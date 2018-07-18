@@ -1,13 +1,7 @@
 # tidy
 library(tidyverse)
 # spatial
-library(rgeos)
-library(rgdal)
-library(sp)
-# housekeeping
-library(rmarkdown)
-# Epi
-library(survey)
+library(sf)
 
 ##----------------------------------##
 ##            Read-In Data          ## 
@@ -27,13 +21,11 @@ dhs13$sampleweight <- dhs13$hv005/1000000
 ##----------------------------------##
 ##           Shape Objects          ## 
 ##----------------------------------##
-tol <- 0.05
-gadmpath <- "~/Google Drive/PhD_Work/Maps/"
-setwd(gadmpath)
-DRCcountry <- gSimplify(readOGR(dsn = "DRC_GADM/COD_adm_shp/", layer = "COD_adm0"), tol, topologyPreserve=TRUE)
-DRCprov <- readOGR(dsn = "DRC_DHS/sdr_subnational_boundaries_2017-11-30/shps/", layer = "sdr_subnational_boundaries2")
+DRCprovfiles <- dir("~/Google Drive/PhD_Work/Maps/DRC_GADM/sf_gadm/", full.names = T)
+DRC <- lapply(DRCprovfiles, function(x)readRDS(x))
+DRCprov <- DRC[[2]]
 
-
+provdict <- read_tsv(file = "~/Google Drive/PhD_Work/Maps/DRC_GADM/dhs_shnprovin_mapfile_variabledocumentation.tab.txt")
 
 #---------------------------
 ######################################
@@ -91,20 +83,14 @@ prelim <- left_join(dhs13, pv, by=c("dnaplate_short", "barcode"))
 
 
 
-
-
-
-
-
-
 ##----------------------------------##
 ##           Final Objects          ## 
 ##----------------------------------##
-dhs13_short <- dhs13 %>% 
-  dplyr::select(barcode, cluster, sampleweight, drcshp13.latnum, drcshp13.longnum)
+dhs13_short <- prelim %>% 
+  dplyr::select(barcode, cluster, shnprovin, pv_pos, sampleweight, drcshp13.latnum, drcshp13.longnum)
 
 
-save(dhs13, DRCcountry, DRCprov, prelim, file = "~/Documents/GitHub/VivID_PhD_Thesis/Preliminary_PowerCalc/RBC_Antigen_Prev/data.RData")
+save(dhs13_short, DRCprov, provdict, prelim, file = "~/Documents/GitHub/VivID_PhD_Thesis/Preliminary_PowerCalc/RBC_Antigen_Prev/data.RData")
 
 
   
