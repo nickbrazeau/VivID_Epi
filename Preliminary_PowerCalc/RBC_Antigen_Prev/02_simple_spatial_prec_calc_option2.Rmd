@@ -195,7 +195,7 @@ dhs13_sub_sum <- dhs13_sub_sum %>%
   dplyr::select(-c(provname)) %>% 
   dplyr::mutate(wtL95CI = mut - 1.96*se) %>% 
   dplyr::mutate(wtU95CI = mut + 1.96*se) %>% 
-  dplyr::mutate(CLwidth = abs(wtU95CI) + abs(wtL95CI)) %>% 
+  dplyr::mutate(CLwidth = wtU95CI - wtL95CI) %>% 
   mutate_if(is.numeric, funs(round(., 2)))
 
 
