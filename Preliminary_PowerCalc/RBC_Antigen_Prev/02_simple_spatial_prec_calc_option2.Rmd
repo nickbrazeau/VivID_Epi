@@ -195,6 +195,7 @@ dhs13_sub_sum <- dhs13_sub_sum %>%
   dplyr::select(-c(provname)) %>% 
   dplyr::mutate(wtL95CI = mut - 1.96*se) %>% 
   dplyr::mutate(wtU95CI = mut + 1.96*se) %>% 
+  dplyr::mutate(CLwidth = abs(wtU95CI) + abs(wtL95CI)) %>% 
   mutate_if(is.numeric, funs(round(., 2)))
 
 
@@ -205,8 +206,8 @@ dhs13_mapdf <- DRCprov %>%
 
   
 plotObj <- ggplot() + 
-  geom_sf(data=dhs13_mapdf, aes(fill = mut)) +
- scale_fill_gradientn("Mutation \n Prev", colours = c("#d0d1e6", "#3690c0", "#253494")) +
+  geom_sf(data=dhs13_mapdf, aes(fill = CLwidth)) +
+ scale_fill_gradientn("Mutation \n CI Width", colours = c("#d0d1e6", "#3690c0", "#253494")) +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(), 
         panel.background = element_blank(),
