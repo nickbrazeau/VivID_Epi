@@ -1,0 +1,46 @@
+--- 
+title: "DARC Primer and MID Design for SeekDeep" 
+author: "Nick Brazeau" 
+date: "`r format(Sys.time(), '%B %d, %Y')`" 
+output: 
+  html_document: 
+    highlight: tango 
+    theme: lumen 
+    toc: yes 
+    toc_float: yes 
+    toc_depth: 3 
+    result_folding: hide 
+editor_options:  
+  chunk_output_type: console
+--- 
+
+```{r, echo=F, message=F, warning=F}
+library(tidyverse)
+library(RCurl)
+library(Biostrings)
+library(seqinr)
+```
+
+# Read in Data
+Primers are from [Menard et al. 2010](http://www.pnas.org/content/pnas/suppl/2010/03/12/0912496107.DCSupplemental/pnas.200912496SI.pdf). **These are the inner primers from a hemi-nested PCR protocol**. 
+```{r, echo=F, message=F, warning=F}
+# note these are nested primers
+Fw <- Biostrings::DNAString("GTGGGGTAAGGCTTCCTGAT") # 5'-3'
+Rv <-  Biostrings::reverseComplement(Biostrings::DNAString("CAAACAGCAGGGGAAATGAG"))
+  
+target <- Biostrings::readDNAStringSet(file = "X85785.1.fasta", 
+                                       format="fasta", use.names = T)
+  
+```
+
+
+```{r, echo=F, message=F, warning=F}
+
+
+lapply(list(Fw, Rv), function(x) {
+  vmatchPattern(x, target)
+})
+
+
+
+```
