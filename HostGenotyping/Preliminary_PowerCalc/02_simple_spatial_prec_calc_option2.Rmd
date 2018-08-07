@@ -21,7 +21,7 @@ library(gridExtra)
 ##----------------------------------##
 ##            Read-In Data          ## 
 ##----------------------------------##
-load("~/Documents/GitHub/VivID_PhD_Thesis/Preliminary_PowerCalc/RBC_Antigen_Prev/data.RData")
+load("data.RData")
 
 ```
 

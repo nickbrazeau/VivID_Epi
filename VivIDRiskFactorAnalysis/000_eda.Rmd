@@ -1,0 +1,16 @@
+--- 
+title: "EDA" 
+author: "Nick Brazeau" 
+date: "`r format(Sys.time(), '%B %d, %Y')`" 
+output: 
+  html_document: 
+    highlight: tango 
+    theme: lumen 
+    toc: yes 
+    toc_float: yes 
+    toc_depth: 3 
+    result_folding: hide 
+editor_options:  
+  chunk_output_type: console
+--- 
+
