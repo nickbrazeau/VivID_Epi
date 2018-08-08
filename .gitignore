@@ -7,4 +7,6 @@
 .Rproj.user
 .Rhistory
 cachedata/
+db/
+datasets/
 rdhs.json
