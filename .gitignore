@@ -6,3 +6,5 @@
 *.RDATA
 .Rproj.user
 .Rhistory
+cachedata/
+rdhs.json
