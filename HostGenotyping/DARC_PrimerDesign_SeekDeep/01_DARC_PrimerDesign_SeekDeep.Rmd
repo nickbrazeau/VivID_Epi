@@ -15,10 +15,11 @@ editor_options:
 --- 
 
 ```{r, echo=F, message=F, warning=F}
+# tidy data
 library(tidyverse)
-library(RCurl)
+# genomics 
 library(Biostrings)
-library(seqinr)
+
 ```
 
 # Read in Data
@@ -44,3 +45,84 @@ lapply(list(Fw, Rv), function(x) {
 
 
 ```
+
+
+```{r, echo=F, message=F, warning=F}
+
+MID2MIDmatches <- 8
+length <- 12
+homopolymercutoff <- 2
+MID2targetmatches <- 2
+
+MIDsWanted <- 96
+
+
+MIDmaker <- function(length, homopolymercutoff){
+  MID <- paste0(c(sample(x=c("C","G"), size=1), sample(x=c("C","G", "A", "T"), size=length-1, replace = T)), collapse="")
+  if(max(unlist(parallel::mclapply(c("A", "C", "T", "G"), function(x){longestConsecutive(MID, x)}))) >= homopolymercutoff){
+    while(max(unlist(parallel::mclapply(c("A", "C", "T", "G"), function(x){longestConsecutive(MID, x)}))) >= homopolymercutoff){  
+      MID <- paste0(c(sample(x=c("C","G"), size=1), sample(x=c("C","G", "A", "T"), size=length-1, replace = T)), collapse="")
+    }}
+  return(MID)
+  
+}
+
+
+
+finalMIDs <- NULL # init N
+currMIDs <- NULL # init 
+n <- MIDsWanted # init N
+int <- 1 # housekeeping
+
+
+while(length(finalMIDs) < MIDsWanted){
+  propMIDs <- replicate(n, MIDmaker(length, homopolymercutoff)) # init
+  if(int%%1e1 == 0){cat(paste0("Done with proposal iteration", int, "\n ------- \n"))}
+  propMIDs <- c(propMIDs, currMIDs)
+  # get pairs and pair.list
+  pairs <- t(combn(propMIDs,m=2)) # choose 2
+  pairs.list <- split(pairs, seq(nrow(pairs)))
+  pairs.list.ret <- parallel::mclapply(pairs.list, function(x){stringdist::stringdistmatrix(x[1], x[2], method = c("hamming"))}) 
+  pairs.list.ret <- tibble(primer = c(pairs[,1], pairs[,2]), Hdist = rep(c(do.call("rbind", pairs.list.ret)),2)) # TODO sloppy
+
+  MIDret <- pairs.list.ret %>% 
+    dplyr::group_by(primer) %>% 
+    dplyr::summarise(Hdist=min(Hdist)) 
+  
+  # update MID proposals
+  if(min(MIDret$Hdist) <= length-MID2MIDmatches){
+    # Use distances as weights to fine tune the number of MIDs to keep 
+    keep <- floor( runif( n = 1, min = MIDsWanted*sum(MIDret$Hdist)/(nrow(MIDret)*length), max =  MIDsWanted-1 ) ) 
+    # Standardize to length and then select those MIDs that have the best distances so far 
+    currMIDs <- sample(MIDret$primer, size = keep, prob = MIDret$Hdist/length) 
+    # update N for propsoal 
+    n <- MIDsWanted - length(currMIDs)
+    
+    # housekeeping
+    int <- int + 1
+    
+  } else {
+    
+    finalMIDs <- MIDret$primer
+    
+  }
+  
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
