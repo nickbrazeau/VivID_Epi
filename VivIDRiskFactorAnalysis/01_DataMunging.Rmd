@@ -1,5 +1,5 @@
 --- 
-title: "EDA" 
+title: "Data Munging and Database Normalization" 
 author: "Nick Brazeau" 
 date: "`r format(Sys.time(), '%B %d, %Y')`" 
 output: 
@@ -26,31 +26,23 @@ library(rdhs)
 ```{r, echo=F, message=F, warning=F}
 proj_dir <- "~/Documents/GitHub/VivID_PhD_Thesis/VivIDRiskFactorAnalysis/"
 setwd(file.path(proj_dir))
+#---------------
+# Using rDHS to pull down HIV recode. You will need to use your own DHS access 
+#---------------
+# https://ojwatson.github.io/rdhs/
 rdhs::set_rdhs_config(email = "nbrazeau@med.unc.edu",
-                      project = "Malaria Spatiotemporal Analysis", 
-                      config_path = "rdhs.json", 
+                      project = "Malaria Spatiotemporal Analysis",
+                      config_path = "rdhs.json",
                       global = FALSE,
-                      cache_path = "~/Documents/GitHub/VivID_PhD_Thesis/VivIDRiskFactorAnalysis/")
-
+                      cache_path = "/Users/NFB/Documents/GitHub/VivID_PhD_Thesis/VivIDRiskFactorAnalysis/")
 
 survs <- dhs_surveys(countryIds = c("CD"),
                      surveyYearStart = 2013)
 
 
-datasets <- dhs_datasets(surveyIds = survs$SurveyId, 
+datasets <- dhs_datasets(surveyIds = survs$SurveyId,
                          fileFormat = "flat")
-
-downloads <- get_datasets(datasets$FileName)
-
-
-t <- readRDS("~/Documents/GitHub/VivID_PhD_Thesis/VivIDRiskFactorAnalysis/datasets/CDPR61FL.rds")
-
-str(t)
-
-
-
-## check to see if reformat does what you want
-## what aobout barcode in PR
+downloads <- get_datasets(datasets$FileName) # let's get them all for fun
 
 
 ```
@@ -59,14 +51,6 @@ str(t)
 Pull in 2013 DHS. 
 ```{r, echo=F, message=F, warning=F}
 
-# https://ojwatson.github.io/rdhs/articles/introduction.html
-
-
-
-datasets <- dhs_datasets(surveyIds = "CD2013DHS",
-                         fileFormat = "flat")
-
-dt <- get_datasets("CDAR61FL.ZIP")
 
 ```
 

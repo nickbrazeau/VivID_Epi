@@ -1,0 +1,94 @@
+--- 
+title: "Univariate and Bivariate Analyses" 
+author: "Nick Brazeau" 
+date: "`r format(Sys.time(), '%B %d, %Y')`" 
+output: 
+  html_document: 
+    highlight: tango 
+    theme: lumen 
+    toc: yes 
+    toc_float: yes 
+    toc_depth: 3 
+    result_folding: hide 
+editor_options:  
+  chunk_output_type: console
+--- 
+
+# Overview
+
+**Outcome (binary)**: _P. vivax infection (i.e. parasitemia detectable by RT-PCR)
+
+The variables that I care about as potential EMM & Confounders (or other variables of interest/bookkeeping) are: 
+## Risk Factors
+
+
+  1. barcode (i.e. Sample ID)
+  2. PFLDH (result of Pfalciparum RT-PCR scoring system) **outcome**
+  2. HumBT (whether or not human beta-tubulin was in a sample -- a good positive control per sample)
+  2. PFLDH_parasitemia_mean
+  2. HumBT_ngperuL_mean
+  3. FCq_mean (i.e. CT mean for Pf)
+  4. VCq_mean (i.e. CT mean for human)
+  6. cluster
+  7. household
+  7. HIV Status (HIV03)
+  7. Sample Weight from HIV dataset (HIV05)
+  7. Household Sample Weight (HV005)
+  7. Number of household members (HV009)
+  7. Number of Children in Household under 5 (HV014)
+  7. Province (HV024)
+  7. Type of Residence i.e. Rural or Urban (HV025)
+  7. Place of Residence (HV026)
+  7. Cluster altitude (HV040)
+  7. Drinking Water (categorical: HV201)
+  7. Non-Drinking water (categorical: HV202)
+  7. Type of Tolilet Facility (categorical: HV205)
+  7. Has Electricity (HV206)
+  7. Has Radio (HV207)
+  7. Has television (HV208)
+  7. Has refrigerator (HV209)
+  7. Has bicycle (HV210)
+  7. Has motorcycle/scooter (HV211)
+  7. Has car/truck (HV212)
+  7. Main floor material (categorical: HV213)
+  7. Main wall material (categorical: HV214)
+  7. Main roof material (categorical: HV215)
+  7. Number of rooms for sleeping (HV216)
+  7. Has Telephone (HV221)
+  7. Shares toilet with other household (HV225)
+  8. Owns Mosquite ned for sleeping (HV227)
+  8. CHildren under 5 slept under net (HV228)
+  8. Owns livestock, herds, of farms (HV246)
+  8. Owns cows/bulls (HV246B)
+  8. Owns horses/donkeys/mules (HV246C)
+  8. Wealth Index (HV270)
+  8. Wealth Index Factor (HV271)
+  8. Number of mosquito bed needs (HML1A)
+  8. SHPOOL 
+  9. SHNPROVIN
+  9. Biological Sex (HV104)
+  9. Age (HV105)
+  10. Highest year of education attained (categorical: HV106) -- note there is something very weird going on with this varibale?!!?
+  10. Highest year of education completed (continous: HV107) -- note there is something very weird going on with this varibale?!!?
+  10. Education Completed in Single Years (continous: HV108) -- note there is something very weird going on with this varibale?!!?
+  10. Educational Attainment (Categorical: HV109)
+  10. Hemoglobin Level adjust for altitude and smoking (HA56 & HB56)
+  10. Currently pregnant? (HA54)
+  10. Anemia Level (HA57 & HB57)
+  10. Net Observed by interviewer (HML3)
+  10. Months ago net obtained (HML4)
+  10. Net treated with insecticide (HML5)
+  10. Net Treatment Status (HML6)
+  10. Brand of Net (HML7)
+  10. Net treated since recieving (HML8)
+  10. Time since last re-treatment (HML9)
+  10. Insecticide-Treated Net (HML10)
+  10. Number of person who slept under net (HML11)
+  10. Pregnancy status from Individual file (HML18)
+  10. Person slept under an ever-treated net (HML19)
+  10. Person slept under an LLIN net (HML20)
+  10. Microscopy (HML32)
+  10. RDT (HML35)
+
+* Note HA variables are for female blood tests only and HB are for male only blood tests
+
