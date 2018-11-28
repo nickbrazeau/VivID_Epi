@@ -1,13 +1,69 @@
-#---------------------------------------------------------------------------------
-# Purpose of this script is to import data and merge PCR and PR recode for CD2013
-#---------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------
+# Purpose of this script is to import data and merge PCR and DHS recodes for CD2013
+#----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)
+# DHS munging
+devtools::install_github("OJWatson/rdhs", ref="master")
+library(rdhs)
+
+#---------------------------------------------------------------------------------
+# Using rDHS to pull down CD2013
+#---------------------------------------------------------------------------------
+# https://ojwatson.github.io/rdhs/
+rdhs::set_rdhs_config(email = "nbrazeau@med.unc.edu",
+                      project = "Malaria Spatiotemporal Analysis",
+                      config_path = "rdhs.json",
+                      global = FALSE,
+                      cache_path = "/Users/nickbrazeau/Documents/GitHub/VivID_Epi")
+
+survs <- dhs_surveys(countryIds = c("CD"),
+                     surveyYearStart = 2013)
 
 
+datasets <- dhs_datasets(surveyIds = survs$SurveyId,
+                         fileFormat = "flat")
+# download all DHS datsets 
+downloads <- get_datasets(datasets$FileName) 
+
+#---------------------------------------------------------------------------------
+# Read in qPCR data
+#---------------------------------------------------------------------------------
 # read in data
-pfpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pf_alladults_v4.csv", col_names = T)
-pvpcr <- readr::read_csv(file="", col_names = T)
+pfpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pf_alladults_v4.csv", 
+                         col_names = T) %>% 
+         magrittr::set_colnames(tolower(colnames(.))) %>% 
+         dplyr::rename(barcode = hivrecode_barcode) %>% 
+         dplyr::select(c("barcode", "pfldh"))
+  
+pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v1.csv", 
+                         col_names = T) %>% 
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::rename(barcode = hivrecode_barcode) %>% 
+  dplyr::select(c("barcode", "pv18s"))
+
+popcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Po_alladults_V2.csv", 
+                         col_names = T) %>% 
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::rename(barcode = hivrecode_barcode) %>% 
+  dplyr::select(c("barcode", "po18s"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 cd2013dhspr <- readRDS(file = "~/Documents/GitHub/CD2013DHS_Adults_qPCR_Curation/Pfalciparum/datasets/CDPR61FL.rds")
 cd2013dhsar <- readRDS(file = "~/Documents/GitHub/CD2013DHS_Adults_qPCR_Curation/Pfalciparum/datasets/CDAR61FL.rds")
 colnames(cd2013dhsar) <- c("cluster", "household", "Line", "barcode", "HIV02", "HIV03", "HIV05")
