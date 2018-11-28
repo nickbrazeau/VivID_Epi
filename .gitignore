@@ -1,12 +1,30 @@
-.DS_Store
-*.RDS
-*.rds
-*.RData
-*.rdata
-*.RDATA
-.Rproj.user
+# History files
 .Rhistory
-cachedata/
-db/
+.Rapp.history
+
+# Session Data files
+.RData
+
+# Data files I'm generating
+*.rds
 datasets/
+db/
+data/
 rdhs.json
+
+
+# RStudio files
+.Rproj.user/
+
+# knitr and R markdown default cache directories
+/*_cache/
+/cache/
+
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+
+# MAC files
+.DS_Store
