@@ -28,3 +28,4 @@ rdhs.json
 
 # MAC files
 .DS_Store
+.Rproj.user

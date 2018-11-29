@@ -27,110 +27,91 @@ datasets <- dhs_datasets(surveyIds = survs$SurveyId,
 downloads <- get_datasets(datasets$FileName) 
 
 #---------------------------------------------------------------------------------
-# Read in qPCR data
+# Read in and merge qPCR data
 #---------------------------------------------------------------------------------
 # read in data
 pfpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pf_alladults_v4.csv", 
                          col_names = T) %>% 
          magrittr::set_colnames(tolower(colnames(.))) %>% 
-         dplyr::rename(barcode = hivrecode_barcode) %>% 
-         dplyr::select(c("barcode", "pfldh"))
+         dplyr::select(c("hivrecode_barcode", "pfldh"))
   
 pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v1.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
-  dplyr::rename(barcode = hivrecode_barcode) %>% 
-  dplyr::select(c("barcode", "pv18s"))
+  dplyr::select(c("hivrecode_barcode", "pv18s"))
 
 popcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Po_alladults_V2.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
-  dplyr::rename(barcode = hivrecode_barcode) %>% 
-  dplyr::select(c("barcode", "po18s"))
+  dplyr::select(c("hivrecode_barcode", "po18s"))
 
 
 
+# bind together the pf, po, pv results
+panplasmpcrres <- dplyr::inner_join(pfpcr, popcr, by="hivrecode_barcode") %>% 
+  dplyr::inner_join(., pvpcr, by="hivrecode_barcode")
 
+if(nrow(panplasmpcrres) != nrow(pfpcr) & nrow(pfpcr) != nrow(popcr) & nrow(popcr) != nrow(pvpcr)){
+  stop("Abandon all faith, ye who enter here. Look upstream to how the CD2013 pcr calls were made. There has been an error in barcode renaming and/or merging")
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-cd2013dhspr <- readRDS(file = "~/Documents/GitHub/CD2013DHS_Adults_qPCR_Curation/Pfalciparum/datasets/CDPR61FL.rds")
-cd2013dhsar <- readRDS(file = "~/Documents/GitHub/CD2013DHS_Adults_qPCR_Curation/Pfalciparum/datasets/CDAR61FL.rds")
-colnames(cd2013dhsar) <- c("cluster", "household", "Line", "barcode", "HIV02", "HIV03", "HIV05")
-
-
+#---------------------------------------------------------------------------------
+# Read in and match PR barcode to qpcr data
+#---------------------------------------------------------------------------------
+pr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/datasets/CDPR61FL.rds")
+ar <- readRDS(file = "~/Documents/GitHub/VivID_Epi/datasets/CDAR61FL.rds")
 
 # match HIV/PCR barcodes with the PR recode
-# The HIV recoded barcodes are under the variables HA62 (males) and HB62 (females)
-str(cd2013dhspr$ha62)
-attr(cd2013dhspr$ha62, "label")
-attr(cd2013dhspr$ha62, "labels")
-# of note, there are values in the ha62 and hb62 barcodes that are not listed. Assuming it is missing/damaged.
-cd2013dhspr$ha62[cd2013dhspr$ha62 %in% c("99991", as.character(seq(99997:99999)))]
-head(xtabs(~cd2013dhspr$ha62))
-# The HIV recoded barcodes are under the variables HA62 (males) and HB62 (females)
-str(cd2013dhspr$hb62)
-attr(cd2013dhspr$hb62, "label")
-attr(cd2013dhspr$hb62, "labels")
-# of note, there are values in the ha62 and hb62 barcodes that are not listed. Assuming it is missing/damaged, etc.
-cd2013dhspr$hb62[cd2013dhspr$hb62 %in% c("99991", as.character(seq(99997:99999)))]
-head(xtabs(~cd2013dhspr$hb62))
+# The HIV recoded barcodes are under the variables HA62 (females) in the PR recode
+str(pr$ha62)
+attr(pr$ha62, "label")
+attr(pr$ha62, "labels")
+# check for other odd values
+pr$ha62[pr$ha62 %in% c("99991", as.character(seq(99997:99999)))]
+head(xtabs(~pr$ha62))
 
 # no barcode for the men
-sum(factor(cd2013dhspr$hb62) == "     ")
-sum(factor(cd2013dhspr$hb62) == "?    ")
+sum(factor(pr$ha62) == "     ")
+sum(factor(pr$ha62) == "?    ")
+
+# The HIV recoded barcodes are under the variables HB62 (males) in the PR recode
+str(pr$hb62)
+attr(pr$hb62, "label")
+attr(pr$hb62, "labels")
+# check for other odd values
+pr$hb62[pr$hb62 %in% c("99991", as.character(seq(99997:99999)))]
+head(xtabs(~pr$hb62))
+
+# no barcode for the men
+sum(factor(pr$hb62) == "     ")
+sum(factor(pr$hb62) == "?    ")
 
 
 # make merge table
-infodf <- tibble(ha62 = c("     ",           "99991", "99992",     "99993",  "99994",       "99995",   "99996",  "?    ",   "     ", "     ",     "     ",  "     ",       "     ",   "     ",   "     "),
-                 hb62 = c("     ",           "     ", "     ",     "     ",  "     ",       "     ",   "     ",  "     ",   "99991", "99992",     "99993",  "99994",       "99995",   "99996",   "?    "),
-                 info = c("No info for F/M", "F unk", "F Incmplt", "F dmgd", "F not prsnt", "F rfsd",  "F othr", "F mssng", "M unk", "M Incmplt", "M dmgd", "M not prsnt", "M rfsd",  "M othr",  "M mssng"))
+infodf <- tibble(ha62 = c("     ",           "99991", "99992",     "99993",  "99994",       "99995",   "99996",  "?    ",   "     ", "     ",     "     ",  "     ",       "     ",   "     ",   "     ", "?    "),
+                 hb62 = c("     ",           "     ", "     ",     "     ",  "     ",       "     ",   "     ",  "     ",   "99991", "99992",     "99993",  "99994",       "99995",   "99996",   "?    ", "?    "),
+                 info = c("No info for F/M", "F unk", "F Incmplt", "F dmgd", "F not prsnt", "F rfsd",  "F othr", "F mssng", "M unk", "M Incmplt", "M dmgd", "M not prsnt", "M rfsd",  "M othr",  "M mssng", "both missing"))
 
 # let's make the barcode column now
-cd2013dhspr <- cd2013dhspr %>%
-  dplyr::left_join(x=cd2013dhspr, y = infodf, by=c("ha62", "hb62")) %>%
-  dplyr::mutate(barcode = ifelse(is.na(info) & hb62 != "     ", hb62,
+pr <- pr %>%
+  dplyr::left_join(x=pr, y = infodf, by=c("ha62", "hb62")) %>%
+  dplyr::mutate(hivrecode_barcode = ifelse(is.na(info) & hb62 != "     ", hb62,
                                  ifelse(is.na(info) & ha62 != "     ", ha62, NA)
-                                 )
+                                 ),
+                hivrecode_barcode = factor(hivrecode_barcode)
                 )
 
-# check
-if(TRUE %in% as.data.frame(table(cd2013dhspr$info, cd2013dhspr$barcode))[,3] != 0){
+# check to see if barcodes had missing in AR recode
+if(TRUE %in% as.data.frame(table(pr$info, pr$hivrecode_barcode))[,3] != 0){
   stop("barcode parsing error with info missing and barcode")
 }
-if(sum(!is.na(cd2013dhspr$barcode)) != nrow(cd2013dhsar)){
+
+# check to make sure every PR recode has an AR recode 
+if(sum(!is.na(pr$hivrecode_barcode)) != nrow(ar)){
   stop("predicted barcode number does not match barcode number in AR (HIV) recode")
 }
 
-# filter down to barcodes that are meaningful
-colnames(cd2013dhspcr)[colnames(cd2013dhspcr) == "HIVrecode_barcode"] <- "barcode"
-cd2013dhspr$barcode <- tolower(cd2013dhspr$barcode)
-cd2013dhspr <- inner_join(cd2013dhspcr, cd2013dhspr, by=c("barcode"))
-
-# add in GPS points
-cd2013gps <- tibble(cluster = cd2013dhsge$DHSCLUST, lat = cd2013dhsge$LATNUM, long = cd2013dhsge$LONGNUM)
-# Clusters with Lat and Long of 0,0 were not able to be identified and should have coordinates set to NA
-cd2013gps <- cd2013gps %>%
-  dplyr::mutate(long = ifelse(long == 0 & lat == 0, NA, long)) %>%
-  dplyr::mutate(lat = ifelse(long == 0 & lat == 0, NA, lat))
-
-cd2013dhspr <- left_join(x = cd2013dhspr, y=cd2013gps, by=c("cluster"))
-
-
-
-
-save(cd2013dhspr, cd2013dhsge, drclong, file = "data/EPBID_raw.rda")
-
-
+# write out joined HIV recode to PR, can use this for panplasmodium results
+save(pr, panplasmpcrres, file = "data/vividepi_raw.rda")
 
 
