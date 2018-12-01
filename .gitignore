@@ -11,7 +11,7 @@ datasets/
 db/
 data/
 rdhs.json
-
+figures/
 
 # RStudio files
 .Rproj.user/

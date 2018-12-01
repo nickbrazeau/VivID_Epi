@@ -166,4 +166,8 @@ if(!dir.exists(paths = "data")){
 
 save(DRCprov, ge, arpr, panplasmpcrres, file = "data/vividepi_raw.rda")
 
+# set up figure dir for later storage
+if(!dir.exists("figures")){
+  dir.create("figures")
+}
 

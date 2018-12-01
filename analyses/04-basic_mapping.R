@@ -141,7 +141,7 @@ mapplotter <- function(data, maplvl, plsmdmspec){
 
 prevmaps <- pmap(mp, mapplotter)
 
-jpeg(file = "~/Desktop/prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
+jpeg(file = "figures/04-prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
 gridExtra::grid.arrange(prevmaps[[1]], 
                         prevmaps[[2]],
                         prevmaps[[3]],
@@ -224,7 +224,7 @@ prevhist <- pmap(list(data = clusters$ret, plsmdmspec = clusters$plsmdmspec), fu
 
 
 
-jpeg(file = "~/Desktop/zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
+jpeg(file = "figures/04-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
 gridExtra::grid.arrange(prevhist[[1]],
                         prevhist[[2]],
                         prevhist[[3]],
