@@ -92,3 +92,13 @@ The variables that I care about as potential EMM & Confounders (or other variabl
 
 * Note HA variables are for female blood tests only and HB are for male only blood tests
 
+source("analyses/00-functions.R") 
+library(tidyverse)
+library(sf)
+library(srvyr) #wrap the survey package in dplyr syntax
+#......................
+# Import Data
+#......................
+load("data/vividepi_raw.rda")
+dt <- merge_pr_plsmdm_gemtdt(pr = arpr, plsmdm = panplasmpcrres, ge = ge)
+

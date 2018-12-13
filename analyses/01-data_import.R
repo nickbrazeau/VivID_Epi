@@ -30,6 +30,7 @@ downloads <- rdhs::get_datasets(datasets$FileName)
 #---------------------------------------------------------------------------------
 # pull down maps
 #---------------------------------------------------------------------------------
+# recent r package to wrap gadm -- https://cran.r-project.org/web/packages/GADMTools/GADMTools.pdf
 #spatial from GADM -- these are polygon files
 drclvl0 <- httr::GET(url = "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_COD_0_sf.rds", httr::write_disk(path="data/gadm_drclvl0.rds", overwrite = T))
 drclvl1 <- httr::GET(url = "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_COD_1_sf.rds", httr::write_disk(path="data/gadm_drclvl1.rds", overwrite = T))

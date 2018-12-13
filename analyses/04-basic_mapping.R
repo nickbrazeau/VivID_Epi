@@ -12,6 +12,10 @@ load("data/vividepi_raw.rda")
 dt <- merge_pr_plsmdm_gemtdt(pr = arpr, plsmdm = panplasmpcrres, ge = ge)
 
 
+# R OSM
+# http://osmar.r-forge.r-project.org/
+# https://cran.r-project.org/web/packages/OpenStreetMap/index.html
+# https://openmaptiles.com/downloads/dataset/satellite/africa/congo-democratic-republic/#2.9/-7.11/17.76
 
 #......................
 # Datawrangle
