@@ -1,0 +1,86 @@
+                                                   CDPR61FL
+                                                CDPR61FL_DICT
+
+                                        CDPR61FL.DCF
+                                    Last Modified:  9/16/2016  12:25:18 PM
+
+--------------------------------------------------------------------------------------------------------------
+Level Name                    Level Label                                                  Type            Rec
+  Record Name                   Record Label                                              Value  Req  Max  Len
+--------------------------------------------------------------------------------------------------------------
+HOUSEHOLD                     HOUSEHOLD
+  RECORD1                       RECORD1                                                          Yes    1  1070
+Level: HOUSEHOLD                                       Record: RECORD1
+--------------------------------------------------------------------------------------------------------------
+                                                                                 Data Item            Dec Zero
+Item Name              Item Label                                     Start  Len Type Type  Occ  Dec Char Fill
+--------------------------------------------------------------------------------------------------------------
+HHID              (id) Case Identification                                1   12   AN    I    1    0   No   No
+HVIDX             (id) Line number                                       13    2    N    I    1    0   No   No
+                               1:90
+                         (record type)                                    0    0   AN    I    1    0   No   No
+HV000                  Country code and phase                            15    3   AN    I    1    0   No   No
+HV001                  Cluster number                                    18    8    N    I    1    0   No   No
+HV002                  Household number                                  26    4    N    I    1    0   No   No
+HV003                  Respondent's line number (answering Household q   30    3    N    I    1    0   No   No
+                               0      Incomplete household
+                               1:999
+HV004                  Ultimate area unit                                33    4    N    I    1    0   No   No
+HV005                  Household sample weight (6 decimals)              37    8    N    I    1    0   No   No
+HV006                  Month of interview                                45    2    N    I    1    0   No   No
+                               1:12
+HV007                  Year of interview                                 47    4    N    I    1    0   No   No
+                               2010:2015
+HV008                  Date of interview (CMC)                           51    4    N    I    1    0   No   No
+HV009                  Number of household members                       55    2    N    I    1    0   No   No
+                               0:90
+HV010                  Number of eligible women in household             57    2    N    I    1    0   No   No
+                               0:20
+HV011                  Number of eligible men in household               59    2    N    I    1    0   No   No
+                               0:20
+HV012                  Number of de jure members                         61    2    N    I    1    0   No   No
+                               0:90
+HV013                  Number of de facto members                        63    2    N    I    1    0   No   No
+                               0:90
+HV014                  Number of children 5 and under (de jure)          65    2    N    I    1    0   No   No
+                               0:20
+HV015                  Result of household interview                     67    1    N    I    1    0   No   No
+                               1  Completed
+                               2  No Household member/no competent member at home
+                               3  Entire Household absent for extended period of time
+                               4  Postponed
+                               5  Refused
+                               6  Dwelling vacant or address not a dwelling
+                               7  Dwelling destroyed
+                               8  Dwelling not found
+                               9  Other
+HV016                  Day of interview                                  68    2    N    I    1    0   No   No
+                               1:31
+HV017                  Number of visits                                  70    1    N    I    1    0   No   No
+                               1:8
+                           (m) 9    Missing
+HV018                  Interviewer identification                        71    3    N    I    1    0   No   No
+                               1:632
+                           (m) 999    Missing
+HV019                  Keyer identification                              74    2    N    I    1    0   No   No
+HV020                  Ever-married sample                               76    1    N    I    1    0   No   No
+                               0  All woman sample
+                               1  Ever married sample
+HV021                  Primary sampling unit                             77    4    N    I    1    0   No   No
+HV022                  Sample strata for sampling errors                 81    4    N    I    1    0   No   No
+                               1:66
+HV023                  Stratification used in sample design              85    2    N    I    1    0   No   No
+                               1:66
+HV024                  Province                                          87    2    N    I    1    0   No   No
+                               1   Kinshasa
+                               2   Bandundu
+                               3   Bas-Congo
+                               4   Equateur
+                               5   Kasai-Occidental
+                               6   Kasai-Oriental
+                               7   Katanga
+                               8   Maniema
+                               9   Nord-Kivu
+                               10  Orientale
+                               11  Sud-Kivu
+                          (na)     Non applicable
