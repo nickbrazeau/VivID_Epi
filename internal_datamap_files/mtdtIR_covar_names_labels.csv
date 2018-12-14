@@ -1,0 +1,4246 @@
+variable,description
+caseid,Case Identification
+v000,Country code and phase
+v001,Cluster number
+v002,Household number
+v003,Respondent's line number
+v004,Ultimate area unit
+v005,Women's individual sample weight (6 decimals)
+v006,Month of interview
+v007,Year of interview
+v008,Date of interview (CMC)
+v009,Respondent's month of birth
+v010,Respondent's year of birth
+v011,Date of birth (CMC)
+v012,Respondent's current age
+v013,Age in 5-year groups
+v014,Completeness of age information
+v015,Result of individual interview
+v016,Day of interview
+v017,NA - CMC start of calendar
+v018,NA - Row of month of interview
+v019,NA - Length of calendar
+v019a,Number of calendar columns
+v020,Ever-married sample
+v021,Primary sampling unit
+v022,Sample strata for sampling errors
+v023,Stratification used in sample design
+v024,Province
+v025,Type of place of residence
+v026,De facto place of residence
+v027,Number of visits
+v028,Interviewer identification
+v029,Keyer identification
+v030,Field supervisor
+v031,Field editor
+v032,Office editor
+v034,Line number of husband
+v040,Cluster altitude in meters
+v042,Household selected for hemoglobin
+v044,Selected for Domestic Violence module
+v101,Province
+v102,Type of place of residence
+v103,NA - Childhood place of residence
+v104,NA - Years lived in place of residence
+v105,NA - Type of place of previous residence
+v106,Highest educational level
+v107,Highest year of education
+v113,Source of drinking water
+v115,Time to get to water source
+v116,Type of toilet facility
+v119,Household has: electricity
+v120,Household has: radio
+v121,Household has: television
+v122,Household has: refrigerator
+v123,Household has: bicycle
+v124,Household has: motorcycle/scooter
+v125,Household has: car/truck
+v127,Main floor material
+v128,Main wall material
+v129,Main roof material
+v130,Religion
+v131,Ethnicity
+v133,Education in single years
+v134,De facto place of residence
+v135,Usual resident or visitor
+v136,Number of household members (listed)
+v137,Number of children 5 and under in household (de jure)
+v138,Number of eligible women in household (de facto)
+v139,De jure region of residence
+v140,De jure type of place of residence
+v141,De jure place of residence
+v149,Educational attainment
+v150,Relationship to household head
+v151,Sex of household head
+v152,Age of household head
+v153,Household has: telephone (land-line)
+awfactt,All woman factor - total
+awfactu,All woman factor - urban/rural
+awfactr,All woman factor - regional
+awfacte,All woman factor - educational
+awfactw,All woman factor - wealth index
+v155,Literacy
+v156,NA - Ever participated in a literacy program outside of primary
+v157,Frequency of reading newspaper or magazine
+v158,Frequency of listening to radio
+v159,Frequency of watching television
+v160,Toilet facilities shared with other households
+v161,Type of cooking fuel
+v166,NA - Result of salt test for iodine
+v167,Number of trips in last 12 months
+v168,Away for more than one month in last 12 months
+v190,Wealth index
+v191,Wealth index factor score (5 decimals)
+ml101,Type of mosquito bed net(s) slept under last night
+bidx_01,Birth column number
+bidx_02,Birth column number
+bidx_03,Birth column number
+bidx_04,Birth column number
+bidx_05,Birth column number
+bidx_06,Birth column number
+bidx_07,Birth column number
+bidx_08,Birth column number
+bidx_09,Birth column number
+bidx_10,Birth column number
+bidx_11,Birth column number
+bidx_12,Birth column number
+bidx_13,Birth column number
+bidx_14,Birth column number
+bidx_15,Birth column number
+bidx_16,Birth column number
+bidx_17,Birth column number
+bidx_18,Birth column number
+bidx_19,Birth column number
+bidx_20,Birth column number
+bord_01,Birth order number
+bord_02,Birth order number
+bord_03,Birth order number
+bord_04,Birth order number
+bord_05,Birth order number
+bord_06,Birth order number
+bord_07,Birth order number
+bord_08,Birth order number
+bord_09,Birth order number
+bord_10,Birth order number
+bord_11,Birth order number
+bord_12,Birth order number
+bord_13,Birth order number
+bord_14,Birth order number
+bord_15,Birth order number
+bord_16,Birth order number
+bord_17,Birth order number
+bord_18,Birth order number
+bord_19,Birth order number
+bord_20,Birth order number
+b0_01,Child is twin
+b0_02,Child is twin
+b0_03,Child is twin
+b0_04,Child is twin
+b0_05,Child is twin
+b0_06,Child is twin
+b0_07,Child is twin
+b0_08,Child is twin
+b0_09,Child is twin
+b0_10,Child is twin
+b0_11,Child is twin
+b0_12,Child is twin
+b0_13,Child is twin
+b0_14,Child is twin
+b0_15,Child is twin
+b0_16,Child is twin
+b0_17,Child is twin
+b0_18,Child is twin
+b0_19,Child is twin
+b0_20,Child is twin
+b1_01,Month of birth
+b1_02,Month of birth
+b1_03,Month of birth
+b1_04,Month of birth
+b1_05,Month of birth
+b1_06,Month of birth
+b1_07,Month of birth
+b1_08,Month of birth
+b1_09,Month of birth
+b1_10,Month of birth
+b1_11,Month of birth
+b1_12,Month of birth
+b1_13,Month of birth
+b1_14,Month of birth
+b1_15,Month of birth
+b1_16,Month of birth
+b1_17,Month of birth
+b1_18,Month of birth
+b1_19,Month of birth
+b1_20,Month of birth
+b2_01,Year of birth
+b2_02,Year of birth
+b2_03,Year of birth
+b2_04,Year of birth
+b2_05,Year of birth
+b2_06,Year of birth
+b2_07,Year of birth
+b2_08,Year of birth
+b2_09,Year of birth
+b2_10,Year of birth
+b2_11,Year of birth
+b2_12,Year of birth
+b2_13,Year of birth
+b2_14,Year of birth
+b2_15,Year of birth
+b2_16,Year of birth
+b2_17,Year of birth
+b2_18,Year of birth
+b2_19,Year of birth
+b2_20,Year of birth
+b3_01,Date of birth (CMC)
+b3_02,Date of birth (CMC)
+b3_03,Date of birth (CMC)
+b3_04,Date of birth (CMC)
+b3_05,Date of birth (CMC)
+b3_06,Date of birth (CMC)
+b3_07,Date of birth (CMC)
+b3_08,Date of birth (CMC)
+b3_09,Date of birth (CMC)
+b3_10,Date of birth (CMC)
+b3_11,Date of birth (CMC)
+b3_12,Date of birth (CMC)
+b3_13,Date of birth (CMC)
+b3_14,Date of birth (CMC)
+b3_15,Date of birth (CMC)
+b3_16,Date of birth (CMC)
+b3_17,Date of birth (CMC)
+b3_18,Date of birth (CMC)
+b3_19,Date of birth (CMC)
+b3_20,Date of birth (CMC)
+b4_01,Sex of child
+b4_02,Sex of child
+b4_03,Sex of child
+b4_04,Sex of child
+b4_05,Sex of child
+b4_06,Sex of child
+b4_07,Sex of child
+b4_08,Sex of child
+b4_09,Sex of child
+b4_10,Sex of child
+b4_11,Sex of child
+b4_12,Sex of child
+b4_13,Sex of child
+b4_14,Sex of child
+b4_15,Sex of child
+b4_16,Sex of child
+b4_17,Sex of child
+b4_18,Sex of child
+b4_19,Sex of child
+b4_20,Sex of child
+b5_01,Child is alive
+b5_02,Child is alive
+b5_03,Child is alive
+b5_04,Child is alive
+b5_05,Child is alive
+b5_06,Child is alive
+b5_07,Child is alive
+b5_08,Child is alive
+b5_09,Child is alive
+b5_10,Child is alive
+b5_11,Child is alive
+b5_12,Child is alive
+b5_13,Child is alive
+b5_14,Child is alive
+b5_15,Child is alive
+b5_16,Child is alive
+b5_17,Child is alive
+b5_18,Child is alive
+b5_19,Child is alive
+b5_20,Child is alive
+b6_01,Age at death
+b6_02,Age at death
+b6_03,Age at death
+b6_04,Age at death
+b6_05,Age at death
+b6_06,Age at death
+b6_07,Age at death
+b6_08,Age at death
+b6_09,Age at death
+b6_10,Age at death
+b6_11,Age at death
+b6_12,Age at death
+b6_13,Age at death
+b6_14,Age at death
+b6_15,Age at death
+b6_16,Age at death
+b6_17,Age at death
+b6_18,Age at death
+b6_19,Age at death
+b6_20,Age at death
+b7_01,"Age at death (months, imputed)"
+b7_02,"Age at death (months, imputed)"
+b7_03,"Age at death (months, imputed)"
+b7_04,"Age at death (months, imputed)"
+b7_05,"Age at death (months, imputed)"
+b7_06,"Age at death (months, imputed)"
+b7_07,"Age at death (months, imputed)"
+b7_08,"Age at death (months, imputed)"
+b7_09,"Age at death (months, imputed)"
+b7_10,"Age at death (months, imputed)"
+b7_11,"Age at death (months, imputed)"
+b7_12,"Age at death (months, imputed)"
+b7_13,"Age at death (months, imputed)"
+b7_14,"Age at death (months, imputed)"
+b7_15,"Age at death (months, imputed)"
+b7_16,"Age at death (months, imputed)"
+b7_17,"Age at death (months, imputed)"
+b7_18,"Age at death (months, imputed)"
+b7_19,"Age at death (months, imputed)"
+b7_20,"Age at death (months, imputed)"
+b8_01,Current age of child
+b8_02,Current age of child
+b8_03,Current age of child
+b8_04,Current age of child
+b8_05,Current age of child
+b8_06,Current age of child
+b8_07,Current age of child
+b8_08,Current age of child
+b8_09,Current age of child
+b8_10,Current age of child
+b8_11,Current age of child
+b8_12,Current age of child
+b8_13,Current age of child
+b8_14,Current age of child
+b8_15,Current age of child
+b8_16,Current age of child
+b8_17,Current age of child
+b8_18,Current age of child
+b8_19,Current age of child
+b8_20,Current age of child
+b9_01,Child lives with whom
+b9_02,Child lives with whom
+b9_03,Child lives with whom
+b9_04,Child lives with whom
+b9_05,Child lives with whom
+b9_06,Child lives with whom
+b9_07,Child lives with whom
+b9_08,Child lives with whom
+b9_09,Child lives with whom
+b9_10,Child lives with whom
+b9_11,Child lives with whom
+b9_12,Child lives with whom
+b9_13,Child lives with whom
+b9_14,Child lives with whom
+b9_15,Child lives with whom
+b9_16,Child lives with whom
+b9_17,Child lives with whom
+b9_18,Child lives with whom
+b9_19,Child lives with whom
+b9_20,Child lives with whom
+b10_01,Completeness of information
+b10_02,Completeness of information
+b10_03,Completeness of information
+b10_04,Completeness of information
+b10_05,Completeness of information
+b10_06,Completeness of information
+b10_07,Completeness of information
+b10_08,Completeness of information
+b10_09,Completeness of information
+b10_10,Completeness of information
+b10_11,Completeness of information
+b10_12,Completeness of information
+b10_13,Completeness of information
+b10_14,Completeness of information
+b10_15,Completeness of information
+b10_16,Completeness of information
+b10_17,Completeness of information
+b10_18,Completeness of information
+b10_19,Completeness of information
+b10_20,Completeness of information
+b11_01,Preceding birth interval (months)
+b11_02,Preceding birth interval (months)
+b11_03,Preceding birth interval (months)
+b11_04,Preceding birth interval (months)
+b11_05,Preceding birth interval (months)
+b11_06,Preceding birth interval (months)
+b11_07,Preceding birth interval (months)
+b11_08,Preceding birth interval (months)
+b11_09,Preceding birth interval (months)
+b11_10,Preceding birth interval (months)
+b11_11,Preceding birth interval (months)
+b11_12,Preceding birth interval (months)
+b11_13,Preceding birth interval (months)
+b11_14,Preceding birth interval (months)
+b11_15,Preceding birth interval (months)
+b11_16,Preceding birth interval (months)
+b11_17,Preceding birth interval (months)
+b11_18,Preceding birth interval (months)
+b11_19,Preceding birth interval (months)
+b11_20,Preceding birth interval (months)
+b12_01,Succeeding birth interval (months)
+b12_02,Succeeding birth interval (months)
+b12_03,Succeeding birth interval (months)
+b12_04,Succeeding birth interval (months)
+b12_05,Succeeding birth interval (months)
+b12_06,Succeeding birth interval (months)
+b12_07,Succeeding birth interval (months)
+b12_08,Succeeding birth interval (months)
+b12_09,Succeeding birth interval (months)
+b12_10,Succeeding birth interval (months)
+b12_11,Succeeding birth interval (months)
+b12_12,Succeeding birth interval (months)
+b12_13,Succeeding birth interval (months)
+b12_14,Succeeding birth interval (months)
+b12_15,Succeeding birth interval (months)
+b12_16,Succeeding birth interval (months)
+b12_17,Succeeding birth interval (months)
+b12_18,Succeeding birth interval (months)
+b12_19,Succeeding birth interval (months)
+b12_20,Succeeding birth interval (months)
+b13_01,Flag for age at death
+b13_02,Flag for age at death
+b13_03,Flag for age at death
+b13_04,Flag for age at death
+b13_05,Flag for age at death
+b13_06,Flag for age at death
+b13_07,Flag for age at death
+b13_08,Flag for age at death
+b13_09,Flag for age at death
+b13_10,Flag for age at death
+b13_11,Flag for age at death
+b13_12,Flag for age at death
+b13_13,Flag for age at death
+b13_14,Flag for age at death
+b13_15,Flag for age at death
+b13_16,Flag for age at death
+b13_17,Flag for age at death
+b13_18,Flag for age at death
+b13_19,Flag for age at death
+b13_20,Flag for age at death
+b15_01,Live birth between births
+b15_02,Live birth between births
+b15_03,Live birth between births
+b15_04,Live birth between births
+b15_05,Live birth between births
+b15_06,Live birth between births
+b15_07,Live birth between births
+b15_08,Live birth between births
+b15_09,Live birth between births
+b15_10,Live birth between births
+b15_11,Live birth between births
+b15_12,Live birth between births
+b15_13,Live birth between births
+b15_14,Live birth between births
+b15_15,Live birth between births
+b15_16,Live birth between births
+b15_17,Live birth between births
+b15_18,Live birth between births
+b15_19,Live birth between births
+b15_20,Live birth between births
+b16_01,Child's line number in household
+b16_02,Child's line number in household
+b16_03,Child's line number in household
+b16_04,Child's line number in household
+b16_05,Child's line number in household
+b16_06,Child's line number in household
+b16_07,Child's line number in household
+b16_08,Child's line number in household
+b16_09,Child's line number in household
+b16_10,Child's line number in household
+b16_11,Child's line number in household
+b16_12,Child's line number in household
+b16_13,Child's line number in household
+b16_14,Child's line number in household
+b16_15,Child's line number in household
+b16_16,Child's line number in household
+b16_17,Child's line number in household
+b16_18,Child's line number in household
+b16_19,Child's line number in household
+b16_20,Child's line number in household
+v201,Total children ever born
+v202,Sons at home
+v203,Daughters at home
+v204,Sons elsewhere
+v205,Daughters elsewhere
+v206,Sons who have died
+v207,Daughters who have died
+v208,Births in last five years
+v209,Births in past year
+v210,Births in month of interview
+v211,Date of first birth (CMC)
+v212,Age of respondent at 1st birth
+v213,Currently pregnant
+v214,Duration of current pregnancy
+v215,Time since last menstrual period
+v216,Menstruated in last six weeks
+v217,Knowledge of ovulatory cycle
+v218,Number of living children
+v219,Living children + current pregnancy
+v220,Living children + current pregnancy (grouped)
+v221,Marriage to first birth interval (months)
+v222,Last birth to interview (months)
+v223,Completeness of current pregnancy information
+v224,Entries in birth history
+v225,Current pregnancy wanted
+v226,Time since last period (comp) (months)
+v227,Flag for last period
+v228,Ever had a terminated pregnancy
+v229,Month pregnancy ended
+v230,Year pregnancy ended
+v231,CMC pregnancy ended
+v232,Completeness of last termination information
+v233,Months when pregnancy ended
+v234,Other such pregnancies
+v235,NA - Index last child prior to maternity-health (calendar)
+v237,Birth between last and interview
+v238,Births in last three years
+v239,NA - Pregnancies terminated before calendar beginning
+v240,NA - Month of last termination prior to calendar
+v241,NA - Year of last termination prior to calendar
+v242,NA - CMC termination ended prior to calendar
+v243,NA - Completeness of last termination date prior to calendar
+v301,Knowledge of any method
+v302,NA - Ever use of any method
+v302a,Ever used anything or tried to delay or avoid getting pregnant
+v304a_01,Type of method
+v304a_02,Type of method
+v304a_03,Type of method
+v304a_04,Type of method
+v304a_05,Type of method
+v304a_06,Type of method
+v304a_07,Type of method
+v304a_08,Type of method
+v304a_09,Type of method
+v304a_10,Type of method
+v304a_11,Type of method
+v304a_12,Type of method
+v304a_13,Type of method
+v304a_14,Type of method
+v304a_15,Type of method
+v304a_16,Type of method
+v304a_17,Type of method
+v304a_18,Type of method
+v304a_19,Type of method
+v304a_20,Type of method
+v304_01,Knows method
+v304_02,Knows method
+v304_03,Knows method
+v304_04,Knows method
+v304_05,Knows method
+v304_06,Knows method
+v304_07,Knows method
+v304_08,Knows method
+v304_09,Knows method
+v304_10,Knows method
+v304_11,Knows method
+v304_12,Knows method
+v304_13,Knows method
+v304_14,Knows method
+v304_15,Knows method
+v304_16,Knows method
+v304_17,Knows method
+v304_18,Knows method
+v304_19,Knows method
+v304_20,Knows method
+v305_01,NA - Ever used method
+v305_02,NA - Ever used method
+v305_03,NA - Ever used method
+v305_04,NA - Ever used method
+v305_05,NA - Ever used method
+v305_06,NA - Ever used method
+v305_07,NA - Ever used method
+v305_08,NA - Ever used method
+v305_09,NA - Ever used method
+v305_10,NA - Ever used method
+v305_11,NA - Ever used method
+v305_12,NA - Ever used method
+v305_13,NA - Ever used method
+v305_14,NA - Ever used method
+v305_15,NA - Ever used method
+v305_16,NA - Ever used method
+v305_17,NA - Ever used method
+v305_18,NA - Ever used method
+v305_19,NA - Ever used method
+v305_20,NA - Ever used method
+v307_01,Method currently used
+v307_02,Method currently used
+v307_03,Method currently used
+v307_04,Method currently used
+v307_05,Method currently used
+v307_06,Method currently used
+v307_07,Method currently used
+v307_08,Method currently used
+v307_09,Method currently used
+v307_10,Method currently used
+v307_11,Method currently used
+v307_12,Method currently used
+v307_13,Method currently used
+v307_14,Method currently used
+v307_15,Method currently used
+v307_16,Method currently used
+v307_17,Method currently used
+v307_18,Method currently used
+v307_19,Method currently used
+v307_20,Method currently used
+v310,NA - Living children at first use
+v311,NA - Children at first use (grouped)
+v312,Current contraceptive method
+v313,Current use by method type
+v315,Month of start of use of method
+v316,Year of start of use of method
+v317,Date of start of use of method (CMC)
+v318,Completeness of information
+v319,Years since sterilization
+v320,Age at sterilization
+v321,Marital duration at sterilization
+v322,Parity at sterilization
+v323,Brand of pill used
+v323a,Brand of condom used
+v325a,NA - Cost of current method (in CURRENCY)
+v326,Last source for current users
+v327,Last source for users by type
+v337,Months of use of current method
+v359,NA - Last method discontinued in last 5 years
+v360,NA - Reason of last discontinuation
+v361,NA - Pattern of use
+v362,Intention to use
+v363,NA - Preferred future method
+v364,Contraceptive use and intention
+v367,Wanted last child
+v372,NA - Shown pill package
+v372a,NA - Shown condom package
+v375a,NA - Main reason not using a method
+v376,NA - Main reason not to use a method
+v376a,NA - Would ever use method if married
+v379,NA - Source known for any method
+v380,NA -  Source known for any method
+v384a,Heard family planning on radio last few months
+v384b,Heard family planning on TV last few months
+v384c,Heard family planning in newspaper/magazine last few months
+v393,Visited by family planning worker last 12 months
+v394,Visited health facility last 12 months
+v395,"At health facility, told of family planning"
+v3a00a,Source of family planning for non-users: government hospital
+v3a00b,Source of family planning for non-users: FP clinic
+v3a00c,Source of family planning for non-users: government center/health post
+v3a00d,Source of family planning for non-users: maternity clinic
+v3a00e,Source of family planning for non-users: community Relay
+v3a00f,Source of family planning for non-users: other public
+v3a00g,NA - Source of family planning for non-users: CS public sector
+v3a00h,NA - Source of family planning for non-users: CS public sector
+v3a00i,NA - Source of family planning for non-users: CS public sector
+v3a00j,Source of family planning for non-users: private hospital/clinic
+v3a00k,Source of family planning for non-users: pharmacy
+v3a00l,Source of family planning for non-users: private doctor
+v3a00m,Source of family planning for non-users: NGO
+v3a00n,Source of family planning for non-users: private health center
+v3a00o,Source of family planning for non-users: medical Office
+v3a00p,Source of family planning for non-users: mobile nurse
+v3a00q,Source of family planning for non-users: private fieldworker
+v3a00r,Source of family planning for non-users:  other medical private
+v3a00s,Source of family planning for non-users: shop
+v3a00t,Source of family planning for non-users: religious Institutions
+v3a00u,Source of family planning for non-users: parents/friends
+v3a00v,Source of family planning for non-users: bar/night club
+v3a00w,NA - Source of family planning for non-users: CS other
+v3a00x,Source of family planning for non-users: other
+v3a00y,Source of family planning for non-users: no source
+v3a00z,Source of family planning for non-users: any source
+v3a01,NA - Told sterilization would mean no more children
+v3a02,Told about side effects
+v3a03,Told about side effects by health or family planning worker
+v3a04,Told how to deal with side effects
+v3a05,Told about other family planning methods
+v3a06,Told about other family planning methods by health or family planning worker
+v3a07,First source for current method
+v3a08a,Reason not using: not married
+v3a08b,Reason not using: not having sex
+v3a08c,Reason not using: infrequent sex
+v3a08d,Reason not using: menopausal/hysterectomy
+v3a08e,Reason not using: subfecund/infecund
+v3a08f,Reason not using: postpartum amenorrheic
+v3a08g,Reason not using: breastfeeding
+v3a08h,Reason not using: fatalistic
+v3a08i,Reason not using: respondent opposed
+v3a08j,Reason not using: husband/partner opposed
+v3a08k,Reason not using: others opposed
+v3a08l,Reason not using: religious prohibition
+v3a08m,Reason not using: knows no method
+v3a08n,Reason not using: knows no source
+v3a08o,NA - Reason not using: health concerns
+v3a08p,Reason not using: fear of side effects/health concerns
+v3a08q,Reason not using: lack of access/too far
+v3a08r,Reason not using: costs too much
+v3a08s,Reason not using: inconvenient to use
+v3a08t,Reason not using: interferes with bodys processes
+v3a08u,Reason not using: preferred method not available
+v3a08v,Reason not using: no method available
+v3a08w,NA - Reason not using: CS
+v3a08aa,NA - Reason not using: CS
+v3a08ab,NA - Reason not using: CS
+v3a08ac,NA - Reason not using: CS
+v3a08ad,NA - Reason not using: CS
+v3a08x,Reason not using: other
+v3a08z,Reason not using: don't know
+v3a09a,NA - How many pill cycles did get last time
+v3a09b,NA - How many condoms did get last time
+midx_1,Index to Birth History
+midx_2,Index to Birth History
+midx_3,Index to Birth History
+midx_4,Index to Birth History
+midx_5,Index to Birth History
+midx_6,Index to Birth History
+m1_1,Number of tetanus injections before birth
+m1_2,Number of tetanus injections before birth
+m1_3,Number of tetanus injections before birth
+m1_4,Number of tetanus injections before birth
+m1_5,Number of tetanus injections before birth
+m1_6,Number of tetanus injections before birth
+m1a_1,Number of tetanus injections before pregnancy
+m1a_2,Number of tetanus injections before pregnancy
+m1a_3,Number of tetanus injections before pregnancy
+m1a_4,Number of tetanus injections before pregnancy
+m1a_5,Number of tetanus injections before pregnancy
+m1a_6,Number of tetanus injections before pregnancy
+m1b_1,NA - Month of last tetanus injection before pregnancy
+m1b_2,NA - Month of last tetanus injection before pregnancy
+m1b_3,NA - Month of last tetanus injection before pregnancy
+m1b_4,NA - Month of last tetanus injection before pregnancy
+m1b_5,NA - Month of last tetanus injection before pregnancy
+m1b_6,NA - Month of last tetanus injection before pregnancy
+m1c_1,NA - Year of last tetanus injection before pregnancy
+m1c_2,NA - Year of last tetanus injection before pregnancy
+m1c_3,NA - Year of last tetanus injection before pregnancy
+m1c_4,NA - Year of last tetanus injection before pregnancy
+m1c_5,NA - Year of last tetanus injection before pregnancy
+m1c_6,NA - Year of last tetanus injection before pregnancy
+m1d_1,Years ago received last tetanus injection before pregnancy
+m1d_2,Years ago received last tetanus injection before pregnancy
+m1d_3,Years ago received last tetanus injection before pregnancy
+m1d_4,Years ago received last tetanus injection before pregnancy
+m1d_5,Years ago received last tetanus injection before pregnancy
+m1d_6,Years ago received last tetanus injection before pregnancy
+m1e_1,Last tetanus injection before pregnancy (CMC)
+m1e_2,Last tetanus injection before pregnancy (CMC)
+m1e_3,Last tetanus injection before pregnancy (CMC)
+m1e_4,Last tetanus injection before pregnancy (CMC)
+m1e_5,Last tetanus injection before pregnancy (CMC)
+m1e_6,Last tetanus injection before pregnancy (CMC)
+m2a_1,Prenatal: doctor
+m2a_2,Prenatal: doctor
+m2a_3,Prenatal: doctor
+m2a_4,Prenatal: doctor
+m2a_5,Prenatal: doctor
+m2a_6,Prenatal: doctor
+m2b_1,Prenatal: nurse
+m2b_2,Prenatal: nurse
+m2b_3,Prenatal: nurse
+m2b_4,Prenatal: nurse
+m2b_5,Prenatal: nurse
+m2b_6,Prenatal: nurse
+m2c_1,Prenatal: birth attendant
+m2c_2,Prenatal: birth attendant
+m2c_3,Prenatal: birth attendant
+m2c_4,Prenatal: birth attendant
+m2c_5,Prenatal: birth attendant
+m2c_6,Prenatal: birth attendant
+m2d_1,NA - Prenatal: CS health professional
+m2d_2,NA - Prenatal: CS health professional
+m2d_3,NA - Prenatal: CS health professional
+m2d_4,NA - Prenatal: CS health professional
+m2d_5,NA - Prenatal: CS health professional
+m2d_6,NA - Prenatal: CS health professional
+m2e_1,NA - Prenatal: CS health professional
+m2e_2,NA - Prenatal: CS health professional
+m2e_3,NA - Prenatal: CS health professional
+m2e_4,NA - Prenatal: CS health professional
+m2e_5,NA - Prenatal: CS health professional
+m2e_6,NA - Prenatal: CS health professional
+m2f_1,NA - Prenatal: CS health professional
+m2f_2,NA - Prenatal: CS health professional
+m2f_3,NA - Prenatal: CS health professional
+m2f_4,NA - Prenatal: CS health professional
+m2f_5,NA - Prenatal: CS health professional
+m2f_6,NA - Prenatal: CS health professional
+m2g_1,Prenatal: midwife
+m2g_2,Prenatal: midwife
+m2g_3,Prenatal: midwife
+m2g_4,Prenatal: midwife
+m2g_5,Prenatal: midwife
+m2g_6,Prenatal: midwife
+m2h_1,Prenatal: matron without office
+m2h_2,Prenatal: matron without office
+m2h_3,Prenatal: matron without office
+m2h_4,Prenatal: matron without office
+m2h_5,Prenatal: matron without office
+m2h_6,Prenatal: matron without office
+m2i_1,Prenatal: traditional healer
+m2i_2,Prenatal: traditional healer
+m2i_3,Prenatal: traditional healer
+m2i_4,Prenatal: traditional healer
+m2i_5,Prenatal: traditional healer
+m2i_6,Prenatal: traditional healer
+m2j_1,Prenatal: mom of the neighborhood/village
+m2j_2,Prenatal: mom of the neighborhood/village
+m2j_3,Prenatal: mom of the neighborhood/village
+m2j_4,Prenatal: mom of the neighborhood/village
+m2j_5,Prenatal: mom of the neighborhood/village
+m2j_6,Prenatal: mom of the neighborhood/village
+m2k_1,Prenatal: other
+m2k_2,Prenatal: other
+m2k_3,Prenatal: other
+m2k_4,Prenatal: other
+m2k_5,Prenatal: other
+m2k_6,Prenatal: other
+m2l_1,NA - Prenatal: CS other
+m2l_2,NA - Prenatal: CS other
+m2l_3,NA - Prenatal: CS other
+m2l_4,NA - Prenatal: CS other
+m2l_5,NA - Prenatal: CS other
+m2l_6,NA - Prenatal: CS other
+m2m_1,NA - Prenatal: CS other
+m2m_2,NA - Prenatal: CS other
+m2m_3,NA - Prenatal: CS other
+m2m_4,NA - Prenatal: CS other
+m2m_5,NA - Prenatal: CS other
+m2m_6,NA - Prenatal: CS other
+m2n_1,Prenatal: no one
+m2n_2,Prenatal: no one
+m2n_3,Prenatal: no one
+m2n_4,Prenatal: no one
+m2n_5,Prenatal: no one
+m2n_6,Prenatal: no one
+m3a_1,Assistance: doctor
+m3a_2,Assistance: doctor
+m3a_3,Assistance: doctor
+m3a_4,Assistance: doctor
+m3a_5,Assistance: doctor
+m3a_6,Assistance: doctor
+m3b_1,Assistance: nurse
+m3b_2,Assistance: nurse
+m3b_3,Assistance: nurse
+m3b_4,Assistance: nurse
+m3b_5,Assistance: nurse
+m3b_6,Assistance: nurse
+m3c_1,Assistance: birth attendant
+m3c_2,Assistance: birth attendant
+m3c_3,Assistance: birth attendant
+m3c_4,Assistance: birth attendant
+m3c_5,Assistance: birth attendant
+m3c_6,Assistance: birth attendant
+m3d_1,NA - Assistance: CS health professional
+m3d_2,NA - Assistance: CS health professional
+m3d_3,NA - Assistance: CS health professional
+m3d_4,NA - Assistance: CS health professional
+m3d_5,NA - Assistance: CS health professional
+m3d_6,NA - Assistance: CS health professional
+m3e_1,NA - Assistance: CS health professional
+m3e_2,NA - Assistance: CS health professional
+m3e_3,NA - Assistance: CS health professional
+m3e_4,NA - Assistance: CS health professional
+m3e_5,NA - Assistance: CS health professional
+m3e_6,NA - Assistance: CS health professional
+m3f_1,NA - Assistance: CS health professional
+m3f_2,NA - Assistance: CS health professional
+m3f_3,NA - Assistance: CS health professional
+m3f_4,NA - Assistance: CS health professional
+m3f_5,NA - Assistance: CS health professional
+m3f_6,NA - Assistance: CS health professional
+m3g_1,Assistance: midwife
+m3g_2,Assistance: midwife
+m3g_3,Assistance: midwife
+m3g_4,Assistance: midwife
+m3g_5,Assistance: midwife
+m3g_6,Assistance: midwife
+m3h_1,Assistance: matron without office
+m3h_2,Assistance: matron without office
+m3h_3,Assistance: matron without office
+m3h_4,Assistance: matron without office
+m3h_5,Assistance: matron without office
+m3h_6,Assistance: matron without office
+m3i_1,Assistance: traditional healer
+m3i_2,Assistance: traditional healer
+m3i_3,Assistance: traditional healer
+m3i_4,Assistance: traditional healer
+m3i_5,Assistance: traditional healer
+m3i_6,Assistance: traditional healer
+m3j_1,Assistance: mom of the neighborhood/village
+m3j_2,Assistance: mom of the neighborhood/village
+m3j_3,Assistance: mom of the neighborhood/village
+m3j_4,Assistance: mom of the neighborhood/village
+m3j_5,Assistance: mom of the neighborhood/village
+m3j_6,Assistance: mom of the neighborhood/village
+m3k_1,Assistance: other
+m3k_2,Assistance: other
+m3k_3,Assistance: other
+m3k_4,Assistance: other
+m3k_5,Assistance: other
+m3k_6,Assistance: other
+m3l_1,NA - Assistance: CS other
+m3l_2,NA - Assistance: CS other
+m3l_3,NA - Assistance: CS other
+m3l_4,NA - Assistance: CS other
+m3l_5,NA - Assistance: CS other
+m3l_6,NA - Assistance: CS other
+m3m_1,NA - Assistance: CS other
+m3m_2,NA - Assistance: CS other
+m3m_3,NA - Assistance: CS other
+m3m_4,NA - Assistance: CS other
+m3m_5,NA - Assistance: CS other
+m3m_6,NA - Assistance: CS other
+m3n_1,Assistance: no one
+m3n_2,Assistance: no one
+m3n_3,Assistance: no one
+m3n_4,Assistance: no one
+m3n_5,Assistance: no one
+m3n_6,Assistance: no one
+m4_1,Duration of breastfeeding
+m4_2,Duration of breastfeeding
+m4_3,Duration of breastfeeding
+m4_4,Duration of breastfeeding
+m4_5,Duration of breastfeeding
+m4_6,Duration of breastfeeding
+m5_1,Months of breastfeeding
+m5_2,Months of breastfeeding
+m5_3,Months of breastfeeding
+m5_4,Months of breastfeeding
+m5_5,Months of breastfeeding
+m5_6,Months of breastfeeding
+m6_1,Duration of amenorrhea
+m6_2,Duration of amenorrhea
+m6_3,Duration of amenorrhea
+m6_4,Duration of amenorrhea
+m6_5,Duration of amenorrhea
+m6_6,Duration of amenorrhea
+m7_1,Months of amenorrhea
+m7_2,Months of amenorrhea
+m7_3,Months of amenorrhea
+m7_4,Months of amenorrhea
+m7_5,Months of amenorrhea
+m7_6,Months of amenorrhea
+m8_1,Duration of abstinence
+m8_2,Duration of abstinence
+m8_3,Duration of abstinence
+m8_4,Duration of abstinence
+m8_5,Duration of abstinence
+m8_6,Duration of abstinence
+m9_1,Months of abstinence
+m9_2,Months of abstinence
+m9_3,Months of abstinence
+m9_4,Months of abstinence
+m9_5,Months of abstinence
+m9_6,Months of abstinence
+m10_1,Wanted pregnancy when became pregnant
+m10_2,Wanted pregnancy when became pregnant
+m10_3,Wanted pregnancy when became pregnant
+m10_4,Wanted pregnancy when became pregnant
+m10_5,Wanted pregnancy when became pregnant
+m10_6,Wanted pregnancy when became pregnant
+m11_1,Desired time would have waited
+m11_2,Desired time would have waited
+m11_3,Desired time would have waited
+m11_4,Desired time would have waited
+m11_5,Desired time would have waited
+m11_6,Desired time would have waited
+m13_1,Timing of 1st antenatal check (months)
+m13_2,Timing of 1st antenatal check (months)
+m13_3,Timing of 1st antenatal check (months)
+m13_4,Timing of 1st antenatal check (months)
+m13_5,Timing of 1st antenatal check (months)
+m13_6,Timing of 1st antenatal check (months)
+m14_1,Number of antenatal visits during pregnancy
+m14_2,Number of antenatal visits during pregnancy
+m14_3,Number of antenatal visits during pregnancy
+m14_4,Number of antenatal visits during pregnancy
+m14_5,Number of antenatal visits during pregnancy
+m14_6,Number of antenatal visits during pregnancy
+m15_1,Place of delivery
+m15_2,Place of delivery
+m15_3,Place of delivery
+m15_4,Place of delivery
+m15_5,Place of delivery
+m15_6,Place of delivery
+m17_1,Delivery by caesarean section
+m17_2,Delivery by caesarean section
+m17_3,Delivery by caesarean section
+m17_4,Delivery by caesarean section
+m17_5,Delivery by caesarean section
+m17_6,Delivery by caesarean section
+m18_1,Size of child at birth
+m18_2,Size of child at birth
+m18_3,Size of child at birth
+m18_4,Size of child at birth
+m18_5,Size of child at birth
+m18_6,Size of child at birth
+m19_1,Birth weight in kilograms (3 decimals)
+m19_2,Birth weight in kilograms (3 decimals)
+m19_3,Birth weight in kilograms (3 decimals)
+m19_4,Birth weight in kilograms (3 decimals)
+m19_5,Birth weight in kilograms (3 decimals)
+m19_6,Birth weight in kilograms (3 decimals)
+m19a_1,Weight at birth/recall
+m19a_2,Weight at birth/recall
+m19a_3,Weight at birth/recall
+m19a_4,Weight at birth/recall
+m19a_5,Weight at birth/recall
+m19a_6,Weight at birth/recall
+m27_1,NA - Flag for breastfeeding
+m27_2,NA - Flag for breastfeeding
+m27_3,NA - Flag for breastfeeding
+m27_4,NA - Flag for breastfeeding
+m27_5,NA - Flag for breastfeeding
+m27_6,NA - Flag for breastfeeding
+m28_1,Flag for amenorrhea
+m28_2,Flag for amenorrhea
+m28_3,Flag for amenorrhea
+m28_4,Flag for amenorrhea
+m28_5,Flag for amenorrhea
+m28_6,Flag for amenorrhea
+m29_1,Flag for abstinence
+m29_2,Flag for abstinence
+m29_3,Flag for abstinence
+m29_4,Flag for abstinence
+m29_5,Flag for abstinence
+m29_6,Flag for abstinence
+m34_1,When child put to breast
+m34_2,When child put to breast
+m34_3,When child put to breast
+m34_4,When child put to breast
+m34_5,When child put to breast
+m34_6,When child put to breast
+m35_1,NA - Number of times breastfed during previous night
+m35_2,NA - Number of times breastfed during previous night
+m35_3,NA - Number of times breastfed during previous night
+m35_4,NA - Number of times breastfed during previous night
+m35_5,NA - Number of times breastfed during previous night
+m35_6,NA - Number of times breastfed during previous night
+m36_1,NA - Number of times breastfed during previous day
+m36_2,NA - Number of times breastfed during previous day
+m36_3,NA - Number of times breastfed during previous day
+m36_4,NA - Number of times breastfed during previous day
+m36_5,NA - Number of times breastfed during previous day
+m36_6,NA - Number of times breastfed during previous day
+m38_1,Drank from bottle with nipple yesterday/last night
+m38_2,Drank from bottle with nipple yesterday/last night
+m38_3,Drank from bottle with nipple yesterday/last night
+m38_4,Drank from bottle with nipple yesterday/last night
+m38_5,Drank from bottle with nipple yesterday/last night
+m38_6,Drank from bottle with nipple yesterday/last night
+m39a_1,"Did eat any solid, semi-solid or soft foods yesterday"
+m39a_2,"Did eat any solid, semi-solid or soft foods yesterday"
+m39a_3,"Did eat any solid, semi-solid or soft foods yesterday"
+m39a_4,"Did eat any solid, semi-solid or soft foods yesterday"
+m39a_5,"Did eat any solid, semi-solid or soft foods yesterday"
+m39a_6,"Did eat any solid, semi-solid or soft foods yesterday"
+m39_1,"Number of times ate solid, semi-solid or soft food yesterday"
+m39_2,"Number of times ate solid, semi-solid or soft food yesterday"
+m39_3,"Number of times ate solid, semi-solid or soft food yesterday"
+m39_4,"Number of times ate solid, semi-solid or soft food yesterday"
+m39_5,"Number of times ate solid, semi-solid or soft food yesterday"
+m39_6,"Number of times ate solid, semi-solid or soft food yesterday"
+m42a_1,During pregnancy: weighed
+m42a_2,During pregnancy: weighed
+m42a_3,During pregnancy: weighed
+m42a_4,During pregnancy: weighed
+m42a_5,During pregnancy: weighed
+m42a_6,During pregnancy: weighed
+m42b_1,During pregnancy: height measured
+m42b_2,During pregnancy: height measured
+m42b_3,During pregnancy: height measured
+m42b_4,During pregnancy: height measured
+m42b_5,During pregnancy: height measured
+m42b_6,During pregnancy: height measured
+m42c_1,During pregnancy: blood pressure taken
+m42c_2,During pregnancy: blood pressure taken
+m42c_3,During pregnancy: blood pressure taken
+m42c_4,During pregnancy: blood pressure taken
+m42c_5,During pregnancy: blood pressure taken
+m42c_6,During pregnancy: blood pressure taken
+m42d_1,During pregnancy: urine sample taken
+m42d_2,During pregnancy: urine sample taken
+m42d_3,During pregnancy: urine sample taken
+m42d_4,During pregnancy: urine sample taken
+m42d_5,During pregnancy: urine sample taken
+m42d_6,During pregnancy: urine sample taken
+m42e_1,During pregnancy: blood sample taken
+m42e_2,During pregnancy: blood sample taken
+m42e_3,During pregnancy: blood sample taken
+m42e_4,During pregnancy: blood sample taken
+m42e_5,During pregnancy: blood sample taken
+m42e_6,During pregnancy: blood sample taken
+m43_1,Told about pregnancy complications
+m43_2,Told about pregnancy complications
+m43_3,Told about pregnancy complications
+m43_4,Told about pregnancy complications
+m43_5,Told about pregnancy complications
+m43_6,Told about pregnancy complications
+m44_1,NA - Told where to go for pregnancy complications
+m44_2,NA - Told where to go for pregnancy complications
+m44_3,NA - Told where to go for pregnancy complications
+m44_4,NA - Told where to go for pregnancy complications
+m44_5,NA - Told where to go for pregnancy complications
+m44_6,NA - Told where to go for pregnancy complications
+m45_1,"During pregnancy, given or bought iron tablets/syrup"
+m45_2,"During pregnancy, given or bought iron tablets/syrup"
+m45_3,"During pregnancy, given or bought iron tablets/syrup"
+m45_4,"During pregnancy, given or bought iron tablets/syrup"
+m45_5,"During pregnancy, given or bought iron tablets/syrup"
+m45_6,"During pregnancy, given or bought iron tablets/syrup"
+m46_1,Days tablets or syrup taken
+m46_2,Days tablets or syrup taken
+m46_3,Days tablets or syrup taken
+m46_4,Days tablets or syrup taken
+m46_5,Days tablets or syrup taken
+m46_6,Days tablets or syrup taken
+m47_1,"NA - During pregnancy, had difficulty with daylight vision"
+m47_2,"NA - During pregnancy, had difficulty with daylight vision"
+m47_3,"NA - During pregnancy, had difficulty with daylight vision"
+m47_4,"NA - During pregnancy, had difficulty with daylight vision"
+m47_5,"NA - During pregnancy, had difficulty with daylight vision"
+m47_6,"NA - During pregnancy, had difficulty with daylight vision"
+m48_1,"NA - During pregnancy, had difficulty with night blindness"
+m48_2,"NA - During pregnancy, had difficulty with night blindness"
+m48_3,"NA - During pregnancy, had difficulty with night blindness"
+m48_4,"NA - During pregnancy, had difficulty with night blindness"
+m48_5,"NA - During pregnancy, had difficulty with night blindness"
+m48_6,"NA - During pregnancy, had difficulty with night blindness"
+m49a_1,During pregnancy took: SP/fansidar for malaria
+m49a_2,During pregnancy took: SP/fansidar for malaria
+m49a_3,During pregnancy took: SP/fansidar for malaria
+m49a_4,During pregnancy took: SP/fansidar for malaria
+m49a_5,During pregnancy took: SP/fansidar for malaria
+m49a_6,During pregnancy took: SP/fansidar for malaria
+m49b_1,During pregnancy took: chloroquine for malaria
+m49b_2,During pregnancy took: chloroquine for malaria
+m49b_3,During pregnancy took: chloroquine for malaria
+m49b_4,During pregnancy took: chloroquine for malaria
+m49b_5,During pregnancy took: chloroquine for malaria
+m49b_6,During pregnancy took: chloroquine for malaria
+m49c_1,During pregnancy took: quinine drug for malaria
+m49c_2,During pregnancy took: quinine drug for malaria
+m49c_3,During pregnancy took: quinine drug for malaria
+m49c_4,During pregnancy took: quinine drug for malaria
+m49c_5,During pregnancy took: quinine drug for malaria
+m49c_6,During pregnancy took: quinine drug for malaria
+m49d_1,NA - During pregnancy took: CS drug for malaria
+m49d_2,NA - During pregnancy took: CS drug for malaria
+m49d_3,NA - During pregnancy took: CS drug for malaria
+m49d_4,NA - During pregnancy took: CS drug for malaria
+m49d_5,NA - During pregnancy took: CS drug for malaria
+m49d_6,NA - During pregnancy took: CS drug for malaria
+m49e_1,NA - During pregnancy took: CS drug for malaria
+m49e_2,NA - During pregnancy took: CS drug for malaria
+m49e_3,NA - During pregnancy took: CS drug for malaria
+m49e_4,NA - During pregnancy took: CS drug for malaria
+m49e_5,NA - During pregnancy took: CS drug for malaria
+m49e_6,NA - During pregnancy took: CS drug for malaria
+m49f_1,NA - During pregnancy took: CS drug for malaria
+m49f_2,NA - During pregnancy took: CS drug for malaria
+m49f_3,NA - During pregnancy took: CS drug for malaria
+m49f_4,NA - During pregnancy took: CS drug for malaria
+m49f_5,NA - During pregnancy took: CS drug for malaria
+m49f_6,NA - During pregnancy took: CS drug for malaria
+m49g_1,NA - During pregnancy took: CS drug for malaria
+m49g_2,NA - During pregnancy took: CS drug for malaria
+m49g_3,NA - During pregnancy took: CS drug for malaria
+m49g_4,NA - During pregnancy took: CS drug for malaria
+m49g_5,NA - During pregnancy took: CS drug for malaria
+m49g_6,NA - During pregnancy took: CS drug for malaria
+m49x_1,During pregnancy took: other drug for malaria
+m49x_2,During pregnancy took: other drug for malaria
+m49x_3,During pregnancy took: other drug for malaria
+m49x_4,During pregnancy took: other drug for malaria
+m49x_5,During pregnancy took: other drug for malaria
+m49x_6,During pregnancy took: other drug for malaria
+m49z_1,During pregnancy took: don't know
+m49z_2,During pregnancy took: don't know
+m49z_3,During pregnancy took: don't know
+m49z_4,During pregnancy took: don't know
+m49z_5,During pregnancy took: don't know
+m49z_6,During pregnancy took: don't know
+m49y_1,During pregnancy took: no drug for malaria
+m49y_2,During pregnancy took: no drug for malaria
+m49y_3,During pregnancy took: no drug for malaria
+m49y_4,During pregnancy took: no drug for malaria
+m49y_5,During pregnancy took: no drug for malaria
+m49y_6,During pregnancy took: no drug for malaria
+m50_1,Respondent's check up after delivery
+m50_2,Respondent's check up after delivery
+m50_3,Respondent's check up after delivery
+m50_4,Respondent's check up after delivery
+m50_5,Respondent's check up after delivery
+m50_6,Respondent's check up after delivery
+m51_1,Respondent's checkup after deliver timing
+m51_2,Respondent's checkup after deliver timing
+m51_3,Respondent's checkup after deliver timing
+m51_4,Respondent's checkup after deliver timing
+m51_5,Respondent's checkup after deliver timing
+m51_6,Respondent's checkup after deliver timing
+m52_1,Respondent's health professional checked up after delivery
+m52_2,Respondent's health professional checked up after delivery
+m52_3,Respondent's health professional checked up after delivery
+m52_4,Respondent's health professional checked up after delivery
+m52_5,Respondent's health professional checked up after delivery
+m52_6,Respondent's health professional checked up after delivery
+m54_1,Received Vitamin A dose in first 2 months after delivery
+m54_2,Received Vitamin A dose in first 2 months after delivery
+m54_3,Received Vitamin A dose in first 2 months after delivery
+m54_4,Received Vitamin A dose in first 2 months after delivery
+m54_5,Received Vitamin A dose in first 2 months after delivery
+m54_6,Received Vitamin A dose in first 2 months after delivery
+m55a_1,"First 3 days, given milk (other than breast milk)"
+m55a_2,"First 3 days, given milk (other than breast milk)"
+m55a_3,"First 3 days, given milk (other than breast milk)"
+m55a_4,"First 3 days, given milk (other than breast milk)"
+m55a_5,"First 3 days, given milk (other than breast milk)"
+m55a_6,"First 3 days, given milk (other than breast milk)"
+m55b_1,"First 3 days, given plain water"
+m55b_2,"First 3 days, given plain water"
+m55b_3,"First 3 days, given plain water"
+m55b_4,"First 3 days, given plain water"
+m55b_5,"First 3 days, given plain water"
+m55b_6,"First 3 days, given plain water"
+m55c_1,"First 3 days, given sugar/glucose water"
+m55c_2,"First 3 days, given sugar/glucose water"
+m55c_3,"First 3 days, given sugar/glucose water"
+m55c_4,"First 3 days, given sugar/glucose water"
+m55c_5,"First 3 days, given sugar/glucose water"
+m55c_6,"First 3 days, given sugar/glucose water"
+m55d_1,"First 3 days, given gripe water"
+m55d_2,"First 3 days, given gripe water"
+m55d_3,"First 3 days, given gripe water"
+m55d_4,"First 3 days, given gripe water"
+m55d_5,"First 3 days, given gripe water"
+m55d_6,"First 3 days, given gripe water"
+m55e_1,"First 3 days, given sugar/salt solution"
+m55e_2,"First 3 days, given sugar/salt solution"
+m55e_3,"First 3 days, given sugar/salt solution"
+m55e_4,"First 3 days, given sugar/salt solution"
+m55e_5,"First 3 days, given sugar/salt solution"
+m55e_6,"First 3 days, given sugar/salt solution"
+m55f_1,"First 3 days, given fruit juice"
+m55f_2,"First 3 days, given fruit juice"
+m55f_3,"First 3 days, given fruit juice"
+m55f_4,"First 3 days, given fruit juice"
+m55f_5,"First 3 days, given fruit juice"
+m55f_6,"First 3 days, given fruit juice"
+m55g_1,"First 3 days, given infant formula"
+m55g_2,"First 3 days, given infant formula"
+m55g_3,"First 3 days, given infant formula"
+m55g_4,"First 3 days, given infant formula"
+m55g_5,"First 3 days, given infant formula"
+m55g_6,"First 3 days, given infant formula"
+m55h_1,"First 3 days, given tea/infusions"
+m55h_2,"First 3 days, given tea/infusions"
+m55h_3,"First 3 days, given tea/infusions"
+m55h_4,"First 3 days, given tea/infusions"
+m55h_5,"First 3 days, given tea/infusions"
+m55h_6,"First 3 days, given tea/infusions"
+m55i_1,"First 3 days, given honey"
+m55i_2,"First 3 days, given honey"
+m55i_3,"First 3 days, given honey"
+m55i_4,"First 3 days, given honey"
+m55i_5,"First 3 days, given honey"
+m55i_6,"First 3 days, given honey"
+m55j_1,"First 3 days, given coffee"
+m55j_2,"First 3 days, given coffee"
+m55j_3,"First 3 days, given coffee"
+m55j_4,"First 3 days, given coffee"
+m55j_5,"First 3 days, given coffee"
+m55j_6,"First 3 days, given coffee"
+m55k_1,"NA - First 3 days, given country specific"
+m55k_2,"NA - First 3 days, given country specific"
+m55k_3,"NA - First 3 days, given country specific"
+m55k_4,"NA - First 3 days, given country specific"
+m55k_5,"NA - First 3 days, given country specific"
+m55k_6,"NA - First 3 days, given country specific"
+m55l_1,"NA - First 3 days, given country specific"
+m55l_2,"NA - First 3 days, given country specific"
+m55l_3,"NA - First 3 days, given country specific"
+m55l_4,"NA - First 3 days, given country specific"
+m55l_5,"NA - First 3 days, given country specific"
+m55l_6,"NA - First 3 days, given country specific"
+m55m_1,"NA - First 3 days, given country specific"
+m55m_2,"NA - First 3 days, given country specific"
+m55m_3,"NA - First 3 days, given country specific"
+m55m_4,"NA - First 3 days, given country specific"
+m55m_5,"NA - First 3 days, given country specific"
+m55m_6,"NA - First 3 days, given country specific"
+m55n_1,"NA - First 3 days, given country specific"
+m55n_2,"NA - First 3 days, given country specific"
+m55n_3,"NA - First 3 days, given country specific"
+m55n_4,"NA - First 3 days, given country specific"
+m55n_5,"NA - First 3 days, given country specific"
+m55n_6,"NA - First 3 days, given country specific"
+m55o_1,"NA - First 3 days, given country specific"
+m55o_2,"NA - First 3 days, given country specific"
+m55o_3,"NA - First 3 days, given country specific"
+m55o_4,"NA - First 3 days, given country specific"
+m55o_5,"NA - First 3 days, given country specific"
+m55o_6,"NA - First 3 days, given country specific"
+m55x_1,"First 3 days, given other"
+m55x_2,"First 3 days, given other"
+m55x_3,"First 3 days, given other"
+m55x_4,"First 3 days, given other"
+m55x_5,"First 3 days, given other"
+m55x_6,"First 3 days, given other"
+m55z_1,"First 3 days, given nothing"
+m55z_2,"First 3 days, given nothing"
+m55z_3,"First 3 days, given nothing"
+m55z_4,"First 3 days, given nothing"
+m55z_5,"First 3 days, given nothing"
+m55z_6,"First 3 days, given nothing"
+m57a_1,Antenatal care: respondent's home
+m57a_2,Antenatal care: respondent's home
+m57a_3,Antenatal care: respondent's home
+m57a_4,Antenatal care: respondent's home
+m57a_5,Antenatal care: respondent's home
+m57a_6,Antenatal care: respondent's home
+m57b_1,Antenatal care: other home
+m57b_2,Antenatal care: other home
+m57b_3,Antenatal care: other home
+m57b_4,Antenatal care: other home
+m57b_5,Antenatal care: other home
+m57b_6,Antenatal care: other home
+m57c_1,NA - Antenatal care: CS home
+m57c_2,NA - Antenatal care: CS home
+m57c_3,NA - Antenatal care: CS home
+m57c_4,NA - Antenatal care: CS home
+m57c_5,NA - Antenatal care: CS home
+m57c_6,NA - Antenatal care: CS home
+m57d_1,NA - Antenatal care: CS home
+m57d_2,NA - Antenatal care: CS home
+m57d_3,NA - Antenatal care: CS home
+m57d_4,NA - Antenatal care: CS home
+m57d_5,NA - Antenatal care: CS home
+m57d_6,NA - Antenatal care: CS home
+m57e_1,Antenatal care: government hospital
+m57e_2,Antenatal care: government hospital
+m57e_3,Antenatal care: government hospital
+m57e_4,Antenatal care: government hospital
+m57e_5,Antenatal care: government hospital
+m57e_6,Antenatal care: government hospital
+m57f_1,Antenatal care: govt. health post
+m57f_2,Antenatal care: govt. health post
+m57f_3,Antenatal care: govt. health post
+m57f_4,Antenatal care: govt. health post
+m57f_5,Antenatal care: govt. health post
+m57f_6,Antenatal care: govt. health post
+m57g_1,Antenatal care: health post
+m57g_2,Antenatal care: health post
+m57g_3,Antenatal care: health post
+m57g_4,Antenatal care: health post
+m57g_5,Antenatal care: health post
+m57g_6,Antenatal care: health post
+m57h_1,Antenatal care: other public
+m57h_2,Antenatal care: other public
+m57h_3,Antenatal care: other public
+m57h_4,Antenatal care: other public
+m57h_5,Antenatal care: other public
+m57h_6,Antenatal care: other public
+m57i_1,NA - Antenatal care: CS public health
+m57i_2,NA - Antenatal care: CS public health
+m57i_3,NA - Antenatal care: CS public health
+m57i_4,NA - Antenatal care: CS public health
+m57i_5,NA - Antenatal care: CS public health
+m57i_6,NA - Antenatal care: CS public health
+m57j_1,NA - Antenatal care: CS public health
+m57j_2,NA - Antenatal care: CS public health
+m57j_3,NA - Antenatal care: CS public health
+m57j_4,NA - Antenatal care: CS public health
+m57j_5,NA - Antenatal care: CS public health
+m57j_6,NA - Antenatal care: CS public health
+m57k_1,NA - Antenatal care: CS public health
+m57k_2,NA - Antenatal care: CS public health
+m57k_3,NA - Antenatal care: CS public health
+m57k_4,NA - Antenatal care: CS public health
+m57k_5,NA - Antenatal care: CS public health
+m57k_6,NA - Antenatal care: CS public health
+m57l_1,NA - Antenatal care: CS public health
+m57l_2,NA - Antenatal care: CS public health
+m57l_3,NA - Antenatal care: CS public health
+m57l_4,NA - Antenatal care: CS public health
+m57l_5,NA - Antenatal care: CS public health
+m57l_6,NA - Antenatal care: CS public health
+m57m_1,Antenatal care: private hospital/clinic
+m57m_2,Antenatal care: private hospital/clinic
+m57m_3,Antenatal care: private hospital/clinic
+m57m_4,Antenatal care: private hospital/clinic
+m57m_5,Antenatal care: private hospital/clinic
+m57m_6,Antenatal care: private hospital/clinic
+m57n_1,Antenatal care: other private
+m57n_2,Antenatal care: other private
+m57n_3,Antenatal care: other private
+m57n_4,Antenatal care: other private
+m57n_5,Antenatal care: other private
+m57n_6,Antenatal care: other private
+m57o_1,NA - Antenatal care: CS private medical
+m57o_2,NA - Antenatal care: CS private medical
+m57o_3,NA - Antenatal care: CS private medical
+m57o_4,NA - Antenatal care: CS private medical
+m57o_5,NA - Antenatal care: CS private medical
+m57o_6,NA - Antenatal care: CS private medical
+m57p_1,NA - Antenatal care: CS private medical
+m57p_2,NA - Antenatal care: CS private medical
+m57p_3,NA - Antenatal care: CS private medical
+m57p_4,NA - Antenatal care: CS private medical
+m57p_5,NA - Antenatal care: CS private medical
+m57p_6,NA - Antenatal care: CS private medical
+m57q_1,NA - Antenatal care: CS private medical
+m57q_2,NA - Antenatal care: CS private medical
+m57q_3,NA - Antenatal care: CS private medical
+m57q_4,NA - Antenatal care: CS private medical
+m57q_5,NA - Antenatal care: CS private medical
+m57q_6,NA - Antenatal care: CS private medical
+m57r_1,NA - Antenatal care: CS private medical
+m57r_2,NA - Antenatal care: CS private medical
+m57r_3,NA - Antenatal care: CS private medical
+m57r_4,NA - Antenatal care: CS private medical
+m57r_5,NA - Antenatal care: CS private medical
+m57r_6,NA - Antenatal care: CS private medical
+m57s_1,NA - Antenatal care: CS other
+m57s_2,NA - Antenatal care: CS other
+m57s_3,NA - Antenatal care: CS other
+m57s_4,NA - Antenatal care: CS other
+m57s_5,NA - Antenatal care: CS other
+m57s_6,NA - Antenatal care: CS other
+m57t_1,NA - Antenatal care: CS other
+m57t_2,NA - Antenatal care: CS other
+m57t_3,NA - Antenatal care: CS other
+m57t_4,NA - Antenatal care: CS other
+m57t_5,NA - Antenatal care: CS other
+m57t_6,NA - Antenatal care: CS other
+m57u_1,NA - Antenatal care: CS other
+m57u_2,NA - Antenatal care: CS other
+m57u_3,NA - Antenatal care: CS other
+m57u_4,NA - Antenatal care: CS other
+m57u_5,NA - Antenatal care: CS other
+m57u_6,NA - Antenatal care: CS other
+m57v_1,NA - Antenatal care: CS other
+m57v_2,NA - Antenatal care: CS other
+m57v_3,NA - Antenatal care: CS other
+m57v_4,NA - Antenatal care: CS other
+m57v_5,NA - Antenatal care: CS other
+m57v_6,NA - Antenatal care: CS other
+m57x_1,Antenatal care: other
+m57x_2,Antenatal care: other
+m57x_3,Antenatal care: other
+m57x_4,Antenatal care: other
+m57x_5,Antenatal care: other
+m57x_6,Antenatal care: other
+m60_1,Drugs for intestinal parasites during pregnancy
+m60_2,Drugs for intestinal parasites during pregnancy
+m60_3,Drugs for intestinal parasites during pregnancy
+m60_4,Drugs for intestinal parasites during pregnancy
+m60_5,Drugs for intestinal parasites during pregnancy
+m60_6,Drugs for intestinal parasites during pregnancy
+m61_1,Time spent at place of delivery
+m61_2,Time spent at place of delivery
+m61_3,Time spent at place of delivery
+m61_4,Time spent at place of delivery
+m61_5,Time spent at place of delivery
+m61_6,Time spent at place of delivery
+m62_1,Respondent's health checked before discharge
+m62_2,Respondent's health checked before discharge
+m62_3,Respondent's health checked before discharge
+m62_4,Respondent's health checked before discharge
+m62_5,Respondent's health checked before discharge
+m62_6,Respondent's health checked before discharge
+m65a_1,NA - Reason didn't deliver at health facility: cost too much
+m65a_2,NA - Reason didn't deliver at health facility: cost too much
+m65a_3,NA - Reason didn't deliver at health facility: cost too much
+m65a_4,NA - Reason didn't deliver at health facility: cost too much
+m65a_5,NA - Reason didn't deliver at health facility: cost too much
+m65a_6,NA - Reason didn't deliver at health facility: cost too much
+m65b_1,NA - Reason didn't deliver at health facility: facility not open
+m65b_2,NA - Reason didn't deliver at health facility: facility not open
+m65b_3,NA - Reason didn't deliver at health facility: facility not open
+m65b_4,NA - Reason didn't deliver at health facility: facility not open
+m65b_5,NA - Reason didn't deliver at health facility: facility not open
+m65b_6,NA - Reason didn't deliver at health facility: facility not open
+m65c_1,NA - Reason didn't deliver at health facility: too far/no transport
+m65c_2,NA - Reason didn't deliver at health facility: too far/no transport
+m65c_3,NA - Reason didn't deliver at health facility: too far/no transport
+m65c_4,NA - Reason didn't deliver at health facility: too far/no transport
+m65c_5,NA - Reason didn't deliver at health facility: too far/no transport
+m65c_6,NA - Reason didn't deliver at health facility: too far/no transport
+m65d_1,NA - Reason didn't deliver at health facility: don't trust facility/poor service
+m65d_2,NA - Reason didn't deliver at health facility: don't trust facility/poor service
+m65d_3,NA - Reason didn't deliver at health facility: don't trust facility/poor service
+m65d_4,NA - Reason didn't deliver at health facility: don't trust facility/poor service
+m65d_5,NA - Reason didn't deliver at health facility: don't trust facility/poor service
+m65d_6,NA - Reason didn't deliver at health facility: don't trust facility/poor service
+m65e_1,NA - Reason didn't deliver at health facility: no female provider
+m65e_2,NA - Reason didn't deliver at health facility: no female provider
+m65e_3,NA - Reason didn't deliver at health facility: no female provider
+m65e_4,NA - Reason didn't deliver at health facility: no female provider
+m65e_5,NA - Reason didn't deliver at health facility: no female provider
+m65e_6,NA - Reason didn't deliver at health facility: no female provider
+m65f_1,NA - Reason didn't deliver at health facility: husband/family didn't allow
+m65f_2,NA - Reason didn't deliver at health facility: husband/family didn't allow
+m65f_3,NA - Reason didn't deliver at health facility: husband/family didn't allow
+m65f_4,NA - Reason didn't deliver at health facility: husband/family didn't allow
+m65f_5,NA - Reason didn't deliver at health facility: husband/family didn't allow
+m65f_6,NA - Reason didn't deliver at health facility: husband/family didn't allow
+m65g_1,NA - Reason didn't deliver at health facility: not necessary
+m65g_2,NA - Reason didn't deliver at health facility: not necessary
+m65g_3,NA - Reason didn't deliver at health facility: not necessary
+m65g_4,NA - Reason didn't deliver at health facility: not necessary
+m65g_5,NA - Reason didn't deliver at health facility: not necessary
+m65g_6,NA - Reason didn't deliver at health facility: not necessary
+m65h_1,NA - Reason didn't deliver at health facility: not customary
+m65h_2,NA - Reason didn't deliver at health facility: not customary
+m65h_3,NA - Reason didn't deliver at health facility: not customary
+m65h_4,NA - Reason didn't deliver at health facility: not customary
+m65h_5,NA - Reason didn't deliver at health facility: not customary
+m65h_6,NA - Reason didn't deliver at health facility: not customary
+m65i_1,NA - Reason didn't deliver at health facility: CS
+m65i_2,NA - Reason didn't deliver at health facility: CS
+m65i_3,NA - Reason didn't deliver at health facility: CS
+m65i_4,NA - Reason didn't deliver at health facility: CS
+m65i_5,NA - Reason didn't deliver at health facility: CS
+m65i_6,NA - Reason didn't deliver at health facility: CS
+m65j_1,NA - Reason didn't deliver at health facility: CS
+m65j_2,NA - Reason didn't deliver at health facility: CS
+m65j_3,NA - Reason didn't deliver at health facility: CS
+m65j_4,NA - Reason didn't deliver at health facility: CS
+m65j_5,NA - Reason didn't deliver at health facility: CS
+m65j_6,NA - Reason didn't deliver at health facility: CS
+m65k_1,NA - Reason didn't deliver at health facility: CS
+m65k_2,NA - Reason didn't deliver at health facility: CS
+m65k_3,NA - Reason didn't deliver at health facility: CS
+m65k_4,NA - Reason didn't deliver at health facility: CS
+m65k_5,NA - Reason didn't deliver at health facility: CS
+m65k_6,NA - Reason didn't deliver at health facility: CS
+m65l_1,NA - Reason didn't deliver at health facility: CS
+m65l_2,NA - Reason didn't deliver at health facility: CS
+m65l_3,NA - Reason didn't deliver at health facility: CS
+m65l_4,NA - Reason didn't deliver at health facility: CS
+m65l_5,NA - Reason didn't deliver at health facility: CS
+m65l_6,NA - Reason didn't deliver at health facility: CS
+m65x_1,NA - Reason didn't deliver at health facility: other
+m65x_2,NA - Reason didn't deliver at health facility: other
+m65x_3,NA - Reason didn't deliver at health facility: other
+m65x_4,NA - Reason didn't deliver at health facility: other
+m65x_5,NA - Reason didn't deliver at health facility: other
+m65x_6,NA - Reason didn't deliver at health facility: other
+m66_1,Respondent's health checked after discharge/delivery at home
+m66_2,Respondent's health checked after discharge/delivery at home
+m66_3,Respondent's health checked after discharge/delivery at home
+m66_4,Respondent's health checked after discharge/delivery at home
+m66_5,Respondent's health checked after discharge/delivery at home
+m66_6,Respondent's health checked after discharge/delivery at home
+m70_1,Baby postnatal check within 2 months
+m70_2,Baby postnatal check within 2 months
+m70_3,Baby postnatal check within 2 months
+m70_4,Baby postnatal check within 2 months
+m70_5,Baby postnatal check within 2 months
+m70_6,Baby postnatal check within 2 months
+m71_1,Time after delivery postnatal check took place
+m71_2,Time after delivery postnatal check took place
+m71_3,Time after delivery postnatal check took place
+m71_4,Time after delivery postnatal check took place
+m71_5,Time after delivery postnatal check took place
+m71_6,Time after delivery postnatal check took place
+m72_1,Person who performed postnatal checkup
+m72_2,Person who performed postnatal checkup
+m72_3,Person who performed postnatal checkup
+m72_4,Person who performed postnatal checkup
+m72_5,Person who performed postnatal checkup
+m72_6,Person who performed postnatal checkup
+m73_1,Place baby was first checked
+m73_2,Place baby was first checked
+m73_3,Place baby was first checked
+m73_4,Place baby was first checked
+m73_5,Place baby was first checked
+m73_6,Place baby was first checked
+v401,Last birth a caesarean section
+v404,Currently breastfeeding
+v405,Currently amenorrheic
+v406,Currently abstaining
+v407,NA - Number of times breastfed during night
+v408,NA - Number of times breastfed during day
+v409,Gave child plain water
+v409a,NA - Gave child sugar water
+v410,Gave child juice
+v410a,NA - Gave child tea or coffee
+v411,"Gave child tinned, powdered or fresh milk"
+v411a,Gave child baby formula
+v412,NA - Gave child fresh milk
+v412a,"Gave child fortified baby food (cerelac, etc)"
+v412b,NA - Gave child other porridge/gruel
+v412c,Gave child soup/clear broth
+v413,Gave child other liquid
+v413a,NA - Gave child CS liquid
+v413b,NA - Gave child CS liquid
+v413c,NA - Gave child CS liquid
+v413d,NA - Gave child CS liquid
+v414a,NA - Gave child CS foods
+v414b,NA - Gave child CS foods
+v414c,NA - Gave child CS foods
+v414d,NA - Gave child CS foods
+v414e,"Gave child bread, noodles, other made from grains"
+v414f,"Gave child potatoes, cassava, or other tubers"
+v414g,Gave child eggs
+v414h,"Gave child meat (beef, pork, lamb, chicken, etc)"
+v414i,"Gave child pumpkin, carrots, squash (yellow or orange inside)"
+v414j,Gave child any dark green leafy vegetables
+v414k,"Gave child mangoes, papayas, other vitamin A fruits"
+v414l,Gave child any other fruits
+v414m,"Gave child liver, heart, other organs"
+v414n,Gave child fish or shellfish
+v414o,"Gave child food made from beans, peas, lentils, nuts"
+v414p,"Gave child cheese, yogurt, other milk products"
+v414q,"NA - Gave child oil, fats, butter, products made of them"
+v414r,"NA - Gave child chocolates, sweets, candies, pastries, etc"
+v414s,Gave child other solid-semisolid food
+v414t,NA - Gave child CS foods
+v414u,NA - Gave child CS foods
+v414v,Gave child yogurt
+v414w,NA - Gave child CS foods
+v415,Drank from bottle with nipple yesterday/last night
+v416,Heard of oral rehydration
+v417,Entries in maternity table
+v418,Entries in health table
+v419,Entries in height/weight table
+v420,NA - Measurer's code
+v421,NA - Assistant measurer's code
+v426,When child put to breast
+v437,Respondent's weight in kilograms (1 decimal)
+v438,Respondent's height in centimeters (1 decimal)
+v439,Height/Age percentile
+v440,Height/Age standard deviation
+v441,Height/Age percent ref. median
+v442,Weight/Height percent ref. median (DHS)
+v443,Weight/Height percent ref. median (Fog)
+v444,Weight/Height percent ref. median (WHO)
+v444a,Weight/Height standard deviation (DHS)
+v445,Body Mass Index
+v446,Rohrer's index
+v447,Result of measurement - height/weight
+v447a,Women's age in years (from household questionnaire)
+v452a,Under age 18 (from household questionnaire)
+v452b,Line number of parent/caretaker
+v452c,Read consent statement - hemoglobin
+v453,Hemoglobin level (g/dl - 1 decimal)
+v454,Currently pregnant (from household questionnaire)
+v455,Result of measurement - hemoglobin
+v456,Hemoglobin level adjusted for altitude and smoking (g/dl - 1 decimal)
+v457,Anemia level
+v458,NA - Agrees to referral - anemia
+v459,Have mosquito bed net for sleeping (from household questionnaire)
+v460,Children under 5 slept under mosquito bed net last night (household questionnaire)
+v461,Respondent slept under mosquito bed net
+v462,NA - Washed hands before preparing last meal
+v463a,Smokes cigarettes
+v463b,Smokes pipe
+v463c,Uses chewing tobacco
+v463d,Uses snuff
+v463e,Smokes cigars/natural tobacco wrapped by hand
+v463f,NA - Smokes country specific
+v463g,NA - Smokes country specific
+v463x,Smokes other
+v463z,Does not use tobacco
+v464,Number of cigarettes in last 24 hours
+v465,Disposal of youngest child's stools when not using toilet
+v466,"NA - When child is seriously ill, can decide whether medical treatment sought"
+v467a,NA - Getting medical help for self: know where to go
+v467b,Getting medical help for self: getting permission to go
+v467c,Getting medical help for self: getting money needed for treatment
+v467d,Getting medical help for self: distance to health facility
+v467e,NA - Getting medical help for self: having to take transport
+v467f,Getting medical help for self: not wanting to go alone
+v467g,NA - Getting medical help for self: concern no female health provider
+v467h,NA - Getting medical help for self: concern no provider
+v467i,NA - Getting medical help for self: concern no drugs available
+v467j,NA - Getting medical help for self: CS
+v467k,NA - Getting medical help for self: CS
+v467l,NA - Getting medical help for self: CS
+v467m,NA - Getting medical help for self: CS
+v468,Record for Last Birth
+v469e,Times gave child powdered/tinned/fresh milk
+v469f,Times gave child infant formula
+v469x,Times gave child yogurt
+v471a,"NA - Mother had tinned, powdered or fresh milk"
+v471b,NA - Mother had tea or coffee
+v471c,NA - Mother had any other liquid
+v471d,NA - Mother had CS liquid
+v471e,NA - Mother had CS liquid
+v471f,NA - Mother had CS liquid
+v471g,NA - Mother had CS liquid
+v472a,NA - Mother had CS foods
+v472b,NA - Mother had CS foods
+v472c,NA - Mother had CS foods
+v472d,NA - Mother had CS foods
+v472e,"NA - Mother had bread, noodles, other made from grains"
+v472f,"NA - Mother had potatoes, cassava, or other tubers"
+v472g,NA - Mother had eggs
+v472h,"NA - Mother had meat (beef, pork, lamb, chicken, etc)"
+v472i,"NA - Mother had pumpkin, carrots, squash (yellow or orange inside)"
+v472j,NA - Mother had any dark green leafy vegetables
+v472k,"NA - Mother had mangoes, papayas, other vitamin A fruits"
+v472l,NA - Mother had any other fruits
+v472m,"NA - Mother had liver, heart, other organs"
+v472n,NA - Mother had fish or shellfish
+v472o,"NA - Mother had food made from beans, peas, lentils, nuts"
+v472p,"NA - Mother had cheese, yogurt, other milk products"
+v472q,"NA - Mother had oil, fats, butter, products made of them"
+v472r,"NA - Mother had chocolates, sweets, candies, pastries, etc"
+v472s,NA - Mother had other solid-semisolid food
+v472t,NA - Mother had CS foods
+v472u,NA - Mother had CS foods
+v473a,Read consent statement - HIV
+v473b,Result of measurement - HIV
+v474,NA - Heard of tuberculosis or TB
+v474a,NA - Tuberculosis spread by: air when coughing or sneezing
+v474b,NA - Tuberculosis spread by: sharing utensils
+v474c,NA - Tuberculosis spread by: touching a person with TB
+v474d,NA - Tuberculosis spread by: food
+v474e,NA - Tuberculosis spread by: sexual contact
+v474f,NA - Tuberculosis spread by: mosquito bites
+v474g,NA - Tuberculosis spread by: CS
+v474h,NA - Tuberculosis spread by: CS
+v474i,NA - Tuberculosis spread by: CS
+v474j,NA - Tuberculosis spread by: CS
+v474x,NA - Tuberculosis spread by: other
+v474z,NA - Tuberculosis spread by: don't know
+v475,NA - Tuberculosis can be cured
+v476,NA - Keep secret when family member gets TB
+v477,Number of injections in last 12 months
+v478,Number of injections administered by a health worker
+v479,NA - Place of injection by health worker
+v480,"Syringe and needle from new, unopened package"
+v481,Covered by health insurance
+v481a,Health insurance type: mutual/community organization
+v481b,Health insurance type: provided by employer
+v481c,Health insurance type: social security
+v481d,Health insurance type: private/commercially purchased
+v481e,NA - Health insurance type: CS
+v481f,NA - Health insurance type: CS
+v481g,NA - Health insurance type: CS
+v481h,NA - Health insurance type: CS
+v481x,Health insurance type: other
+v482a,NA - Arrange care of biological children under age 18
+v482b,NA - Primary caregiver of children under age 18
+v482c,NA - Arrange care of non-biological children < 18
+hidx_1,Index to birth history
+hidx_2,Index to birth history
+hidx_3,Index to birth history
+hidx_4,Index to birth history
+hidx_5,Index to birth history
+hidx_6,Index to birth history
+h1_1,Has health card
+h1_2,Has health card
+h1_3,Has health card
+h1_4,Has health card
+h1_5,Has health card
+h1_6,Has health card
+h2_1,Received BCG
+h2_2,Received BCG
+h2_3,Received BCG
+h2_4,Received BCG
+h2_5,Received BCG
+h2_6,Received BCG
+h2d_1,BCG day
+h2d_2,BCG day
+h2d_3,BCG day
+h2d_4,BCG day
+h2d_5,BCG day
+h2d_6,BCG day
+h2m_1,BCG month
+h2m_2,BCG month
+h2m_3,BCG month
+h2m_4,BCG month
+h2m_5,BCG month
+h2m_6,BCG month
+h2y_1,BCG year
+h2y_2,BCG year
+h2y_3,BCG year
+h2y_4,BCG year
+h2y_5,BCG year
+h2y_6,BCG year
+h3_1,Received DPT 1
+h3_2,Received DPT 1
+h3_3,Received DPT 1
+h3_4,Received DPT 1
+h3_5,Received DPT 1
+h3_6,Received DPT 1
+h3d_1,DPT 1 day
+h3d_2,DPT 1 day
+h3d_3,DPT 1 day
+h3d_4,DPT 1 day
+h3d_5,DPT 1 day
+h3d_6,DPT 1 day
+h3m_1,DPT 1 month
+h3m_2,DPT 1 month
+h3m_3,DPT 1 month
+h3m_4,DPT 1 month
+h3m_5,DPT 1 month
+h3m_6,DPT 1 month
+h3y_1,DPT 1 year
+h3y_2,DPT 1 year
+h3y_3,DPT 1 year
+h3y_4,DPT 1 year
+h3y_5,DPT 1 year
+h3y_6,DPT 1 year
+h4_1,Received POLIO 1
+h4_2,Received POLIO 1
+h4_3,Received POLIO 1
+h4_4,Received POLIO 1
+h4_5,Received POLIO 1
+h4_6,Received POLIO 1
+h4d_1,POLIO 1 day
+h4d_2,POLIO 1 day
+h4d_3,POLIO 1 day
+h4d_4,POLIO 1 day
+h4d_5,POLIO 1 day
+h4d_6,POLIO 1 day
+h4m_1,POLIO 1 month
+h4m_2,POLIO 1 month
+h4m_3,POLIO 1 month
+h4m_4,POLIO 1 month
+h4m_5,POLIO 1 month
+h4m_6,POLIO 1 month
+h4y_1,POLIO 1 year
+h4y_2,POLIO 1 year
+h4y_3,POLIO 1 year
+h4y_4,POLIO 1 year
+h4y_5,POLIO 1 year
+h4y_6,POLIO 1 year
+h5_1,Received DPT 2
+h5_2,Received DPT 2
+h5_3,Received DPT 2
+h5_4,Received DPT 2
+h5_5,Received DPT 2
+h5_6,Received DPT 2
+h5d_1,DPT 2 day
+h5d_2,DPT 2 day
+h5d_3,DPT 2 day
+h5d_4,DPT 2 day
+h5d_5,DPT 2 day
+h5d_6,DPT 2 day
+h5m_1,DPT 2 month
+h5m_2,DPT 2 month
+h5m_3,DPT 2 month
+h5m_4,DPT 2 month
+h5m_5,DPT 2 month
+h5m_6,DPT 2 month
+h5y_1,DPT 2 year
+h5y_2,DPT 2 year
+h5y_3,DPT 2 year
+h5y_4,DPT 2 year
+h5y_5,DPT 2 year
+h5y_6,DPT 2 year
+h6_1,Received POLIO 2
+h6_2,Received POLIO 2
+h6_3,Received POLIO 2
+h6_4,Received POLIO 2
+h6_5,Received POLIO 2
+h6_6,Received POLIO 2
+h6d_1,POLIO 2 day
+h6d_2,POLIO 2 day
+h6d_3,POLIO 2 day
+h6d_4,POLIO 2 day
+h6d_5,POLIO 2 day
+h6d_6,POLIO 2 day
+h6m_1,POLIO 2 month
+h6m_2,POLIO 2 month
+h6m_3,POLIO 2 month
+h6m_4,POLIO 2 month
+h6m_5,POLIO 2 month
+h6m_6,POLIO 2 month
+h6y_1,POLIO 2 year
+h6y_2,POLIO 2 year
+h6y_3,POLIO 2 year
+h6y_4,POLIO 2 year
+h6y_5,POLIO 2 year
+h6y_6,POLIO 2 year
+h7_1,Received DPT 3
+h7_2,Received DPT 3
+h7_3,Received DPT 3
+h7_4,Received DPT 3
+h7_5,Received DPT 3
+h7_6,Received DPT 3
+h7d_1,DPT 3 day
+h7d_2,DPT 3 day
+h7d_3,DPT 3 day
+h7d_4,DPT 3 day
+h7d_5,DPT 3 day
+h7d_6,DPT 3 day
+h7m_1,DPT 3 month
+h7m_2,DPT 3 month
+h7m_3,DPT 3 month
+h7m_4,DPT 3 month
+h7m_5,DPT 3 month
+h7m_6,DPT 3 month
+h7y_1,DPT 3 year
+h7y_2,DPT 3 year
+h7y_3,DPT 3 year
+h7y_4,DPT 3 year
+h7y_5,DPT 3 year
+h7y_6,DPT 3 year
+h8_1,Received POLIO 3
+h8_2,Received POLIO 3
+h8_3,Received POLIO 3
+h8_4,Received POLIO 3
+h8_5,Received POLIO 3
+h8_6,Received POLIO 3
+h8d_1,POLIO 3 day
+h8d_2,POLIO 3 day
+h8d_3,POLIO 3 day
+h8d_4,POLIO 3 day
+h8d_5,POLIO 3 day
+h8d_6,POLIO 3 day
+h8m_1,POLIO 3 month
+h8m_2,POLIO 3 month
+h8m_3,POLIO 3 month
+h8m_4,POLIO 3 month
+h8m_5,POLIO 3 month
+h8m_6,POLIO 3 month
+h8y_1,POLIO 3 year
+h8y_2,POLIO 3 year
+h8y_3,POLIO 3 year
+h8y_4,POLIO 3 year
+h8y_5,POLIO 3 year
+h8y_6,POLIO 3 year
+h9_1,Received MEASLES
+h9_2,Received MEASLES
+h9_3,Received MEASLES
+h9_4,Received MEASLES
+h9_5,Received MEASLES
+h9_6,Received MEASLES
+h9d_1,MEASLES day
+h9d_2,MEASLES day
+h9d_3,MEASLES day
+h9d_4,MEASLES day
+h9d_5,MEASLES day
+h9d_6,MEASLES day
+h9m_1,MEASLES month
+h9m_2,MEASLES month
+h9m_3,MEASLES month
+h9m_4,MEASLES month
+h9m_5,MEASLES month
+h9m_6,MEASLES month
+h9y_1,MEASLES year
+h9y_2,MEASLES year
+h9y_3,MEASLES year
+h9y_4,MEASLES year
+h9y_5,MEASLES year
+h9y_6,MEASLES year
+h0_1,Received POLIO 0
+h0_2,Received POLIO 0
+h0_3,Received POLIO 0
+h0_4,Received POLIO 0
+h0_5,Received POLIO 0
+h0_6,Received POLIO 0
+h0d_1,POLIO 0 day
+h0d_2,POLIO 0 day
+h0d_3,POLIO 0 day
+h0d_4,POLIO 0 day
+h0d_5,POLIO 0 day
+h0d_6,POLIO 0 day
+h0m_1,POLIO 0 month
+h0m_2,POLIO 0 month
+h0m_3,POLIO 0 month
+h0m_4,POLIO 0 month
+h0m_5,POLIO 0 month
+h0m_6,POLIO 0 month
+h0y_1,POLIO 0 year
+h0y_2,POLIO 0 year
+h0y_3,POLIO 0 year
+h0y_4,POLIO 0 year
+h0y_5,POLIO 0 year
+h0y_6,POLIO 0 year
+h10_1,Ever had vaccination
+h10_2,Ever had vaccination
+h10_3,Ever had vaccination
+h10_4,Ever had vaccination
+h10_5,Ever had vaccination
+h10_6,Ever had vaccination
+h11_1,Had diarrhea recently
+h11_2,Had diarrhea recently
+h11_3,Had diarrhea recently
+h11_4,Had diarrhea recently
+h11_5,Had diarrhea recently
+h11_6,Had diarrhea recently
+h11b_1,Blood in the stools
+h11b_2,Blood in the stools
+h11b_3,Blood in the stools
+h11b_4,Blood in the stools
+h11b_5,Blood in the stools
+h11b_6,Blood in the stools
+h12a_1,Diarrhea: government hospital
+h12a_2,Diarrhea: government hospital
+h12a_3,Diarrhea: government hospital
+h12a_4,Diarrhea: government hospital
+h12a_5,Diarrhea: government hospital
+h12a_6,Diarrhea: government hospital
+h12b_1,Diarrhea: government health center
+h12b_2,Diarrhea: government health center
+h12b_3,Diarrhea: government health center
+h12b_4,Diarrhea: government health center
+h12b_5,Diarrhea: government health center
+h12b_6,Diarrhea: government health center
+h12c_1,Diarrhea: government health post
+h12c_2,Diarrhea: government health post
+h12c_3,Diarrhea: government health post
+h12c_4,Diarrhea: government health post
+h12c_5,Diarrhea: government health post
+h12c_6,Diarrhea: government health post
+h12d_1,Diarrhea: maternity clinic
+h12d_2,Diarrhea: maternity clinic
+h12d_3,Diarrhea: maternity clinic
+h12d_4,Diarrhea: maternity clinic
+h12d_5,Diarrhea: maternity clinic
+h12d_6,Diarrhea: maternity clinic
+h12e_1,Diarrhea: community relay
+h12e_2,Diarrhea: community relay
+h12e_3,Diarrhea: community relay
+h12e_4,Diarrhea: community relay
+h12e_5,Diarrhea: community relay
+h12e_6,Diarrhea: community relay
+h12f_1,Diarrhea: mobile clinic
+h12f_2,Diarrhea: mobile clinic
+h12f_3,Diarrhea: mobile clinic
+h12f_4,Diarrhea: mobile clinic
+h12f_5,Diarrhea: mobile clinic
+h12f_6,Diarrhea: mobile clinic
+h12g_1,Diarrhea: health worker
+h12g_2,Diarrhea: health worker
+h12g_3,Diarrhea: health worker
+h12g_4,Diarrhea: health worker
+h12g_5,Diarrhea: health worker
+h12g_6,Diarrhea: health worker
+h12h_1,Diarrhea: other public sector
+h12h_2,Diarrhea: other public sector
+h12h_3,Diarrhea: other public sector
+h12h_4,Diarrhea: other public sector
+h12h_5,Diarrhea: other public sector
+h12h_6,Diarrhea: other public sector
+h12i_1,NA - Diarrhea: CS public sector
+h12i_2,NA - Diarrhea: CS public sector
+h12i_3,NA - Diarrhea: CS public sector
+h12i_4,NA - Diarrhea: CS public sector
+h12i_5,NA - Diarrhea: CS public sector
+h12i_6,NA - Diarrhea: CS public sector
+h12j_1,Diarrhea: private hospital/clinic
+h12j_2,Diarrhea: private hospital/clinic
+h12j_3,Diarrhea: private hospital/clinic
+h12j_4,Diarrhea: private hospital/clinic
+h12j_5,Diarrhea: private hospital/clinic
+h12j_6,Diarrhea: private hospital/clinic
+h12k_1,Diarrhea: private pharmacy
+h12k_2,Diarrhea: private pharmacy
+h12k_3,Diarrhea: private pharmacy
+h12k_4,Diarrhea: private pharmacy
+h12k_5,Diarrhea: private pharmacy
+h12k_6,Diarrhea: private pharmacy
+h12l_1,Diarrhea: private doctor
+h12l_2,Diarrhea: private doctor
+h12l_3,Diarrhea: private doctor
+h12l_4,Diarrhea: private doctor
+h12l_5,Diarrhea: private doctor
+h12l_6,Diarrhea: private doctor
+h12m_1,Diarrhea: mobile nurse
+h12m_2,Diarrhea: mobile nurse
+h12m_3,Diarrhea: mobile nurse
+h12m_4,Diarrhea: mobile nurse
+h12m_5,Diarrhea: mobile nurse
+h12m_6,Diarrhea: mobile nurse
+h12n_1,Diarrhea: other medical private
+h12n_2,Diarrhea: other medical private
+h12n_3,Diarrhea: other medical private
+h12n_4,Diarrhea: other medical private
+h12n_5,Diarrhea: other medical private
+h12n_6,Diarrhea: other medical private
+h12o_1,NA - Diarrhea: CS private medical
+h12o_2,NA - Diarrhea: CS private medical
+h12o_3,NA - Diarrhea: CS private medical
+h12o_4,NA - Diarrhea: CS private medical
+h12o_5,NA - Diarrhea: CS private medical
+h12o_6,NA - Diarrhea: CS private medical
+h12p_1,NA - Diarrhea: CS private medical
+h12p_2,NA - Diarrhea: CS private medical
+h12p_3,NA - Diarrhea: CS private medical
+h12p_4,NA - Diarrhea: CS private medical
+h12p_5,NA - Diarrhea: CS private medical
+h12p_6,NA - Diarrhea: CS private medical
+h12q_1,NA - Diarrhea: CS private medical
+h12q_2,NA - Diarrhea: CS private medical
+h12q_3,NA - Diarrhea: CS private medical
+h12q_4,NA - Diarrhea: CS private medical
+h12q_5,NA - Diarrhea: CS private medical
+h12q_6,NA - Diarrhea: CS private medical
+h12r_1,NA - Diarrhea: CS private medical
+h12r_2,NA - Diarrhea: CS private medical
+h12r_3,NA - Diarrhea: CS private medical
+h12r_4,NA - Diarrhea: CS private medical
+h12r_5,NA - Diarrhea: CS private medical
+h12r_6,NA - Diarrhea: CS private medical
+h12s_1,Diarrhea: shop
+h12s_2,Diarrhea: shop
+h12s_3,Diarrhea: shop
+h12s_4,Diarrhea: shop
+h12s_5,Diarrhea: shop
+h12s_6,Diarrhea: shop
+h12t_1,Diarrhea: traditional pract.
+h12t_2,Diarrhea: traditional pract.
+h12t_3,Diarrhea: traditional pract.
+h12t_4,Diarrhea: traditional pract.
+h12t_5,Diarrhea: traditional pract.
+h12t_6,Diarrhea: traditional pract.
+h12u_1,Diarrhea: market
+h12u_2,Diarrhea: market
+h12u_3,Diarrhea: market
+h12u_4,Diarrhea: market
+h12u_5,Diarrhea: market
+h12u_6,Diarrhea: market
+h12v_1,NA - Diarrhea: CS other sector
+h12v_2,NA - Diarrhea: CS other sector
+h12v_3,NA - Diarrhea: CS other sector
+h12v_4,NA - Diarrhea: CS other sector
+h12v_5,NA - Diarrhea: CS other sector
+h12v_6,NA - Diarrhea: CS other sector
+h12w_1,NA - Diarrhea: CS other sector
+h12w_2,NA - Diarrhea: CS other sector
+h12w_3,NA - Diarrhea: CS other sector
+h12w_4,NA - Diarrhea: CS other sector
+h12w_5,NA - Diarrhea: CS other sector
+h12w_6,NA - Diarrhea: CS other sector
+h12x_1,Diarrhea: Other
+h12x_2,Diarrhea: Other
+h12x_3,Diarrhea: Other
+h12x_4,Diarrhea: Other
+h12x_5,Diarrhea: Other
+h12x_6,Diarrhea: Other
+h12y_1,Diarrhea: no treatment
+h12y_2,Diarrhea: no treatment
+h12y_3,Diarrhea: no treatment
+h12y_4,Diarrhea: no treatment
+h12y_5,Diarrhea: no treatment
+h12y_6,Diarrhea: no treatment
+h12z_1,Diarrhea: medical treatment
+h12z_2,Diarrhea: medical treatment
+h12z_3,Diarrhea: medical treatment
+h12z_4,Diarrhea: medical treatment
+h12z_5,Diarrhea: medical treatment
+h12z_6,Diarrhea: medical treatment
+h13_1,Given oral rehydration
+h13_2,Given oral rehydration
+h13_3,Given oral rehydration
+h13_4,Given oral rehydration
+h13_5,Given oral rehydration
+h13_6,Given oral rehydration
+h13b_1,Given pre-packaged ORS liquid
+h13b_2,Given pre-packaged ORS liquid
+h13b_3,Given pre-packaged ORS liquid
+h13b_4,Given pre-packaged ORS liquid
+h13b_5,Given pre-packaged ORS liquid
+h13b_6,Given pre-packaged ORS liquid
+h14_1,Given recommended home solution
+h14_2,Given recommended home solution
+h14_3,Given recommended home solution
+h14_4,Given recommended home solution
+h14_5,Given recommended home solution
+h14_6,Given recommended home solution
+h15_1,Given antibiotic pills or syrups
+h15_2,Given antibiotic pills or syrups
+h15_3,Given antibiotic pills or syrups
+h15_4,Given antibiotic pills or syrups
+h15_5,Given antibiotic pills or syrups
+h15_6,Given antibiotic pills or syrups
+h15a_1,Given antimotility
+h15a_2,Given antimotility
+h15a_3,Given antimotility
+h15a_4,Given antimotility
+h15a_5,Given antimotility
+h15a_6,Given antimotility
+h15b_1,Given antibiotic injection
+h15b_2,Given antibiotic injection
+h15b_3,Given antibiotic injection
+h15b_4,Given antibiotic injection
+h15b_5,Given antibiotic injection
+h15b_6,Given antibiotic injection
+h15c_1,Given intravenous (IV)
+h15c_2,Given intravenous (IV)
+h15c_3,Given intravenous (IV)
+h15c_4,Given intravenous (IV)
+h15c_5,Given intravenous (IV)
+h15c_6,Given intravenous (IV)
+h15d_1,"Given home remedy, herbal medicine"
+h15d_2,"Given home remedy, herbal medicine"
+h15d_3,"Given home remedy, herbal medicine"
+h15d_4,"Given home remedy, herbal medicine"
+h15d_5,"Given home remedy, herbal medicine"
+h15d_6,"Given home remedy, herbal medicine"
+h15e_1,Given zinc
+h15e_2,Given zinc
+h15e_3,Given zinc
+h15e_4,Given zinc
+h15e_5,Given zinc
+h15e_6,Given zinc
+h15f_1,"Given other (not antibiotic, antimotility, zinc)"
+h15f_2,"Given other (not antibiotic, antimotility, zinc)"
+h15f_3,"Given other (not antibiotic, antimotility, zinc)"
+h15f_4,"Given other (not antibiotic, antimotility, zinc)"
+h15f_5,"Given other (not antibiotic, antimotility, zinc)"
+h15f_6,"Given other (not antibiotic, antimotility, zinc)"
+h15g_1,Given unknown pill or syrup
+h15g_2,Given unknown pill or syrup
+h15g_3,Given unknown pill or syrup
+h15g_4,Given unknown pill or syrup
+h15g_5,Given unknown pill or syrup
+h15g_6,Given unknown pill or syrup
+h15h_1,Given non-antibiotic injection
+h15h_2,Given non-antibiotic injection
+h15h_3,Given non-antibiotic injection
+h15h_4,Given non-antibiotic injection
+h15h_5,Given non-antibiotic injection
+h15h_6,Given non-antibiotic injection
+h15i_1,Given unknown injection
+h15i_2,Given unknown injection
+h15i_3,Given unknown injection
+h15i_4,Given unknown injection
+h15i_5,Given unknown injection
+h15i_6,Given unknown injection
+h15j_1,NA - Given CS
+h15j_2,NA - Given CS
+h15j_3,NA - Given CS
+h15j_4,NA - Given CS
+h15j_5,NA - Given CS
+h15j_6,NA - Given CS
+h15k_1,NA - Given CS
+h15k_2,NA - Given CS
+h15k_3,NA - Given CS
+h15k_4,NA - Given CS
+h15k_5,NA - Given CS
+h15k_6,NA - Given CS
+h15l_1,NA - Given CS
+h15l_2,NA - Given CS
+h15l_3,NA - Given CS
+h15l_4,NA - Given CS
+h15l_5,NA - Given CS
+h15l_6,NA - Given CS
+h15m_1,NA - Given CS
+h15m_2,NA - Given CS
+h15m_3,NA - Given CS
+h15m_4,NA - Given CS
+h15m_5,NA - Given CS
+h15m_6,NA - Given CS
+h20_1,Given other treatment
+h20_2,Given other treatment
+h20_3,Given other treatment
+h20_4,Given other treatment
+h20_5,Given other treatment
+h20_6,Given other treatment
+h21a_1,Given no treatment
+h21a_2,Given no treatment
+h21a_3,Given no treatment
+h21a_4,Given no treatment
+h21a_5,Given no treatment
+h21a_6,Given no treatment
+h21_1,Received any treatment
+h21_2,Received any treatment
+h21_3,Received any treatment
+h21_4,Received any treatment
+h21_5,Received any treatment
+h21_6,Received any treatment
+h22_1,Had fever in last two weeks
+h22_2,Had fever in last two weeks
+h22_3,Had fever in last two weeks
+h22_4,Had fever in last two weeks
+h22_5,Had fever in last two weeks
+h22_6,Had fever in last two weeks
+h31_1,Had cough in last two weeks
+h31_2,Had cough in last two weeks
+h31_3,Had cough in last two weeks
+h31_4,Had cough in last two weeks
+h31_5,Had cough in last two weeks
+h31_6,Had cough in last two weeks
+h31b_1,"Short, rapid breaths"
+h31b_2,"Short, rapid breaths"
+h31b_3,"Short, rapid breaths"
+h31b_4,"Short, rapid breaths"
+h31b_5,"Short, rapid breaths"
+h31b_6,"Short, rapid breaths"
+h31c_1,Problem in the chest or blocked or running nose
+h31c_2,Problem in the chest or blocked or running nose
+h31c_3,Problem in the chest or blocked or running nose
+h31c_4,Problem in the chest or blocked or running nose
+h31c_5,Problem in the chest or blocked or running nose
+h31c_6,Problem in the chest or blocked or running nose
+h31d_1,Had fever/cough in last 2 weeks: amount offered to drink
+h31d_2,Had fever/cough in last 2 weeks: amount offered to drink
+h31d_3,Had fever/cough in last 2 weeks: amount offered to drink
+h31d_4,Had fever/cough in last 2 weeks: amount offered to drink
+h31d_5,Had fever/cough in last 2 weeks: amount offered to drink
+h31d_6,Had fever/cough in last 2 weeks: amount offered to drink
+h31e_1,Had fever/cough in last 2 weeks: amount offered to eat
+h31e_2,Had fever/cough in last 2 weeks: amount offered to eat
+h31e_3,Had fever/cough in last 2 weeks: amount offered to eat
+h31e_4,Had fever/cough in last 2 weeks: amount offered to eat
+h31e_5,Had fever/cough in last 2 weeks: amount offered to eat
+h31e_6,Had fever/cough in last 2 weeks: amount offered to eat
+h32a_1,Fever/cough: government hospital
+h32a_2,Fever/cough: government hospital
+h32a_3,Fever/cough: government hospital
+h32a_4,Fever/cough: government hospital
+h32a_5,Fever/cough: government hospital
+h32a_6,Fever/cough: government hospital
+h32b_1,Fever/cough: government health center
+h32b_2,Fever/cough: government health center
+h32b_3,Fever/cough: government health center
+h32b_4,Fever/cough: government health center
+h32b_5,Fever/cough: government health center
+h32b_6,Fever/cough: government health center
+h32c_1,Fever/cough: government health post
+h32c_2,Fever/cough: government health post
+h32c_3,Fever/cough: government health post
+h32c_4,Fever/cough: government health post
+h32c_5,Fever/cough: government health post
+h32c_6,Fever/cough: government health post
+h32d_1,Fever/cough: maternity clinic
+h32d_2,Fever/cough: maternity clinic
+h32d_3,Fever/cough: maternity clinic
+h32d_4,Fever/cough: maternity clinic
+h32d_5,Fever/cough: maternity clinic
+h32d_6,Fever/cough: maternity clinic
+h32e_1,Fever/cough: community relay
+h32e_2,Fever/cough: community relay
+h32e_3,Fever/cough: community relay
+h32e_4,Fever/cough: community relay
+h32e_5,Fever/cough: community relay
+h32e_6,Fever/cough: community relay
+h32f_1,Fever/cough: mobile clinic
+h32f_2,Fever/cough: mobile clinic
+h32f_3,Fever/cough: mobile clinic
+h32f_4,Fever/cough: mobile clinic
+h32f_5,Fever/cough: mobile clinic
+h32f_6,Fever/cough: mobile clinic
+h32g_1,Fever/cough: health worker
+h32g_2,Fever/cough: health worker
+h32g_3,Fever/cough: health worker
+h32g_4,Fever/cough: health worker
+h32g_5,Fever/cough: health worker
+h32g_6,Fever/cough: health worker
+h32h_1,Fever/cough: other public sector
+h32h_2,Fever/cough: other public sector
+h32h_3,Fever/cough: other public sector
+h32h_4,Fever/cough: other public sector
+h32h_5,Fever/cough: other public sector
+h32h_6,Fever/cough: other public sector
+h32i_1,NA - Fever/cough: CS public sector
+h32i_2,NA - Fever/cough: CS public sector
+h32i_3,NA - Fever/cough: CS public sector
+h32i_4,NA - Fever/cough: CS public sector
+h32i_5,NA - Fever/cough: CS public sector
+h32i_6,NA - Fever/cough: CS public sector
+h32j_1,Fever/cough: private hospital/ clinic
+h32j_2,Fever/cough: private hospital/ clinic
+h32j_3,Fever/cough: private hospital/ clinic
+h32j_4,Fever/cough: private hospital/ clinic
+h32j_5,Fever/cough: private hospital/ clinic
+h32j_6,Fever/cough: private hospital/ clinic
+h32k_1,Fever/cough: private pharmacy
+h32k_2,Fever/cough: private pharmacy
+h32k_3,Fever/cough: private pharmacy
+h32k_4,Fever/cough: private pharmacy
+h32k_5,Fever/cough: private pharmacy
+h32k_6,Fever/cough: private pharmacy
+h32l_1,Fever/cough: private doctor
+h32l_2,Fever/cough: private doctor
+h32l_3,Fever/cough: private doctor
+h32l_4,Fever/cough: private doctor
+h32l_5,Fever/cough: private doctor
+h32l_6,Fever/cough: private doctor
+h32m_1,Fever/cough: mobile nurse
+h32m_2,Fever/cough: mobile nurse
+h32m_3,Fever/cough: mobile nurse
+h32m_4,Fever/cough: mobile nurse
+h32m_5,Fever/cough: mobile nurse
+h32m_6,Fever/cough: mobile nurse
+h32n_1,Fever/cough: other medical private
+h32n_2,Fever/cough: other medical private
+h32n_3,Fever/cough: other medical private
+h32n_4,Fever/cough: other medical private
+h32n_5,Fever/cough: other medical private
+h32n_6,Fever/cough: other medical private
+h32o_1,NA - Fever/cough: CS private medical
+h32o_2,NA - Fever/cough: CS private medical
+h32o_3,NA - Fever/cough: CS private medical
+h32o_4,NA - Fever/cough: CS private medical
+h32o_5,NA - Fever/cough: CS private medical
+h32o_6,NA - Fever/cough: CS private medical
+h32p_1,NA - Fever/cough: CS private medical
+h32p_2,NA - Fever/cough: CS private medical
+h32p_3,NA - Fever/cough: CS private medical
+h32p_4,NA - Fever/cough: CS private medical
+h32p_5,NA - Fever/cough: CS private medical
+h32p_6,NA - Fever/cough: CS private medical
+h32q_1,NA - Fever/cough: CS private medical
+h32q_2,NA - Fever/cough: CS private medical
+h32q_3,NA - Fever/cough: CS private medical
+h32q_4,NA - Fever/cough: CS private medical
+h32q_5,NA - Fever/cough: CS private medical
+h32q_6,NA - Fever/cough: CS private medical
+h32r_1,NA - Fever/cough: CS private medical
+h32r_2,NA - Fever/cough: CS private medical
+h32r_3,NA - Fever/cough: CS private medical
+h32r_4,NA - Fever/cough: CS private medical
+h32r_5,NA - Fever/cough: CS private medical
+h32r_6,NA - Fever/cough: CS private medical
+h32s_1,Fever/cough: shop
+h32s_2,Fever/cough: shop
+h32s_3,Fever/cough: shop
+h32s_4,Fever/cough: shop
+h32s_5,Fever/cough: shop
+h32s_6,Fever/cough: shop
+h32t_1,Fever/cough: traditional pract.
+h32t_2,Fever/cough: traditional pract.
+h32t_3,Fever/cough: traditional pract.
+h32t_4,Fever/cough: traditional pract.
+h32t_5,Fever/cough: traditional pract.
+h32t_6,Fever/cough: traditional pract.
+h32u_1,Fever/cough: market
+h32u_2,Fever/cough: market
+h32u_3,Fever/cough: market
+h32u_4,Fever/cough: market
+h32u_5,Fever/cough: market
+h32u_6,Fever/cough: market
+h32v_1,NA - Fever/cough: CS other sector
+h32v_2,NA - Fever/cough: CS other sector
+h32v_3,NA - Fever/cough: CS other sector
+h32v_4,NA - Fever/cough: CS other sector
+h32v_5,NA - Fever/cough: CS other sector
+h32v_6,NA - Fever/cough: CS other sector
+h32w_1,NA - Fever/cough: CS other sector
+h32w_2,NA - Fever/cough: CS other sector
+h32w_3,NA - Fever/cough: CS other sector
+h32w_4,NA - Fever/cough: CS other sector
+h32w_5,NA - Fever/cough: CS other sector
+h32w_6,NA - Fever/cough: CS other sector
+h32x_1,Fever/cough: other
+h32x_2,Fever/cough: other
+h32x_3,Fever/cough: other
+h32x_4,Fever/cough: other
+h32x_5,Fever/cough: other
+h32x_6,Fever/cough: other
+h32y_1,Fever/cough: no treatment
+h32y_2,Fever/cough: no treatment
+h32y_3,Fever/cough: no treatment
+h32y_4,Fever/cough: no treatment
+h32y_5,Fever/cough: no treatment
+h32y_6,Fever/cough: no treatment
+h32z_1,Fever/cough: medical treatment
+h32z_2,Fever/cough: medical treatment
+h32z_3,Fever/cough: medical treatment
+h32z_4,Fever/cough: medical treatment
+h32z_5,Fever/cough: medical treatment
+h32z_6,Fever/cough: medical treatment
+h33_1,Received Vitamin A1 (most recent)
+h33_2,Received Vitamin A1 (most recent)
+h33_3,Received Vitamin A1 (most recent)
+h33_4,Received Vitamin A1 (most recent)
+h33_5,Received Vitamin A1 (most recent)
+h33_6,Received Vitamin A1 (most recent)
+h33d_1,Vitamin A1 day
+h33d_2,Vitamin A1 day
+h33d_3,Vitamin A1 day
+h33d_4,Vitamin A1 day
+h33d_5,Vitamin A1 day
+h33d_6,Vitamin A1 day
+h33m_1,Vitamin A1 month
+h33m_2,Vitamin A1 month
+h33m_3,Vitamin A1 month
+h33m_4,Vitamin A1 month
+h33m_5,Vitamin A1 month
+h33m_6,Vitamin A1 month
+h33y_1,Vitamin A1 year
+h33y_2,Vitamin A1 year
+h33y_3,Vitamin A1 year
+h33y_4,Vitamin A1 year
+h33y_5,Vitamin A1 year
+h33y_6,Vitamin A1 year
+h34_1,Vitamin A in last 6 months
+h34_2,Vitamin A in last 6 months
+h34_3,Vitamin A in last 6 months
+h34_4,Vitamin A in last 6 months
+h34_5,Vitamin A in last 6 months
+h34_6,Vitamin A in last 6 months
+h35_1,NA - Any vaccinations in last 2 years part of campaign
+h35_2,NA - Any vaccinations in last 2 years part of campaign
+h35_3,NA - Any vaccinations in last 2 years part of campaign
+h35_4,NA - Any vaccinations in last 2 years part of campaign
+h35_5,NA - Any vaccinations in last 2 years part of campaign
+h35_6,NA - Any vaccinations in last 2 years part of campaign
+h36a_1,NA - Vaccinated during Campaign A
+h36a_2,NA - Vaccinated during Campaign A
+h36a_3,NA - Vaccinated during Campaign A
+h36a_4,NA - Vaccinated during Campaign A
+h36a_5,NA - Vaccinated during Campaign A
+h36a_6,NA - Vaccinated during Campaign A
+h36b_1,NA - Vaccinated during Campaign B
+h36b_2,NA - Vaccinated during Campaign B
+h36b_3,NA - Vaccinated during Campaign B
+h36b_4,NA - Vaccinated during Campaign B
+h36b_5,NA - Vaccinated during Campaign B
+h36b_6,NA - Vaccinated during Campaign B
+h36c_1,NA - Vaccinated during Campaign C
+h36c_2,NA - Vaccinated during Campaign C
+h36c_3,NA - Vaccinated during Campaign C
+h36c_4,NA - Vaccinated during Campaign C
+h36c_5,NA - Vaccinated during Campaign C
+h36c_6,NA - Vaccinated during Campaign C
+h36d_1,NA - Vaccinated during Campaign D
+h36d_2,NA - Vaccinated during Campaign D
+h36d_3,NA - Vaccinated during Campaign D
+h36d_4,NA - Vaccinated during Campaign D
+h36d_5,NA - Vaccinated during Campaign D
+h36d_6,NA - Vaccinated during Campaign D
+h36e_1,NA - Vaccinated during Campaign E
+h36e_2,NA - Vaccinated during Campaign E
+h36e_3,NA - Vaccinated during Campaign E
+h36e_4,NA - Vaccinated during Campaign E
+h36e_5,NA - Vaccinated during Campaign E
+h36e_6,NA - Vaccinated during Campaign E
+h36f_1,NA - Vaccinated during Campaign F
+h36f_2,NA - Vaccinated during Campaign F
+h36f_3,NA - Vaccinated during Campaign F
+h36f_4,NA - Vaccinated during Campaign F
+h36f_5,NA - Vaccinated during Campaign F
+h36f_6,NA - Vaccinated during Campaign F
+h37a_1,NA - SP/Fansidar taken for fever/cough
+h37a_2,NA - SP/Fansidar taken for fever/cough
+h37a_3,NA - SP/Fansidar taken for fever/cough
+h37a_4,NA - SP/Fansidar taken for fever/cough
+h37a_5,NA - SP/Fansidar taken for fever/cough
+h37a_6,NA - SP/Fansidar taken for fever/cough
+h37b_1,NA - Chloroquine taken for fever/cough
+h37b_2,NA - Chloroquine taken for fever/cough
+h37b_3,NA - Chloroquine taken for fever/cough
+h37b_4,NA - Chloroquine taken for fever/cough
+h37b_5,NA - Chloroquine taken for fever/cough
+h37b_6,NA - Chloroquine taken for fever/cough
+h37c_1,NA - Amodiaquine taken for fever/cough
+h37c_2,NA - Amodiaquine taken for fever/cough
+h37c_3,NA - Amodiaquine taken for fever/cough
+h37c_4,NA - Amodiaquine taken for fever/cough
+h37c_5,NA - Amodiaquine taken for fever/cough
+h37c_6,NA - Amodiaquine taken for fever/cough
+h37d_1,NA - Quinine taken for fever/cough
+h37d_2,NA - Quinine taken for fever/cough
+h37d_3,NA - Quinine taken for fever/cough
+h37d_4,NA - Quinine taken for fever/cough
+h37d_5,NA - Quinine taken for fever/cough
+h37d_6,NA - Quinine taken for fever/cough
+h37e_1,NA - Combination with artemisinin taken for fever/cough
+h37e_2,NA - Combination with artemisinin taken for fever/cough
+h37e_3,NA - Combination with artemisinin taken for fever/cough
+h37e_4,NA - Combination with artemisinin taken for fever/cough
+h37e_5,NA - Combination with artemisinin taken for fever/cough
+h37e_6,NA - Combination with artemisinin taken for fever/cough
+h37f_1,NA - CS antimalarial taken for fever/cough
+h37f_2,NA - CS antimalarial taken for fever/cough
+h37f_3,NA - CS antimalarial taken for fever/cough
+h37f_4,NA - CS antimalarial taken for fever/cough
+h37f_5,NA - CS antimalarial taken for fever/cough
+h37f_6,NA - CS antimalarial taken for fever/cough
+h37g_1,NA - CS antimalarial taken for fever/cough
+h37g_2,NA - CS antimalarial taken for fever/cough
+h37g_3,NA - CS antimalarial taken for fever/cough
+h37g_4,NA - CS antimalarial taken for fever/cough
+h37g_5,NA - CS antimalarial taken for fever/cough
+h37g_6,NA - CS antimalarial taken for fever/cough
+h37h_1,NA - Other antimalarial taken for fever/cough
+h37h_2,NA - Other antimalarial taken for fever/cough
+h37h_3,NA - Other antimalarial taken for fever/cough
+h37h_4,NA - Other antimalarial taken for fever/cough
+h37h_5,NA - Other antimalarial taken for fever/cough
+h37h_6,NA - Other antimalarial taken for fever/cough
+h37i_1,NA - Antibiotic pill/syrup taken for fever/cough
+h37i_2,NA - Antibiotic pill/syrup taken for fever/cough
+h37i_3,NA - Antibiotic pill/syrup taken for fever/cough
+h37i_4,NA - Antibiotic pill/syrup taken for fever/cough
+h37i_5,NA - Antibiotic pill/syrup taken for fever/cough
+h37i_6,NA - Antibiotic pill/syrup taken for fever/cough
+h37j_1,NA - Antibiotic injection taken for fever/cough
+h37j_2,NA - Antibiotic injection taken for fever/cough
+h37j_3,NA - Antibiotic injection taken for fever/cough
+h37j_4,NA - Antibiotic injection taken for fever/cough
+h37j_5,NA - Antibiotic injection taken for fever/cough
+h37j_6,NA - Antibiotic injection taken for fever/cough
+h37k_1,NA - Aspirin taken for fever/cough
+h37k_2,NA - Aspirin taken for fever/cough
+h37k_3,NA - Aspirin taken for fever/cough
+h37k_4,NA - Aspirin taken for fever/cough
+h37k_5,NA - Aspirin taken for fever/cough
+h37k_6,NA - Aspirin taken for fever/cough
+h37l_1,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+h37l_2,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+h37l_3,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+h37l_4,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+h37l_5,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+h37l_6,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+h37m_1,NA - Ibuprofen taken for fever/cough
+h37m_2,NA - Ibuprofen taken for fever/cough
+h37m_3,NA - Ibuprofen taken for fever/cough
+h37m_4,NA - Ibuprofen taken for fever/cough
+h37m_5,NA - Ibuprofen taken for fever/cough
+h37m_6,NA - Ibuprofen taken for fever/cough
+h37n_1,NA - CS other taken for fever/cough
+h37n_2,NA - CS other taken for fever/cough
+h37n_3,NA - CS other taken for fever/cough
+h37n_4,NA - CS other taken for fever/cough
+h37n_5,NA - CS other taken for fever/cough
+h37n_6,NA - CS other taken for fever/cough
+h37o_1,NA - CS other for fever/cough
+h37o_2,NA - CS other for fever/cough
+h37o_3,NA - CS other for fever/cough
+h37o_4,NA - CS other for fever/cough
+h37o_5,NA - CS other for fever/cough
+h37o_6,NA - CS other for fever/cough
+h37p_1,NA - CS other for fever/cough
+h37p_2,NA - CS other for fever/cough
+h37p_3,NA - CS other for fever/cough
+h37p_4,NA - CS other for fever/cough
+h37p_5,NA - CS other for fever/cough
+h37p_6,NA - CS other for fever/cough
+h37x_1,NA - Other taken for fever/cough
+h37x_2,NA - Other taken for fever/cough
+h37x_3,NA - Other taken for fever/cough
+h37x_4,NA - Other taken for fever/cough
+h37x_5,NA - Other taken for fever/cough
+h37x_6,NA - Other taken for fever/cough
+h37y_1,NA - Nothing taken for fever/cough
+h37y_2,NA - Nothing taken for fever/cough
+h37y_3,NA - Nothing taken for fever/cough
+h37y_4,NA - Nothing taken for fever/cough
+h37y_5,NA - Nothing taken for fever/cough
+h37y_6,NA - Nothing taken for fever/cough
+h37z_1,NA - Don't know if or what was taken for fever/cough
+h37z_2,NA - Don't know if or what was taken for fever/cough
+h37z_3,NA - Don't know if or what was taken for fever/cough
+h37z_4,NA - Don't know if or what was taken for fever/cough
+h37z_5,NA - Don't know if or what was taken for fever/cough
+h37z_6,NA - Don't know if or what was taken for fever/cough
+h38_1,Diarrhea in last 2 weeks: amount offered to drink
+h38_2,Diarrhea in last 2 weeks: amount offered to drink
+h38_3,Diarrhea in last 2 weeks: amount offered to drink
+h38_4,Diarrhea in last 2 weeks: amount offered to drink
+h38_5,Diarrhea in last 2 weeks: amount offered to drink
+h38_6,Diarrhea in last 2 weeks: amount offered to drink
+h39_1,Diarrhea in last 2 weeks: amount offered to eat
+h39_2,Diarrhea in last 2 weeks: amount offered to eat
+h39_3,Diarrhea in last 2 weeks: amount offered to eat
+h39_4,Diarrhea in last 2 weeks: amount offered to eat
+h39_5,Diarrhea in last 2 weeks: amount offered to eat
+h39_6,Diarrhea in last 2 weeks: amount offered to eat
+h40_1,NA - Received Vitamin A2 (2nd most recent)
+h40_2,NA - Received Vitamin A2 (2nd most recent)
+h40_3,NA - Received Vitamin A2 (2nd most recent)
+h40_4,NA - Received Vitamin A2 (2nd most recent)
+h40_5,NA - Received Vitamin A2 (2nd most recent)
+h40_6,NA - Received Vitamin A2 (2nd most recent)
+h40d_1,NA - Vitamin A2 day
+h40d_2,NA - Vitamin A2 day
+h40d_3,NA - Vitamin A2 day
+h40d_4,NA - Vitamin A2 day
+h40d_5,NA - Vitamin A2 day
+h40d_6,NA - Vitamin A2 day
+h40m_1,NA - Vitamin A2 month
+h40m_2,NA - Vitamin A2 month
+h40m_3,NA - Vitamin A2 month
+h40m_4,NA - Vitamin A2 month
+h40m_5,NA - Vitamin A2 month
+h40m_6,NA - Vitamin A2 month
+h40y_1,NA - Vitamin A2 year
+h40y_2,NA - Vitamin A2 year
+h40y_3,NA - Vitamin A2 year
+h40y_4,NA - Vitamin A2 year
+h40y_5,NA - Vitamin A2 year
+h40y_6,NA - Vitamin A2 year
+h41a_1,NA - Received vitamin A after most recent in card
+h41a_2,NA - Received vitamin A after most recent in card
+h41a_3,NA - Received vitamin A after most recent in card
+h41a_4,NA - Received vitamin A after most recent in card
+h41a_5,NA - Received vitamin A after most recent in card
+h41a_6,NA - Received vitamin A after most recent in card
+h41b_1,NA - Ever received Vitamin A dose
+h41b_2,NA - Ever received Vitamin A dose
+h41b_3,NA - Ever received Vitamin A dose
+h41b_4,NA - Ever received Vitamin A dose
+h41b_5,NA - Ever received Vitamin A dose
+h41b_6,NA - Ever received Vitamin A dose
+h42_1,"Taking iron pills, sprinkles or syrup"
+h42_2,"Taking iron pills, sprinkles or syrup"
+h42_3,"Taking iron pills, sprinkles or syrup"
+h42_4,"Taking iron pills, sprinkles or syrup"
+h42_5,"Taking iron pills, sprinkles or syrup"
+h42_6,"Taking iron pills, sprinkles or syrup"
+h43_1,Drugs for intestinal parasites in last 6 months
+h43_2,Drugs for intestinal parasites in last 6 months
+h43_3,Drugs for intestinal parasites in last 6 months
+h43_4,Drugs for intestinal parasites in last 6 months
+h43_5,Drugs for intestinal parasites in last 6 months
+h43_6,Drugs for intestinal parasites in last 6 months
+h44a_1,Place first sought treatment for diarrhea
+h44a_2,Place first sought treatment for diarrhea
+h44a_3,Place first sought treatment for diarrhea
+h44a_4,Place first sought treatment for diarrhea
+h44a_5,Place first sought treatment for diarrhea
+h44a_6,Place first sought treatment for diarrhea
+h44b_1,NA - Days after diarrhea sought advice or treatment
+h44b_2,NA - Days after diarrhea sought advice or treatment
+h44b_3,NA - Days after diarrhea sought advice or treatment
+h44b_4,NA - Days after diarrhea sought advice or treatment
+h44b_5,NA - Days after diarrhea sought advice or treatment
+h44b_6,NA - Days after diarrhea sought advice or treatment
+h44c_1,NA - Still has diarrhea
+h44c_2,NA - Still has diarrhea
+h44c_3,NA - Still has diarrhea
+h44c_4,NA - Still has diarrhea
+h44c_5,NA - Still has diarrhea
+h44c_6,NA - Still has diarrhea
+h45_1,NA - Times zinc was given
+h45_2,NA - Times zinc was given
+h45_3,NA - Times zinc was given
+h45_4,NA - Times zinc was given
+h45_5,NA - Times zinc was given
+h45_6,NA - Times zinc was given
+h46a_1,Place first sought treatment for fever
+h46a_2,Place first sought treatment for fever
+h46a_3,Place first sought treatment for fever
+h46a_4,Place first sought treatment for fever
+h46a_5,Place first sought treatment for fever
+h46a_6,Place first sought treatment for fever
+h46b_1,NA - Days after fever sought advice or treatment
+h46b_2,NA - Days after fever sought advice or treatment
+h46b_3,NA - Days after fever sought advice or treatment
+h46b_4,NA - Days after fever sought advice or treatment
+h46b_5,NA - Days after fever sought advice or treatment
+h46b_6,NA - Days after fever sought advice or treatment
+h47_1,Blood taken from child's finger/heel for testing
+h47_2,Blood taken from child's finger/heel for testing
+h47_3,Blood taken from child's finger/heel for testing
+h47_4,Blood taken from child's finger/heel for testing
+h47_5,Blood taken from child's finger/heel for testing
+h47_6,Blood taken from child's finger/heel for testing
+hwidx_1,Index to Birth History
+hwidx_2,Index to Birth History
+hwidx_3,Index to Birth History
+hwidx_4,Index to Birth History
+hwidx_5,Index to Birth History
+hwidx_6,Index to Birth History
+hw1_1,Child's age in months
+hw1_2,Child's age in months
+hw1_3,Child's age in months
+hw1_4,Child's age in months
+hw1_5,Child's age in months
+hw1_6,Child's age in months
+hw2_1,Child's weight in kilograms (1 decimal)
+hw2_2,Child's weight in kilograms (1 decimal)
+hw2_3,Child's weight in kilograms (1 decimal)
+hw2_4,Child's weight in kilograms (1 decimal)
+hw2_5,Child's weight in kilograms (1 decimal)
+hw2_6,Child's weight in kilograms (1 decimal)
+hw3_1,Child's height in centimeters (1 decimal)
+hw3_2,Child's height in centimeters (1 decimal)
+hw3_3,Child's height in centimeters (1 decimal)
+hw3_4,Child's height in centimeters (1 decimal)
+hw3_5,Child's height in centimeters (1 decimal)
+hw3_6,Child's height in centimeters (1 decimal)
+hw4_1,Height/Age percentile
+hw4_2,Height/Age percentile
+hw4_3,Height/Age percentile
+hw4_4,Height/Age percentile
+hw4_5,Height/Age percentile
+hw4_6,Height/Age percentile
+hw5_1,Height/Age standard deviation
+hw5_2,Height/Age standard deviation
+hw5_3,Height/Age standard deviation
+hw5_4,Height/Age standard deviation
+hw5_5,Height/Age standard deviation
+hw5_6,Height/Age standard deviation
+hw6_1,Height/Age percent of ref. median
+hw6_2,Height/Age percent of ref. median
+hw6_3,Height/Age percent of ref. median
+hw6_4,Height/Age percent of ref. median
+hw6_5,Height/Age percent of ref. median
+hw6_6,Height/Age percent of ref. median
+hw7_1,Weight/Age percentile
+hw7_2,Weight/Age percentile
+hw7_3,Weight/Age percentile
+hw7_4,Weight/Age percentile
+hw7_5,Weight/Age percentile
+hw7_6,Weight/Age percentile
+hw8_1,Weight/Age standard deviation
+hw8_2,Weight/Age standard deviation
+hw8_3,Weight/Age standard deviation
+hw8_4,Weight/Age standard deviation
+hw8_5,Weight/Age standard deviation
+hw8_6,Weight/Age standard deviation
+hw9_1,Weight/Age percent of ref. median
+hw9_2,Weight/Age percent of ref. median
+hw9_3,Weight/Age percent of ref. median
+hw9_4,Weight/Age percent of ref. median
+hw9_5,Weight/Age percent of ref. median
+hw9_6,Weight/Age percent of ref. median
+hw10_1,Weight/Height percentile
+hw10_2,Weight/Height percentile
+hw10_3,Weight/Height percentile
+hw10_4,Weight/Height percentile
+hw10_5,Weight/Height percentile
+hw10_6,Weight/Height percentile
+hw11_1,Weight/Height standard deviation
+hw11_2,Weight/Height standard deviation
+hw11_3,Weight/Height standard deviation
+hw11_4,Weight/Height standard deviation
+hw11_5,Weight/Height standard deviation
+hw11_6,Weight/Height standard deviation
+hw12_1,Weight/Height percent of ref. median
+hw12_2,Weight/Height percent of ref. median
+hw12_3,Weight/Height percent of ref. median
+hw12_4,Weight/Height percent of ref. median
+hw12_5,Weight/Height percent of ref. median
+hw12_6,Weight/Height percent of ref. median
+hw13_1,Result of measurement - height/weight
+hw13_2,Result of measurement - height/weight
+hw13_3,Result of measurement - height/weight
+hw13_4,Result of measurement - height/weight
+hw13_5,Result of measurement - height/weight
+hw13_6,Result of measurement - height/weight
+hw15_1,Height: lying or standing
+hw15_2,Height: lying or standing
+hw15_3,Height: lying or standing
+hw15_4,Height: lying or standing
+hw15_5,Height: lying or standing
+hw15_6,Height: lying or standing
+hw16_1,Day of birth of child
+hw16_2,Day of birth of child
+hw16_3,Day of birth of child
+hw16_4,Day of birth of child
+hw16_5,Day of birth of child
+hw16_6,Day of birth of child
+hw17_1,Date measured (day)
+hw17_2,Date measured (day)
+hw17_3,Date measured (day)
+hw17_4,Date measured (day)
+hw17_5,Date measured (day)
+hw17_6,Date measured (day)
+hw18_1,Date measured (month)
+hw18_2,Date measured (month)
+hw18_3,Date measured (month)
+hw18_4,Date measured (month)
+hw18_5,Date measured (month)
+hw18_6,Date measured (month)
+hw19_1,Date measured (year)
+hw19_2,Date measured (year)
+hw19_3,Date measured (year)
+hw19_4,Date measured (year)
+hw19_5,Date measured (year)
+hw19_6,Date measured (year)
+hw51_1,Line number of parent/caretaker
+hw51_2,Line number of parent/caretaker
+hw51_3,Line number of parent/caretaker
+hw51_4,Line number of parent/caretaker
+hw51_5,Line number of parent/caretaker
+hw51_6,Line number of parent/caretaker
+hw52_1,Read consent statement - hemoglobin
+hw52_2,Read consent statement - hemoglobin
+hw52_3,Read consent statement - hemoglobin
+hw52_4,Read consent statement - hemoglobin
+hw52_5,Read consent statement - hemoglobin
+hw52_6,Read consent statement - hemoglobin
+hw53_1,Hemoglobin level (g/dl - 1 decimal)
+hw53_2,Hemoglobin level (g/dl - 1 decimal)
+hw53_3,Hemoglobin level (g/dl - 1 decimal)
+hw53_4,Hemoglobin level (g/dl - 1 decimal)
+hw53_5,Hemoglobin level (g/dl - 1 decimal)
+hw53_6,Hemoglobin level (g/dl - 1 decimal)
+hw55_1,Result of measurement - hemoglobin
+hw55_2,Result of measurement - hemoglobin
+hw55_3,Result of measurement - hemoglobin
+hw55_4,Result of measurement - hemoglobin
+hw55_5,Result of measurement - hemoglobin
+hw55_6,Result of measurement - hemoglobin
+hw56_1,Hemoglobin level adjusted for altitude (g/dl - 1 decimal)
+hw56_2,Hemoglobin level adjusted for altitude (g/dl - 1 decimal)
+hw56_3,Hemoglobin level adjusted for altitude (g/dl - 1 decimal)
+hw56_4,Hemoglobin level adjusted for altitude (g/dl - 1 decimal)
+hw56_5,Hemoglobin level adjusted for altitude (g/dl - 1 decimal)
+hw56_6,Hemoglobin level adjusted for altitude (g/dl - 1 decimal)
+hw57_1,Anemia level
+hw57_2,Anemia level
+hw57_3,Anemia level
+hw57_4,Anemia level
+hw57_5,Anemia level
+hw57_6,Anemia level
+hw58_1,NA - Agrees to referral - anemia
+hw58_2,NA - Agrees to referral - anemia
+hw58_3,NA - Agrees to referral - anemia
+hw58_4,NA - Agrees to referral - anemia
+hw58_5,NA - Agrees to referral - anemia
+hw58_6,NA - Agrees to referral - anemia
+hw70_1,Height/Age standard deviation (new WHO)
+hw70_2,Height/Age standard deviation (new WHO)
+hw70_3,Height/Age standard deviation (new WHO)
+hw70_4,Height/Age standard deviation (new WHO)
+hw70_5,Height/Age standard deviation (new WHO)
+hw70_6,Height/Age standard deviation (new WHO)
+hw71_1,Weight/Age standard deviation (new WHO)
+hw71_2,Weight/Age standard deviation (new WHO)
+hw71_3,Weight/Age standard deviation (new WHO)
+hw71_4,Weight/Age standard deviation (new WHO)
+hw71_5,Weight/Age standard deviation (new WHO)
+hw71_6,Weight/Age standard deviation (new WHO)
+hw72_1,Weight/Height standard deviation (new WHO)
+hw72_2,Weight/Height standard deviation (new WHO)
+hw72_3,Weight/Height standard deviation (new WHO)
+hw72_4,Weight/Height standard deviation (new WHO)
+hw72_5,Weight/Height standard deviation (new WHO)
+hw72_6,Weight/Height standard deviation (new WHO)
+hw73_1,BMI standard deviation (new WHO)
+hw73_2,BMI standard deviation (new WHO)
+hw73_3,BMI standard deviation (new WHO)
+hw73_4,BMI standard deviation (new WHO)
+hw73_5,BMI standard deviation (new WHO)
+hw73_6,BMI standard deviation (new WHO)
+v501,Current marital status
+v502,Currently/formerly/never in union
+v503,Number of unions
+v504,Currently residing with husband/partner
+v505,Number of other wives
+v506,Respondent's rank among wives
+v507,Month of first cohabitation
+v508,Year of first cohabitation
+v509,Date of first cohabitation (CMC)
+v510,Completeness of date information in V509
+v511,Age at first cohabitation
+v512,Years since first cohabitation
+v513,Cohabitation duration (grouped)
+v525,Age at first sex
+v527,Time since last sex
+v528,Time since last sex (in days)
+v529,Time since last sex (in months)
+v530,Flag for V529
+v531,Age at first sex (imputed)
+v532,Flag for V531
+v535,Ever been married or in union
+v536,Recent sexual activity
+v537,Months of abstinence
+v538,NA - How previous marriage or union ended
+v539,NA - Person who received most of late husband's property
+v540,NA - Respondent received any of late husband's assets or valuables
+v541,NA - Intends to wait until marriage to have sex
+v602,Fertility preference
+v603,Preferred waiting time for birth of a/another child
+v604,Preferred waiting time for birth of a/another child (grouped)
+v605,Desire for more children
+v613,Ideal number of children
+v614,Ideal number of children (grouped)
+v616,Time for future birth
+v621,Husband's desire for children
+v623,Exposure
+v624,Unmet need
+v625,Exposure (definition 2)
+v626,Unmet need (definition 2)
+v625a,Exposure to need for contraception (definition 3)
+v626a,Unmet need for contraception (definition 3)
+v627,Ideal number of boys
+v628,Ideal number of girls
+v629,Ideal number of either sex
+v631,NA - Problem if became pregnant
+v632,Decision maker for using contraception
+v633a,NA - Reason for not having sex: husband has STI
+v633b,Reason for not having sex: husband has other women
+v633c,NA - Reason for not having sex: recent birth
+v633d,"NA - Reason for not having sex: tired, not in mood"
+v633e,NA - Reason for not having sex: CS
+v633f,NA - Reason for not having sex: CS
+v633g,NA - Reason for not having sex: CS
+v634,NA - Husband knows that respondent is using contraception
+v701,Husband/partner's education level
+v702,Husband/partner's highest year of education (at level in V701)
+v704,Husband/partner's occupation
+v705,Husband/partner's occupation (grouped)
+v714,Respondent currently working
+v714a,"Respondent has a job, but currently absent"
+v715,Husband/partner's total number of years of education
+v716,Respondent's occupation
+v717,Respondent's occupation (grouped)
+v719,"Respondent works for family, others, self"
+v721,NA - Respondent works at home or away
+v729,Husband/partner's educational attainment
+v730,Husband/partner's age
+v731,Respondent worked in last 12 months
+v732,Respondent employed all year/seasonal
+v739,Person who usually decides how to spend respondent's earnings
+v740,NA - Type of land where respondent works
+v741,Type of earnings from respondent's work
+v743a,Person who usually decides on respondent's health care
+v743b,Person who usually decides on large household purchases
+v743c,NA - Person who usually decides on household purchases for daily needs
+v743d,Person who usually decides on visits to family or relatives
+v743e,NA - Person who usually decides on food to be cooked each day
+v743f,Person who usually decides what to do with money husband earns
+v744a,Beating justified if wife goes out without telling husband
+v744b,Beating justified if wife neglects the children
+v744c,Beating justified if wife argues with husband
+v744d,Beating justified if wife refuses to have sex with husband
+v744e,Beating justified if wife burns the food
+v745a,Owns a house alone or jointly
+v745b,Owns land alone or jointly
+v746,Respondent earns more than husband/partner
+v750,Ever heard of a Sexually Transmitted Infection (STI)
+v751,Ever heard of AIDS
+v754bp,NA - Reduce risk of getting HIV: do not have sex at all
+v754cp,Reduce risk of getting HIV: always use condoms during sex
+v754dp,"Reduce risk of getting HIV: have 1 sex partner only, who has no other partners"
+v754jp,Can get HIV from mosquito bites
+v754wp,Can get HIV by sharing food with person who has AIDS
+v756,A healthy looking person can have HIV
+v761,Condom used during last sex with most recent partner
+v761b,Condom used during last sex with 2nd to most recent partner
+v761c,Condom used during last sex with 3rd to most recent partner
+v762aa,Source for condoms: government hospital
+v762ab,Source for condoms: government health cente
+v762ac,Source for condoms: government health post
+v762ad,Source for condoms: FP clinic
+v762ae,Source for condoms: community relay
+v762af,Source for condoms: other public
+v762ag,NA - Source for condoms: CS public
+v762ah,NA - Source for condoms: CS public
+v762ai,NA - Source for condoms: CS public
+v762aj,Source for condoms: private hospital/clinic
+v762ak,Source for condoms: pharmacy
+v762al,NA - Source for condoms: private doctor
+v762am,Source for condoms: NGO
+v762an,Source for condoms: mobile clinic
+v762ao,Source for condoms: private fieldworke
+v762ap,Source for condoms: other medical private
+v762aq,NA - Source for condoms: CS private
+v762ar,NA - Source for condoms: CS private
+v762as,Source for condoms: shop
+v762at,Source for condoms: bar/night club
+v762au,Source for condoms: kiosk
+v762av,Source for condoms: table holder
+v762aw,Source for condoms: parents/knowledge/friends
+v762ax,Source for condoms: other
+v762az,Don't know any source for condoms
+v762ba,Source for female condoms: government hospital
+v762bb,Source for female condoms: government health center
+v762bc,Source for female condoms: government health post
+v762bd,Source for female condoms: FP clinic
+v762be,Source for female condoms: community relay
+v762bf,Source for female condoms: other public
+v762bg,NA - Source for female condoms: CS public
+v762bh,NA - Source for female condoms: CS public
+v762bi,NA - Source for female condoms: CS public
+v762bj,Source for female condoms: private hospital/clinic
+v762bk,Source for female condoms: pharmacy
+v762bl,NA - Source for female condoms: private doctor
+v762bm,Source for female condoms: NGO
+v762bn,Source for female condoms: mobile clinic
+v762bo,Source for female condoms: private fieldworker
+v762bp,Source for female condoms: other medical private
+v762bq,NA - Source for female condoms: CS private
+v762br,NA - Source for female condoms: CS private
+v762bs,Source for female condoms: shop
+v762bt,Source for female condoms: bar/Night club
+v762bu,Source for female condoms: kiosk
+v762bv,Source for female condoms: table holder
+v762bw,Source for female condoms: parents/knowledge/friends
+v762bx,Source for female condoms: other
+v762bz,Don't know any source for female condoms
+v763a,Had any STI in last 12 months
+v763b,Had genital sore/ulcer in last 12 months
+v763c,Had genital discharge in last 12 months
+v763d,NA - Had CS STI in last 12 months
+v763e,NA - Had CS STI in last 12 months
+v763f,NA - Had CS STI in last 12 months
+v763g,NA - Had CS STI in last 12 months
+v766a,"Number of sex partners, excluding spouse, in last 12 months"
+v766b,"Number of sex partners, including spouse, in last 12 months"
+v767a,Relationship with most recent sex partner
+v767b,Relationship with 2nd to most recent sex partner
+v767c,Relationship with 3rd to most recent sex partner
+v768a,NA - Length of time knows last partner
+v768b,NA - Length of time knows other partner (1)
+v768c,NA - Length of time knows other partner (2)
+v769,Can get a condom
+v769a,Can get a female condom
+v770,Sought advice/treatment for last STI infection
+v770a,Sought STI advice/treatment from: government hospital
+v770b,Sought STI advice/treatment from: government health center/post
+v770c,Sought STI advice/treatment from: public stand-alone VCT center
+v770d,Sought STI advice/treatment from: public family planning clinic
+v770e,Sought STI advice/treatment from: public mobile clinic
+v770f,Sought STI advice/treatment from: public field worker
+v770g,Sought STI advice/treatment from: mobile treatment center
+v770h,Sought STI advice/treatment from: other public
+v770i,NA - Sought STI advice/treatment from: CS public
+v770j,NA - Sought STI advice/treatment from: CS public
+v770k,Sought STI advice/treatment from: private hospital/clinic/doctor
+v770l,Sought STI advice/treatment from: VCT mobile
+v770m,Sought STI advice/treatment from: mobile treatment center
+v770n,Sought STI advice/treatment from: young care center
+v770o,Sought STI advice/treatment from: other private medical
+v770p,NA - Sought STI advice/treatment from: CS private
+v770q,NA - Sought STI advice/treatment from: CS private
+v770r,NA - Sought STI advice/treatment from: CS private
+v770s,NA - Sought STI advice/treatment from: CS private
+v770t,NA - Sought STI advice/treatment from: CS other
+v770u,NA - Sought STI advice/treatment from: CS other
+v770v,NA - Sought STI advice/treatment from: CS other
+v770w,NA - Sought STI advice/treatment from: CS other
+v770x,Sought STI advice/treatment from: other
+v774a,HIV transmitted during pregnancy
+v774b,HIV transmitted during delivery
+v774c,HIV transmitted by breastfeeding
+v775,"NA - Knows someone who has, or is suspected of having, HIV"
+v777,Would want HIV infection in family to remain secret
+v778,Willing to care for relative with AIDS
+v779,"A female teacher infected with HIV, but is not sick, should be allowed to continue teaching"
+v780,Children should be taught about condoms to avoid AIDS
+v781,Ever been tested for HIV
+v783,Know a place to get HIV test
+v784a,Place for HIV test: government hospital
+v784b,Place for HIV test: government health center/post
+v784c,Place for HIV test: public stand-alone VCT center
+v784d,Place for HIV test: public family planning clinic
+v784e,Place for HIV test: public mobile clinic
+v784f,Place for HIV test: public field worker
+v784g,Place for HIV test: mobile treatment center
+v784h,Place for HIV test: other public
+v784i,NA - Place for HIV test: CS public
+v784j,NA - Place for HIV test: CS public
+v784k,Place for HIV test: private hospital/clinic/doctor
+v784l,Place for HIV test: VCT mobile
+v784m,Place for HIV test: mobile treatment center
+v784n,Place for HIV test: young care center
+v784o,Place for HIV test: other private medical
+v784p,NA - Place for HIV test: CS private
+v784q,NA - Place for HIV test: CS private
+v784r,NA - Place for HIV test: CS private
+v784s,NA - Place for HIV test: CS private
+v784t,NA - Place for HIV test: CS other
+v784u,NA - Place for HIV test: CS other
+v784v,NA - Place for HIV test: CS other
+v784x,Place for HIV test: other
+v785,Heard about other STIs
+v820,NA - Condom used at first sex
+v821a,"NA - Most recent sex partner younger, the same age or older"
+v821b,"NA - 2nd to most recent sex partner younger, the same age or older"
+v821c,"NA - 3rd to most recent sex partner younger, the same age or older"
+v822,Wife justified asking husband to use condom if he has STI
+v823,Can get HIV by witchcraft or supernatural means
+v824,Drugs to avoid HIV transmission to baby during pregnancy
+v825,Would buy vegetables from vendor with HIV
+v826,NA - Last time tested for HIV
+v826a,Months ago most recent HIV test
+v827,"NA - Last HIV test: on your own, offered or required"
+v828,Received result from last HIV test
+v829,Place where last HIV test was taken
+v830,NA - Age of first sex partner
+v831,"NA - First sex partner younger, same age or older"
+v832b,Time since last sex with 2nd to most recent partner
+v832c,Time since last sex with 3rd to most recent partner
+v833a,Used condom every time had sex with most recent partner in last 12 months
+v833b,Used condom every time had sex with 2nd to most recent partner in last 12 months
+v833c,Used condom every time had sex with 3rd to most recent partner in last 12 months
+v834a,Age of most recent partner
+v834b,Age of 2nd to most recent partner
+v834c,Age of 3rd to most recent partner
+v835a,NA - Alcohol consumption at last sex with most recent partner
+v835b,NA - Alcohol consumption at last sex with 2nd to most recent partner
+v835c,NA - Alcohol consumption at last sex with 3rd to most recent partner
+v836,Total lifetime number of sex partners
+v837,NA - Heard of drugs to help HIV infected people live longer
+v838a,During antenatal visit talked about: HIV transmitted mother to child
+v838b,During antenatal visit talked about: things to do to prevent getting HIV
+v838c,During antenatal visit talked about: getting tested for HIV
+v839,Offered HIV test as part of antenatal visit
+v839a,Offered HIV test between the time went for delivery and before baby was born
+v840,Tested for HIV as part of antenatal visit
+v840a,Tested for HIV between the time went for delivery and before baby was born
+v841,Got results of HIV test as part of antenatal visit
+v841a,Got results of HIV test when tested before baby was born
+v842,Place were HIV test was taken as part of antenatal visit
+v843,Tested for HIV since antenatal visit test
+v844,"NA - Knows someone denied health services for having, or suspected of having, HIV; in last 12 months"
+v845,"NA - Knows someone denied social events for having, or suspected of having, HIV; in last 12 months"
+v846,"NA - Knows someone verbally abused for having, or suspected of having, HIV; in last 12 months"
+v847,NA - People with HIV should be ashamed of themselves
+v848,NA - People with HIV should be blamed for bringing disease to community
+v849,NA - Children 12-14 should be taught to wait for sex until marriage
+v850a,Respondent can refuse sex
+v850b,Respondent can ask partner to use a condom
+v851a,NA - Young men should wait for sex until marriage
+v851b,NA - Most young men wait for sex until marriage
+v851c,NA - Unmarried sexually active men should only having sex with one partner
+v851d,NA - Most unmarried sexually active men have only one partner
+v851e,NA - Married men should only have sex with their wives
+v851f,NA - Most married men only have sex with their wives
+v851g,NA - Young women should wait for sex until marriage
+v851h,NA - Most young women wait for sex until marriage
+v851i,NA - Unmarried sexually active women should have only one partner
+v851j,NA - Most unmarried sexually active women have only one partner
+v851k,NA - Married women should only have sex with their husbands
+v851l,NA - Most married women only have sex with their husbands
+v852a,How long ago first had sex with most recent partner
+v852b,How long ago first had sex with 2nd most recent partner
+v852c,How long ago first had sex with 3rd most recent partner
+v853a,Times in last 12 months had sex with most recent partner
+v853b,Times in last 12 months had sex with 2nd most recent partner
+v853c,Times in last 12 months had sex with 3rd most recent partner
+v854a,Point concurrent sexual partners
+v854b,Cumulative concurrent sexual partners
+v855,Received counseling after tested for AIDS during antenatal care
+v801,Time interview started (hhmm - 24 hour clock)
+v802,Time interview ended (hhmm - 24 hour clock)
+v803,Length of interview in minutes
+v804,Number of visits
+v805,Interviewer identification
+v806,Keyer identification
+v811,Presence of children < 10 for 'Wife beating justified' questions
+v812,Presence of husband for 'Wife beating justified' questions
+v813,Presence of other males for 'Wife beating justified' questions
+v814,Presence of other females for 'Wife beating justified' questions
+v815a,Presence of children < 10 during sexual activity section
+v815b,Presence of male adults during sexual activity section
+v815c,Presence of female adults during sexual activity section
+mmidx_01,Index to Maternal Mortality
+mmidx_02,Index to Maternal Mortality
+mmidx_03,Index to Maternal Mortality
+mmidx_04,Index to Maternal Mortality
+mmidx_05,Index to Maternal Mortality
+mmidx_06,Index to Maternal Mortality
+mmidx_07,Index to Maternal Mortality
+mmidx_08,Index to Maternal Mortality
+mmidx_09,Index to Maternal Mortality
+mmidx_10,Index to Maternal Mortality
+mmidx_11,Index to Maternal Mortality
+mmidx_12,Index to Maternal Mortality
+mmidx_13,Index to Maternal Mortality
+mmidx_14,Index to Maternal Mortality
+mmidx_15,Index to Maternal Mortality
+mmidx_16,Index to Maternal Mortality
+mmidx_17,Index to Maternal Mortality
+mmidx_18,Index to Maternal Mortality
+mmidx_19,Index to Maternal Mortality
+mmidx_20,Index to Maternal Mortality
+mm1_01,Sex of sibling
+mm1_02,Sex of sibling
+mm1_03,Sex of sibling
+mm1_04,Sex of sibling
+mm1_05,Sex of sibling
+mm1_06,Sex of sibling
+mm1_07,Sex of sibling
+mm1_08,Sex of sibling
+mm1_09,Sex of sibling
+mm1_10,Sex of sibling
+mm1_11,Sex of sibling
+mm1_12,Sex of sibling
+mm1_13,Sex of sibling
+mm1_14,Sex of sibling
+mm1_15,Sex of sibling
+mm1_16,Sex of sibling
+mm1_17,Sex of sibling
+mm1_18,Sex of sibling
+mm1_19,Sex of sibling
+mm1_20,Sex of sibling
+mm2_01,Survival status of sibling
+mm2_02,Survival status of sibling
+mm2_03,Survival status of sibling
+mm2_04,Survival status of sibling
+mm2_05,Survival status of sibling
+mm2_06,Survival status of sibling
+mm2_07,Survival status of sibling
+mm2_08,Survival status of sibling
+mm2_09,Survival status of sibling
+mm2_10,Survival status of sibling
+mm2_11,Survival status of sibling
+mm2_12,Survival status of sibling
+mm2_13,Survival status of sibling
+mm2_14,Survival status of sibling
+mm2_15,Survival status of sibling
+mm2_16,Survival status of sibling
+mm2_17,Survival status of sibling
+mm2_18,Survival status of sibling
+mm2_19,Survival status of sibling
+mm2_20,Survival status of sibling
+mm3_01,Sibling's current age
+mm3_02,Sibling's current age
+mm3_03,Sibling's current age
+mm3_04,Sibling's current age
+mm3_05,Sibling's current age
+mm3_06,Sibling's current age
+mm3_07,Sibling's current age
+mm3_08,Sibling's current age
+mm3_09,Sibling's current age
+mm3_10,Sibling's current age
+mm3_11,Sibling's current age
+mm3_12,Sibling's current age
+mm3_13,Sibling's current age
+mm3_14,Sibling's current age
+mm3_15,Sibling's current age
+mm3_16,Sibling's current age
+mm3_17,Sibling's current age
+mm3_18,Sibling's current age
+mm3_19,Sibling's current age
+mm3_20,Sibling's current age
+mm4_01,Sibling's date of birth (CMC)
+mm4_02,Sibling's date of birth (CMC)
+mm4_03,Sibling's date of birth (CMC)
+mm4_04,Sibling's date of birth (CMC)
+mm4_05,Sibling's date of birth (CMC)
+mm4_06,Sibling's date of birth (CMC)
+mm4_07,Sibling's date of birth (CMC)
+mm4_08,Sibling's date of birth (CMC)
+mm4_09,Sibling's date of birth (CMC)
+mm4_10,Sibling's date of birth (CMC)
+mm4_11,Sibling's date of birth (CMC)
+mm4_12,Sibling's date of birth (CMC)
+mm4_13,Sibling's date of birth (CMC)
+mm4_14,Sibling's date of birth (CMC)
+mm4_15,Sibling's date of birth (CMC)
+mm4_16,Sibling's date of birth (CMC)
+mm4_17,Sibling's date of birth (CMC)
+mm4_18,Sibling's date of birth (CMC)
+mm4_19,Sibling's date of birth (CMC)
+mm4_20,Sibling's date of birth (CMC)
+mm5_01,NA - Sibling's marital status
+mm5_02,NA - Sibling's marital status
+mm5_03,NA - Sibling's marital status
+mm5_04,NA - Sibling's marital status
+mm5_05,NA - Sibling's marital status
+mm5_06,NA - Sibling's marital status
+mm5_07,NA - Sibling's marital status
+mm5_08,NA - Sibling's marital status
+mm5_09,NA - Sibling's marital status
+mm5_10,NA - Sibling's marital status
+mm5_11,NA - Sibling's marital status
+mm5_12,NA - Sibling's marital status
+mm5_13,NA - Sibling's marital status
+mm5_14,NA - Sibling's marital status
+mm5_15,NA - Sibling's marital status
+mm5_16,NA - Sibling's marital status
+mm5_17,NA - Sibling's marital status
+mm5_18,NA - Sibling's marital status
+mm5_19,NA - Sibling's marital status
+mm5_20,NA - Sibling's marital status
+mm6_01,Years since sibling died
+mm6_02,Years since sibling died
+mm6_03,Years since sibling died
+mm6_04,Years since sibling died
+mm6_05,Years since sibling died
+mm6_06,Years since sibling died
+mm6_07,Years since sibling died
+mm6_08,Years since sibling died
+mm6_09,Years since sibling died
+mm6_10,Years since sibling died
+mm6_11,Years since sibling died
+mm6_12,Years since sibling died
+mm6_13,Years since sibling died
+mm6_14,Years since sibling died
+mm6_15,Years since sibling died
+mm6_16,Years since sibling died
+mm6_17,Years since sibling died
+mm6_18,Years since sibling died
+mm6_19,Years since sibling died
+mm6_20,Years since sibling died
+mm7_01,Sibling's age at death
+mm7_02,Sibling's age at death
+mm7_03,Sibling's age at death
+mm7_04,Sibling's age at death
+mm7_05,Sibling's age at death
+mm7_06,Sibling's age at death
+mm7_07,Sibling's age at death
+mm7_08,Sibling's age at death
+mm7_09,Sibling's age at death
+mm7_10,Sibling's age at death
+mm7_11,Sibling's age at death
+mm7_12,Sibling's age at death
+mm7_13,Sibling's age at death
+mm7_14,Sibling's age at death
+mm7_15,Sibling's age at death
+mm7_16,Sibling's age at death
+mm7_17,Sibling's age at death
+mm7_18,Sibling's age at death
+mm7_19,Sibling's age at death
+mm7_20,Sibling's age at death
+mm8_01,Date of death of sibling (CMC)
+mm8_02,Date of death of sibling (CMC)
+mm8_03,Date of death of sibling (CMC)
+mm8_04,Date of death of sibling (CMC)
+mm8_05,Date of death of sibling (CMC)
+mm8_06,Date of death of sibling (CMC)
+mm8_07,Date of death of sibling (CMC)
+mm8_08,Date of death of sibling (CMC)
+mm8_09,Date of death of sibling (CMC)
+mm8_10,Date of death of sibling (CMC)
+mm8_11,Date of death of sibling (CMC)
+mm8_12,Date of death of sibling (CMC)
+mm8_13,Date of death of sibling (CMC)
+mm8_14,Date of death of sibling (CMC)
+mm8_15,Date of death of sibling (CMC)
+mm8_16,Date of death of sibling (CMC)
+mm8_17,Date of death of sibling (CMC)
+mm8_18,Date of death of sibling (CMC)
+mm8_19,Date of death of sibling (CMC)
+mm8_20,Date of death of sibling (CMC)
+mm9_01,Sibling's death and pregnancy
+mm9_02,Sibling's death and pregnancy
+mm9_03,Sibling's death and pregnancy
+mm9_04,Sibling's death and pregnancy
+mm9_05,Sibling's death and pregnancy
+mm9_06,Sibling's death and pregnancy
+mm9_07,Sibling's death and pregnancy
+mm9_08,Sibling's death and pregnancy
+mm9_09,Sibling's death and pregnancy
+mm9_10,Sibling's death and pregnancy
+mm9_11,Sibling's death and pregnancy
+mm9_12,Sibling's death and pregnancy
+mm9_13,Sibling's death and pregnancy
+mm9_14,Sibling's death and pregnancy
+mm9_15,Sibling's death and pregnancy
+mm9_16,Sibling's death and pregnancy
+mm9_17,Sibling's death and pregnancy
+mm9_18,Sibling's death and pregnancy
+mm9_19,Sibling's death and pregnancy
+mm9_20,Sibling's death and pregnancy
+mm10_01,NA - Death and a pregnancy are related
+mm10_02,NA - Death and a pregnancy are related
+mm10_03,NA - Death and a pregnancy are related
+mm10_04,NA - Death and a pregnancy are related
+mm10_05,NA - Death and a pregnancy are related
+mm10_06,NA - Death and a pregnancy are related
+mm10_07,NA - Death and a pregnancy are related
+mm10_08,NA - Death and a pregnancy are related
+mm10_09,NA - Death and a pregnancy are related
+mm10_10,NA - Death and a pregnancy are related
+mm10_11,NA - Death and a pregnancy are related
+mm10_12,NA - Death and a pregnancy are related
+mm10_13,NA - Death and a pregnancy are related
+mm10_14,NA - Death and a pregnancy are related
+mm10_15,NA - Death and a pregnancy are related
+mm10_16,NA - Death and a pregnancy are related
+mm10_17,NA - Death and a pregnancy are related
+mm10_18,NA - Death and a pregnancy are related
+mm10_19,NA - Death and a pregnancy are related
+mm10_20,NA - Death and a pregnancy are related
+mm11_01,NA - Cause of death sibling
+mm11_02,NA - Cause of death sibling
+mm11_03,NA - Cause of death sibling
+mm11_04,NA - Cause of death sibling
+mm11_05,NA - Cause of death sibling
+mm11_06,NA - Cause of death sibling
+mm11_07,NA - Cause of death sibling
+mm11_08,NA - Cause of death sibling
+mm11_09,NA - Cause of death sibling
+mm11_10,NA - Cause of death sibling
+mm11_11,NA - Cause of death sibling
+mm11_12,NA - Cause of death sibling
+mm11_13,NA - Cause of death sibling
+mm11_14,NA - Cause of death sibling
+mm11_15,NA - Cause of death sibling
+mm11_16,NA - Cause of death sibling
+mm11_17,NA - Cause of death sibling
+mm11_18,NA - Cause of death sibling
+mm11_19,NA - Cause of death sibling
+mm11_20,NA - Cause of death sibling
+mm12_01,NA - Amount of time between sibling's delivery and death
+mm12_02,NA - Amount of time between sibling's delivery and death
+mm12_03,NA - Amount of time between sibling's delivery and death
+mm12_04,NA - Amount of time between sibling's delivery and death
+mm12_05,NA - Amount of time between sibling's delivery and death
+mm12_06,NA - Amount of time between sibling's delivery and death
+mm12_07,NA - Amount of time between sibling's delivery and death
+mm12_08,NA - Amount of time between sibling's delivery and death
+mm12_09,NA - Amount of time between sibling's delivery and death
+mm12_10,NA - Amount of time between sibling's delivery and death
+mm12_11,NA - Amount of time between sibling's delivery and death
+mm12_12,NA - Amount of time between sibling's delivery and death
+mm12_13,NA - Amount of time between sibling's delivery and death
+mm12_14,NA - Amount of time between sibling's delivery and death
+mm12_15,NA - Amount of time between sibling's delivery and death
+mm12_16,NA - Amount of time between sibling's delivery and death
+mm12_17,NA - Amount of time between sibling's delivery and death
+mm12_18,NA - Amount of time between sibling's delivery and death
+mm12_19,NA - Amount of time between sibling's delivery and death
+mm12_20,NA - Amount of time between sibling's delivery and death
+mm13_01,NA - Place of sibling's death
+mm13_02,NA - Place of sibling's death
+mm13_03,NA - Place of sibling's death
+mm13_04,NA - Place of sibling's death
+mm13_05,NA - Place of sibling's death
+mm13_06,NA - Place of sibling's death
+mm13_07,NA - Place of sibling's death
+mm13_08,NA - Place of sibling's death
+mm13_09,NA - Place of sibling's death
+mm13_10,NA - Place of sibling's death
+mm13_11,NA - Place of sibling's death
+mm13_12,NA - Place of sibling's death
+mm13_13,NA - Place of sibling's death
+mm13_14,NA - Place of sibling's death
+mm13_15,NA - Place of sibling's death
+mm13_16,NA - Place of sibling's death
+mm13_17,NA - Place of sibling's death
+mm13_18,NA - Place of sibling's death
+mm13_19,NA - Place of sibling's death
+mm13_20,NA - Place of sibling's death
+mm14_01,Number of sibling's children
+mm14_02,Number of sibling's children
+mm14_03,Number of sibling's children
+mm14_04,Number of sibling's children
+mm14_05,Number of sibling's children
+mm14_06,Number of sibling's children
+mm14_07,Number of sibling's children
+mm14_08,Number of sibling's children
+mm14_09,Number of sibling's children
+mm14_10,Number of sibling's children
+mm14_11,Number of sibling's children
+mm14_12,Number of sibling's children
+mm14_13,Number of sibling's children
+mm14_14,Number of sibling's children
+mm14_15,Number of sibling's children
+mm14_16,Number of sibling's children
+mm14_17,Number of sibling's children
+mm14_18,Number of sibling's children
+mm14_19,Number of sibling's children
+mm14_20,Number of sibling's children
+mm15_01,NA - Sibling's year of death
+mm15_02,NA - Sibling's year of death
+mm15_03,NA - Sibling's year of death
+mm15_04,NA - Sibling's year of death
+mm15_05,NA - Sibling's year of death
+mm15_06,NA - Sibling's year of death
+mm15_07,NA - Sibling's year of death
+mm15_08,NA - Sibling's year of death
+mm15_09,NA - Sibling's year of death
+mm15_10,NA - Sibling's year of death
+mm15_11,NA - Sibling's year of death
+mm15_12,NA - Sibling's year of death
+mm15_13,NA - Sibling's year of death
+mm15_14,NA - Sibling's year of death
+mm15_15,NA - Sibling's year of death
+mm15_16,NA - Sibling's year of death
+mm15_17,NA - Sibling's year of death
+mm15_18,NA - Sibling's year of death
+mm15_19,NA - Sibling's year of death
+mm15_20,NA - Sibling's year of death
+mmc1,Number of siblings of respondent
+mmc2,Number of siblings born before respondent's birth
+mmc3,NA - Sister's reporting***
+mmc4_1,NA - Sister's line number from Household Schedule***
+mmc4_2,NA - Sister's line number from Household Schedule***
+mmc4_3,NA - Sister's line number from Household Schedule***
+mmc4_4,NA - Sister's line number from Household Schedule***
+mmc4_5,NA - Sister's line number from Household Schedule***
+mmc4_6,NA - Sister's line number from Household Schedule***
+mmc5,Cut off age for Maternal Mortality collection (in questionnaire)
+idxml_1,Index to Birth History
+idxml_2,Index to Birth History
+idxml_3,Index to Birth History
+idxml_4,Index to Birth History
+idxml_5,Index to Birth History
+idxml_6,Index to Birth History
+ml0_1,Type of mosquito bed net(s) child slept under last night
+ml0_2,Type of mosquito bed net(s) child slept under last night
+ml0_3,Type of mosquito bed net(s) child slept under last night
+ml0_4,Type of mosquito bed net(s) child slept under last night
+ml0_5,Type of mosquito bed net(s) child slept under last night
+ml0_6,Type of mosquito bed net(s) child slept under last night
+ml1_1,Number of times took fansidar during pregnancy
+ml1_2,Number of times took fansidar during pregnancy
+ml1_3,Number of times took fansidar during pregnancy
+ml1_4,Number of times took fansidar during pregnancy
+ml1_5,Number of times took fansidar during pregnancy
+ml1_6,Number of times took fansidar during pregnancy
+ml2_1,Source of antimalarial during pregnancy
+ml2_2,Source of antimalarial during pregnancy
+ml2_3,Source of antimalarial during pregnancy
+ml2_4,Source of antimalarial during pregnancy
+ml2_5,Source of antimalarial during pregnancy
+ml2_6,Source of antimalarial during pregnancy
+ml11_1,NA - Child has fever/cough now
+ml11_2,NA - Child has fever/cough now
+ml11_3,NA - Child has fever/cough now
+ml11_4,NA - Child has fever/cough now
+ml11_5,NA - Child has fever/cough now
+ml11_6,NA - Child has fever/cough now
+ml12_1,NA - Child has had convulsions in last 2 weeks
+ml12_2,NA - Child has had convulsions in last 2 weeks
+ml12_3,NA - Child has had convulsions in last 2 weeks
+ml12_4,NA - Child has had convulsions in last 2 weeks
+ml12_5,NA - Child has had convulsions in last 2 weeks
+ml12_6,NA - Child has had convulsions in last 2 weeks
+ml13a_1,Fansidar taken for fever/cough
+ml13a_2,Fansidar taken for fever/cough
+ml13a_3,Fansidar taken for fever/cough
+ml13a_4,Fansidar taken for fever/cough
+ml13a_5,Fansidar taken for fever/cough
+ml13a_6,Fansidar taken for fever/cough
+ml13b_1,Chloroquine taken for fever/cough
+ml13b_2,Chloroquine taken for fever/cough
+ml13b_3,Chloroquine taken for fever/cough
+ml13b_4,Chloroquine taken for fever/cough
+ml13b_5,Chloroquine taken for fever/cough
+ml13b_6,Chloroquine taken for fever/cough
+ml13c_1,Amodiaquine taken for fever/cough
+ml13c_2,Amodiaquine taken for fever/cough
+ml13c_3,Amodiaquine taken for fever/cough
+ml13c_4,Amodiaquine taken for fever/cough
+ml13c_5,Amodiaquine taken for fever/cough
+ml13c_6,Amodiaquine taken for fever/cough
+ml13d_1,Quinine taken for fever/cough
+ml13d_2,Quinine taken for fever/cough
+ml13d_3,Quinine taken for fever/cough
+ml13d_4,Quinine taken for fever/cough
+ml13d_5,Quinine taken for fever/cough
+ml13d_6,Quinine taken for fever/cough
+ml13e_1,Combination with artemisinin taken for fever/cough
+ml13e_2,Combination with artemisinin taken for fever/cough
+ml13e_3,Combination with artemisinin taken for fever/cough
+ml13e_4,Combination with artemisinin taken for fever/cough
+ml13e_5,Combination with artemisinin taken for fever/cough
+ml13e_6,Combination with artemisinin taken for fever/cough
+ml13f_1,Other CTA/antimalarial taken for fever/cough
+ml13f_2,Other CTA/antimalarial taken for fever/cough
+ml13f_3,Other CTA/antimalarial taken for fever/cough
+ml13f_4,Other CTA/antimalarial taken for fever/cough
+ml13f_5,Other CTA/antimalarial taken for fever/cough
+ml13f_6,Other CTA/antimalarial taken for fever/cough
+ml13g_1,NA - CS antimalarial taken for fever/cough
+ml13g_2,NA - CS antimalarial taken for fever/cough
+ml13g_3,NA - CS antimalarial taken for fever/cough
+ml13g_4,NA - CS antimalarial taken for fever/cough
+ml13g_5,NA - CS antimalarial taken for fever/cough
+ml13g_6,NA - CS antimalarial taken for fever/cough
+ml13h_1,Other antimalarial taken for fever/cough
+ml13h_2,Other antimalarial taken for fever/cough
+ml13h_3,Other antimalarial taken for fever/cough
+ml13h_4,Other antimalarial taken for fever/cough
+ml13h_5,Other antimalarial taken for fever/cough
+ml13h_6,Other antimalarial taken for fever/cough
+ml13i_1,Antibiotic pill/syrup taken for fever/cough
+ml13i_2,Antibiotic pill/syrup taken for fever/cough
+ml13i_3,Antibiotic pill/syrup taken for fever/cough
+ml13i_4,Antibiotic pill/syrup taken for fever/cough
+ml13i_5,Antibiotic pill/syrup taken for fever/cough
+ml13i_6,Antibiotic pill/syrup taken for fever/cough
+ml13j_1,Antibiotic injection taken for fever/cough
+ml13j_2,Antibiotic injection taken for fever/cough
+ml13j_3,Antibiotic injection taken for fever/cough
+ml13j_4,Antibiotic injection taken for fever/cough
+ml13j_5,Antibiotic injection taken for fever/cough
+ml13j_6,Antibiotic injection taken for fever/cough
+ml13k_1,Aspirin taken for fever/cough
+ml13k_2,Aspirin taken for fever/cough
+ml13k_3,Aspirin taken for fever/cough
+ml13k_4,Aspirin taken for fever/cough
+ml13k_5,Aspirin taken for fever/cough
+ml13k_6,Aspirin taken for fever/cough
+ml13l_1,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+ml13l_2,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+ml13l_3,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+ml13l_4,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+ml13l_5,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+ml13l_6,NA - Acetaminophen/paracetamol/panadol taken for fever/cough
+ml13m_1,NA - Ibuprofen taken for fever/cough
+ml13m_2,NA - Ibuprofen taken for fever/cough
+ml13m_3,NA - Ibuprofen taken for fever/cough
+ml13m_4,NA - Ibuprofen taken for fever/cough
+ml13m_5,NA - Ibuprofen taken for fever/cough
+ml13m_6,NA - Ibuprofen taken for fever/cough
+ml13n_1,Paracetamol taken for fever/cough
+ml13n_2,Paracetamol taken for fever/cough
+ml13n_3,Paracetamol taken for fever/cough
+ml13n_4,Paracetamol taken for fever/cough
+ml13n_5,Paracetamol taken for fever/cough
+ml13n_6,Paracetamol taken for fever/cough
+ml13o_1,NA - CS other taken for fever/cough
+ml13o_2,NA - CS other taken for fever/cough
+ml13o_3,NA - CS other taken for fever/cough
+ml13o_4,NA - CS other taken for fever/cough
+ml13o_5,NA - CS other taken for fever/cough
+ml13o_6,NA - CS other taken for fever/cough
+ml13p_1,NA - CS other taken for fever/cough
+ml13p_2,NA - CS other taken for fever/cough
+ml13p_3,NA - CS other taken for fever/cough
+ml13p_4,NA - CS other taken for fever/cough
+ml13p_5,NA - CS other taken for fever/cough
+ml13p_6,NA - CS other taken for fever/cough
+ml13x_1,Other taken for fever/cough
+ml13x_2,Other taken for fever/cough
+ml13x_3,Other taken for fever/cough
+ml13x_4,Other taken for fever/cough
+ml13x_5,Other taken for fever/cough
+ml13x_6,Other taken for fever/cough
+ml13y_1,Nothing taken for fever/cough
+ml13y_2,Nothing taken for fever/cough
+ml13y_3,Nothing taken for fever/cough
+ml13y_4,Nothing taken for fever/cough
+ml13y_5,Nothing taken for fever/cough
+ml13y_6,Nothing taken for fever/cough
+ml13z_1,Don't know if or what was taken for fever/cough
+ml13z_2,Don't know if or what was taken for fever/cough
+ml13z_3,Don't know if or what was taken for fever/cough
+ml13z_4,Don't know if or what was taken for fever/cough
+ml13z_5,Don't know if or what was taken for fever/cough
+ml13z_6,Don't know if or what was taken for fever/cough
+ml14a_1,NA - Injection given for fever/convulsion***
+ml14a_2,NA - Injection given for fever/convulsion***
+ml14a_3,NA - Injection given for fever/convulsion***
+ml14a_4,NA - Injection given for fever/convulsion***
+ml14a_5,NA - Injection given for fever/convulsion***
+ml14a_6,NA - Injection given for fever/convulsion***
+ml14b_1,NA - Suppository given for fever/convulsion***
+ml14b_2,NA - Suppository given for fever/convulsion***
+ml14b_3,NA - Suppository given for fever/convulsion***
+ml14b_4,NA - Suppository given for fever/convulsion***
+ml14b_5,NA - Suppository given for fever/convulsion***
+ml14b_6,NA - Suppository given for fever/convulsion***
+ml14y_1,NA - No suppository or injection given for fever/convulsion***
+ml14y_2,NA - No suppository or injection given for fever/convulsion***
+ml14y_3,NA - No suppository or injection given for fever/convulsion***
+ml14y_4,NA - No suppository or injection given for fever/convulsion***
+ml14y_5,NA - No suppository or injection given for fever/convulsion***
+ml14y_6,NA - No suppository or injection given for fever/convulsion***
+ml14z_1,NA - Don't know if suppository or injection given for fever/convulsion***
+ml14z_2,NA - Don't know if suppository or injection given for fever/convulsion***
+ml14z_3,NA - Don't know if suppository or injection given for fever/convulsion***
+ml14z_4,NA - Don't know if suppository or injection given for fever/convulsion***
+ml14z_5,NA - Don't know if suppository or injection given for fever/convulsion***
+ml14z_6,NA - Don't know if suppository or injection given for fever/convulsion***
+ml15a_1,Timing of start of fansidar
+ml15a_2,Timing of start of fansidar
+ml15a_3,Timing of start of fansidar
+ml15a_4,Timing of start of fansidar
+ml15a_5,Timing of start of fansidar
+ml15a_6,Timing of start of fansidar
+ml15b_1,NA - Number of days child took fansidar
+ml15b_2,NA - Number of days child took fansidar
+ml15b_3,NA - Number of days child took fansidar
+ml15b_4,NA - Number of days child took fansidar
+ml15b_5,NA - Number of days child took fansidar
+ml15b_6,NA - Number of days child took fansidar
+ml15c_1,NA - First source for fansidar
+ml15c_2,NA - First source for fansidar
+ml15c_3,NA - First source for fansidar
+ml15c_4,NA - First source for fansidar
+ml15c_5,NA - First source for fansidar
+ml15c_6,NA - First source for fansidar
+ml16a_1,Timing of start of chloroquine
+ml16a_2,Timing of start of chloroquine
+ml16a_3,Timing of start of chloroquine
+ml16a_4,Timing of start of chloroquine
+ml16a_5,Timing of start of chloroquine
+ml16a_6,Timing of start of chloroquine
+ml16b_1,NA - Number of days child took chloroquine
+ml16b_2,NA - Number of days child took chloroquine
+ml16b_3,NA - Number of days child took chloroquine
+ml16b_4,NA - Number of days child took chloroquine
+ml16b_5,NA - Number of days child took chloroquine
+ml16b_6,NA - Number of days child took chloroquine
+ml16c_1,NA - First source for chloroquine
+ml16c_2,NA - First source for chloroquine
+ml16c_3,NA - First source for chloroquine
+ml16c_4,NA - First source for chloroquine
+ml16c_5,NA - First source for chloroquine
+ml16c_6,NA - First source for chloroquine
+ml17a_1,Timing of start of amodiaquine
+ml17a_2,Timing of start of amodiaquine
+ml17a_3,Timing of start of amodiaquine
+ml17a_4,Timing of start of amodiaquine
+ml17a_5,Timing of start of amodiaquine
+ml17a_6,Timing of start of amodiaquine
+ml17b_1,NA - Number of days child took amodiaquine
+ml17b_2,NA - Number of days child took amodiaquine
+ml17b_3,NA - Number of days child took amodiaquine
+ml17b_4,NA - Number of days child took amodiaquine
+ml17b_5,NA - Number of days child took amodiaquine
+ml17b_6,NA - Number of days child took amodiaquine
+ml17c_1,NA - First source for amodiaquine
+ml17c_2,NA - First source for amodiaquine
+ml17c_3,NA - First source for amodiaquine
+ml17c_4,NA - First source for amodiaquine
+ml17c_5,NA - First source for amodiaquine
+ml17c_6,NA - First source for amodiaquine
+ml18a_1,Timing of start of quinine
+ml18a_2,Timing of start of quinine
+ml18a_3,Timing of start of quinine
+ml18a_4,Timing of start of quinine
+ml18a_5,Timing of start of quinine
+ml18a_6,Timing of start of quinine
+ml18b_1,NA - Number of days child took quinine
+ml18b_2,NA - Number of days child took quinine
+ml18b_3,NA - Number of days child took quinine
+ml18b_4,NA - Number of days child took quinine
+ml18b_5,NA - Number of days child took quinine
+ml18b_6,NA - Number of days child took quinine
+ml18c_1,NA - First source for quinine
+ml18c_2,NA - First source for quinine
+ml18c_3,NA - First source for quinine
+ml18c_4,NA - First source for quinine
+ml18c_5,NA - First source for quinine
+ml18c_6,NA - First source for quinine
+ml19a_1,NA - For fever/convulsion: consulted traditional healer***
+ml19a_2,NA - For fever/convulsion: consulted traditional healer***
+ml19a_3,NA - For fever/convulsion: consulted traditional healer***
+ml19a_4,NA - For fever/convulsion: consulted traditional healer***
+ml19a_5,NA - For fever/convulsion: consulted traditional healer***
+ml19a_6,NA - For fever/convulsion: consulted traditional healer***
+ml19b_1,NA - For fever/convulsion: gave tepid sponging***
+ml19b_2,NA - For fever/convulsion: gave tepid sponging***
+ml19b_3,NA - For fever/convulsion: gave tepid sponging***
+ml19b_4,NA - For fever/convulsion: gave tepid sponging***
+ml19b_5,NA - For fever/convulsion: gave tepid sponging***
+ml19b_6,NA - For fever/convulsion: gave tepid sponging***
+ml19c_1,NA - For fever/convulsion: gave herbs***
+ml19c_2,NA - For fever/convulsion: gave herbs***
+ml19c_3,NA - For fever/convulsion: gave herbs***
+ml19c_4,NA - For fever/convulsion: gave herbs***
+ml19c_5,NA - For fever/convulsion: gave herbs***
+ml19c_6,NA - For fever/convulsion: gave herbs***
+ml19d_1,NA - For fever/convulsion: CS***
+ml19d_2,NA - For fever/convulsion: CS***
+ml19d_3,NA - For fever/convulsion: CS***
+ml19d_4,NA - For fever/convulsion: CS***
+ml19d_5,NA - For fever/convulsion: CS***
+ml19d_6,NA - For fever/convulsion: CS***
+ml19e_1,NA - For fever/convulsion: CS***
+ml19e_2,NA - For fever/convulsion: CS***
+ml19e_3,NA - For fever/convulsion: CS***
+ml19e_4,NA - For fever/convulsion: CS***
+ml19e_5,NA - For fever/convulsion: CS***
+ml19e_6,NA - For fever/convulsion: CS***
+ml19f_1,NA - For fever/convulsion: CS***
+ml19f_2,NA - For fever/convulsion: CS***
+ml19f_3,NA - For fever/convulsion: CS***
+ml19f_4,NA - For fever/convulsion: CS***
+ml19f_5,NA - For fever/convulsion: CS***
+ml19f_6,NA - For fever/convulsion: CS***
+ml19x_1,NA - For fever/convulsion: other***
+ml19x_2,NA - For fever/convulsion: other***
+ml19x_3,NA - For fever/convulsion: other***
+ml19x_4,NA - For fever/convulsion: other***
+ml19x_5,NA - For fever/convulsion: other***
+ml19x_6,NA - For fever/convulsion: other***
+ml19y_1,NA - For fever/convulsion: gave/did nothing***
+ml19y_2,NA - For fever/convulsion: gave/did nothing***
+ml19y_3,NA - For fever/convulsion: gave/did nothing***
+ml19y_4,NA - For fever/convulsion: gave/did nothing***
+ml19y_5,NA - For fever/convulsion: gave/did nothing***
+ml19y_6,NA - For fever/convulsion: gave/did nothing***
+ml19z_1,NA - For fever/convulsion: don't know if something else was done***
+ml19z_2,NA - For fever/convulsion: don't know if something else was done***
+ml19z_3,NA - For fever/convulsion: don't know if something else was done***
+ml19z_4,NA - For fever/convulsion: don't know if something else was done***
+ml19z_5,NA - For fever/convulsion: don't know if something else was done***
+ml19z_6,NA - For fever/convulsion: don't know if something else was done***
+ml20a_1,Timing of start of combination with artemisinin
+ml20a_2,Timing of start of combination with artemisinin
+ml20a_3,Timing of start of combination with artemisinin
+ml20a_4,Timing of start of combination with artemisinin
+ml20a_5,Timing of start of combination with artemisinin
+ml20a_6,Timing of start of combination with artemisinin
+ml20b_1,NA - Number of days child took combination with artemisinin
+ml20b_2,NA - Number of days child took combination with artemisinin
+ml20b_3,NA - Number of days child took combination with artemisinin
+ml20b_4,NA - Number of days child took combination with artemisinin
+ml20b_5,NA - Number of days child took combination with artemisinin
+ml20b_6,NA - Number of days child took combination with artemisinin
+ml20c_1,NA - First source for combination with artemisinin
+ml20c_2,NA - First source for combination with artemisinin
+ml20c_3,NA - First source for combination with artemisinin
+ml20c_4,NA - First source for combination with artemisinin
+ml20c_5,NA - First source for combination with artemisinin
+ml20c_6,NA - First source for combination with artemisinin
+ml21a_1,Timing of start of other CTA antimalarial use
+ml21a_2,Timing of start of other CTA antimalarial use
+ml21a_3,Timing of start of other CTA antimalarial use
+ml21a_4,Timing of start of other CTA antimalarial use
+ml21a_5,Timing of start of other CTA antimalarial use
+ml21a_6,Timing of start of other CTA antimalarial use
+ml21b_1,NA - Number of days child took CS antimalarial
+ml21b_2,NA - Number of days child took CS antimalarial
+ml21b_3,NA - Number of days child took CS antimalarial
+ml21b_4,NA - Number of days child took CS antimalarial
+ml21b_5,NA - Number of days child took CS antimalarial
+ml21b_6,NA - Number of days child took CS antimalarial
+ml21c_1,NA - First source for CS antimalarial
+ml21c_2,NA - First source for CS antimalarial
+ml21c_3,NA - First source for CS antimalarial
+ml21c_4,NA - First source for CS antimalarial
+ml21c_5,NA - First source for CS antimalarial
+ml21c_6,NA - First source for CS antimalarial
+ml22a_1,NA - Timing of start of CS antimalarial use
+ml22a_2,NA - Timing of start of CS antimalarial use
+ml22a_3,NA - Timing of start of CS antimalarial use
+ml22a_4,NA - Timing of start of CS antimalarial use
+ml22a_5,NA - Timing of start of CS antimalarial use
+ml22a_6,NA - Timing of start of CS antimalarial use
+ml22b_1,NA - Number of days child took CS antimalarial
+ml22b_2,NA - Number of days child took CS antimalarial
+ml22b_3,NA - Number of days child took CS antimalarial
+ml22b_4,NA - Number of days child took CS antimalarial
+ml22b_5,NA - Number of days child took CS antimalarial
+ml22b_6,NA - Number of days child took CS antimalarial
+ml22c_1,NA - First source for CS antimalarial
+ml22c_2,NA - First source for CS antimalarial
+ml22c_3,NA - First source for CS antimalarial
+ml22c_4,NA - First source for CS antimalarial
+ml22c_5,NA - First source for CS antimalarial
+ml22c_6,NA - First source for CS antimalarial
+ml23a_1,Timing of start of other anti-malarial use
+ml23a_2,Timing of start of other anti-malarial use
+ml23a_3,Timing of start of other anti-malarial use
+ml23a_4,Timing of start of other anti-malarial use
+ml23a_5,Timing of start of other anti-malarial use
+ml23a_6,Timing of start of other anti-malarial use
+ml23b_1,NA - Number of days child took other anti-malarial
+ml23b_2,NA - Number of days child took other anti-malarial
+ml23b_3,NA - Number of days child took other anti-malarial
+ml23b_4,NA - Number of days child took other anti-malarial
+ml23b_5,NA - Number of days child took other anti-malarial
+ml23b_6,NA - Number of days child took other anti-malarial
+ml23c_1,NA - First source for other anti-malarial
+ml23c_2,NA - First source for other anti-malarial
+ml23c_3,NA - First source for other anti-malarial
+ml23c_4,NA - First source for other anti-malarial
+ml23c_5,NA - First source for other anti-malarial
+ml23c_6,NA - First source for other anti-malarial
+ml24c_1,NA - First source for antibiotic pill/syrup
+ml24c_2,NA - First source for antibiotic pill/syrup
+ml24c_3,NA - First source for antibiotic pill/syrup
+ml24c_4,NA - First source for antibiotic pill/syrup
+ml24c_5,NA - First source for antibiotic pill/syrup
+ml24c_6,NA - First source for antibiotic pill/syrup
+d005,Weight for Domestic Violence (6 decimals)
+d101a,Husband/partner jealous if respondent talks with other men
+d101b,Husband/partner accuses respondent of unfaithfulness
+d101c,Husband/partner does not permit respondent to meet female friends
+d101d,Husband/partner tries to limit respondent's contact with family
+d101e,Husband/partner insists on knowing where respondent is
+d101f,NA - Husband/partner doesn't trust respondent with money
+d101g,NA - CS control issue
+d101h,NA - CS control issue
+d101i,NA - CS control issue
+d101j,NA - CS control issue
+d102,Number of control issues answered 'Yes'  (D101x = 1)***
+d103a,Ever been humiliated by husband/partner
+d103b,Ever been threatened with harm by husband/partner
+d103c,Ever been insulted or made to feel bad by husband/partner
+d103d,NA - Ever CS emotional abuse by husband/partner
+d103e,NA - Ever CS emotional abuse by husband/partner
+d103f,NA - Ever CS emotional abuse by husband/partner
+d104,Experienced any emotional violence (D103x series)***
+d105a,"Ever been pushed, shook or had something thrown by husband/partner"
+d105b,Ever been slapped by husband/partner
+d105c,Ever been punched with fist or hit by something harmful by husband/partner
+d105d,Ever been kicked or dragged by husband/partner
+d105e,Ever been strangled or burnt by husband/partner
+d105f,Ever been threatened with knife/gun or other weapon by husband/partner
+d105g,NA - Ever CS physical violence by husband/partner
+d105h,Ever been physically forced into unwanted sex by husband/partner
+d105i,Ever been forced into other unwanted sexual acts by husband/partner
+d105j,Ever had arm twisted or hair pulled by husband/partner
+d105k,Ever been physically forced to perform sexual acts respondent didn't want to
+d105l,NA - Ever CS physical violence by husband/partner
+d105m,NA - Ever CS physical violence by husband/partner
+d105n,NA - Ever CS physical violence by husband/partner
+d106,"Experienced any less severe violence (D105A-C,J) by husband/partner"
+d107,Experienced any severe violence (D105D-F) by husband/partner
+d108,"Experienced any sexual violence (D105H-I,K) by husband/partner"
+d109,Timing of first event (from D105 series) in years after marriage
+d110a,Ever had bruises because of husband/partner's actions
+d110b,"Ever had eye injuries, sprains, dislocations or burns because of husband/partner's actions"
+d110c,NA - Ever went to health facility because of husband/partner's actions
+d110d,"Ever had wounds, broken bones, broken teeth or other serious injury because of husband/partner's actions"
+d110e,NA - CS because of husband/partner's actions
+d110f,NA - CS because of husband/partner's actions
+d110g,NA - CS because of husband/partner's actions
+d110h,NA - CS because of husband/partner's actions
+d111,Experienced any of listed husband/partner's actions (D110x series)***
+d112,Respondent ever physically hurt husband/partner when he was not hurting her
+d112a,Frequency of physically hurting husband/partner in last 12 months
+d113,Husband/partner drinks alcohol
+d114,Frequency of husband/partner being drunk
+d115b,Mother: Person who has ever physically hurt respondent
+d115c,Father: Person who has ever physically hurt respondent
+d115d,Daughter: Person who has ever physically hurt respondent
+d115e,NA - Son: Person who has ever physically hurt respondent
+d115f,Sister/brother: Person who has ever physically hurt respondent
+d115g,Other relative: Person who has ever physically hurt respondent
+d115h,NA - Other female family: Person who has ever physically hurt respondent
+d115i,NA - Other male family: Person who has ever physically hurt respondent
+d115j,NA - Former partner: Person who has ever physically hurt respondent
+d115k,Current boyfriend: Person who has ever physically hurt respondent
+d115l,Former boyfriend: Person who has ever physically hurt respondent
+d115m,NA - Step-mother: Person who has ever physically hurt respondent
+d115n,NA - Step-father: Person who has ever physically hurt respondent
+d115o,Mother-in-law: Person who has ever physically hurt respondent
+d115p,Father-in-law: Person who has ever physically hurt respondent
+d115q,Other in-law: Person who has ever physically hurt respondent
+d115r,NA - Other male in-law: Person who has ever physically hurt respondent
+d115s,NA - Female friend: Person who has ever physically hurt respondent
+d115t,NA - Male friend: Person who has ever physically hurt respondent
+d115u,NA - Neighbor: Person who has ever physically hurt respondent
+d115v,Teacher: Person who has ever physically hurt respondent
+d115w,Employer: Person who has ever physically hurt respondent
+d115x,Other: Person who has ever physically hurt respondent
+d115y,No person other than husband/partner ever physically hurt respondent
+d115xa,NA - Stranger: Person who has ever physically hurt respondent
+d115xb,NA - Other female in-law/family: Person who has ever physically hurt respondent
+d115xc,NA - Other male in-law/family: Person who has ever physically hurt respondent
+d115xd,NA - Friend: Person who has ever physically hurt respondent
+d115xe,Police: Person who has ever physically hurt respondent
+d115xf,NA - Religious leader: Person who has ever physically hurt respondent
+d115xg,NA - Lawyer: Person who has ever physically hurt respondent
+d115xh,NA - Doctor: Person who has ever physically hurt respondent
+d115xi,NA - CS: Person who has ever physically hurt respondent
+d115xj,NA - CS: Person who has ever physically hurt respondent
+d115xk,NA - CS: Person who has ever physically hurt respondent
+d116,NA - Person who hurt respondent most often
+d117a,Frequency of being hit in last 12 months by other than husband/partner
+d118a,Husband/partner: Person who hurt respondent during a pregnancy
+d118b,Mother: Person who hurt respondent during a pregnancy
+d118c,Father/step-father: Person who hurt respondent during a pregnancy
+d118d,Daughter/son: Person who hurt respondent during a pregnancy
+d118e,NA - Son alone: Person who hurt respondent during a pregnancy
+d118f,Sister/brother: Person who hurt respondent during a pregnancy
+d118g,Other relative: Person who hurt respondent during a pregnancy
+d118h,NA - Other female family: Person who hurt respondent during a pregnancy
+d118i,NA - Other male family: Person who hurt respondent during a pregnancy
+d118j,Former husband/partner: Person who hurt respondent during a pregnancy
+d118k,Current boyfriend: Person who hurt respondent during a pregnancy
+d118l,Former boyfriend: Person who hurt respondent during a pregnancy
+d118m,NA - Step-mother: Person who hurt respondent during a pregnancy
+d118n,NA - Step-father: Person who hurt respondent during a pregnancy
+d118o,Mother-in-law: Person who hurt respondent during a pregnancy
+d118p,Father-in-law: Person who hurt respondent during a pregnancy
+d118q,Other in-law: Person who hurt respondent during a pregnancy
+d118r,NA - Other female/male in-law: Person who hurt respondent during a pregnancy
+d118s,NA - Female friend: Person who hurt respondent during a pregnancy
+d118t,NA - Male friend: Person who hurt respondent during a pregnancy
+d118u,NA - Neighbor: Person who hurt respondent during a pregnancy
+d118v,Teacher: Person who hurt respondent during a pregnancy
+d118w,Employer: Person who hurt respondent during a pregnancy
+d118x,Other: Person who hurt respondent during a pregnancy
+d118y,Respondent was not hurt by anyone during a pregnancy
+d118xa,NA - Stranger: Person who hurt respondent during a pregnancy
+d118xb,NA - Other female in-law/family: Person who hurt respondent during a pregnancy
+d118xc,NA - Other male in-law/family: Person who hurt respondent during a pregnancy
+d118xd,NA - Friend: Person who hurt respondent during a pregnancy
+d118xe,Police: Person who hurt respondent during a pregnancy
+d118xf,NA - Religious leader: Person who hurt respondent during a pregnancy
+d118xg,NA - Lawyer: Person who hurt respondent during a pregnancy
+d118xh,NA - Doctor: Person who hurt respondent during a pregnancy
+d118xi,NA - CS: Person who hurt respondent during a pregnancy
+d118xj,NA - CS: Person who hurt respondent during a pregnancy
+d118xk,NA - CS: Person who hurt respondent during a pregnancy
+d119a,NA - Husband/partner: Person respondent went to seek help
+d119b,NA - Mother: Person respondent went to seek help
+d119c,NA - Father: Person respondent went to seek help
+d119d,NA - Daughter: Person respondent went to seek help
+d119e,NA - Son: Person respondent went to seek help
+d119f,NA - Sister: Person respondent went to seek help
+d119g,NA - Brother: Person respondent went to seek help
+d119h,Own family: Person respondent went to seek help
+d119i,Husband/partner family: Person respondent went to seek help
+d119j,Current/former husband/partner: Person respondent went to seek help
+d119k,Current/former boyfriend: Person respondent went to seek help
+d119l,NA - Former boyfriend alone: Person respondent went to seek help
+d119m,NA - Step-mother: Person respondent went to seek help
+d119n,NA - Step-father: Person respondent went to seek help
+d119o,NA - Mother-in-law: Person respondent went to seek help
+d119p,NA - Father-in-law: Person respondent went to seek help
+d119q,NA - Other female in-law: Person respondent went to seek help
+d119r,NA - Other male in-law: Person respondent went to seek help
+d119s,NA - Female friend: Person respondent went to seek help
+d119t,NA - Male friend: Person respondent went to seek help
+d119u,Neighbor: Person respondent went to seek help
+d119v,NA - Teacher: Person respondent went to seek help
+d119w,NA - Employer: Person respondent went to seek help
+d119x,Other: Person respondent went to seek help
+d119y,Respondent did not seek help from anyone
+d119xa,NA - Stranger: Person respondent went to seek help
+d119xb,Social service organization: Person respondent went to seek help
+d119xc,NA - CS: Person respondent went to seek help
+d119xd,Friend: Person respondent went to seek help
+d119xe,Police: Person respondent went to seek help
+d119xf,Religious leader: Person respondent went to seek help
+d119xg,Lawyer: Person respondent went to seek help
+d119xh,Doctor: Person respondent went to seek help
+d119xi,NA - CS: Person respondent went to seek help
+d119xj,NA - CS: Person respondent went to seek help
+d119xk,NA - CS: Person respondent went to seek help
+d120,NA - Main reason never sought help
+d121,Respondent's father ever beat her mother
+d122a,Interview interrupted: husband's presence
+d122b,Interview interrupted: other adult male's presence
+d122c,Interview interrupted: adult female's presence
+d123,NA - First sex was wanted or forced
+d124,Ever forced to have sex by anyone other than husband/partner in last 12 months
+d125,Ever forced to perform unwanted sexual acts
+d126,Age at first forced sexual act
+d127,Person who forced respondent into first sexual act
+d128,Ever told anyone else about violence
+d129,"Respondent afraid of husband/partner most of the time, sometimes or never"
+d130a,"Previous husband: ever hit, slap, kick or physically hurt respondent"
+d130b,Previous husband: physically forced to have sex or to perform sexual acts
+spool,Pool
+snprovin,New Province
+seligm,Household selected for male interview
+seligdv,Woman selected for DV
+sqlang,Questionnaire Language
+slangint,Interview Language
+sinterp,Interpreter
+s113a,Are you Congolese ?
+s114,Ethnicity
+s1005a,Number of cigarettes purchased last time
+s1005b,Total spent
+s1007a,Use tobacco without smoking
+s1007c,Try to stop smoking in the last 12 months
+s1007d,Smoking in the workplace in the last 30 days
+s1101a,Mother had other birth
+s1101b,Brothers alive
+s1101c,Sisters alive
+s1101d,Brothers who died
+s1101e,Sisters who died
+s1101f,Other siblings
+s1101g,Number of other siblings
+s1202,Line number of the youngest child
+s1203a,Has a birth certificate
+s1203b,Why doesn't have a birth certificate ?
+s1204,Number of books for children
+s1205a,Fabricated toys in the house
+s1205b,Toys from a store
+s1205c,Objects from household or from outside
+s1206a,Days left alone for more than one hour
+s1206b,Number of days left with another child for more than one hour.
+s1208,Line number of the youngest child of 3 or 4 years
+s1210,Participating in an educational learning program
+s1211,Hours spent in learning program during last 7 days
+s1212aa,Read books with child: mother
+s1212ab,Read books with child: father
+s1212ax,Read books with child: other
+s1212ay,Read books with child: no one
+s1212ba,Tell stories to child: mother
+s1212bb,Tell stories to child: father
+s1212bx,Tell stories to child: other
+s1212by,Tell stories to child: no one
+s1212ca,Sing songs to child: mother
+s1212cb,Sing songs to child: father
+s1212cx,Sing songs to child: other
+s1212cy,Sing songs to child: no one
+s1212da,Stroll out of the house with child: mother
+s1212db,Stroll out of the house with child: father
+s1212dx,Stroll out of the house with child: other
+s1212dy,Stroll out of the house with child: no one
+s1212ea,Play with child: mother
+s1212eb,Play with child: father
+s1212ex,Play with child: other
+s1212ey,Play with child: no one
+s1212fa,Spend time with child: mother
+s1212fb,Spend time with child: father
+s1212fx,Spend time with child: other
+s1212fy,Spend time with child: no one
+s1213,Child can name at least 10 letters of the alphabet.
+s1214,Child can read at least 4 common words
+s1215,Child can recognize the numbers 1 to 10
+s1216,Child can pick up with 2 fingers a small object
+s1217,Child is often too sick to play
+s1218,Child can follow simple instructions
+s1219,Child can do a task independently
+s1220,Child gets along well with other children
+s1221,"Child kicks, bites or beats others"
+s1222,Child is easily distracted
+s1323,Anyone (besides partner) ever forced respondent to have intercourse
+s1324,Anyone ever forced respondent to have other intercourse
+idx95_1,Index to Birth History
+idx95_2,Index to Birth History
+idx95_3,Index to Birth History
+idx95_4,Index to Birth History
+idx95_5,Index to Birth History
+idx95_6,Index to Birth History
+s506f_1,Yellow fever
+s506f_2,Yellow fever
+s506f_3,Yellow fever
+s506f_4,Yellow fever
+s506f_5,Yellow fever
+s506f_6,Yellow fever
+s506fd_1,Yellow fever  day
+s506fd_2,Yellow fever  day
+s506fd_3,Yellow fever  day
+s506fd_4,Yellow fever  day
+s506fd_5,Yellow fever  day
+s506fd_6,Yellow fever  day
+s506fm_1,Yellow fever month
+s506fm_2,Yellow fever month
+s506fm_3,Yellow fever month
+s506fm_4,Yellow fever month
+s506fm_5,Yellow fever month
+s506fm_6,Yellow fever month
+s506fy_1,Yellow fever  year
+s506fy_2,Yellow fever  year
+s506fy_3,Yellow fever  year
+s506fy_4,Yellow fever  year
+s506fy_5,Yellow fever  year
+s506fy_6,Yellow fever  year
+s510h_1,Yellow fever
+s510h_2,Yellow fever
+s510h_3,Yellow fever
+s510h_4,Yellow fever
+s510h_5,Yellow fever
+s510h_6,Yellow fever
+s513a_1,Given one tablet of mebendazole
+s513a_2,Given one tablet of mebendazole
+s513a_3,Given one tablet of mebendazole
+s513a_4,Given one tablet of mebendazole
+s513a_5,Given one tablet of mebendazole
+s513a_6,Given one tablet of mebendazole
+s513b_1,Already had the measles
+s513b_2,Already had the measles
+s513b_3,Already had the measles
+s513b_4,Already had the measles
+s513b_5,Already had the measles
+s513b_6,Already had the measles
+s513c_1,Age when child had measles
+s513c_2,Age when child had measles
+s513c_3,Age when child had measles
+s513c_4,Age when child had measles
+s513c_5,Age when child had measles
+s513c_6,Age when child had measles
+s538g_1,Malaxin taken for fever/cough
+s538g_2,Malaxin taken for fever/cough
+s538g_3,Malaxin taken for fever/cough
+s538g_4,Malaxin taken for fever/cough
+s538g_5,Malaxin taken for fever/cough
+s538g_6,Malaxin taken for fever/cough
+s538h_1,Malaritab taken for fever/cough
+s538h_2,Malaritab taken for fever/cough
+s538h_3,Malaritab taken for fever/cough
+s538h_4,Malaritab taken for fever/cough
+s538h_5,Malaritab taken for fever/cough
+s538h_6,Malaritab taken for fever/cough
+s538i_1,Arinate taken for fever/cough
+s538i_2,Arinate taken for fever/cough
+s538i_3,Arinate taken for fever/cough
+s538i_4,Arinate taken for fever/cough
+s538i_5,Arinate taken for fever/cough
+s538i_6,Arinate taken for fever/cough
+s538j_1,Artesunate taken for fever/cough
+s538j_2,Artesunate taken for fever/cough
+s538j_3,Artesunate taken for fever/cough
+s538j_4,Artesunate taken for fever/cough
+s538j_5,Artesunate taken for fever/cough
+s538j_6,Artesunate taken for fever/cough
+s538k_1,Mefloquine taken for fever/cough
+s538k_2,Mefloquine taken for fever/cough
+s538k_3,Mefloquine taken for fever/cough
+s538k_4,Mefloquine taken for fever/cough
+s538k_5,Mefloquine taken for fever/cough
+s538k_6,Mefloquine taken for fever/cough
+s538l_1,Other taken for fever/cough
+s538l_2,Other taken for fever/cough
+s538l_3,Other taken for fever/cough
+s538l_4,Other taken for fever/cough
+s538l_5,Other taken for fever/cough
+s538l_6,Other taken for fever/cough
