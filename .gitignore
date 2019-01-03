@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 .Rapp.history
+.Rproj.user
 
 # Session Data files
 .RData
@@ -26,7 +27,11 @@ figures/
 *.utf8.md
 *.knit.md
 
+# knitr outputs
+*.pdf
+*.html
+*.docx
 
 # MAC files
 .DS_Store
-.Rproj.user
+

@@ -25,8 +25,6 @@ dtsub <- dt %>%
 #----------------------------------------------------------------------------------------------------
 # Explore here the different prevalences/regions of Plasmodium species basic maps
 #----------------------------------------------------------------------------------------------------
-# issue here is that we are not using the weights. easy to incorporate...but is it worthwhile
-# at the very least, need to include the HIV weights
 
 
 # set mapping parameters
