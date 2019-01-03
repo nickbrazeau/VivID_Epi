@@ -6,6 +6,9 @@ library(tidyverse)
 # DHS munging
 devtools::install_github("OJWatson/rdhs", ref="master")
 library(rdhs)
+devtools::install_github("ropensci/osmdata")
+library(osmdata)
+library(sf)
 
 #---------------------------------------------------------------------------------
 # Using rDHS to pull down CD2013
@@ -68,6 +71,24 @@ ge <- ge %>%
 #---------------------------------------------------------------------------------
 # pull down terrain maps
 #---------------------------------------------------------------------------------
+# https://github.com/ropensci/osmdata
+# query <- osmdata::opq(osmdata::getbb("DR Congo", format_out = "polygon"))
+
+bb <- getbb("Democratic Republic of the Congo", featuretype = "country")
+
+osm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway") %>% 
+  osmdata::osmdata_sf()
+
+save(osm, file = "data/osm_sf.rda")
+
+
+
+# london_streets = opq(getbb("london, uk")) %>%
+#   add_osm_feature(key = "highway") %>%
+#   osmdata_sf() %>%
+#   `[[`("osm_lines")
+# london_streets = dplyr::select(london_streets, osm_id)
 
 
 #---------------------------------------------------------------------------------
