@@ -35,7 +35,7 @@ merge_pr_plsmdm_gemtdt <- function(pr = arpr, plsmdm = panplasmpcrres, ge = ge){
 #----------------------------------------------------------------------------------------------------
 # Mapping Functions
 #----------------------------------------------------------------------------------------------------
-prev_summarizer <- function(data, maplvl, plsmdmspec, sfobj){
+prev_point_est_summarizer <- function(data, maplvl, plsmdmspec, sfobj){
   
   
   # catch error
@@ -48,7 +48,7 @@ prev_summarizer <- function(data, maplvl, plsmdmspec, sfobj){
   
   # clusters are weighted (each individual has same weight in cluster)
   ret <- data %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hv005) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hv005_cont) %>% 
     dplyr::group_by(!!maplvl) %>% 
     dplyr::summarise(plsmdn = srvyr::survey_total(hv001), 
                      plsmd = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 

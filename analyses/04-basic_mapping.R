@@ -8,19 +8,14 @@ library(srvyr) #wrap the survey package in dplyr syntax
 #......................
 # Import Data
 #......................
-load("data/vividepi_recode.rds")
-load("data/vividepi_raw.rda")
+load("data/vividepi_recode.rda")
 
-# R OSM
-# http://osmar.r-forge.r-project.org/
-# https://cran.r-project.org/web/packages/OpenStreetMap/index.html
-# https://openmaptiles.com/downloads/dataset/satellite/africa/congo-democratic-republic/#2.9/-7.11/17.76
 
 #......................
 # Datawrangle
 #......................
 dtsub <- dt %>% 
-  dplyr::select(c("hivrecode_barcode", "hv001", "hv002", "hiv05_cont", "pfldh", "po18s", "pv18s", "adm1dhs", "adm1name", "latnum", "longnum"))
+  dplyr::select(c("hivrecode_barcode", "hv001", "hv002", "hv005_cont", "hiv05_cont", "pfldh", "po18s", "pv18s", "adm1dhs", "adm1name", "latnum", "longnum"))
 
 #----------------------------------------------------------------------------------------------------
 # Explore here the different prevalences/regions of Plasmodium species basic maps

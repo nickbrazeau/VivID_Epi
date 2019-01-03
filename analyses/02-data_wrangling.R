@@ -10,8 +10,32 @@
 # libraries and imports
 library(tidyverse)
 source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R")
+
+
+#--------------------------------------------------------------
+# Section 1:Pulling map file for all recodes
+#-------------------------------------------------------------- 
+# this code is now located under sandbox/01-liftover_attempts.R
+# cd2013 was under phase 6
+# https://dhsprogram.com/publications/publication-DHSG4-DHS-Questionnaires-and-Manuals.cfm
+# recode map https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
+# https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_raw.rda")
 dt <- merge_pr_plsmdm_gemtdt(pr = arpr, plsmdm = panplasmpcrres, ge = ge)
+
+
+
+
+
+
+#--------------------------------------------------------------
+# Section 2: Looking at recodes, manual data wrangle
+#-------------------------------------------------------------- 
+# The purist in me would like to do this in a way that was automatic
+# however, it is going to be a lot of work with lifting over all the recodes
+# and the covariates are not all the same names or numbers in the various recodes
+# which makes for a ton of corner cases, that will take more time to optimize
+# than to do by hand... 
 
 #..........................
 # Exposure of Interests
@@ -277,7 +301,13 @@ dt <- dt %>%
 #.............
 
 
-
+#.............
+# Open Street Map
+#.............
+# R OSM
+# http://osmar.r-forge.r-project.org/
+# https://cran.r-project.org/web/packages/OpenStreetMap/index.html
+# https://openmaptiles.com/downloads/dataset/satellite/africa/congo-democratic-republic/#2.9/-7.11/17.76
 
 
 
@@ -295,6 +325,6 @@ dt <- dt %>%
 #..........................................................................................
 #                               Final Write Out
 #..........................................................................................
-save(dt, file = "data/vividepi_recode.rds")
+save(dt, DRCprov, file = "data/vividepi_recode.rda")
 
 

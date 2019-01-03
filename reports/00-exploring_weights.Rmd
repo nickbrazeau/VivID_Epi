@@ -1,0 +1,76 @@
+---
+title: "Exploring DHS Weights"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+editor_options: 
+  chunk_output_type: console
+---
+
+<style>
+
+table, td, th {
+  border: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  min-width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+</style>
+
+```{r setup, echo=T, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+#Data Wrangling
+source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R")
+library(tidyverse)
+library(sf)
+devtools::install_github("kaz-yos/tableone")
+library(tableone)
+
+# weights
+library(survey)
+library(srvyr)
+
+```
+
+
+**Note**, `survey_total` is really a sum.
+
+Issues that remain: why does the `adm1name` and the `hv001` cluster level produce different Ns.
+```{r}
+
+
+# Set up survey design
+dt$pv18s[is.na(dt$pv18s)] <- 1
+design <- survey::svydesign(ids = dt$hv001,
+                            weights=dt$hiv05_cont,
+                            data=dt)
+
+# Get country-wide count
+svytable(~pv18s,design) 
+svyby(~pv18s,~adm1name,design,svytotal)
+
+svymean(~pv18s,design)
+svyby(~pv18s,~adm1name,design, svymean)
+
+dt %>%
+  srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>%
+  dplyr::group_by(adm1name) %>% 
+  dplyr::summarise( n = srvyr::survey_total(x=pv18s, vartype = c("se", "ci")),
+                    plsmd = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95))
+
+
+
+
+```
