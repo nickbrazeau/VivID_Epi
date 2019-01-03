@@ -1,0 +1,118 @@
+---
+title: "Title"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    code_folding: true
+editor_options: 
+  chunk_output_type: console
+---
+
+<style>
+
+table, td, th {
+  border: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  min-width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+</style>
+
+
+
+```{r packages, echo=F, warning=F, message=F, results='hide'}
+# CSS style code from SO: https://stackoverflow.com/questions/32588870/spaces-between-columns-in-stargazer-type-html-table-output
+
+# datawrangle
+library(tidyverse)
+
+
+```
+
+```{r, echo=F, warning=F, message=F}
+
+
+
+df %>% 
+  DT::datatable(., extensions='Buttons',
+               options = list(
+              searching = T,
+              pageLength = 20,
+              dom = 'Bfrtip', 
+              buttons = c('csv')))
+
+```
+
+
+
+```{r}
+
+## basic epi
+xtabs(~llin+pv, addNA=T, data=fullsearch)
+round(prop.table(xtabs(~llin+pv, addNA=T, data=fullsearch), margin = 2),4)
+
+
+
+
+
+```
+# mixed linear models
+```{r}
+m1 <- glm(pfldh ~ netinsecticide, 
+          data=alladultscomm[!is.na(alladultscomm$netinsecticide),],
+           family=binomial(link="identity"))
+summary(m1)
+
+cbind(coef(m1), confint(m1))
+
+m1.glmer = lme4::glmer(pfldh ~ netinsecticide + (1|shnprovin),
+              data=alladultscomm[!is.na(alladultscomm$netinsecticide),],
+              family=binomial(link="identity"))
+
+summary(m1.glmer)
+cbind(coef(m1.glmer), confint(m1.glmer))
+
+m2.glmer = lme4::glmer(pfldh ~ netinsecticide + netpropprov + (1|shnprovin),
+              data=alladultscomm[!is.na(alladultscomm$netinsecticide),],
+              family=binomial(link="identity"))
+
+summary(m2.glmer)
+cbind(coef(m2.glmer), confint(m2.glmer))
+
+
+
+```
+
+```{r stargazer, echo=F, warning=F, message=F, results='asis'}
+stargazer::stargazer(%%%%, title = "Results of Weighted Linear Models for Hap WT Prev with 95% CI", 
+          dep.var.labels=c("x Freq", "y Freq"),
+          add.lines=list(c("AIC", round(AIC(mod_pfcrt_1),1), round(AIC(mod_pfcrt_2),1), round(AIC(mod_pfcrt_3),1), round(AIC(mod_mdre1_1),1),round(AIC(mod_mdre1_2),1),round(AIC(mod_mdre1_3),1))),
+          no.space=F,
+          ci=TRUE, ci.level=0.95, 
+          single.row=F,
+          align=T, 
+          type = "html")
+
+
+```
+  
+  
+```{r stargazer2, echo=F, warning=F, message=F, results='asis'}
+stargazer::stargazer(%%%%, 
+          title = "Pvalues of Coef from Weighted Linear Models for Hap WT Prev",
+          report=('vc*p'),
+          align=T, 
+          type = "html")
+
+```
