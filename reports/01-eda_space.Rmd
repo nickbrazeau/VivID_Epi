@@ -9,8 +9,10 @@ output:
     toc: yes
     toc_float: yes
     toc_depth: 2
+    code_folding: hide
 editor_options: 
   chunk_output_type: console
+  
 ---
 
 <style>
@@ -66,6 +68,10 @@ gridExtra::grid.arrange(prevmaps[[2]],
                         prevmaps[[5]],
                         ncol=2, top=grid::textGrob("Vivax Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
 
+
+
+
+
 ```
 
 #### _P. falciparum_
@@ -92,7 +98,7 @@ Each tab is a prevalence map for a malaria species
 #### _P. vivax_
 ```{r, results='hide', fig.keep='all'}
 gridExtra::grid.arrange(prevhist[[2]], 
-                        zscoreprevmaps[[5]],
+                        zscoreprevmaps[[2]],
                         ncol=2, top=grid::textGrob("Vivax Standardized Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
 
 ```
@@ -100,7 +106,7 @@ gridExtra::grid.arrange(prevhist[[2]],
 #### _P. falciparum_
 ```{r, results='hide', fig.keep='all'}
 gridExtra::grid.arrange(prevhist[[1]], 
-                        zscoreprevmaps[[4]],
+                        zscoreprevmaps[[1]],
                         ncol=2, top=grid::textGrob("Falciparum Standardized Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
 
 ```
@@ -108,7 +114,7 @@ gridExtra::grid.arrange(prevhist[[1]],
 #### _P. ovale_
 ```{r, results='hide', fig.keep='all'}
 gridExtra::grid.arrange(prevhist[[3]], 
-                        zscoreprevmaps[[6]],
+                        zscoreprevmaps[[3]],
                         ncol=2, top=grid::textGrob("Ovale Standardized Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
 
 ```
@@ -122,15 +128,16 @@ Weighted cluster prevalence estimates
 ```{r}
 
 dt %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hv005) %>% 
-    dplyr::group_by(hv001) %>% 
-    dplyr::summarise(plsmdn = srvyr::survey_total(hv001), 
+    dplyr::mutate(count = 1) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
+    dplyr::group_by(adm1name) %>% 
+    dplyr::summarise(plsmdn = srvyr::survey_total(count, vartype = c("se", "ci")), 
                      plsmd = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
   mutate_if(is.numeric, round, 2) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
               searching = T,
-              pageLength = 20,
+              pageLength = 10,
               dom = 'Bfrtip', 
               buttons = c('csv'))) 
 
@@ -142,15 +149,16 @@ dt %>%
 Weighted cluster prevalence estimates 
 ```{r}
 dt %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hv005) %>% 
-    dplyr::group_by(adm1name) %>% 
-    dplyr::summarise(plsmdn = srvyr::survey_total(hv005), 
+    dplyr::mutate(count = 1) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
+    dplyr::group_by(hv001) %>% 
+    dplyr::summarise(plsmdn = srvyr::survey_total(count, vartype = c("se", "ci")), 
                      plsmd = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
   mutate_if(is.numeric, round, 2) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
               searching = T,
-              pageLength = 20,
+              pageLength = 10,
               dom = 'Bfrtip', 
               buttons = c('csv'))) 
 
@@ -160,15 +168,16 @@ dt %>%
 Weighted cluster prevalence estimates 
 ```{r}
 dt %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hv005) %>% 
+    dplyr::mutate(count = 1) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
     dplyr::group_by(hv002) %>% 
-    dplyr::summarise(plsmdn = srvyr::survey_total(hv001), 
+    dplyr::summarise(plsmdn = srvyr::survey_total(count, vartype = c("se", "ci")), 
                      plsmd = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
   mutate_if(is.numeric, round, 2) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
               searching = T,
-              pageLength = 20,
+              pageLength = 10,
               dom = 'Bfrtip', 
               buttons = c('csv'))) 
   
@@ -193,17 +202,8 @@ plotObj <- dplyr::bind_cols(pfprov, pvprov) %>%
   ggplot(aes(x=Pf_prev, y=Pv_prev, size = plsmdn)) +
   geom_point(aes(colour = adm1name)) +
   geom_smooth(method="loess", se=F, colour = "red") +
-      ggtitle("Pfalciparum versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") +
-    theme(plot.title = element_text(famil = "Arial", face = "bold", hjust = 0.5, size = 18), 
-          legend.position = "none",
-          axis.text.x = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, angle = 90, size = 10),
-          axis.text.y = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, size = 10),
-          axis.ticks = element_blank(),
-          axis.line = element_line(colour = "black"),
-          panel.background = element_rect(fill = "transparent"),
-          plot.background = element_rect(fill = "transparent"),
-          panel.grid = element_blank(),
-          panel.border = element_blank())
+      ggtitle("Pfalciparum versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") + 
+  vivid_theme
 
 plotly::ggplotly(plotObj)
 
@@ -213,7 +213,7 @@ plotly::ggplotly(plotObj)
 Points are scaled by size of province (and color of province). Loess curve in red. 
 ```{r}
 poprov <- mp$data[[3]]
-colnames(pfprov)[4] <- "Po_prev"
+colnames(poprov)[4] <- "Po_prev"
 
 pvprov <- mp$data[[2]]
 colnames(pvprov)[4] <- "Pv_prev"
@@ -224,16 +224,7 @@ plotObj <- dplyr::bind_cols(poprov, pvprov) %>%
   geom_point(aes(colour = adm1name)) +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Povlae versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Po Prevalence") +
-    theme(plot.title = element_text(famil = "Arial", face = "bold", hjust = 0.5, size = 18), 
-          legend.position = "none",
-          axis.text.x = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, angle = 90, size = 10),
-          axis.text.y = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, size = 10),
-          axis.ticks = element_blank(),
-          axis.line = element_line(colour = "black"),
-          panel.background = element_rect(fill = "transparent"),
-          plot.background = element_rect(fill = "transparent"),
-          panel.grid = element_blank(),
-          panel.border = element_blank())
+  vivid_theme
 
 plotly::ggplotly(plotObj)
 
@@ -252,22 +243,13 @@ pvclust <- mp$data[[5]]
 colnames(pvclust)[4] <- "Pv_prev"
   
 
-plotObj <- dplyr::bind_cols(pfprov, pvprov) %>% 
+plotObj <- dplyr::bind_cols(pfclust, pvclust) %>% 
   dplyr::filter(!(Pf_prev == 0 & Pv_prev == 0)) %>% 
   ggplot(aes(x=Pf_prev, y=Pv_prev, size = plsmdn)) +
   geom_point(aes(colour = hv001)) +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Pfalciparum versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") +
-    theme(plot.title = element_text(famil = "Arial", face = "bold", hjust = 0.5, size = 18), 
-          legend.position = "none",
-          axis.text.x = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, angle = 90, size = 10),
-          axis.text.y = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, size = 10),
-          axis.ticks = element_blank(),
-          axis.line = element_line(colour = "black"),
-          panel.background = element_rect(fill = "transparent"),
-          plot.background = element_rect(fill = "transparent"),
-          panel.grid = element_blank(),
-          panel.border = element_blank())
+  vivid_theme
 
 plotly::ggplotly(plotObj)
 
@@ -288,16 +270,7 @@ plotObj <- dplyr::bind_cols(poclust, pvclust) %>%
   geom_point(aes(colour = hv001)) +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Pfalciparum versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") +
-    theme(plot.title = element_text(famil = "Arial", face = "bold", hjust = 0.5, size = 18), 
-          legend.position = "none",
-          axis.text.x = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, angle = 90, size = 10),
-          axis.text.y = element_text(famil = "Arial", hjust = 0.5, vjust = 0.5, size = 10),
-          axis.ticks = element_blank(),
-          axis.line = element_line(colour = "black"),
-          panel.background = element_rect(fill = "transparent"),
-          plot.background = element_rect(fill = "transparent"),
-          panel.grid = element_blank(),
-          panel.border = element_blank())
+    vivid_theme
 
 plotly::ggplotly(plotObj)
 
@@ -305,3 +278,9 @@ plotly::ggplotly(plotObj)
 
 
 #### 
+
+
+
+
+
+

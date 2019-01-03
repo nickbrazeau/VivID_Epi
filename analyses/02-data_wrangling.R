@@ -23,8 +23,9 @@ source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R")
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_raw.rda")
 dt <- merge_pr_plsmdm_gemtdt(pr = arpr, plsmdm = panplasmpcrres, ge = ge)
 
-
-
+# drop observations with missing geospatial data
+dt <- dt %>% 
+  dplyr::filter(!is.na(dt$dhscc))
 
 
 
@@ -325,6 +326,6 @@ dt <- dt %>%
 #..........................................................................................
 #                               Final Write Out
 #..........................................................................................
-save(dt, DRCprov, file = "data/vividepi_recode.rda")
+save(dt, DRCprov, ge, file = "data/vividepi_recode.rda")
 
 

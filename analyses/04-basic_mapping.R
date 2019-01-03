@@ -1,14 +1,14 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to explore basic maps of Plasmodium infections in the CD2013 data
 #----------------------------------------------------------------------------------------------------
-source("analyses/00-functions.R") 
+source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R") 
 library(tidyverse)
 library(sf)
 library(srvyr) #wrap the survey package in dplyr syntax
 #......................
 # Import Data
 #......................
-load("data/vividepi_recode.rda")
+load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 
 
 #......................
@@ -65,36 +65,6 @@ mp$data <- sapply(list(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, 
 #......................
 # Plot Maps
 #......................
-mapplotter <- function(data, maplvl, plsmdmspec){
-  
-  
-  ret <- ggplot() + 
-    geom_sf(data = DRCprov) +
-    ggtitle(paste(plsmdmspec)) +
-    vivid_map_theme
-  
-  if(maplvl == "adm1name"){
-    
-    ret <- ret + geom_sf(data = data, aes(fill = plsmd)) +
-      scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-      coord_sf(datum=NA)  # to get rid of gridlines
-    
-  } else if(maplvl == "hv001"){
-    
-    ret <- ret + geom_sf(data = data, aes(fill = plsmd, colour = plsmd, size = plsmdn), alpha = 0.8) +
-      scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-      scale_size(guide = 'none') +  scale_fill_continuous(guide = 'none') +
-      coord_sf(datum=NA)  # to get rid of gridlines
-    
-  } else {
-    stop("maplvl is not in the options for this function")
-  }
-  
-  
-  return(ret)
-  
-}
-
 prevmaps <- pmap(mp, mapplotter)
 
 # jpeg(file = "figures/04-prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
@@ -141,7 +111,7 @@ zscoremapplotter <- function(data, plsmdmspec){
     scale_size(guide = 'none') +
     ggtitle(paste(plsmdmspec)) +
     coord_sf(datum=NA) + # to get rid of gridlines
-    vivid_map_theme
+    vivid_theme
   
   return(ret)
   
@@ -155,13 +125,13 @@ prevhist <- pmap(list(data = clusters$ret, plsmdmspec = clusters$plsmdmspec), fu
   ggplot(.) +
     geom_histogram(mapping = aes(x=plsmd)) + 
     ggtitle(paste(plsmdmspec)) + ylab("Count") +
-    vivid_map_theme
+    vivid_theme
 })
 
 
 
 # jpeg(file = "figures/04-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
-gridExtra::grid.arrange(prevhist[[1]],
+ gridExtra::grid.arrange(prevhist[[1]],
                         prevhist[[2]],
                         prevhist[[3]],
                         zscoreprevmaps[[1]], 

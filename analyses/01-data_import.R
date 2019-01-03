@@ -25,10 +25,10 @@ datasets <- rdhs::dhs_datasets(surveyIds = survs$SurveyId,
                                fileFormat = "flat")
 
 # download all DHS datsets 
-downloads <- rdhs::get_datasets(datasets$FileName) 
+downloads <- rdhs::get_datasets(datasets$FileName[!grepl("GC", datasets$FileName)]) # still not reading GC correctly
 
 #---------------------------------------------------------------------------------
-# pull down maps
+# pull down boundary maps
 #---------------------------------------------------------------------------------
 # recent r package to wrap gadm -- https://cran.r-project.org/web/packages/GADMTools/GADMTools.pdf
 #spatial from GADM -- these are polygon files
@@ -62,7 +62,12 @@ ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled thi
 # remove clusters that were missing from the DHS, see readme
 ge <- ge %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
+
+#---------------------------------------------------------------------------------
+# pull down terrain maps
+#---------------------------------------------------------------------------------
 
 
 #---------------------------------------------------------------------------------
