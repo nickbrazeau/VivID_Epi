@@ -254,9 +254,9 @@ dt %>%
                      plsmd = mean(pv18s)) %>% 
     dplyr::filter(plsmd != 0) %>%
   ggplot() +
-  geom_violin(aes(x=factor(plsmdn), y=plsmd, colour = factor(plsmdn))) +
-  vivid_theme
-  
+  geom_violin(aes(x=factor(plsmdn), y=plsmd, fill = factor(plsmdn))) +
+  vivid_theme +
+  guides(fill=FALSE)
 
 ```
 
