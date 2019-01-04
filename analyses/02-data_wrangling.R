@@ -95,6 +95,11 @@ dt <- dt %>%
   dplyr::mutate(hvdate_fct = lubridate::dmy(paste0(hv016, "/", hv006, "/", hv007)))
 
 
+#.............
+# households?? hard to say
+#............
+dt <- dt %>% 
+  dplyr::mutate(hhid_fct = factor( gsub("        | ", "", hhid)))
 
 
 

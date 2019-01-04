@@ -124,7 +124,7 @@ gridExtra::grid.arrange(prevhist[[3]],
 
 ### _P. vivax_ Summary Stats with Weights {.tabset .tabset-fade .tabset-pill}
 #### Province
-Weighted cluster prevalence estimates 
+Weighted province prevalence estimates 
 ```{r}
 
 dt %>% 
@@ -165,12 +165,12 @@ dt %>%
 ```
 
 #### Household
-Weighted cluster prevalence estimates 
+Weighted household prevalence estimates 
 ```{r}
 dt %>% 
     dplyr::mutate(count = 1) %>% 
     srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
-    dplyr::group_by(hv002) %>% 
+    dplyr::group_by(hhid_fct) %>% 
     dplyr::summarise(plsmdn = srvyr::survey_total(count, vartype = c("se", "ci")), 
                      plsmd = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
   mutate_if(is.numeric, round, 2) %>% 
@@ -191,7 +191,7 @@ dt %>%
 
 ### _P. vivax_ Summary Stats Unweights {.tabset .tabset-fade .tabset-pill}
 #### Province
-Unweighted cluster prevalence estimates 
+Unweighted province prevalence estimates 
 ```{r}
 
 dt %>% 
@@ -228,10 +228,10 @@ dt %>%
 ```
 
 #### Household
-Unweighted cluster prevalence estimates 
+Unweighted household prevalence estimates 
 ```{r}
 dt %>% 
-    dplyr::group_by(hv002) %>% 
+    dplyr::group_by(hhid_fct) %>% 
     dplyr::summarise(plsmdn = n(), 
                      plsmd = mean(pv18s)) %>% 
   mutate_if(is.numeric, round, 2) %>% 
@@ -244,6 +244,22 @@ dt %>%
   
 
 ```
+
+#### Household Dist
+Unweighted household prevalence estimates that are plotted where `Pv18s != 0` and `household membership > 1`
+```{r}
+dt %>% 
+    dplyr::group_by(hhid_fct) %>% 
+    dplyr::summarise(plsmdn = n(), 
+                     plsmd = mean(pv18s)) %>% 
+    dplyr::filter(plsmd != 0) %>%
+  ggplot() +
+  geom_violin(aes(x=factor(plsmdn), y=plsmd, colour = factor(plsmdn))) +
+  vivid_theme
+  
+
+```
+
 ### 
 
 
@@ -290,7 +306,6 @@ plotObj <- dplyr::bind_cols(poprov, pvprov) %>%
 plotly::ggplotly(plotObj)
 
 ```
-
 ####
 
 ### By Cluster
@@ -336,8 +351,6 @@ plotObj <- dplyr::bind_cols(poclust, pvclust) %>%
 plotly::ggplotly(plotObj)
 
 ```
-
-
 #### 
 
 
