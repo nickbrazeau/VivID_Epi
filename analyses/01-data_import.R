@@ -69,16 +69,64 @@ ge <- ge %>%
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
 #---------------------------------------------------------------------------------
-# pull down terrain maps
+# pull down OSM maps
 #---------------------------------------------------------------------------------
 # https://github.com/ropensci/osmdata
 # query <- osmdata::opq(osmdata::getbb("DR Congo", format_out = "polygon"))
 
 bb <- getbb("Democratic Republic of the Congo", featuretype = "country")
+polybb <- getbb("Democratic Republic of the Congo", featuretype = "country",  format_out = 'polygon')
 
-osm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "highway") %>% 
+# https://wiki.openstreetmap.org/wiki/Map_Features#Highway
+trunkroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway", value = "trunk") %>% # The most important roads in a country's system that aren't motorways. (Need not necessarily be a divided highway.) 
+  trim_osmdata(polybb) %>% 
   osmdata::osmdata_sf()
+primaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link larger towns.)
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+secondaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link towns.)
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+tertiaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway", value = "tertiary") %>% # The next most important roads in a country's system. (Often link smaller towns and villages)
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+hospitalosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "amenity", value = "hospital") %>% 
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+docosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "amenity", value = "doctor") %>% # A doctor's practice / surgery.
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+
+riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+riverbankosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "waterway", value = "riverbank") %>% # A wide river as defined by its area.
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+streamosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "waterway", value = "stream") %>% # The linear flow of a river, in flow direction.
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+waterosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "natural", value = "water") %>% # Any body of water, from natural such as a lake or pond to artificial like moat or canal
+  trim_osmdata(polybb) %>% 
+  osmdata::osmdata_sf()
+
+
 
 save(osm, file = "data/osm_sf.rda")
 
@@ -90,6 +138,27 @@ save(osm, file = "data/osm_sf.rda")
 #   `[[`("osm_lines")
 # london_streets = dplyr::select(london_streets, osm_id)
 
+#---------------------------------------------------------------------------------
+# Pull Down Stamen Maps (esp terrain)
+#---------------------------------------------------------------------------------
+
+drc_back_terrain <- ggmap::get_stamenmap(bb, zoom = 11, 
+                                         maptype = "terrain-background")
+save(drc_back_terrain, file = "~/Documents/GitHub/VivID_Epi/data/DRC_terrain.rda")
+
+#---------------------------------------------------------------------------------
+# Climate Data
+#---------------------------------------------------------------------------------
+
+# From OJ (via slack on 1/10/2019)
+# https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0056487
+# https://www.nature.com/articles/ncomms1879#supplementary-information
+load("data/imperial_share/admin_units_seasonal.rda")
+admin_units_seasonal <- admin_units_seasonal %>% 
+  filter(country == "Democratic Republic of the Congo")
+# this is from 2010 and just the 13 DRC prov... 
+
+# if this doesn't pan out, check the GSODR package from Ropensci -- https://cran.r-project.org/web/packages/GSODR/index.html
 
 #---------------------------------------------------------------------------------
 # Read in and merge qPCR data

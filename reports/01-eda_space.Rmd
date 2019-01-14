@@ -43,7 +43,8 @@ library(tableone)
 #......................
 # Import Data
 #......................
-source("~/Documents/GitHub/VivID_Epi/analyses/04-basic_mapping.R")
+load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+load("~/Documents/GitHub/VivID_Epi/reports/report_obj/04-basic_mapping_objs.rda")
 
 ```
 
@@ -59,7 +60,7 @@ source("~/Documents/GitHub/VivID_Epi/analyses/04-basic_mapping.R")
 
 ## Prevalence Maps
 
-### Unstandardized Point Estimate Prevalence Maps by Species {.tabset .tabset-fade .tabset-pill}
+### Unstandardized Point Estimate Prevalence Maps by Species, Weighted {.tabset .tabset-fade .tabset-pill}
 Each tab is a prevalence map for a malaria species
 
 #### _P. vivax_
@@ -86,13 +87,25 @@ gridExtra::grid.arrange(prevmaps[[1]],
 ```{r, results='hide', fig.keep='all'}
 gridExtra::grid.arrange(prevmaps[[3]], 
                         prevmaps[[6]],
-                        ncol=2, top=grid::textGrob("Ovale Standardized Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+                        ncol=2, top=grid::textGrob("Ovale Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+
+```
+
+#### All
+```{r, results='hide', fig.keep='all'}
+gridExtra::grid.arrange(prevmaps[[1]], 
+                        prevmaps[[2]],
+                        prevmaps[[3]],
+                        prevmaps[[4]],
+                        prevmaps[[5]],
+                        prevmaps[[6]],
+                        nrow=2, top=grid::textGrob("Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
 
 ```
 ###
 
 
-### Standardized Point Estimate Prevalence Maps by Species {.tabset .tabset-fade .tabset-pill}
+### Standardized Point Estimate Prevalence Maps by Species, Weighted {.tabset .tabset-fade .tabset-pill}
 Each tab is a prevalence map for a malaria species
 
 #### _P. vivax_
@@ -118,8 +131,55 @@ gridExtra::grid.arrange(prevhist[[3]],
                         ncol=2, top=grid::textGrob("Ovale Standardized Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
 
 ```
+
+#### All
+```{r, results='hide', fig.keep='all'}
+
+ gridExtra::grid.arrange(prevhist[[1]],
+                        prevhist[[2]],
+                        prevhist[[3]],
+                        zscoreprevmaps[[1]], 
+                        zscoreprevmaps[[2]],
+                        zscoreprevmaps[[3]],
+                        nrow=2, 
+                        top=grid::textGrob("Histograms and Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+
+```
 ###
 
+### Terrain Maps with Point Estimate Prevalence by Species (Weighted) {.tabset .tabset-fade .tabset-pill}
+Each tab is a prevalence map for a malaria species
+
+#### _P. vivax_
+```{r, results='hide', fig.keep='all', fig.width = 11, fig.width=8}
+
+gridExtra::grid.arrange(terrmaps[[2]], 
+                        ncol=2, top=grid::textGrob("Vivax Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+
+```
+
+#### _P. falciparum_
+```{r, results='hide', fig.keep='all', fig.width = 11, fig.width=8}
+gridExtra::grid.arrange(terrmaps[[1]], 
+                        ncol=2, top=grid::textGrob("Falciparum Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+
+```
+
+#### _P. ovale_
+```{r, results='hide', fig.keep='all', fig.width = 11, fig.width=8}
+gridExtra::grid.arrange(terrmaps[[3]], 
+                        ncol=2, top=grid::textGrob("Ovale Prevalence in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+
+```
+#### All
+```{r, results='hide', fig.keep='all', fig.width = 11, fig.width=8}
+gridExtra::grid.arrange(terrmaps[[1]], 
+                        terrmaps[[2]],
+                        terrmaps[[3]],
+                        ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+
+```
+###
 
 
 ### _P. vivax_ Summary Stats with Weights {.tabset .tabset-fade .tabset-pill}
@@ -259,7 +319,6 @@ dt %>%
   guides(fill=FALSE)
 
 ```
-
 ### 
 
 

@@ -93,3 +93,24 @@ mapplotter <- function(data, maplvl, plsmdmspec){
   return(ret)
   
 }
+
+
+mapplotter_clust_terrain <- function(data, plsmdmspec){
+  
+   ret <-  ggmap::ggmap(drc_back_terrain) + 
+           geom_point(data=data, aes(x=longnum, y = latnum, fill = plsmd, colour = plsmd, size = plsmdn), 
+                      alpha = 0.4) +
+           scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+           # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmd[data$plsmd != 0], 0.75)) + 
+           scale_size(guide = 'none') +  scale_fill_continuous(guide = 'none') +
+           coord_sf(datum=NA) +
+           ggtitle(paste(plsmdmspec)) +
+           vivid_theme +
+           theme(axis.text = element_blank(),
+                 axis.line = element_blank(), 
+                 legend.position = "bottom")
+   
+    return(ret)
+}
+    
+

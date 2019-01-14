@@ -9,7 +9,7 @@ library(srvyr) #wrap the survey package in dplyr syntax
 # Import Data
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-
+load("~/Documents/GitHub/VivID_Epi/data/DRC_terrain.rda")
 
 #......................
 # Datawrangle
@@ -77,6 +77,23 @@ gridExtra::grid.arrange(prevmaps[[1]],
                         nrow=2, top=grid::textGrob("Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 # graphics.off()
 
+#..............................
+# Plot terrain cluster Maps
+#..............................
+terrmaps <- mp %>% 
+  dplyr::filter(maplvl == "hv001") %>% 
+  dplyr::select(-c(maplvl)) %>% 
+  purrr::pmap(., mapplotter_clust_terrain)
+
+
+jpeg(file = "figures/04-terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
+gridExtra::grid.arrange(terrmaps[[1]], 
+                        terrmaps[[2]],
+                        terrmaps[[3]],
+                        ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS, Terrain Maps", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+graphics.off()
+
+
 #----------------------------------------------------------------------------------------------------
 # Explore here the different clusters of Plasmodium species z scores
 #----------------------------------------------------------------------------------------------------
@@ -141,3 +158,12 @@ prevhist <- pmap(list(data = clusters$ret, plsmdmspec = clusters$plsmdmspec), fu
                         top=grid::textGrob("Histograms and Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 # graphics.off()
 
+ 
+ 
+ 
+ #----------------------------------------------------------------------------------------------------
+ # Save Objects for Reports
+ #----------------------------------------------------------------------------------------------------
+ out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
+ if(!dir.exists(out)){dir.create(out)}
+ save(prevmaps, prevhist, zscoreprevmaps, terrmaps, mp, file = paste0(out, "/", "04-basic_mapping_objs.rda"))

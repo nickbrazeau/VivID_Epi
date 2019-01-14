@@ -7,7 +7,9 @@
 .RData
 
 # Data files I'm generating
+*.rda
 *.rds
+report_obj/
 datasets/
 db/
 data/
