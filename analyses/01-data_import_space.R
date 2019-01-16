@@ -131,7 +131,7 @@ lakeosm <- lakeosm$osm_multipolygons
 # Pull Down Stamen Maps (esp terrain)
 #---------------------------------------------------------------------------------
 
-drc_stamen_back_terrain <- ggmap::get_stamenmap(bb, zoom = 11, 
+drc_stamen_back_terrain <- ggmap::get_stamenmap(bb, zoom = 7, 
                                          maptype = "terrain-background")
  save(drc_stamen_back_terrain, file = "~/Documents/GitHub/VivID_Epi/data/DRC_stamen_terrain.rds")
 

@@ -6,11 +6,12 @@ library(tidyverse)
 library(sf)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(RColorBrewer)
+
 #......................
 # Import Data
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-load("~/Documents/GitHub/VivID_Epi/data/drc_stamen_back_terrain")
+load("~/Documents/GitHub/VivID_Epi/data/DRC_stamen_terrain.rds")
 
 #......................
 # Datawrangle
