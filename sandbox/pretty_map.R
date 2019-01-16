@@ -29,7 +29,7 @@ library(tidyverse)
 devtools::install_github("ropensci/osmdata")
 library(osmdata)
 library(sf)
-
+library(ggspatial)
 
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/gadm_drclvl1.rds")
 colnames(DRCprov) <- tolower(colnames(DRCprov))
@@ -53,14 +53,14 @@ polybb <- getbb("Democratic Republic of the Congo", featuretype = "country",  fo
 dem.raster <- elevatr::get_elev_raster(sf::as_Spatial(DRCprov), z=5) # elevatr expects sp 
 
 # raster to ggplot for color
-dem.raster <- raster::crop(dem.raster, sf::as_Spatial(DRCprov), snap='out')
+dem.raster <- raster::crop(dem.raster, sf::as_Spatial(DRCprov), snap='in')
 dem.m  <-  raster::rasterToPoints(dem.raster)
 dem.df <-  data.frame(lon = dem.m[,1], lat = dem.m[,2], alt = dem.m[,3])
 
 # raster to ggplot for hill share
 slope.raster <- raster::terrain(dem.raster, opt='slope')
 aspect.raster <- raster::terrain(dem.raster, opt='aspect')
-hill.raster <- raster::hillShade(slope.raster, aspect.raster, 40, 270, normalize = T)
+hill.raster <- raster::hillShade(slope.raster, aspect.raster, 40, 270)
 
 hill.m <- raster::rasterToPoints(hill.raster)
 hill.df <-  data.frame(lon = hill.m[,1], lat = hill.m[,2], hill = hill.m[,3])
@@ -77,28 +77,18 @@ trunkroadsosm <- trunkroadsosm$osm_lines
 riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
   #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
-  osmdata::osmdata_sf() 
-riverosm <- trim_osmdata(riverosm, polybb, exclude = F) 
-riverosm <- riverosm$osm_lines
+ osmdata::osmdata_sf() 
+majriver <- riverosm$osm_lines[which(tolower(riverosm$osm_lines$name) %in% c("congo", "ubangi")), ]
 
-
-lakeosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "water", value = "lake") %>% # Any body of water, from natural such as a lake or pond to artificial like moat or canal
-  osmdata::osmdata_sf() 
-lakeosm <- trim_osmdata(lakeosm, polybb, exclude = F) 
-lakeosm <- lakeosm$osm_multipolygons
 
 
 plotObj <- ggplot() +
-  geom_raster(data = hill.df, aes(lon, lat, fill = hill), alpha = .45) +
+  geom_raster(data=hill.df, aes(lon, lat, fill=hill), alpha=0.5) +
   scale_fill_gradientn(colours = grey.colors(100)) +
-  geom_sf(data = lakeosm, fill = '#9ecae1', colour = NA, alpha = 0.7) +
-  geom_sf(data = riverosm, colour = '#9ecae1', size = 0.05, alpha = 0.7) +
-#  geom_sf(data = trunkroadsosm, colour = '#636363', size = 0.1) +
+  geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = .45) +
+  scale_fill_gradientn(colours = terrain.colors(100)) +
+  geom_sf(data = majriver, colour = '#9ecae1', size = 2, alpha = 0.7) +
   geom_sf(data=DRCprov, fill = NA) +
   theme_bw()
 
-
-jpeg("~/Desktop/test_pretty.jpg", width = 8, height = 8, units = "in", res=300)
-plot(plotObj)
-graphics.off()
+plotObj
