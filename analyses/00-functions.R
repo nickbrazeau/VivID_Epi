@@ -73,14 +73,16 @@ mapplotter <- function(data, maplvl, plsmdmspec){
   if(maplvl == "adm1name"){
     
     ret <- ret + geom_sf(data = data, aes(fill = plsmd)) +
-     scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+      scale_fill_distiller("Prevalence", palette = "Spectral") +
+     # scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
      # scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmd[data$plsmd != 0], 0.75)) + 
       coord_sf(datum=NA)  # to get rid of gridlines
     
   } else if(maplvl == "hv001"){
     
     ret <- ret + geom_sf(data = data, aes(fill = plsmd, colour = plsmd, size = plsmdn), alpha = 0.8) +
-      scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+      scale_fill_distiller("Prevalence", palette = "Spectral") +
+    #  scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
     # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmd[data$plsmd != 0], 0.75)) + 
       scale_size(guide = 'none') +  scale_fill_continuous(guide = 'none') +
       coord_sf(datum=NA)  # to get rid of gridlines
@@ -97,10 +99,11 @@ mapplotter <- function(data, maplvl, plsmdmspec){
 
 mapplotter_clust_terrain <- function(data, plsmdmspec){
   
-   ret <-  ggmap::ggmap(drc_back_terrain) + 
+   ret <-  ggmap::ggmap(drc_stamen_back_terrain) + 
            geom_point(data=data, aes(x=longnum, y = latnum, fill = plsmd, colour = plsmd, size = plsmdn), 
                       alpha = 0.4) +
-           scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+           scale_fill_distiller("Prevalence", palette = "Spectral") +
+          # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
            # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmd[data$plsmd != 0], 0.75)) + 
            scale_size(guide = 'none') +  scale_fill_continuous(guide = 'none') +
            coord_sf(datum=NA) +

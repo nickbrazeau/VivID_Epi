@@ -5,11 +5,12 @@ source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R")
 library(tidyverse)
 library(sf)
 library(srvyr) #wrap the survey package in dplyr syntax
+library(RColorBrewer)
 #......................
 # Import Data
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-load("~/Documents/GitHub/VivID_Epi/data/DRC_terrain.rda")
+load("~/Documents/GitHub/VivID_Epi/data/drc_stamen_back_terrain")
 
 #......................
 # Datawrangle
@@ -86,11 +87,11 @@ terrmaps <- mp %>%
   purrr::pmap(., mapplotter_clust_terrain)
 
 
-jpeg(file = "figures/04-terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
+jpeg(file = "figures/04-stamen_terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
 gridExtra::grid.arrange(terrmaps[[1]], 
                         terrmaps[[2]],
                         terrmaps[[3]],
-                        ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS, Terrain Maps", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+                        ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS, Stamen Terrain Maps", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 graphics.off()
 
 
