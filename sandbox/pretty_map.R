@@ -101,6 +101,13 @@ trunkroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   trim_osmdata(polybb) 
 trunkroadsosm <- trunkroadsosm$osm_lines
 
+primaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link larger towns.)
+  osmdata::osmdata_sf() %>% 
+  trim_osmdata(polybb) 
+primaryroadsosm <- primaryroadsosm$osm_lines
+
+
 riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
   #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
