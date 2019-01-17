@@ -22,10 +22,11 @@ vivid_theme <- theme(plot.title = element_text(famil = "Arial", face = "bold", h
 #----------------------------------------------------------------------------------------------------
 # Tidy and DataWrangling functions
 #..................................
-merge_pr_plsmdm_gemtdt <- function(pr = arpr, plsmdm = panplasmpcrres, ge = ge){
+merge_pr_plsmdm_ge_gc_mtdt <- function(pr = arpr, plsmdm = panplasmpcrres, ge = ge, gc = gc){
   
   ret <- dplyr::left_join(plsmdm, pr, by="hivrecode_barcode") %>%
-    dplyr::left_join(., ge, by = "hv001")
+    dplyr::left_join(., ge, by = "hv001") %>% 
+    dplyr::left_join(., gc, by = c("dhsid", "dhscc", "dhsyear", "hv001"))
   
   return(ret)
 }
@@ -35,7 +36,7 @@ merge_pr_plsmdm_gemtdt <- function(pr = arpr, plsmdm = panplasmpcrres, ge = ge){
 #----------------------------------------------------------------------------------------------------
 # Mapping Functions
 #----------------------------------------------------------------------------------------------------
-prev_point_est_summarizer <- function(data, maplvl, plsmdmspec, sfobj){
+prev_point_est_summarizer <- function(data, maplvl, plsmdmspec){
   
   
   # catch error
@@ -52,8 +53,7 @@ prev_point_est_summarizer <- function(data, maplvl, plsmdmspec, sfobj){
     srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
     dplyr::group_by(!!maplvl) %>% 
     dplyr::summarise(plsmdn = srvyr::survey_total(count), 
-                     plsmd = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
-    dplyr::left_join(., sfobj) # attach spatial data, let R figure out the common var
+                     plsmd = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95))
   # return
   return(ret)
 }

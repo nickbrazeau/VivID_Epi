@@ -134,18 +134,24 @@ if(sum(!is.na(arpr$hivrecode_barcode)) != nrow(ar)){
 
 
 
+
+#---------------------------------------------------------------------------------
+# write out
+#---------------------------------------------------------------------------------
+
 # write out joined HIV recode to PR, can use this for panplasmodium results
 if(!dir.exists(paths = "data")){
   dir.create("data")
 }
 
+# set up figure dir for later storage
+if(!dir.exists("figures")){
+  dir.create("figures")
+}
 
 
 
 save(ge, arpr, panplasmpcrres, file = "data/vividepi_raw.rda")
 
-# set up figure dir for later storage
-if(!dir.exists("figures")){
-  dir.create("figures")
-}
+
 

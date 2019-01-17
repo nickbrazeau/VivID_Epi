@@ -72,11 +72,9 @@ MALARIA-INTERVENTIONS
 
 PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
 
-  1. Cluster altitude (HV040) *
-  2. Rainfall *
-  3. Temparature *
-
-\* Considered separately.  
+  1. Cluster altitude (HV040) 
+  2. Rainfall 
+  3. Temparature 
 
 
 #### Considerations for Bednets
@@ -100,64 +98,40 @@ paste("Note WHO has information except for NetProtect.")
 [Netprotect](http://www.insectcontrol.net/permanent_partnership/index.php)   
   
 
-# Non-parametric, Bivariate Analysis
+# Non-parametric, Bivariate Analysis for _P. vivax_
 For potential risk factors, these are the nx2 tables for categorical variables and mean/t-test for continuous.
 ```{r}
 
-keep <- c("pv18s", "pfldh", "po18s", "NetInsecticide", "adjhb", "hv104", "hv105", "hv025", 
-          "hv270", "hv213", "hv214", "hv215", "ha54", "hv106", "hv014", 
-          "hv205", "hv225", "adm1name")
-dtsub <- dt[, keep]
-colnames(dtsub) <- c("pv18s", "pfldh", "po18s", "NetInsecticide", "adjhb", "sex", "age", "urbanrural", 
-                     "Wealthindex", "floormaterial", "wallmaterial", "roofmaterial", "pregnant", "education", "NumChildU5",
-                     "toilettype", "sharestoilet", "adm1name")
-
-vars <- c("pfldh", "po18s", "NetInsecticide", "adjhb", "sex", "age", "urbanrural", 
-                     "Wealthindex", "floormaterial", "wallmaterial", "roofmaterial", "pregnant", "education", "NumChildU5",
-                     "toilettype", "sharestoilet")
-
-
-
-tableone::kableone(tableone::CreateTableOne(data=dtsub, strata = "pv18s", vars = vars))
-
-#  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
+tableone::kableone(pvtbl1) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
 
+# Non-parametric, Bivariate Analysis for _P. falciparum_
+For potential risk factors, these are the nx2 tables for categorical variables and mean/t-test for continuous.
+```{r}
+
+tableone::kableone(pftbl1) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),  position = "center")
+
+```
+
+### Considerations
+Only really odd thing I did here was collable by months. This is the number of days in each month that was considered above. **A lot more people sampled in December, so don't think it is indicative of a seasonal cause**. 
+```{r}
+
+dt %>% 
+  group_by(hvyrmnth_fctm) %>% 
+  summarise(n=n()) %>% 
+    knitr::kable(., "html") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),  position = "center")
+
+```
 
 
 # Parametric, Bivariate Analysis
 Odds Ratios with Pv as the outcome.
-```{r}
-model_parameters <- data.frame(outcome = rep("pv18s", length(vars)), covar = vars, stringsAsFactors=FALSE)
 
-fitglm <- fit_model <- function(outcome, covar){
-  
-   eq <- as.formula(paste0(outcome, "~", covar))
-   ret <- glm(eq,
-               data = dtsub,
-               family=binomial(link="logit"))
-  
-   return(ret)
-   
-}
-
-model_parameters$glmlogit <- purrr::pmap(model_parameters, .f=fitglm)
-model_parameters$glmlogit_tidy <- purrr::map(model_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
-```
-
-
-## Model Comparisons {.tabset .tabset-fade .tabset-pill}
-```{r, results='asis'}
-
-stargazer::stargazer(model_parameters$glmlogit, title = "Logistic Bivariate Risk Factor Models",
-          no.space=F,
-          ci=TRUE, ci.level=0.95, 
-          single.row=F,
-          align=T, 
-          type = "html")
-
-```
 
 ## Estimates
 
@@ -178,35 +152,6 @@ est %>%
 
 # Parametric, Bivariate Analysis, Province Level Random Effect
 Odds Ratios with Pv as the outcome. Note, these aren't exponentiated estimates. So they are logit-odds (long story. Will fix eventually).
-```{r}
-dtsub$adm1name <- as.numeric(factor(dtsub$adm1name))
-fitglm_prov <- fit_model <- function(outcome, covar, data){
-  
-   eq <- as.formula(paste0(outcome, "~", covar, "+ (1|adm1name)"))
-   ret <- glm(eq,
-               data = dtsub,
-               family=binomial(link="logit"))
-  
-   return(ret)
-   
-}
-
-model_parameters$glmlogit_mlm <- purrr::pmap(model_parameters[,1:2], .f=fitglm_prov)
-model_parameters$glmlogit_mlm_tidy <- purrr::map(model_parameters$glmlogit_mlm, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
-```
-
-
-## Model Comparisons {.tabset .tabset-fade .tabset-pill}
-```{r, results='asis'}
-stargazer::stargazer(model_parameters$glmlogit, title = "Logistic Bivariate Risk Factor Models Multilevel w/ random effects",
-          no.space=F,
-          ci=TRUE, ci.level=0.95, 
-          single.row=F,
-          align=T, 
-          type = "html")
-
-```
-
 
 ## Estimates
 ```{r}
@@ -219,52 +164,10 @@ est2 %>%
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(PvOR = estimate) %>% 
   knitr::kable(., "html") %>%  # note must tell kableExtra html or latex
-  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
-
-
-
-
-
-
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),  position = "center")
 
 ```
 ##
-
-# Comparison of _Pv_ and _Pf_ Risk Factors
-## Age {.tabset .tabset-fade .tabset-pill}
-```{r}
-
-pvage <- dt %>% 
-    dplyr::mutate(count = 1) %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
-    dplyr::group_by(hv105) %>% 
-    dplyr::summarise(plsmdn = srvyr::survey_total(count), 
-                     plsmd = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95))
-pvage$species <- "vivax"
-
-pfage <- dt %>% 
-    dplyr::mutate(count = 1) %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
-    dplyr::group_by(hv105) %>% 
-    dplyr::summarise(plsmdn = srvyr::survey_total(count), 
-                     plsmd = srvyr::survey_mean(pfldh, na.rm = T, vartype = c("se", "ci"), level = 0.95))
-
-pfage$species <- "falciparum"
-
-plotObj <- dplyr::bind_rows(pvage, pfage) %>% 
-  ggplot() + 
-  geom_line(aes(x=hv105, y=plsmd, color = species)) + 
-  geom_ribbon(aes(x=hv105, ymin=plsmd_low, ymax=plsmd_upp, fill = species), alpha=0.5) +
-  geom_point(aes(x=hv105, y=plsmd, size=plsmdn, color = species), alpha=0.5, show.legend=F) +
-  scale_fill_manual("Malara Species", values = c("#a50026", "#313695"), labels = c("Pfalciparum", "Pvivax")) +
-  scale_colour_manual(values = c("#a50026", "#313695"), guide =F) +
-  ggtitle("Malaria Prevalence by Age") +
-  xlab("Age") + ylab("Malaria Prevalence") + 
-  vivid_theme
-
-```
-## 
-
 
 
 

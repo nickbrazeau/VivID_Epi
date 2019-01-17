@@ -22,7 +22,7 @@
 # 
 
 
-
+setwd("/Users/NFB/Documents/GitHub/VivID_Epi")
 
 # libraries
 library(tidyverse)
@@ -30,6 +30,33 @@ devtools::install_github("ropensci/osmdata")
 library(osmdata)
 library(sf)
 library(ggspatial)
+
+
+#..............................
+# Pull down the border cntrs w/ raster
+#..............................
+brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI", "GAB", "CMR", "GNQ"), 
+                  function(x){
+                    ret <- raster::getData(name = "GADM", country = x, level = 0)
+                    ret <- sf::st_as_sf(ret)
+                    return(ret)
+                    
+                  })
+
+brdrcnt_comb <- sf::st_union(brdrcnt[[1]], brdrcnt[[2]]) %>% 
+  sf::st_union(., brdrcnt[[3]]) %>% 
+  sf::st_union(., brdrcnt[[4]]) %>% 
+  sf::st_union(., brdrcnt[[5]]) %>% 
+  sf::st_union(., brdrcnt[[6]]) %>% 
+  sf::st_union(., brdrcnt[[7]]) %>% 
+  sf::st_union(., brdrcnt[[8]]) %>% 
+  sf::st_union(., brdrcnt[[9]]) %>% 
+  sf::st_union(., brdrcnt[[10]]) %>% 
+  sf::st_union(., brdrcnt[[11]]) %>% 
+  sf::st_union(., brdrcnt[[12]])
+
+# https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_ocean.zip
+oceans <- sf::st_read("data/ne_10m_ocean/ne_10m_ocean.shp")
 
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/gadm_drclvl1.rds")
 colnames(DRCprov) <- tolower(colnames(DRCprov))
@@ -77,18 +104,41 @@ trunkroadsosm <- trunkroadsosm$osm_lines
 riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
   #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
- osmdata::osmdata_sf() 
+  osmdata::osmdata_sf() 
 majriver <- riverosm$osm_lines[which(tolower(riverosm$osm_lines$name) %in% c("congo", "ubangi")), ]
 
 
 
-plotObj <- ggplot() +
-  geom_raster(data=hill.df, aes(lon, lat, fill=hill), alpha=0.5) +
-  scale_fill_gradientn(colours = grey.colors(100)) +
-  geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = .45) +
-  scale_fill_gradientn(colours = terrain.colors(100)) +
-  geom_sf(data = majriver, colour = '#9ecae1', size = 2, alpha = 0.7) +
-  geom_sf(data=DRCprov, fill = NA) +
-  theme_bw()
 
+plotObj <- ggplot() +
+  geom_raster(data=hill.df, aes(lon, lat, fill=hill)) +
+  geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7) +
+  scale_fill_gradientn(colours = terrain.colors(100), guide = F) +
+  geom_sf(data = brdrcnt[[1]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[2]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[3]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[4]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[5]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[6]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[7]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[8]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[9]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5) +
+  geom_sf(data = oceans, fill = "#9ecae1") +
+  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9) + 
+  geom_sf(data = DRCprov, fill = "NA") +
+  coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
+           ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
+           datum = NA) +
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true") +
+  vivid_theme + 
+  theme(plot.background = element_rect(fill = "#9ecae1"),
+        axis.title = element_blank()) # overwrite vivid theme
+
+
+svglite::svglite("~/Desktop/pretty_basemap.svg", width = 8, height = 8)
 plotObj
+graphics.off()
+

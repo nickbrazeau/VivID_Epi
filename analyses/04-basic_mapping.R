@@ -11,7 +11,7 @@ library(RColorBrewer)
 # Import Data
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-load("~/Documents/GitHub/VivID_Epi/data/DRC_stamen_terrain.rds")
+load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
 
 #......................
 # Datawrangle
@@ -23,32 +23,18 @@ dtsub <- dt %>%
 # Explore here the different prevalences/regions of Plasmodium species basic maps
 #----------------------------------------------------------------------------------------------------
 
-
-# set mapping parameters
-# map_params <- expand.grid(
-#   plsmdmspec = c("pfldh", "pv18s", "po18s"),
-#   provlvl = c("adm1name", "hv001"), 
-#   stringsAsFactors = FALSE
-# )
-# 
-# map_params$sfobj <- ifelse(map_params$provlvl == "adm1name", "DRCprov", 
-#                            ifelse(map_params$provlvl == "hv001", "ge", 
-#                                   NA))
-# NOTE PURRR is having an issue because of the "~"
-
-
-pfldhprov <- prev_point_est_summarizer(data = dtsub, maplvl = adm1name, plsmdmspec = pfldh, sfobj = DRCprov) %>% 
+pfldhprov <- prev_point_est_summarizer(data = dtsub, maplvl = adm1name, plsmdmspec = pfldh) %>% 
   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "adm1name")
-pv18sprov <- prev_point_est_summarizer(data = dtsub, maplvl = adm1name, plsmdmspec = pv18s, sfobj = DRCprov)  %>% 
+pv18sprov <- prev_point_est_summarizer(data = dtsub, maplvl = adm1name, plsmdmspec = pv18s)  %>% 
   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "adm1name")
-po18sprov <- prev_point_est_summarizer(data = dtsub, maplvl = adm1name, plsmdmspec = po18s, sfobj = DRCprov) %>% 
+po18sprov <- prev_point_est_summarizer(data = dtsub, maplvl = adm1name, plsmdmspec = po18s) %>% 
   dplyr::mutate(plsmdmspec = "po18s", maplvl = "adm1name")
 
-pfldhclust <- prev_point_est_summarizer(data = dtsub, maplvl = hv001, plsmdmspec = pfldh, sfobj = ge) %>% 
+pfldhclust <- prev_point_est_summarizer(data = dtsub, maplvl = hv001, plsmdmspec = pfldh) %>% 
   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "hv001")
-pv18sclust <- prev_point_est_summarizer(data = dtsub, maplvl = hv001, plsmdmspec = pv18s, sfobj = ge) %>% 
+pv18sclust <- prev_point_est_summarizer(data = dtsub, maplvl = hv001, plsmdmspec = pv18s) %>% 
   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "hv001")
-po18sclust <- prev_point_est_summarizer(data = dtsub, maplvl = hv001, plsmdmspec = po18s, sfobj = ge) %>% 
+po18sclust <- prev_point_est_summarizer(data = dtsub, maplvl = hv001, plsmdmspec = po18s) %>% 
   dplyr::mutate(plsmdmspec = "po18s", maplvl = "hv001")
 
 
@@ -99,7 +85,7 @@ graphics.off()
 #----------------------------------------------------------------------------------------------------
 # Explore here the different clusters of Plasmodium species z scores
 #----------------------------------------------------------------------------------------------------
-#
+
 clusters <- mp %>% 
   dplyr::filter(maplvl == "hv001")
 
