@@ -9,15 +9,8 @@
 source("analyses/00-functions.R") 
 library(tidyverse)
 
-load("data/vividepi_raw.rda")
-dt <- merge_pr_plsmdm_gemtdt(pr = arpr, plsmdm = panplasmpcrres, ge = ge)
+load("data/vividepi_recode.rda")
 
-#......................
-# drop to important covariates for sim
-#......................
-dt <- dt %>% 
-  select(c("hivrecode_barcode", "hv002", "pv18s", "adm1dhs", "adm1name", "dhsregco", "dhsregna",
-           "latnum", "longnum", "geometry"))
 
 #..........................................................
 # Create simulation function for independent covariates
@@ -32,7 +25,8 @@ simulate_cd2013_indcov <- function(outcome_prev = 0.031,
                             exp_prev = list(),
                             n_covar = 10, 
                             n_covar_pred = 2,
-                            n_covar_pred_effect = list()){
+                            n_covar_pred_effect = list(),
+                            n = 16000){
   
   
   #  I have assumed that the n_covar_pred_effect is p(x=0|Y)/p(x=0) via bayes
@@ -55,7 +49,7 @@ simulate_cd2013_indcov <- function(outcome_prev = 0.031,
   #......................
   # setup assoc params
   #......................
-  dfout <- tibble::tibble(Y = rbinom(n = nrow(dt), 1, prob = outcome_prev))
+  dfout <- tibble::tibble(Y = rbinom(n = n, 1, prob = outcome_prev))
   expassoc_store <- list()
   
   for(i in 1:length(n_covar_pred_effect)){
@@ -128,6 +122,12 @@ simulate_cd2013_indcov <- function(outcome_prev = 0.031,
   return(ret)
   
 }
+
+
+simulate_cd2013_indcov(outcome_prev = 0.03, n_covar = 1, exp_prev = list(1.5, 2),
+                       n_covar_pred = 2, n_covar_pred_effect = list(1,0.5)
+                      )
+
 
 
 #..........................................................

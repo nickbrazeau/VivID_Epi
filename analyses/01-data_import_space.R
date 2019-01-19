@@ -205,7 +205,6 @@ if(!dir.exists("figures")){
 }
 
 
-
 save(gc, file = "data/vividspace_raw.rda")
 save(DRCprov, drc_stamen_back_terrain, file = "data/vividmaps_small.rda")
 

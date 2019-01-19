@@ -18,7 +18,7 @@ rdhs::set_rdhs_config(email = "nbrazeau@med.unc.edu",
                       project = "Malaria Spatiotemporal Analysis",
                       config_path = "rdhs.json",
                       global = FALSE,
-                      cache_path = "/Users/NFB/Documents/GitHub/VivID_Epi")
+                      cache_path = "~/Documents/GitHub/VivID_Epi")
 
 survs <- rdhs::dhs_surveys(countryIds = c("CD"),
                            surveyYearStart = 2013)
