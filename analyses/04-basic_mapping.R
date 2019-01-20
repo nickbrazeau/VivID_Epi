@@ -12,6 +12,7 @@ library(RColorBrewer)
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
+load("data/vividmaps_large.rda")
 
 #......................
 # Datawrangle
@@ -74,7 +75,7 @@ terrmaps <- mp %>%
   purrr::pmap(., mapplotter_clust_terrain)
 
 
-jpeg(file = "figures/04-stamen_terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
+jpeg(file = "figures/04-pointpretty_terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
 gridExtra::grid.arrange(terrmaps[[1]], 
                         terrmaps[[2]],
                         terrmaps[[3]],

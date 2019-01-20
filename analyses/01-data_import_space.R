@@ -7,8 +7,7 @@ library(tidyverse)
 devtools::install_github("ropensci/osmdata")
 library(osmdata)
 library(sf)
-# library(GADMTools) has conflict with sf that isn't easily resolved
-
+source("analyses/00-functions.R")
 #---------------------------------------------------------------------------------
 # pull down DRC maps from GADM
 #---------------------------------------------------------------------------------
@@ -129,12 +128,15 @@ primaryroadsosm <- primaryroadsosm$osm_lines
 #   trim_osmdata(polybb) 
 # docosm <- docosm$osm_points
 
-riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
-  #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
-  osmdata::osmdata_sf() %>% 
-  trim_osmdata(polybb, exclude = F) 
-riverosm <- riverosm$osm_lines
+# riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+#   add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
+# #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
+#   osmdata::osmdata_sf() %>%
+#   trim_osmdata(polybb, exclude = F)
+# 
+# majriver <- riverosm$osm_lines[which(tolower(riverosm$osm_lines$name) %in% c("congo", "ubangi")), ]
+# 
+
 
 # riverbankosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
 #   add_osm_feature(key = "waterway", value = "riverbank") %>% # A wide river as defined by its area.
@@ -207,12 +209,12 @@ if(!dir.exists("figures")){
 
 save(gc, file = "data/vividspace_raw.rda")
 save(DRCprov, drc_stamen_back_terrain, file = "data/vividmaps_small.rda")
-
+save(trunkroadsosm, primaryroadsosm, file = "data/osm_roads.rda")
 #---------------------------------------------------------------------------------
 # write out large objects
 #---------------------------------------------------------------------------------
 
-prettybasemap <- ggplot() +
+prettybasemap_terraincolors <- ggplot() +
   geom_raster(data=hill.df, aes(lon, lat, fill=hill)) +
   geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7) +
   scale_fill_gradientn(colours = terrain.colors(100), guide = F) +
@@ -229,7 +231,7 @@ prettybasemap <- ggplot() +
   geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5) +
   geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5) +
   geom_sf(data = oceans, fill = "#9ecae1") +
-  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9) + 
+#  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9) + 
   geom_sf(data = DRCprov, fill = "NA") +
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
@@ -239,7 +241,7 @@ prettybasemap <- ggplot() +
   theme(plot.background = element_rect(fill = "#9ecae1"),
         axis.title = element_blank()) # overwrite vivid theme
 
-save(prettybasemap, file = "data/vividmaps_large.rda")
+save(prettybasemap_terraincolors, file = "data/vividmaps_large.rda")
 
 
 

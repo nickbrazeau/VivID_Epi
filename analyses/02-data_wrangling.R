@@ -344,13 +344,23 @@ xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
 #.............
 # Cluster-Level Altitude
 #.............
+
 dt <- dt %>% 
-  dplyr::mutate(hv040_cont = ifelse(hv040 == 9999, NA, hv040))
+  dplyr::mutate(alt_dem_cont = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
+                alt_dem_fctb = factor(
+                  ifelse(alt_dem_cont > median(alt_dem_cont), "high", "low"),
+                  levels = c("low", "high"))
+  )
 
-
+#.............
+# Temperature 
+#.............
 dt <- dt %>% 
   dplyr::mutate(mean_temperature_2015_cont = ifelse(mean_temperature_2015 < 0, NA, mean_temperature_2015)) # these are clearly errors but aren't labelled as such unless separate map file?
 
+#.............
+# Rainfall
+#.............
 dt <- dt %>% 
   dplyr::mutate(rainfall_2015_cont = ifelse(rainfall_2015 < 0, NA, rainfall_2015)) # these are clearly errors but aren't labelled as such unless separate map file?
   # however these got knocked out by the missing cluster gps coord 

@@ -21,7 +21,10 @@ load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 vars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
 # put drop weights and household id and continous data
 vars <- vars[!vars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb")]
-pvtbl1 <- tableone::CreateTableOne(data=dt, strata = "pv18s_fctb", vars = vars)
+pvtbl1 <- tableone::CreateTableOne(data=dt, 
+                                   strata = "pv18s_fctb", 
+                                   vars = vars,
+                                   includeNA = T)
 
 #----------------------------------------------------------------------------------------------------
 # Table One for Pf
@@ -29,7 +32,10 @@ pvtbl1 <- tableone::CreateTableOne(data=dt, strata = "pv18s_fctb", vars = vars)
 vars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
 # put drop weights and household id and continous data
 vars <- vars[!vars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pfldh_fctb")]
-pftbl1 <- tableone::CreateTableOne(data=dt, strata = "pfldh_fctb", vars = vars)
+pftbl1 <- tableone::CreateTableOne(data=dt, 
+                                   strata = "pfldh_fctb", 
+                                   vars = vars,
+                                   includeNA = T)
 
 
 dt %>% 
@@ -43,8 +49,10 @@ dt %>%
 # Odds Ratios with Pv as the outcome
 #----------------------------------------------------------------------------------------------------
 covars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
+
 covars <- covars[!covars %in% c("pv18s_fctb")]
-model_parameters <- data.frame(outcome = rep("pv18s", length(vars)), covar = vars, stringsAsFactors=FALSE)
+model_parameters <- data.frame(outcome = rep("pv18s", length(covars)), 
+                               covar = covars, stringsAsFactors=FALSE)
 
 fitglm <- fit_model <- function(outcome, covar){
   

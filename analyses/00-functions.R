@@ -98,8 +98,8 @@ mapplotter <- function(data, maplvl, plsmdmspec){
 
 
 mapplotter_clust_terrain <- function(data, plsmdmspec){
-  
-   ret <-  ggmap::ggmap(drc_stamen_back_terrain) + 
+  # need to load data/vividmaps_large.rda first
+   ret <-  prettybasemap_terraincolors + 
            geom_point(data=data, aes(x=longnum, y = latnum, fill = plsmd, colour = plsmd, size = plsmdn), 
                       alpha = 0.4) +
            scale_fill_distiller("Prevalence", palette = "Spectral") +

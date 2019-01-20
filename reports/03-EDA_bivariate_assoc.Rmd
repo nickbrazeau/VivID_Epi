@@ -1,6 +1,5 @@
 --- 
 title: "Univariate and Bivariate Analyses" 
-subtitle: "Space, Time, and Climate Considered Separately"
 author: "Nicholas F. Brazeau" 
 date: "`r format(Sys.time(), '%B %d, %Y')`" 
 output: 
@@ -28,6 +27,9 @@ library(tableone)
 # Import Data
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+load("~/Documents/GitHub/VivID_Epi/reports/report_obj/03-Uni_Bivar_analyses.rda")
+
+options("scipen"=100, "digits"=4)
 
 ```
 
