@@ -104,11 +104,12 @@ primaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   trim_osmdata(polybb) 
 primaryroadsosm <- primaryroadsosm$osm_lines
 
-# secondaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-#   add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link towns.)
-#   osmdata::osmdata_sf() %>% 
-#   trim_osmdata(polybb) 
-# secondaryroadsosm <- secondaryroadsosm$osm_lines
+secondaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link towns.)
+  osmdata::osmdata_sf() %>%
+  trim_osmdata(polybb)
+secondaryroadsosm <- secondaryroadsosm$osm_lines
+
 # 
 # tertiaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
 #   add_osm_feature(key = "highway", value = "tertiary") %>% # The next most important roads in a country's system. (Often link smaller towns and villages)
@@ -128,14 +129,14 @@ primaryroadsosm <- primaryroadsosm$osm_lines
 #   trim_osmdata(polybb) 
 # docosm <- docosm$osm_points
 
-riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+riverosm <- osmdata::opq(bbox = bb, memsize = 1e11 ) %>%
   add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
 #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
   osmdata::osmdata_sf() %>%
   trim_osmdata(polybb, exclude = F)
 
 majriver <- riverosm$osm_lines[which(tolower(riverosm$osm_lines$name) %in% c("congo", "ubangi")), ]
-# 
+
 
 
 # riverbankosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
@@ -213,7 +214,7 @@ if(!dir.exists("figures")){
 
 save(gc, file = "data/vividspace_raw.rda")
 save(DRCprov, drc_stamen_back_terrain, file = "data/vividmaps_small.rda")
-save(trunkroadsosm, primaryroadsosm, file = "data/osm_roads.rda")
+save(trunkroadsosm, primaryroadsosm, secondaryroadsosm, file = "data/osm_roads.rda")
 save(riverosm, majriver, file = "data/osm_rivers.rda")
 #---------------------------------------------------------------------------------
 # write out large objects
