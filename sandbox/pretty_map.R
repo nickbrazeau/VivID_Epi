@@ -31,7 +31,8 @@ library(osmdata)
 library(sf)
 library(ggspatial)
 
-
+load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
 #..............................
 # Pull down the border cntrs w/ raster
 #..............................

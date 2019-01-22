@@ -5,13 +5,13 @@ library(shiny)
 #........................
 # setup functions
 #........................
-rotate <- function(x){
+rotate_abcd_tr <- function(x){
   if(length(x) == 4){
-    ret <- t(apply(x, 2, rev))
+    ret <- t( t(apply(t(apply(x, 2, rev)),  2, rev)) )
     return(ret)
   } else if(length(x) == 8){
     for(i in 1:(log2(length(x))-1)){
-      x[,,i] <- t(apply(x[,,i], 2, rev)) # note, oddly the row/col names don't get dragged along in the array. oh well
+      x[,,i] <- t( t(apply(t(apply(x[,,i], 2, rev)),  2, rev)) )  # note, oddly the row/col names don't get dragged along in the array. oh well
     }
     return(x)
   } else{
@@ -154,18 +154,27 @@ server <- function(input, output) {
   output$table <- function(){
     state <- dragulaValue(input$dragula)
     validate(need(length(state$Model) > 1, message = " "))
-    as.data.frame(xtabs(paste0("~", paste(state$Model, collapse = "+")), data=dt)) %>% 
+    ret <- as.data.frame(xtabs(paste0("~", paste(state$Model, collapse = "+")), data=dt)) %>% 
       tableone::kableone(., "html") %>%
-      kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = T) %>% 
+      kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = T) 
+    if(state$Model == 2){
+      ret %>% 
       kableExtra::add_header_above(c("Covariate Counts" = 3))
+      
+    } else if(state$Model == 3){
+      ret %>% 
+        kableExtra::add_header_above(c("Covariate Counts" = 3))
+    } else{
+      ret
+    }
   }
   
   output$prev <- function(){
     state <- dragulaValue(input$dragula)
     validate(need(length(state$Model) > 1, message = " "))
-    ret <- epiR::epi.2by2(dat = rotate(rotate( 
+    ret <- epiR::epi.2by2(dat = rotate_abcd_tr(
       xtabs(paste0("~", paste(state$Model, collapse = "+")), data=dt)
-      )),
+      ),
                           method = "case.control",
                           conf.level = 0.95, homogeneity = "breslow.day")
     
@@ -180,9 +189,9 @@ server <- function(input, output) {
   output$print <- renderText({
     state <- dragulaValue(input$dragula)
     validate(need(length(state$Model) > 1, message = " "))
-    ret <- epiR::epi.2by2(dat = rotate(rotate(
+    ret <- epiR::epi.2by2(dat = rotate_abcd_tr(
       xtabs(paste0("~", paste(state$Model, collapse = "+")), data=dt)
-      )), # annoying epiR setup
+      ), # annoying epiR setup
                          method = "case.control",
                          conf.level = 0.95, homogeneity = "breslow.day")
     ret <- shiny_print_epi2by2(ret)

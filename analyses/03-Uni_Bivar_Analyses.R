@@ -1,7 +1,8 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to do basic bivariate analyses
 #----------------------------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R") 
+source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R") 
+source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_glms.R") 
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 devtools::install_github("kaz-yos/tableone")
@@ -50,20 +51,9 @@ dt %>%
 #----------------------------------------------------------------------------------------------------
 covars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
 
-covars <- covars[!covars %in% c("pv18s_fctb")]
+covars <- covars[!covars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb")]
 model_parameters <- data.frame(outcome = rep("pv18s", length(covars)), 
                                covar = covars, stringsAsFactors=FALSE)
-
-fitglm <- fit_model <- function(outcome, covar){
-  
-  eq <- as.formula(paste0(outcome, "~", covar))
-  ret <- glm(eq,
-             data = dt,
-             family=binomial(link="logit"))
-  
-  return(ret)
-  
-}
 
 model_parameters$glmlogit <- purrr::pmap(model_parameters, .f=fitglm)
 model_parameters$glmlogit_tidy <- purrr::map(model_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
@@ -74,16 +64,7 @@ model_parameters$glmlogit_tidy <- purrr::map(model_parameters$glmlogit, .f=funct
 # RANDOM EFFECT Odds Ratios with Pv as the outcome
 #----------------------------------------------------------------------------------------------------
 dt$adm1name <- as.numeric(factor(dt$adm1name))
-fitglm_prov <- fit_model <- function(outcome, covar, data){
-  
-  eq <- as.formula(paste0(outcome, "~", covar, "+ (1|adm1name)"))
-  ret <- glm(eq,
-             data = dt,
-             family=binomial(link="logit"))
-  
-  return(ret)
-  
-}
+
 
 model_parameters$glmlogit_mlm <- purrr::pmap(model_parameters[,1:2], .f=fitglm_prov)
 model_parameters$glmlogit_mlm_tidy <- purrr::map(model_parameters$glmlogit_mlm, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))

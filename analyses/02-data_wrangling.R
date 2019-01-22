@@ -9,7 +9,7 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R")
+source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R")
 
 
 #--------------------------------------------------------------
@@ -237,7 +237,9 @@ levels(factor(haven::as_factor(dt$hv270)))
 sum(is.na(dt$hv270)) # no missing wealth
 dt <- dt %>% 
   dplyr::mutate(hv270_fctm = haven::as_factor(hv270),
-                hv270_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv270_fctm, .x = hv270_fctm, .fun = length)) # poorest is largest
+                hv270_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv270_fctm, .x = hv270_fctm, .fun = length)), # poorest is largest
+                hv270_fctb = factor(if_else(hv270_fctm %in% c("poorest", "poorer", "middle"), 
+                                     "poor_b", "rich_b"), levels = c("poor_b", "rich_b"))
                 )
 
 

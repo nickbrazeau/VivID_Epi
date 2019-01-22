@@ -7,7 +7,7 @@ library(tidyverse)
 devtools::install_github("ropensci/osmdata")
 library(osmdata)
 library(sf)
-source("analyses/00-functions.R")
+source("analyses/00-functions_basic.R")
 #---------------------------------------------------------------------------------
 # pull down DRC maps from GADM
 #---------------------------------------------------------------------------------
@@ -128,13 +128,13 @@ primaryroadsosm <- primaryroadsosm$osm_lines
 #   trim_osmdata(polybb) 
 # docosm <- docosm$osm_points
 
-# riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-#   add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
-# #  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
-#   osmdata::osmdata_sf() %>%
-#   trim_osmdata(polybb, exclude = F)
-# 
-# majriver <- riverosm$osm_lines[which(tolower(riverosm$osm_lines$name) %in% c("congo", "ubangi")), ]
+riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+  add_osm_feature(key = "waterway", value = "river") %>% # The linear flow of a river, in flow direction.
+#  add_osm_feature(key = 'name', value = 'Congo', value_exact = FALSE) %>%
+  osmdata::osmdata_sf() %>%
+  trim_osmdata(polybb, exclude = F)
+
+majriver <- riverosm$osm_lines[which(tolower(riverosm$osm_lines$name) %in% c("congo", "ubangi")), ]
 # 
 
 
@@ -165,6 +165,13 @@ drc_stamen_back_terrain <- ggmap::get_stamenmap(bb, zoom = 5,
                                                 maptype = "terrain-background")
 
 #---------------------------------------------------------------------------------
+# Pull Down Great Ape Territories from IUC (minus Pongo)
+#---------------------------------------------------------------------------------
+primate <- sf::read_sf("data/redlist_species_data_primate/data_0.shp")
+ape <- primate[grepl("pan paniscus|pan troglodytes|gorilla", tolower(primate$BINOMIAL)), ] # pan trog, pan panisus, gorilla sp
+
+
+#---------------------------------------------------------------------------------
 # Climate Data from Outside Sources
 #---------------------------------------------------------------------------------
 
@@ -189,9 +196,6 @@ gc <- readr::read_csv("datasets/CDGC62FL/CDGC62FL.csv") %>%
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
 
-
-
-
 #---------------------------------------------------------------------------------
 # write out small objects 
 #---------------------------------------------------------------------------------
@@ -210,38 +214,98 @@ if(!dir.exists("figures")){
 save(gc, file = "data/vividspace_raw.rda")
 save(DRCprov, drc_stamen_back_terrain, file = "data/vividmaps_small.rda")
 save(trunkroadsosm, primaryroadsosm, file = "data/osm_roads.rda")
+save(riverosm, majriver, file = "data/osm_rivers.rda")
 #---------------------------------------------------------------------------------
 # write out large objects
 #---------------------------------------------------------------------------------
 
-prettybasemap_terraincolors <- ggplot() +
-  geom_raster(data=hill.df, aes(lon, lat, fill=hill)) +
-  geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7) +
-  scale_fill_gradientn(colours = terrain.colors(100), guide = F) +
-  geom_sf(data = brdrcnt[[1]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[2]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[3]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[4]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[5]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[6]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[7]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[8]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[9]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5) +
-  geom_sf(data = oceans, fill = "#9ecae1") +
-#  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9) + 
-  geom_sf(data = DRCprov, fill = "NA") +
+prettybasemap_terraincolors <- list(
+  geom_raster(data=hill.df, aes(lon, lat, fill=hill)),
+  geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7),
+  scale_fill_gradientn(colours = terrain.colors(100), guide = F),
+  geom_sf(data = brdrcnt[[1]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[2]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[3]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[4]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[5]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[6]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[7]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[8]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[9]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
+#  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9),
+  geom_sf(data = DRCprov, fill = "NA"),
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
-           datum = NA) +
-  ggspatial::annotation_north_arrow(location = "bl", which_north = "true") +
-  vivid_theme + 
-  theme(plot.background = element_rect(fill = "#9ecae1"),
+           datum = NA),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  vivid_theme,
+  theme(plot.background = element_blank(),
         axis.title = element_blank()) # overwrite vivid theme
+  )
 
-save(prettybasemap_terraincolors, file = "data/vividmaps_large.rda")
+prettybasemap_nodrc <- list(
+# geom_raster(data=hill.df, aes(lon, lat, fill=hill)) +
+ # geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7) +
+ #  scale_fill_manual(values = "#bdbdbd", guide = F) +
+  geom_sf(data = brdrcnt[[1]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[2]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[3]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[4]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[5]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[6]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[7]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[8]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[9]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
+ #  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9), 
+ # geom_sf(data = DRCprov, fill = "NA"),
+  coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
+           ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
+           datum = NA),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  vivid_theme,
+  theme(plot.background = element_blank(),
+        axis.title = element_blank()) # overwrite vivid theme
+  )
+
+
+prettybasemap_hillgrey <- list(
+  geom_raster(data=hill.df, aes(lon, lat, fill=hill)),
+  # geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7),
+  scale_fill_manual(values = "#bdbdbd", guide = F),
+  geom_sf(data = brdrcnt[[1]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[2]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[3]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[4]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[5]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[6]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[7]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[8]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[9]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
+  #  geom_sf(data = majriver, color = "#9ecae1", size = 2, alpha = 0.9), 
+  geom_sf(data = DRCprov, fill = "NA"),
+  coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
+           ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
+           datum = NA),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  vivid_theme,
+  theme(plot.background = element_blank(),
+        axis.title = element_blank()) # overwrite vivid theme
+)
+
+save(prettybasemap_terraincolors, prettybasemap_hillgrey, prettybasemap_nodrc, 
+     file = "data/vividmaps_large.rda")
 
 
 
