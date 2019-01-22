@@ -52,18 +52,18 @@ mp$data <- lapply(list(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, 
 #.............................
 # Plot Summary/Point Est Maps
 #..............................
-prevmaps <- pmap(mp, mapplotter)
+ptestmaps <- pmap(mp, mapplotter)
 
 
 
 # jpeg(file = "figures/04-prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
 gridExtra::grid.arrange(
-                        prettybasemap_nodrc + prevmaps[[1]], 
-                        prettybasemap_nodrc + prevmaps[[2]], 
-                        prettybasemap_nodrc + prevmaps[[3]], 
-                        prettybasemap_nodrc + prevmaps[[4]], 
-                        prettybasemap_nodrc + prevmaps[[5]], 
-                        prettybasemap_nodrc + prevmaps[[6]], 
+                        prettybasemap_nodrc + ptestmaps[[1]], 
+                        prettybasemap_nodrc + ptestmaps[[2]], 
+                        prettybasemap_nodrc + ptestmaps[[3]], 
+                        prettybasemap_nodrc + ptestmaps[[4]], 
+                        prettybasemap_nodrc + ptestmaps[[5]], 
+                        prettybasemap_nodrc + ptestmaps[[6]], 
                         nrow=2, top=grid::textGrob("Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 # graphics.off()
 
@@ -149,9 +149,9 @@ jpeg(file = "figures/04-zscoremaps.jpg", width = 11, height = 8, units="in", res
 gridExtra::grid.arrange(prevhist[[1]],
                         prevhist[[2]],
                         prevhist[[3]],
-                        zscoreprevmaps[[1]], 
-                        zscoreprevmaps[[2]],
-                        zscoreprevmaps[[3]],
+                        prettybasemap_nodrc + zscoreprevmaps[[1]], 
+                        prettybasemap_nodrc + zscoreprevmaps[[2]],
+                        prettybasemap_nodrc + zscoreprevmaps[[3]],
                         nrow=2, 
                         top=grid::textGrob("Histograms and Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 graphics.off()
@@ -233,12 +233,13 @@ caseprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmd
 
 jpeg(file = "figures/04-case-maps.jpg", width = 11, height = 8, units="in", res=300)
 gridExtra::grid.arrange(
-  caseprevmaps[[1]], 
-  caseprevmaps[[2]],
-  caseprevmaps[[3]],
+  prettybasemap_nodrc + caseprevmaps[[1]], 
+  prettybasemap_nodrc + caseprevmaps[[2]],
+  prettybasemap_nodrc + caseprevmaps[[3]],
   nrow=1, 
   top=grid::textGrob("Case Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 graphics.off()
+
 
 
 #----------------------------------------------------------------------------------------------------
@@ -340,15 +341,32 @@ aperange_nhapv <- ggplot() +
  
  jpeg(file = "figures/04-guassian-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
  gridExtra::grid.arrange(
-   prevmaprasterplots[[1]], 
-   prevmaprasterplots[[2]],
-   prevmaprasterplots[[3]],
+   prettybasemap_nodrc + prevmaprasterplots[[1]], 
+   prettybasemap_nodrc + prevmaprasterplots[[2]],
+   prettybasemap_nodrc + prevmaprasterplots[[3]],
    nrow=1, 
    top=grid::textGrob("Smoothed Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
  graphics.off()
  
  
-
+ #----------------------------------------------------------------------------------------------------
+ # Large Figure out
+ #----------------------------------------------------------------------------------------------------
+ jpeg(file = "figures/04-combined-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
+ gridExtra::grid.arrange(
+   prettybasemap_nodrc + ptestmaps[[1]] + theme(plot.title = element_blank()), 
+   prettybasemap_nodrc + caseprevmaps[[1]] + theme(plot.title = element_blank()),
+   prettybasemap_nodrc + prevmaprasterplots[[1]] + theme(plot.title = element_blank()), 
+   prettybasemap_nodrc + ptestmaps[[2]] + theme(plot.title = element_blank()), 
+   prettybasemap_nodrc + caseprevmaps[[2]] + theme(plot.title = element_blank()),
+   prettybasemap_nodrc + prevmaprasterplots[[2]] + theme(plot.title = element_blank()),
+   prettybasemap_nodrc + ptestmaps[[3]] + theme(plot.title = element_blank()), 
+   prettybasemap_nodrc + caseprevmaps[[3]] + theme(plot.title = element_blank()),
+   prettybasemap_nodrc + prevmaprasterplots[[3]] + theme(plot.title = element_blank()),
+   nrow=1, 
+   top=grid::textGrob("Smoothed Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+ graphics.off()
+ 
  #----------------------------------------------------------------------------------------------------
  # Save Objects for Reports
  # Write out
