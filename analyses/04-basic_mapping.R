@@ -353,6 +353,8 @@ aperange_nhapv <- ggplot() +
  # Save Objects for Reports
  # Write out
  #----------------------------------------------------------------------------------------------------
+ save(mp, pr, file = "data/04-basic_mapping_data.rda")
+ 
  out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
  if(!dir.exists(out)){dir.create(out)}
  save(prevmaps, prevhist, zscoreprevmaps, terrmaps, caseprevmaps, aperange_nhapv,
