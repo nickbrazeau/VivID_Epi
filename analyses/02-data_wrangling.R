@@ -115,6 +115,9 @@ dt <- dt %>%
 #.............
 dt <- dt %>% 
   dplyr::mutate(
+    pfldhct_cont = pfctmean,
+    po18sct_cont = poctcrrct,
+    pv18sct_cont = pvctcrrct,
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("fal-", "fal+")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ov-", "ov+")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("viv-", "viv+"))
