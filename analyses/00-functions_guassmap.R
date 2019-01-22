@@ -10,8 +10,7 @@ source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R")
 load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
-pfldhclust <- inner_join(x=pfldhclust, clustgeom, by = "hv001")
-pfldhclust$plsmdprevlog <- logit(pfldhclust$plsmdprev, tol = 1e-3)
+
 
 guass_map_clstr_summarizer <- function(data, plsmdmspec){
   
