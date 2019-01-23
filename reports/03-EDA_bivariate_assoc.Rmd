@@ -17,7 +17,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions.R") 
+source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_glms.R") 
 library(tidyverse)
 library(sf)
 library(srvyr) #wrap the survey package in dplyr syntax
@@ -29,8 +29,7 @@ library(tableone)
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 load("~/Documents/GitHub/VivID_Epi/reports/report_obj/03-Uni_Bivar_analyses.rda")
 
-options("scipen"=100, "digits"=4)
-
+options(scipen=999)
 ```
 
 
@@ -144,6 +143,7 @@ est %>%
   dplyr::filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(PvOR = estimate) %>% 
+  dplyr::filter(PvOR > 0 ) %>% # convergence issue. for now
   knitr::kable(., "html") %>%  # note must tell kableExtra html or latex
   kableExtra::kable_styling(bootstrap_options = "striped", full_width = F, position = "center")
   
@@ -165,6 +165,7 @@ est2 %>%
   dplyr::bind_rows(.) %>% 
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(PvOR = estimate) %>% 
+  dplyr::filter(PvOR > 0 ) %>% # convergence issue. for now
   knitr::kable(., "html") %>%  # note must tell kableExtra html or latex
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),  position = "center")
 

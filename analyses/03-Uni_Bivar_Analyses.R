@@ -72,6 +72,28 @@ model_parameters$glmlogit_mlm_tidy <- purrr::map(model_parameters$glmlogit_mlm, 
 
 
 
+
+#----------------------------------------------------------------------------------------------------
+# Playgroun
+#----------------------------------------------------------------------------------------------------
+#...............
+# how strong of an effect is that pv outlier
+#..............
+# not bad bc so few points
+
+t <- glm(pv18s ~ hv025_fctb,
+         data = dt,
+         family = binomial(link = "logit"))
+broom::tidy(t, exponentiate=TRUE, conf.int=TRUE)
+
+u <- glm(pv18s ~ hv025_fctb,
+         data = dt[dt$hv001 != 81, ],
+         family = binomial(link = "logit"))
+broom::tidy(u, exponentiate=TRUE, conf.int=TRUE)
+
+
+
+
 #----------------------------------------------------------------------------------------------------
 # Save Objects for Reports
 #----------------------------------------------------------------------------------------------------

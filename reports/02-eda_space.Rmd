@@ -335,7 +335,7 @@ colnames(pvprov)[4] <- "Pv_prev"
   
 
 plotObj <- dplyr::bind_cols(pfprov, pvprov) %>% 
-  ggplot(aes(x=Pf_prev, y=Pv_prev, size = plsmdn)) +
+  ggplot(aes(x=Pf_prev, y=Pv_prev, size = n)) +
   geom_point(aes(colour = adm1name)) +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Pfalciparum versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") + 
@@ -356,7 +356,7 @@ colnames(pvprov)[4] <- "Pv_prev"
   
 
 plotObj <- dplyr::bind_cols(poprov, pvprov) %>% 
-  ggplot(aes(x=Po_prev, y=Pv_prev, size = plsmdn)) +
+  ggplot(aes(x=Po_prev, y=Pv_prev, size = n)) +
   geom_point(aes(colour = adm1name)) +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Povlae versus Pvivax Province Prevalence") + ylab("Pv Prevalence") + xlab("Po Prevalence") +
@@ -380,7 +380,7 @@ colnames(pvclust)[4] <- "Pv_prev"
 
 plotObj <- dplyr::bind_cols(pfclust, pvclust) %>% 
 #  dplyr::filter(!(Pf_prev == 0 & Pv_prev == 0)) %>% 
-  ggplot(aes(x=Pf_prev, y=Pv_prev, size = plsmdn)) +
+  ggplot(aes(x=Pf_prev, y=Pv_prev, size = n)) +
   geom_point(color = "#a6bddb") +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Pfalciparum versus Pvivax Cluster Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") +
@@ -401,7 +401,7 @@ colnames(pvclust)[4] <- "Pv_prev"
 
 plotObj <- dplyr::bind_cols(poclust, pvclust) %>% 
 #  dplyr::filter(!(Po_prev == 0 & Pv_prev == 0)) %>% 
-  ggplot(aes(x=Po_prev, y=Pv_prev, size = plsmdn)) +
+  ggplot(aes(x=Po_prev, y=Pv_prev, size = n)) +
   geom_point(color = "#a6bddb") +
   geom_smooth(method="loess", se=F, colour = "red") +
       ggtitle("Pfalciparum versus Povale Cluster Prevalence") + ylab("Pv Prevalence") + xlab("Po Prevalence") +

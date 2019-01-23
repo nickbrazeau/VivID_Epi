@@ -62,8 +62,8 @@ pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2
 popcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Po_alladults_V2.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
-  dplyr::select(c("hivrecode_barcode", "po18s", "corrected_ct")) %>% 
-  dplyr::rename(poctcrrct = corrected_ct)
+  dplyr::select(c("hivrecode_barcode", "po18s", "corrected_ct_adj")) %>% 
+  dplyr::rename(poctcrrct = corrected_ct_adj)
 
 # bind together the pf, po, pv results
 panplasmpcrres <- dplyr::inner_join(pfpcr, popcr, by="hivrecode_barcode") %>% 

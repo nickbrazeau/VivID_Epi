@@ -2,13 +2,56 @@
 # Purpose of this script is to investigate if the pv and pf data are correlated
 # considering both space and other epi variables
 #----------------------------------------------------------------------------------------------------
+library(tidyverse)
+library(sf)
+library(srvyr)
+load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+load("~/Documents/GitHub/VivID_Epi/data/04-basic_mapping_data.rda")
+clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "hv025_fctb", "latnum", "longnum", "geometry")]
+
+#...................................
+# Loess Plots based on Summary 
+#...................................
+pfclst <- mp$data[[4]]
+colnames(pfclst)[6] <- "Pf_prev"
+
+pvclst <- mp$data[[5]]
+colnames(pvclst)[6] <- "Pv_prev"
+
+
+loesspvpf <- dplyr::bind_cols(pfclst, pvclst) %>% 
+  ggplot(aes(x=Pf_prev, y=Pv_prev, size = n)) +
+  geom_point(aes(colour = hv001), show.legend = F) +
+  geom_smooth(method="loess", se=F, colour = "red") +
+  ggtitle("Pfalciparum versus Pvivax Cluster Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") + 
+  vivid_theme
+plotly::ggplotly(loesspvpf)
+
+
+loesspvpf_rrlurbn <- dplyr::bind_cols(pfclst, pvclst) %>% 
+  left_join(., y=clustgeom) %>% 
+  ggplot(aes(x=Pf_prev, y=Pv_prev, size = n, group = hv025_fctb)) +
+  geom_point(aes(colour = hv001), show.legend = F) +
+  geom_smooth(method="loess", se=F, colour = "red") +
+facet_wrap(~hv025_fctb) +
+  ggtitle("Pfalciparum versus Pvivax Cluster Prevalence") + ylab("Pv Prevalence") + xlab("Pf Prevalence") + 
+  vivid_theme
+plotly::ggplotly(loesspvpf_rrlurbn)
+
+
+#...................................
+# Distance Matrix
+#...................................
+pfclst <- mp$data[[4]]
+pvclst <- mp$data[[5]]
 
 
 
-# Comparison of _Pv_ and _Pf_ Risk Factors
-## Age {.tabset .tabset-fade .tabset-pill}
-```{r}
 
+
+#...................................
+# Comparison of Pf and Pv Age dist
+#...................................
 pvage <- dt %>% 
   dplyr::mutate(count = 1) %>% 
   srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
@@ -37,6 +80,5 @@ plotObj <- dplyr::bind_rows(pvage, pfage) %>%
   xlab("Age") + ylab("Malaria Prevalence") + 
   vivid_theme
 
-```
-## 
+
 
