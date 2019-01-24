@@ -216,6 +216,7 @@ save(gc, file = "data/vividspace_raw.rda")
 save(DRCprov, drc_stamen_back_terrain, file = "data/vividmaps_small.rda")
 save(trunkroadsosm, primaryroadsosm, secondaryroadsosm, file = "data/osm_roads.rda")
 save(riverosm, majriver, file = "data/osm_rivers.rda")
+save(ape, file = "data/IUCN_ape.rda")
 #---------------------------------------------------------------------------------
 # write out large objects
 #---------------------------------------------------------------------------------

@@ -108,10 +108,14 @@ mapplotter <- function(data, maplvl, plsmdmspec){
 
 
 mapplotter_clust_terrain <- function(data, plsmdmspec){
-  # need to load data/vividmaps_large.rda first
-  ret <-  prettybasemap_terraincolors + 
-    geom_point(data=data, aes(x=longnum, y = latnum, fill = plsmdprev, colour = plsmdprev, size = n), 
-               alpha = 0.4) +
+  # need to load data/vividmaps_large.rda first and recode.rda
+  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "longnum", "latnum", "geometry")]
+  data <- inner_join(data, clustgeom, by = "hv001")
+  
+  ret <- ggplot() + 
+    prettybasemap_terraincolors + 
+    geom_point(data = data, aes(x=longnum, y = latnum, colour = plsmdprev, size = n), 
+               alpha = 0.4) + # using point here to not overwrite sf fill
     # scale_fill_distiller("Prevalence", palette = "Spectral") +
      scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
     # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmdprev[data$plsmdprev != 0], 0.75)) + 

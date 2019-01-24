@@ -1,0 +1,161 @@
+── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 3.1.0     ✔ purrr   0.2.5
+✔ tibble  2.0.1     ✔ dplyr   0.7.8
+✔ tidyr   0.8.2     ✔ stringr 1.3.1
+✔ readr   1.3.1     ✔ forcats 0.3.0
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Linking to GEOS 3.7.1, GDAL 2.3.2, PROJ 5.2.0
+
+Attaching package: ‘srvyr’
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+Loading required package: geoR
+--------------------------------------------------------------
+ Analysis of Geostatistical Data
+ For an Introduction to geoR go to http://www.leg.ufpr.br/geoR
+ geoR version 1.7-5.2.1 (built on 2016-05-02) is now loaded
+--------------------------------------------------------------
+
+Loading required package: maxLik
+Loading required package: miscTools
+
+Please cite the 'maxLik' package as:
+Henningsen, Arne and Toomet, Ott (2011). maxLik: A package for maximum likelihood estimation in R. Computational Statistics 26(3), 443-458. DOI 10.1007/s00180-010-0217-1.
+
+If you have questions, suggestions, or comments regarding the 'maxLik' package, please use a forum or 'tracker' at maxLik's R-Forge site:
+https://r-forge.r-project.org/projects/maxlik/
+Loading required package: raster
+Loading required package: sp
+
+Attaching package: ‘raster’
+
+The following object is masked from ‘package:srvyr’:
+
+    select
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+Loading required package: pdist
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following object is masked from ‘package:tidyr’:
+
+    expand
+
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Warning message:
+Column `hv001` has different attributes on LHS and RHS of join 
+initial  value 571.520746 
+iter   2 value 571.374297
+iter   3 value 570.710589
+iter   4 value 570.625866
+iter   5 value 570.468784
+iter   6 value 570.458329
+iter   7 value 570.449085
+iter   8 value 570.444401
+iter   9 value 570.444236
+iter   9 value 570.444236
+iter   9 value 570.444236
+final  value 570.444236 
+converged
+Type of prevalence predictions: marginal 
+Spatial predictions: prevalence 
+initial  value 837.495949 
+iter   2 value 836.509945
+iter   3 value 831.483779
+iter   4 value 817.006600
+iter   5 value 816.335845
+iter   6 value 815.100230
+iter   7 value 815.054406
+iter   8 value 815.053588
+iter   9 value 815.052115
+iter  10 value 815.043809
+iter  11 value 815.040317
+iter  12 value 815.040133
+iter  13 value 815.036771
+iter  14 value 815.011142
+iter  15 value 815.002546
+iter  16 value 814.960036
+iter  17 value 814.924368
+iter  18 value 814.863946
+iter  19 value 814.815167
+iter  20 value 814.793347
+iter  21 value 814.792606
+iter  22 value 814.749394
+iter  23 value 814.707054
+iter  24 value 814.639716
+iter  25 value 814.559054
+iter  26 value 814.502683
+iter  27 value 814.433980
+iter  28 value 814.410278
+iter  29 value 814.405957
+iter  30 value 814.400570
+iter  31 value 814.400552
+iter  32 value 814.391287
+iter  33 value 814.387365
+iter  34 value 814.383003
+iter  35 value 814.381831
+iter  36 value 814.381498
+iter  36 value 814.381494
+iter  36 value 814.381494
+final  value 814.381494 
+converged
+Type of prevalence predictions: marginal 
+Spatial predictions: prevalence 
+initial  value 671.777042 
+iter   2 value 671.264262
+iter   3 value 668.845326
+iter   4 value 668.594483
+iter   5 value 668.588408
+iter   6 value 668.331310
+iter   7 value 666.263590
+iter   8 value 665.526013
+iter   9 value 665.338200
+iter  10 value 663.290772
+iter  11 value 663.129586
+iter  12 value 663.062446
+iter  13 value 663.057914
+iter  14 value 663.057576
+iter  15 value 663.057466
+iter  16 value 663.057369
+iter  16 value 663.057369
+final  value 663.057369 
+converged
+Type of prevalence predictions: marginal 
+Spatial predictions: prevalence 
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Coordinate system already present. Adding new coordinate system, which will replace the existing one.
+Error in gzfile(file, "wb") : cannot open the connection
+Calls: save -> gzfile
+In addition: Warning message:
+In gzfile(file, "wb") :
+  cannot open compressed file 'data/04-basic_mapping_data.rda', probable reason 'No such file or directory'
+Execution halted

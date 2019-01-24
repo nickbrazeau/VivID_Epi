@@ -56,7 +56,7 @@ pfpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2
 pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v1.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
-  dplyr::select(c("hivrecode_barcode", "pv18s", "corrected_ct")) %>% 
+  dplyr::select(c("hivrecode_barcode", "pv18s", "corrected_ct", "original_platemnum")) %>% 
   dplyr::rename(pvctcrrct = corrected_ct)
 
 popcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Po_alladults_V2.csv", 

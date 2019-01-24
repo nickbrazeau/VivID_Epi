@@ -15,8 +15,8 @@ library(PrevMap)
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
-load("data/vividmaps_large.rda")
-
+load("~/Documents/GitHub/VivID_Epi/data/vividmaps_large.rda")
+load("~/Documents/GitHub/VivID_Epi/data/IUCN_ape.rda")
 
 #----------------------------------------------------------------------------------------------------
 # Explore here the different prevalences/regions of Plasmodium species basic maps
@@ -53,35 +53,35 @@ mp$data <- lapply(list(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, 
 # Plot Summary/Point Est Maps
 #..............................
 ptestmaps <- pmap(mp, mapplotter)
+ptestmaps <- map(ptestmaps, function(x){return(x + prettybasemap_nodrc)})
 
 
-
-# jpeg(file = "figures/04-prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
+jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
 gridExtra::grid.arrange(
-                        prettybasemap_nodrc + ptestmaps[[1]], 
-                        prettybasemap_nodrc + ptestmaps[[2]], 
-                        prettybasemap_nodrc + ptestmaps[[3]], 
-                        prettybasemap_nodrc + ptestmaps[[4]], 
-                        prettybasemap_nodrc + ptestmaps[[5]], 
-                        prettybasemap_nodrc + ptestmaps[[6]], 
+                        ptestmaps[[1]], 
+                        ptestmaps[[2]], 
+                        ptestmaps[[3]], 
+                        ptestmaps[[4]], 
+                        ptestmaps[[5]], 
+                        ptestmaps[[6]], 
                         nrow=2, top=grid::textGrob("Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-# graphics.off()
+graphics.off()
 
 #..............................
 # Plot terrain cluster Maps
 #..............................
-terrmaps <- mp %>% 
-  dplyr::filter(maplvl == "hv001") %>% 
-  dplyr::select(-c(maplvl)) %>% 
-  purrr::pmap(., mapplotter_clust_terrain)
-
-
-jpeg(file = "figures/04-pointpretty_terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
-gridExtra::grid.arrange(terrmaps[[1]], 
-                        terrmaps[[2]],
-                        terrmaps[[3]],
-                        ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS, Stamen Terrain Maps", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-graphics.off()
+# terrmaps <- mp %>% 
+#   dplyr::filter(maplvl == "hv001") %>% 
+#   dplyr::select(-c(maplvl)) %>% 
+#   purrr::pmap(., mapplotter_clust_terrain)
+# 
+# 
+# jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-pointpretty_terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
+# gridExtra::grid.arrange(terrmaps[[1]], 
+#                         terrmaps[[2]],
+#                         terrmaps[[3]],
+#                         ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS, Stamen Terrain Maps", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+# graphics.off()
 
 
 #----------------------------------------------------------------------------------------------------
@@ -130,6 +130,7 @@ zscoremapplotter <- function(data, plsmdmspec){
 }
 
 zscoreprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), zscoremapplotter)
+zscoreprevmaps <- map(zscoreprevmaps, function(x){return(x + prettybasemap_nodrc)})
 
 prevhist <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), function(data, plsmdmspec){
   data %>% 
@@ -145,56 +146,56 @@ prevhist <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspe
 
 
 
-jpeg(file = "figures/04-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
+jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
 gridExtra::grid.arrange(prevhist[[1]],
                         prevhist[[2]],
                         prevhist[[3]],
-                        prettybasemap_nodrc + zscoreprevmaps[[1]], 
-                        prettybasemap_nodrc + zscoreprevmaps[[2]],
-                        prettybasemap_nodrc + zscoreprevmaps[[3]],
+                        zscoreprevmaps[[1]], 
+                        zscoreprevmaps[[2]],
+                        zscoreprevmaps[[3]],
                         nrow=2, 
                         top=grid::textGrob("Histograms and Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 graphics.off()
 
  
 
-# #......................
-# # Plot logit zscores
-# #......................
-# logitzscoremapplotter <- function(data, plsmdmspec){
-#   # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
-#   
-#     clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "geometry")]
-#     ret <- data %>% 
-#     ggplot() + 
-#     geom_sf(data = DRCprov) +
-#     geom_sf(data = inner_joing(data, clustgeom, by = "hv001"),
-#             aes(colour = zscorelogitplsmdprev, size = n), alpha = 0.4) +
-#     scale_color_gradient2("Prevalence Logit Z-Scores", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-#     scale_size(guide = 'none') +
-#     ggtitle(paste(plsmdmspec)) +
-#     coord_sf(datum=NA) + # to get rid of gridlines
-#     vivid_theme +
-#     theme(axis.text = element_blank(),
-#           axis.line = element_blank(), 
-#           legend.position = "bottom")
-#   
-#   return(ret)
-#   
-# }
-# 
-# logitzscoremapplotterprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), logitzscoremapplotter)
-# 
-# 
-# jpeg(file = "figures/04-logit-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
-# gridExtra::grid.arrange(
-#                         logitzscoremapplotterprevmaps[[1]], 
-#                         logitzscoremapplotterprevmaps[[2]],
-#                         logitzscoremapplotterprevmaps[[3]],
-#                         nrow=1, 
-#                         top=grid::textGrob("Logit Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-# graphics.off()
-# 
+#......................
+# Plot logit zscores
+#......................
+logitzscoremapplotter <- function(data, plsmdmspec){
+  # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
+
+    clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "geometry")]
+    ret <- data %>%
+    ggplot() +
+    geom_sf(data = DRCprov) +
+    geom_sf(data = inner_join(data, clustgeom, by = "hv001"),
+            aes(colour = zscorelogitplsmdprev, size = n), alpha = 0.4) +
+    scale_color_gradient2("Prevalence Logit Z-Scores", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+    scale_size(guide = 'none') +
+    ggtitle(paste(plsmdmspec)) +
+    coord_sf(datum=NA) + # to get rid of gridlines
+    vivid_theme +
+    theme(axis.text = element_blank(),
+          axis.line = element_blank(),
+          legend.position = "bottom")
+
+  return(ret)
+
+}
+
+logitzscoremapplotterprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), logitzscoremapplotter)
+
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-logit-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
+gridExtra::grid.arrange(
+                        logitzscoremapplotterprevmaps[[1]],
+                        logitzscoremapplotterprevmaps[[2]],
+                        logitzscoremapplotterprevmaps[[3]],
+                        nrow=1,
+                        top=grid::textGrob("Logit Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
+graphics.off()
+
 
 
 
@@ -228,50 +229,18 @@ casemapplotter <- function(data, plsmdmspec){
   
 }
 
-caseprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), casemapplotter)
+caseprevmaps <- pmap(list(data = clusters$data, plsmdmspec = clusters$plsmdmspec), casemapplotter)
+caseprevmaps <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
 
 
-jpeg(file = "figures/04-case-maps.jpg", width = 11, height = 8, units="in", res=300)
+jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-case-maps.jpg", width = 11, height = 8, units="in", res=300)
 gridExtra::grid.arrange(
-  prettybasemap_nodrc + caseprevmaps[[1]], 
-  prettybasemap_nodrc + caseprevmaps[[2]],
-  prettybasemap_nodrc + caseprevmaps[[3]],
+  caseprevmaps[[1]], 
+  caseprevmaps[[2]],
+  caseprevmaps[[3]],
   nrow=1, 
   top=grid::textGrob("Case Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 graphics.off()
-
-
-
-#----------------------------------------------------------------------------------------------------
-# Sampling Dates Distributions
-#----------------------------------------------------------------------------------------------------
-datesamp <- dt %>% 
-  dplyr::group_by(hv001) %>%
-  dplyr::mutate(time = ifelse(length(unique(hvyrmnth_fctm)) == 1, 
-                              paste(unique(hvyrmnth_fctm)),
-                              paste0(unique(hvyrmnth_fctm), collapse="/"))
-  ) %>% 
-  dplyr::summarise(n = n(), 
-                   timen = length(unique(hvyrmnth_fctm)),
-                   latnum = mean(latnum), 
-                   longnum = mean(longnum),
-                   time = unique(time)
-                   ) 
-datesampmap <- datesamp %>% 
-  ggplot() +
-  geom_sf(data = DRCprov, fill = "#d9d9d9") +
-  geom_point(data = datesamp, aes(x=longnum, y=latnum, color = factor(time)),
-             size = 1.2, alpha = 0.8) +
-  theme(legend.position = "bottom",
-        plot.background = element_blank())
-
-
-
-jpeg("~/Documents/GitHub/VivID_Epi/figures/04-clstr_collection_times.jpg", width = 8, height = 8, res = 400, units = "in")
-plot(datesampmap)
-graphics.off()
-
-
 
 
  
@@ -338,35 +307,39 @@ aperange_nhapv <- ggplot() +
  #..............................
  prevmaprasterplots <- lapply(pr$prevrasterspred,
                      prevmaprasterplotter, smoothfct = rep(7,3))
+ prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
  
- jpeg(file = "figures/04-guassian-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
+ 
+ jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-guassian-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
  gridExtra::grid.arrange(
-   prettybasemap_nodrc + prevmaprasterplots[[1]], 
-   prettybasemap_nodrc + prevmaprasterplots[[2]],
-   prettybasemap_nodrc + prevmaprasterplots[[3]],
+   prevmaprasterplots[[1]], 
+   prevmaprasterplots[[2]],
+   prevmaprasterplots[[3]],
    nrow=1, 
    top=grid::textGrob("Smoothed Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
  graphics.off()
  
  
  #----------------------------------------------------------------------------------------------------
- # Large Figure out
+ # Pv & Pf Figure out
  #----------------------------------------------------------------------------------------------------
- jpeg(file = "figures/04-combined-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
+ jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-vivax-prev.jpg", width = 11, height = 8, units="in", res=300)
  gridExtra::grid.arrange(
-   prettybasemap_nodrc + ptestmaps[[1]] + theme(plot.title = element_blank()), 
-   prettybasemap_nodrc + caseprevmaps[[1]] + theme(plot.title = element_blank()),
-   prettybasemap_nodrc + prevmaprasterplots[[1]] + theme(plot.title = element_blank()), 
-   prettybasemap_nodrc + ptestmaps[[2]] + theme(plot.title = element_blank()), 
-   prettybasemap_nodrc + caseprevmaps[[2]] + theme(plot.title = element_blank()),
-   prettybasemap_nodrc + prevmaprasterplots[[2]] + theme(plot.title = element_blank()),
-   prettybasemap_nodrc + ptestmaps[[3]] + theme(plot.title = element_blank()), 
-   prettybasemap_nodrc + caseprevmaps[[3]] + theme(plot.title = element_blank()),
-   prettybasemap_nodrc + prevmaprasterplots[[3]] + theme(plot.title = element_blank()),
+   ptestmaps[[2]], 
+   caseprevmaps[[2]],
+   prevmaprasterplots[[2]],
    nrow=1, 
-   top=grid::textGrob("Smoothed Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+   top=grid::textGrob("Case Prevalence for Vivax in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
  graphics.off()
  
+ jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-vivax-prev.jpg", width = 11, height = 8, units="in", res=300)
+ gridExtra::grid.arrange(
+   ptestmaps[[1]], 
+   caseprevmaps[[1]],
+   prevmaprasterplots[[1]],
+   nrow=1, 
+   top=grid::textGrob("Case Prevalence for Falciparum in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+ graphics.off()
  #----------------------------------------------------------------------------------------------------
  # Save Objects for Reports
  # Write out
@@ -375,6 +348,6 @@ aperange_nhapv <- ggplot() +
  
  out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
  if(!dir.exists(out)){dir.create(out)}
- save(prevmaps, prevhist, zscoreprevmaps, terrmaps, caseprevmaps, aperange_nhapv,
+ save(prevmaps, prevhist, zscoreprevmaps, caseprevmaps, aperange_nhapv,
       mp, pr, 
       file = paste0(out, "/", "04-basic_mapping_objs.rda"))

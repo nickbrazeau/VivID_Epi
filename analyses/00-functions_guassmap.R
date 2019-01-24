@@ -41,17 +41,19 @@ fit_pred_spMLE <- function(outcome, covar,
                      data, 
                      grid.pred,
                      kappa = 0.5,
-                     pred.reps = 1e2){
+                     start.cov.pars = c(1,1),
+                     scale.predictions = "prevalence",
+                     pred.reps = 1e2, SE = T){
   eq <- as.formula(paste0(outcome, "~", covar))
   coords <- as.formula(paste0("~", long_var, "+", lat_var))
   ret.fit <- PrevMap::linear.model.MLE(formula=eq, coords=coords, 
-                          data=data, start.cov.pars=c(1,1), 
+                          data=data, start.cov.pars=start.cov.pars, 
                           kappa=kappa)
   
   ret.pred <- PrevMap::spatial.pred.linear.MLE(ret.fit, 
                           grid.pred = grid.pred, 
-                          scale.predictions="prevalence", 
-                          n.sim.prev=pred.reps, standard.errors=TRUE)
+                          scale.predictions=scale.predictions, 
+                          n.sim.prev=pred.reps, standard.errors=SE)
   
   return(list(
     fit = ret.fit,
@@ -80,8 +82,7 @@ prevmaprasterplotter <- function(prevrasters, smoothfct = 5){
                                  prev = ret.smrstr.m[,3])
   ret.smrstr.m.plot <- ggplot() + 
     geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.8) +
-    scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
-    prettybasemap_nodrc 
+    scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") 
 
   return(ret.smrstr.m.plot)
 }
