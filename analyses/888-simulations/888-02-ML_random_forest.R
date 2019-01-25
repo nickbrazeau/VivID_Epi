@@ -15,4 +15,79 @@
 #......................
 # Import Data and Dependencies
 #......................
-source("analyses/05-simulations/05-00-Create_Sim_Data.R")
+library(mlr)
+load("~/Documents/GitHub/VivID_Epi/analyses/888-simulations/simdata/simdat_basic.rds")
+expdat <- dat %>% 
+  mutate(outcome = factor(outcome, levels = c(0,1), labels = c("neg", "pos")),
+         treatment = factor(treatment, 
+                            levels=c(0,1), labels = c("neg", "pos")),
+         hv001 = factor(hv001)
+  ) %>% 
+  select(c("x_1", "x_2", "treatment")) %>% 
+  as.data.frame(.)
+
+xtabs(~expdat$treatment)
+#......................
+# Make the task (i.e. dataset) and the learner
+#......................
+
+classif.task = makeClassifTask(id = "EN_dat", 
+                               data = expdat, 
+                               target = "treatment")
+
+
+#Classification tree, set it up for predicting probabilities
+classif.rf = makeLearner("classif.randomForest", 
+                         predict.type = "prob", 
+                         fix.factors.prediction = TRUE)
+
+getHyperPars(classif.rf)
+getParamSet(classif.rf)
+
+#......................
+# Setup Train
+#......................
+n = getTaskSize(classif.task)
+# Use 2/3 of the observations for training and 1/3 for testing
+train.set = sample(n, size = 2*n/3)
+test.set = seq(1,n)[ ! seq(1, n) %in% train.set ]
+mod <- train(classif.rf, classif.task, subset = train.set)
+task.pred <- predict(mod, task = classif.task, subset = test.set)
+task.pred
+calculateConfusionMatrix(task.pred)
+# plotLearnerPrediction(classif.rf, task = classif.task)
+performance(task.pred, measures = list(fpr, fnr, mmce))
+d = generateThreshVsPerfData(task.pred, measures = list(fpr, fnr, mmce))
+plotThreshVsPerf(d)
+calculateROCMeasures(task.pred)
+
+
+
+
+#......................
+# IPW Weights
+#......................
+# dat$ps <- predict(mod, task = classif.task)$data$prob.pos
+pred <- predict(mod, task = classif.task)$data
+dat$ps <- ifelse(pred$response == "pos", pred$prob.pos, pred$prob.neg)
+ggplot(data=dat,aes(x=ps, 
+                    group=factor(treatment), fill=factor(treatment))) +
+  geom_histogram(aes(y=..density..),alpha = 0.75,binwidth=0.02,position = position_dodge(width=0.01))+
+  theme_classic()+
+  xlab("Predicted probability of Ai")+
+  labs(fill = "Observed")
+# create weights
+p_exposure <- sum(dat$treatment == "pos") / nrow(dat)
+dat$iptw_s <-  1/dat$ps
+
+weighted_df <- survey::svydesign(~0, weights = dat$iptw_s, data=dat)
+survey::svymean(~treatment, weighted_df, na.rm=T)
+tableone::svyCreateTableOne(vars = c("x_1", "x_2"), 
+                  strata = "treatment", test = F, 
+                  data = weighted_df)
+
+dat$x <- 1:nrow(dat)
+broom::tidy(geepack::geeglm(data = dat, outcome ~ treatment, 
+                   family=binomial("logit"), 
+                   weight=iptw_s, id = x))
+

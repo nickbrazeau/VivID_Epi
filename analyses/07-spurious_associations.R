@@ -19,6 +19,9 @@ clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum", "geometry
 #........................
 # Original Plate nums
 #........................
+plts <- dt %>% 
+  group_by(original_platemnum, hv001) %>% 
+  summarise(longnum = mean(longnum), latnum = mean(latnum))
 
 pltnm <- dt %>% 
   group_by(original_platemnum) %>% 
@@ -27,6 +30,7 @@ pltnm <- dt %>%
             pvmean = mean(pv18s, na.rm=T),
             pvctmean = mean(pv18sct_cont, na.rm = T)) %>% 
   filter(pvmean > 0) 
+  
 
 pltnm %>% 
   DT::datatable(., extensions='Buttons',
@@ -37,15 +41,15 @@ pltnm %>%
                   buttons = c('csv')))
 # https://stackoverflow.com/questions/15282580/how-to-generate-a-number-of-most-distinctive-colors-in-r              
 
-n <- length(levels(factor(pltnm$hv001)))
+n <- length(levels(factor(plts$hv001)))
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
 col_vector <- c(col_vector, rainbow(7))
 
 ggplot() +
   geom_sf(data = DRCprov, fill = "#d9d9d9") +
-  geom_point(data = pltnm, aes(x=longnum, y=latnum, colour = factor(original_platemnum))) +
-  scale_color_manual(values = col_vector) +
+  geom_point(data = plts, aes(x=longnum, y=latnum, colour = factor(original_platemnum))) +
+#  scale_color_manual(values = col_vector) +
   theme(legend.position = "none")
 
 

@@ -57,15 +57,15 @@ perlin_noise <- function(
 }
 
 # create space probabilities based on perline noise (smoothly varying)
-PN <- perlin_noise(n=2, m=3, N=10, M=10)
+PN <- perlin_noise(n=2, m=3, N=100, M=100)
 image(PN)
 
 plot(raster(PN))
 
-s <- matrix(0.1, 50, 100)
-t <- matrix(1, 50, 100)
-PN <- rbind(s,t)
-plot(raster(PN))
+# s <- matrix(0.1, 50, 100)
+# t <- matrix(1, 50, 100)
+# PN <- rbind(s,t)
+# plot(raster(PN))
 #--------------------------------------------------------
 # Setup Covariates
 #--------------------------------------------------------
@@ -101,11 +101,11 @@ dat <- tibble(
   lat = unlist(clst[,2]),
   pn = unlist(clst[,3]),
   hv001 = unlist(clst[,4]),
-  treatment = as.numeric(- 0.5 + 0.25 * x_1 + 0.75 * x_2 + rnorm(n, 0, 1) + pn*5 > 0),
-  outcome = as.numeric(rbernoulli(n, plogis(2 * treatment + rnorm(n, 0, 1))))
+  treatment = as.numeric(- 0.5 + 0.25 * x_1 + 0.75 * x_2 + rnorm(n, 0, 1) + pn > 0),
+  outcome = as.numeric(rbernoulli(n, plogis(treatment + rnorm(n, 0, 1))))
 )
 
-PN ISN'T GET PICKED UP BC COVAR IS TOO MUCH FROM X1 AND X2'
+# PN ISN'T GET PICKED UP BC COVAR IS TOO MUCH FROM X1 AND X2'
 
 
 #--------------------------------------------------------
@@ -121,7 +121,8 @@ m2 <- glm(formula = outcome ~ treatment + x_1 + x_2,
     family = binomial(link = "logit"))
 broom::tidy(m2, exponentiate = T, conf.int = T)
 
-
+xtabs(~dat$outcome)
+xtabs(~dat$treatment)
 # make cluster level
 mp <- dat %>% 
   group_by(hv001, lat, lon) %>% 
@@ -152,4 +153,7 @@ ggplot() +
   geom_point(data = mp, aes(lon, lat, color = outprev), alpha = 0.8) +
   scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = 0.67) 
 plot(raster(PN))
+
+
+save(dat, file = "~/Documents/GitHub/VivID_Epi/analyses/888-simulations/simdata/simdat_basic.rds")
 
