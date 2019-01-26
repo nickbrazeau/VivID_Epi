@@ -134,8 +134,9 @@ dt %>%
 Odds Ratios with Pv as the outcome.
 
 
-## Estimates
+## Estimates  {.tabset .tabset-fade .tabset-pill}
 
+### Full
 ```{r}
 est <- do.call("rbind", model_parameters$glmlogit_tidy)
 
@@ -150,12 +151,22 @@ est %>%
 
 
 ```
+
+### Subset
+```{r}
+# make a table with the covar that you estimated when you bind 
+# have a smaller subset for interpreting 
+
+```
+
 ##
 
 # Parametric, Bivariate Analysis, Province Level Random Effect
 Odds Ratios with Pv as the outcome. Note, these aren't exponentiated estimates. So they are logit-odds (long story. Will fix eventually).
 
-## Estimates
+## Estimates {.tabset .tabset-fade .tabset-pill}
+
+### Full
 ```{r}
 
 est2 <- do.call("rbind", model_parameters$glmlogit_mlm_tidy)
@@ -170,6 +181,15 @@ est2 %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),  position = "center")
 
 ```
+
+
+### Subset
+```{r}
+# make a table with the covar that you estimated when you bind 
+# have a smaller subset for interpreting 
+
+```
+
 ##
 
 

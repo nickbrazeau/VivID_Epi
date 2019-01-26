@@ -79,7 +79,9 @@ p1 <- dt %>%
                  hvcat = hvcat)) 
 plotly::ggplotly(p1)
 
-
+#........................
+# Are plates overly contaminated?
+#........................
 platmaps <- dt %>% 
   group_by(hv001) %>% 
   mutate(original_platemnum_cat = paste(levels(factor(original_platemnum)), collapse = "-")) %>% 
@@ -151,19 +153,30 @@ dt$pv18s_sens <- ifelse(dt$pv18sct_cont < 42 & !is.na(dt$pv18sct_cont), 1, 0)
 pv18sprov_sens <- prev_point_est_summarizer(data = dt, maplvl = adm1name, plsmdmspec = pv18s_sens)  %>% 
   dplyr::rename(plsmdprev_sens = plsmdprev)
 pv18sclust_sens <- prev_point_est_summarizer(data = dt, maplvl = hv001, plsmdmspec = pv18s_sens) %>% 
-  dplyr::rename(plsmdprev_sens = plsmdprev)
+  magrittr::set_colnames( c(colnames(.)[colnames(.) %in% c("hv001", "n")],
+                            paste0(colnames(.)[!colnames(.) %in% c("hv001", "n")], "_sens" ) ) )
+# get unweighted
+unweighted_pv_sen <- dt %>% 
+  group_by(hv001) %>% 
+  summarise(unweighted_count_sens = sum(pv18s_sens, na.rm = T),
+            unweighted_prev_sens = mean(pv18s_sens, na.rm = T))
+
+pv18sclust_sens <- left_join(pv18sclust_sens, unweighted_pv_sen)
 
 #......................
 # Plot Cases
 #......................
-casemapplotter <- function(data, plsmdmspec){
+casemapplotter <- function(data, plsmdmspec, prev_var){
+  
+  prev_var <- dplyr::enquo(prev_var)
+  
   # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
   clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
   data <- inner_join(data, clustgeom, by = "hv001")
   pos <- data %>% 
-    dplyr::filter(plsmdprev_sens > 0)
+    dplyr::filter(!!prev_var > 0)
   neg <- data %>% 
-    dplyr::filter(plsmdprev_sens == 0)
+    dplyr::filter(!!prev_var == 0)
   
   ret <- ggplot() + 
     geom_sf(data = DRCprov) +
@@ -183,14 +196,28 @@ casemapplotter <- function(data, plsmdmspec){
   
 }
 
-casemapplotter(pv18sclust_sens, "pv18s")
+casemapplotter(pv18sclust_sens, "pv18s", prev_var = plsmdprev_sens)
 hist(pv18sclust_sens$plsmdprev[pv18sclust_sens$plsmdprev_sens != 0])
 min(pv18sclust_sens$plsmdprev[pv18sclust_sens$plsmdprev_sens != 0])
 sum(pv18sclust_sens$plsmdprev_sens > 0)
 
 
+# ORIGINAL 
+
 orig <- prev_point_est_summarizer(data = dt, maplvl = hv001, plsmdmspec = pv18s) %>% 
-  dplyr::rename(plsmdprev_orig = plsmdprev)
+  magrittr::set_colnames( c(colnames(.)[colnames(.) %in% c("hv001", "n")],
+                    paste0(colnames(.)[!colnames(.) %in% c("hv001", "n")], "_orig" ) ) )
+casemapplotter(orig, "pv18s", prev_var = plsmdprev_orig)
+
+# ORIGINAL unweighted
+unweighted_pv_orig <- dt %>% 
+  group_by(hv001) %>% 
+  summarise(unweighted_count_orig = sum(pv18s, na.rm = T),
+            unweighted_prev_orig = mean(pv18s, na.rm = T))
+
+orig <- left_join(orig, unweighted_pv_orig)
+
+
 hist(orig$plsmdprev_orig[orig$plsmdprev_orig != 0])
 min(orig$plsmdprev_orig[orig$plsmdprev_orig != 0])
 sum(orig$plsmdprev_orig > 0)
@@ -214,13 +241,78 @@ ggplot() +
   ggtitle("Cluster Prevalences") + xlab("CT < 42") + ylab("CT < 45 & Snounou") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+write.csv(corr, file = "reports/report_obj/correlation_of_Pv_from_Sensitivity_Analysis.csv",
+          row.names = F, quote = F)
 
+corr %>% 
+  filter(unweighted_count_orig > 0) %>% 
+  ggplot() + 
+  geom_bar(data = , aes(x=unweighted_count_orig)) +
+  scale_x_continuous("Unweighted Count of Cases within a Cluster", breaks = seq(1:10)) +
+  ylab("Count of the Count (i.e. Count of Number of Cases)") + 
+  ggtitle("Distribution of the Number of Cases in a Cluster") +
+  theme(plot.title = element_text(hjust=0.5))
 
 #.................
 # Parametric, Bivariate Analysis
 # Odds Ratios with Pv as the outcome
 #.................
 # see 03-Uni_Bivar_Analyses_SENS
+
+
+
+#----------------------------------------------------------------------------------------------------
+# Looking at Singleton Clusters
+#----------------------------------------------------------------------------------------------------
+
+clstbarcodect <- dt[, c("hv001", "pv18sct_cont", "hivrecode_barcode")]
+
+clstbarcodectcorr <- left_join(clstbarcodect, corr, by = "hv001") %>% 
+  filter(!is.na(pv18sct_cont)) %>% 
+  filter(unweighted_count_sens != 0 &  unweighted_count_orig != 0) # didn't pass snounou
+
+
+clstbarcodectcorr %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+
+# are cts different?
+clstbarcodectcorr %>% 
+  ggplot(data = .) +
+  ggridges::geom_density_ridges(aes(x=pv18sct_cont, y = factor(unweighted_count_orig))) +
+  ylab("Count of Cases per cluster")
+
+
+# remove singletons and map 
+corr %>% 
+  dplyr::mutate(plsmdprev_orig_nosing = ifelse(unweighted_count_orig == 1, 0, plsmdprev_orig)) %>% 
+  casemapplotter(., "pv18s", prev_var = plsmdprev_orig_nosing)
+
+# remove singletons/doubles and map 
+corr %>% 
+  dplyr::mutate(plsmdprev_orig_nosing = ifelse(unweighted_count_orig %in% c(1,2), 0, plsmdprev_orig)) %>% 
+  casemapplotter(., "pv18s", prev_var = plsmdprev_orig_nosing)
+
+# remove singletons/doubles/tripletons and map 
+corr %>% 
+  dplyr::mutate(plsmdprev_orig_nosing = ifelse(unweighted_count_orig %in% c(1,2,3), 0, plsmdprev_orig)) %>% 
+  casemapplotter(., "pv18s", prev_var = plsmdprev_orig_nosing)
+
+# repel for positive clusters 
+pt <- corr %>% 
+  casemapplotter(., "pv18s", prev_var = plsmdprev_orig) 
+
+repel <- corr %>% 
+  dplyr::filter(unweighted_count_orig >= 1) %>% 
+  left_join(x=., y=clustgeom) 
+
+pt +
+  ggrepel::geom_label_repel(data = repel, aes(x=longnum, y = latnum, label = unweighted_count_orig))
 
 #----------------------------------------------------------------------------------------------------
 # QUICK Interpolation for Temperature and Precip

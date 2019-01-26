@@ -8,7 +8,7 @@
 #---------------
 library(tidyverse)
 library(zoo)
-
+set.seed(44)
 sn <- readxl::read_excel(path =  "/Volumes/share/1. Data/1. Raw Data/Adult_Pv18s/VivID_Snounou_plate_maps.xlsx", sheet = 2, col_names = F) # Cedar/Nick's results Pv Snounou Plate Maps 
 
 #---------------
@@ -37,13 +37,27 @@ adult_snounou <- adult_snounou %>%
 
 sn$barcode[! sn$barcode %in% adult_snounou$barcode ]
 
+#---------------
+# Randomly select 10% of samples actually being used in this study from the 16,363
+#---------------
+load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+pvpos <- dt[dt$pv18s_fctb == "viv+",]
+pvbarcodes <- sample(pvpos$hivrecode_barcode, size = 0.1*nrow(pvpos), replace = F) %>% 
+  tibble(barcode = .)
+
 
 #---------------
-# Randomly select 10% of samples 
+# Find matches in SN
 #---------------
+sangerduffy <- inner_join(x=sn, y=pvbarcodes, by = "barcode")
+if(nrow(sangerduffy) != floor(0.1*nrow(pvpos))){
+  stop("There was a barcode matching error. See which one it has a one-off base with as you did in the original data generation")
+}
 
-sangerduffy <- sn[ sample(x = 1:nrow(sn), size = 0.1*nrow(sn), replace = F), ]
 sangerduffy <- sangerduffy %>% 
-  dplyr::arrange(plate, rowlett, columnnum)
+  dplyr::arrange(plate, rowlett, columnnum) %>% 
+  dplyr::select(c("plate", "rowlett", "columnnum", "barcode")) %>% 
+  write.csv(., file = "WetLabWork/confirmatory_duffy_sanger_smpls.csv",
+            quote = F, row.names = F)
 
 
