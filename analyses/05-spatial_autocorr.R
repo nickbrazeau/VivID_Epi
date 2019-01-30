@@ -9,6 +9,7 @@ library(shp2graph) #Shp2graph: Tools to Convert a Spatial Network into an Igraph
 library(tidygraph)
 library(ggraph)
 library(ape)
+library(spdep)
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 load("~/Documents/GitHub/VivID_Epi/data/04-basic_mapping_data.rda")
 load("~/Documents/GitHub/VivID_Epi/data/osm_roads.rda")
@@ -39,6 +40,11 @@ clstrs$MIgc <- map(clstrs$data, function(x){
     dplyr::bind_cols(.)
   return(ret)
 })
+
+
+#.......
+# basic neighbors
+#.......
 
 
 #.......
