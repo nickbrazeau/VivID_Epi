@@ -92,7 +92,7 @@ From Hupalo et al. 2016 [PMID: 27348298](https://www.ncbi.nlm.nih.gov/pubmed/273
 
 # vcf and metadata
 
-mtdt <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/amplicon/curated_samples_20181211.xlsx")
+mtdt <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/curated_samples_20181211.xlsx")
 pvs47 <- vcfR::read.vcfR(file = "~/Documents/MountPoints/mountedMeshnick/Sandbox/pvs47/pvs47_snps.VQSR900.vcf")
 
 pvs47gtpos <- cbind.data.frame(CHROM = vcfR::getCHROM(pvs47),
