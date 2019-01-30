@@ -1,0 +1,133 @@
+---
+title: "Pvs47 As a Segregating Site for Population Structure"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+# datawrangle
+library(tidyverse)
+library(stringr)
+library(DT)
+library(parallel)
+# Genomics
+#library(rentrez)
+library(Biostrings)
+library(vcfR)
+devtools::install_github("IDEELResearch/vcfR2manip"); library(vcfRmanip)
+library(ape)
+devtools::install_github("nickbrazeau/rplasmodium"); library(rplasmodium)
+# plotting
+library(RColorBrewer)
+library(plotly)
+
+fastafinder <- function(fa, start, end, centerdist = 50){
+  ret <- fa[start:end]
+  return(ret)
+}
+```
+
+# Overview
+Need a gene that is segregating for populatin structure in _Pv_. In addition, need these loci to be "amplicon-able", i.e. ~400 bp with bp cutoff for long molecular barcoding. 
+
+From Hupalo et al. 2016 [PMID: 27348298](https://www.ncbi.nlm.nih.gov/pubmed/27348298) and particularly Supplementary Table 2 and Figure 5, we have identified _pvs47_ as a potential target. Here, I will interrogate genbank to see if those holds up based on publicly available amplicon data.
+
+
+
+<!-- ## Query -->
+<!-- ```{r, echo=F, warning=F, message=F} -->
+<!-- query <- "pvs47[gene] OR Pvs47[gene]  OR PVs47[gene] OR PVS47[gene]" -->
+<!-- pvs48.search <- rentrez::entrez_search(db= "nucleotide", query, -->
+<!--                                          retmax = 1e4, -->
+<!--                                          use_history = T) -->
+<!-- ``` -->
+<!-- With the above query, we returned `r prettyNum(length(pvs48.search$ids), big.mark = ",")` _pvs47_ hits. We are now going to download those and group them by country.  -->
+
+<!-- ## Scrape -->
+<!-- ```{r, echo=F} -->
+<!-- # my api key -->
+<!-- set_entrez_key("9c4d847cc6cd93b9b88524f7b0a2945c2108") -->
+
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- fasta_mtdt_fetch <- function(id){ -->
+<!--   f <- rentrez::entrez_fetch(db="nucleotide", rettype="fasta", id = id) -->
+<!--   Sys.sleep(3) -->
+<!--   m <- rentrez::entrez_summary(db="nucleotide", id = id) -->
+<!--   Sys.sleep(3) -->
+<!--   ret <- list(fasta = f,  -->
+<!--               metadata = m) -->
+<!--   return(ret) -->
+<!-- } -->
+<!-- # fetch -->
+<!-- pvs47dt <- lapply(pvs48.search$ids, fasta_mtdt_fetch) -->
+<!-- # parse -->
+<!-- pvs47dtmtdt <- purrr::map(pvs47dt, `[[`, "metadata") -->
+<!-- pvs47dtmtdt <- purrr::map_df(pvs47dtmtdt, `[`, c("uid", "caption", "subname", "slen")) -->
+<!-- outfastas <- purrr::map(pvs47dt, `[[`, "fasta") -->
+<!-- write.table(x=outfastas, file="data/amplicon/pvs47.fasta", quote = F, col.names = F, row.names = F, sep = "") -->
+<!-- p18sf <- Biostrings::readDNAStringSet(filepath = "temp/outfasta.fasta", format = "fasta") -->
+<!-- # drop sequences with very small lengths -->
+<!-- p18sf <- p18sf[p18sf@ranges@width >= 100] -->
+<!-- p18smtdt <- p18smtdt[p18smtdt$slen >= 100, ] -->
+<!-- # make a link here -->
+<!-- p18smtdt$names <- names(p18sf) -->
+<!-- ``` -->
+
+```{r}
+#pvp01gff <- GFF2VariantAnnotation_Short("~/Documents/MountPoints/mountIDEEL/resources/genomes/Pvivax/info/gff/")
+#pvp01fasta <- Biostrings::readDNAStringSet("~/Documents/MountPoints/mountIDEEL/resources/genomes/Pvivax/genomes/PvP01.fasta", format = "fasta")
+
+# vcf and metadata
+
+mtdt <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/amplicon/curated_samples_20181211.xlsx")
+pvs47 <- vcfR::read.vcfR(file = "~/Documents/MountPoints/mountedMeshnick/Sandbox/pvs47/pvs47_snps.VQSR900.vcf")
+
+pvs47gtpos <- cbind.data.frame(CHROM = vcfR::getCHROM(pvs47),
+                               POS = vcfR::getPOS(pvs47),
+                               vcfR::extract.gt(pvs47, element = "GT")
+                               ) %>% 
+  gather(., key = "iid", value = "gt", 3:ncol(.)) %>%
+  dplyr::mutate(gt_fct = factor(gt, levels = c("0/0", "0/1", "1/1"), 
+                                labels = c("REF", "HET", "ALT")),
+                POS = as.numeric(POS)) %>% 
+  inner_join(mtdt, ., by = "iid") %>% 
+  dplyr::mutate(cont = rplasmodium::encode_continent(country)) %>% 
+ # dplyr::mutate(country_fct = factor(ifelse(host == "Homo_sapiens", country, "NHA"))) %>% 
+ dplyr::mutate(country_fct = factor(country)) %>% 
+  dplyr::filter(host == "Homo_sapiens")
+
+pvs47gtpos <- pvs47gtpos %>% 
+  group_by(POS) %>% 
+  dplyr::mutate(segsite = ifelse(mean(as.numeric(gt_fct), na.rm =T) %in% c(1,2,3),
+                                  F, T))
+
+pvs47gtpos %>% 
+  #filter(segsite == T) %>% 
+  dplyr::arrange(POS) %>% 
+  ggplot() +
+  geom_tile(aes(x=factor(iid), y= factor(POS), fill = gt_fct)) + 
+  facet_wrap(cont + country_fct ~ ., scales = "free_x", nrow = 1) +
+  theme_classic() +
+  theme(axis.text.x = element_blank())
+
+
+
+```
+
+
+
+
+
