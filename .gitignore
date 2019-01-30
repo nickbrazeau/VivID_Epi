@@ -9,6 +9,7 @@
 # Data files I'm generating
 *.rda
 *.rds
+*.csv
 report_obj/
 datasets/
 db/

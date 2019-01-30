@@ -79,7 +79,7 @@ sangerduffy <- sangerduffy %>%
                 snounouname = stringr::str_replace(snounouname, "VivID_", "")) 
 
 sangerduffy %>% 
-  write.csv(., file = "WetLabWork/confirmatory_duffy_sanger_smpls_LONG.csv",
+  write.csv(., file = "WetLabWork/platemapsout/confirmatory_duffy_sanger_smpls_LONG.csv",
             quote = F, row.names = F)
 
 sangerduffy %>% 
@@ -91,7 +91,7 @@ sangerduffy %>%
                      snounouname = c("PC1", "PC2", "NTC"))
                    ) %>% 
   tidyr::spread(., key = "sngplt_colnum", value = "snounouname") %>% 
-  write.csv(., file = "WetLabWork/confirmatory_duffy_sanger_smpls_wide.csv",
+  write.csv(., file = "WetLabWork/platemapsout/confirmatory_duffy_sanger_smpls_wide.csv",
             quote = F, row.names = F)
 
 
@@ -130,7 +130,7 @@ pvamp <- pvamp %>%
                 newplate = plt) 
 
 pvamp %>% 
-  write.csv(., file = "WetLabWork/Pvamplicon_smpls_LONG.csv",
+  write.csv(., file = "WetLabWork/platemapsout/Pvamplicon_smpls_LONG.csv",
             quote = F, row.names = F)
 
 
@@ -145,7 +145,7 @@ pvamp %>%
                      snounouname = c("PC", "NTC"))
                    ) %>% 
   tidyr::spread(., key = "pvampplt_colnum", value = "snounouname") %>% 
-  write.csv(., file = "WetLabWork/Pvamplicon_smpls_wide_PLATE1.csv",
+  write.csv(., file = "WetLabWork/platemapsout/Pvamplicon_smpls_wide_PLATE1.csv",
             quote = F, row.names = F)
 
 
@@ -159,7 +159,7 @@ pvamp %>%
                      snounouname = c("PC", "NTC"))
   ) %>% 
   tidyr::spread(., key = "pvampplt_colnum", value = "snounouname") %>% 
-  write.csv(., file = "WetLabWork/Pvamplicon_smpls_wide_PLATE2.csv",
+  write.csv(., file = "WetLabWork/platemapsout/Pvamplicon_smpls_wide_PLATE2.csv",
             quote = F, row.names = F)
 
 
