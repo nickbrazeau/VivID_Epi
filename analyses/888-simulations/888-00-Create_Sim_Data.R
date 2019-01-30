@@ -15,10 +15,6 @@ load("data/vividepi_recode.rda")
 #..........................................................
 # Create simulation function for independent covariates
 #..........................................................
- 
-# TEMPORARY UNTIL LAST SNOUNOU 
-dt$pv18s[dt$hivrecode_barcode == "e3a6n"] <- 1
-outcome_prev = mean(dt$pv18s)
 
 
 simulate_cd2013_indcov <- function(outcome_prev = 0.031,
