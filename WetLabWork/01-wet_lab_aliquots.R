@@ -36,7 +36,6 @@ adult_snounou <- adult_snounou %>%
                               barcode = stringr::str_split_fixed(SampleName, "_", n=3)[,3]) %>% 
   dplyr::mutate(barcode = tolower(barcode)) # all lower cases, to remove Case Sensitivity
 
-sn$barcode[! sn$barcode %in% adult_snounou$barcode ]
 
 #---------------
 # 96 well plate specs
@@ -88,7 +87,7 @@ sangerduffy %>%
   rbind.data.frame(. ,
                    data.frame(
                      sngplt_rowlet = c("E", "E", "E"),
-                     sngplt_colnum = c(3,4,5),
+                     sngplt_colnum = c(2,3,4),
                      snounouname = c("PC1", "PC2", "NTC"))
                    ) %>% 
   tidyr::spread(., key = "sngplt_colnum", value = "snounouname") %>% 
@@ -160,7 +159,7 @@ pvamp %>%
                      snounouname = c("PC", "NTC"))
   ) %>% 
   tidyr::spread(., key = "pvampplt_colnum", value = "snounouname") %>% 
-  write.csv(., file = "WetLabWork/Pvamplicon_smpls_wide_PLATE1.csv",
+  write.csv(., file = "WetLabWork/Pvamplicon_smpls_wide_PLATE2.csv",
             quote = F, row.names = F)
 
 
