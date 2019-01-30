@@ -17,10 +17,7 @@ library(vcfR)
 # note, I subsetted this vcf on the command line previously
 dv <- vcfR::read.vcfR(file = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/WetLabWork/PvampliconDesign/vcf/prop-primers_snps.VQSR900.human_only.vcf.gz")
 bd <- readr::read_tsv(file = "WetLabWork/primerbeds/pv_p01_prop-primers.bed")
-mt <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/curated_samples_20181211.xlsx")
 
-write.table(x=bd[,1:6], file = "~/Desktop/pv_p01_prop-primers.bed",
-            quote = F, sep = "\t", row.names = F, col.names = T)
 #.................................
 # datawrangle
 #.................................
@@ -29,7 +26,7 @@ bd <- bd %>%
 bdlist <- split(bd, factor(1:nrow(bd)))
 
 bd$vcfRobj <- purrr::map(bdlist, vcfRmanip::vcfR2SubsetChromPos, vcfRobject = dv)
-
+bd$nvar <- unlist(purrr::map(bd$vcfRobj, function(x){ return(nrow(x@gt)) }))
 
 #.................................
 # data manip for plotting
