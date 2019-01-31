@@ -100,4 +100,8 @@ bd$vcfplots <- purrr::map2(bd$plotdf, bd$geneid, function(x, y){
 
 bd$vcfplots 
 
+
+
+save(bd, file = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/potential_primer_variants.rda")
+
 ```
