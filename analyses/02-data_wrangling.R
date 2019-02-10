@@ -168,14 +168,14 @@ dt$hv025_fctb <- haven::as_factor(dt$hv025)
 #.............
 # drinking water and non-drink water
 #.............
-levels(factor(haven::as_factor(dt$hv201)))
-
-dt <- dt %>% 
-  dplyr::mutate(hv201_fctm = haven::as_factor(hv201), # floor
-                hv201_fctm = if_else(hv201_fctm != "missing", hv201_fctm, factor(NA)), # not sure why hv201_fctm == "missing", factor(NA), hv201_fctm misbehaves...
-                hv201_fctm = forcats::fct_drop(hv201_fctm), # drop missing var we just did and any others that aren't supported
-                hv201_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv201_fctm, .x = hv201_fctm, .fun = length)) # sort by that factors length, and then reverse
-  )
+# levels(factor(haven::as_factor(dt$hv201)))
+# 
+# dt <- dt %>% 
+#   dplyr::mutate(hv201_fctm = haven::as_factor(hv201), # floor
+#                 hv201_fctm = if_else(hv201_fctm != "missing", hv201_fctm, factor(NA)), # not sure why hv201_fctm == "missing", factor(NA), hv201_fctm misbehaves...
+#                 hv201_fctm = forcats::fct_drop(hv201_fctm), # drop missing var we just did and any others that aren't supported
+#                 hv201_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv201_fctm, .x = hv201_fctm, .fun = length)) # sort by that factors length, and then reverse
+#   )
 
 # reproducible example of odd if_else behavior...
 # set.seed(1)
@@ -194,6 +194,11 @@ dt <- dt %>%
 #.............
 # main floor, wall, roof
 #.............
+# recode to rudimentary or non-rudimentary like they did here 
+# https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
+# check to see how collinear wealth index and housing construction are since
+# housing construction is included in the wealth index
+
 dt <- dt %>% 
   dplyr::mutate(hv213_fctm = haven::as_factor(hv213), # floor
                 hv213_fctm = if_else(hv213_fctm != "missing", hv213_fctm, factor(NA)), 

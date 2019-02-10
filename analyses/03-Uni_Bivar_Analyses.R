@@ -51,7 +51,9 @@ dt %>%
 #----------------------------------------------------------------------------------------------------
 covars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
 
-covars <- covars[!covars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb", "pv18sct_cont")]
+covars <- covars[!covars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb", "pv18sct_cont",
+                                
+                                )]
 model_parameters <- data.frame(outcome = rep("pv18s", length(covars)), 
                                covar = covars, stringsAsFactors=FALSE)
 

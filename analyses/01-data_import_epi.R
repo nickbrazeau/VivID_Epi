@@ -53,7 +53,7 @@ pfpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2
          dplyr::rename(pfctmean = fcq_mean)
   
   
-pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v1.csv", 
+pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v2.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::select(c("hivrecode_barcode", "pv18s", "corrected_ct", "original_platemnum")) %>% 
