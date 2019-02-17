@@ -7,7 +7,7 @@ library(tidyverse)
 devtools::install_github("ropensci/osmdata")
 library(osmdata)
 library(sf)
-source("analyses/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 #---------------------------------------------------------------------------------
 # pull down DRC maps from GADM
 #---------------------------------------------------------------------------------

@@ -2,14 +2,14 @@
 # Purpose of this script is to wrangle and clean the various covariates in
 # the CD2013, weather, and other datasets
 # 
-# Notes: All variables that I will use will either contain a "_fct" or "_cont" to show
+# Notes: All variables that I will use will either contain a "_fctb/m" or "_cont" to show
 #        that I have manipulated/investigated that variable.
 #        Men/Women recode combinations (i.e. ha in one and hb in other for same covariate)
 #        will be combined to be hab##
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
 
 #--------------------------------------------------------------

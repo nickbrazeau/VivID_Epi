@@ -9,9 +9,9 @@ library(gstat)
 load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
 load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
 load("~/Documents/GitHub/VivID_Epi/data/vividmaps_large.rda")
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R")
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_glms.R")
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_guassmap.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_glms.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_guassmap.R")
 clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum", "geometry")]
 #----------------------------------------------------------------------------------------------------
 # Check for Contamination

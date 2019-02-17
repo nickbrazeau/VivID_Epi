@@ -1,8 +1,8 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to do basic bivariate analyses
 #----------------------------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R") 
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_glms.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_glms.R") 
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 devtools::install_github("kaz-yos/tableone")

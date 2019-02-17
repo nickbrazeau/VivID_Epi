@@ -1,8 +1,8 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to explore basic maps of Plasmodium infections in the CD2013 data
 #----------------------------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R") 
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_guassmap.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_guassmap.R") 
 library(tidyverse)
 library(sf)
 library(srvyr) #wrap the survey package in dplyr syntax
