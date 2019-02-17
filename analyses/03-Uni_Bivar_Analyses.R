@@ -51,8 +51,7 @@ dt %>%
 #----------------------------------------------------------------------------------------------------
 covars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
 
-covars <- covars[!covars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb", "pv18sct_cont",
-                                
+covars <- covars[!covars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb", "pv18sct_cont"
                                 )]
 model_parameters <- data.frame(outcome = rep("pv18s", length(covars)), 
                                covar = covars, stringsAsFactors=FALSE)
@@ -81,14 +80,14 @@ model_parameters$glmlogit_mlm_tidy <- purrr::map(model_parameters$glmlogit_mlm, 
 #...............
 # how strong of an effect is that pv outlier
 #..............
-# not bad bc so few points
+# not bad bc so few points in cluster 81 even though high prev of viv
 
-t <- glm(pv18s ~ hv025_fctb,
+m1 <- glm(pv18s ~ hv025_fctb,
          data = dt,
          family = binomial(link = "logit"))
 broom::tidy(t, exponentiate=TRUE, conf.int=TRUE)
 
-u <- glm(pv18s ~ hv025_fctb,
+m2 <- glm(pv18s ~ hv025_fctb,
          data = dt[dt$hv001 != 81, ],
          family = binomial(link = "logit"))
 broom::tidy(u, exponentiate=TRUE, conf.int=TRUE)

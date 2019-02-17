@@ -68,8 +68,11 @@ dt <- dt %>%
 # 9. Biological Sex (HV104)
 # 10. Age (HV105)
 # 11. Highest year of education completed (continous: HV107) 
-# 12. Number of Children Under Age of 5 (continuous: )
-# 
+# 12. Highest grade of education completed (categorical: HV107) 
+# 13. Number of Children Under Age of 5 (continuous: HV014)
+# 14. Number of Household Members (continuous: HV009)
+
+
 # MALARIA-INTERVENTIONS
 # 1. Person slept under an LLIN net (HML20)/Net by Insecticide 
 # 
@@ -163,7 +166,7 @@ dt <- dt %>%
 #.............
 levels(factor(haven::as_factor(dt$hv025))) # no missing
 dt$hv025_fctb <- haven::as_factor(dt$hv025)
-
+xtabs(~dt$hv025 + dt$hv025_fctb)
 
 #.............
 # drinking water and non-drink water
@@ -287,7 +290,7 @@ dt <- dt %>%
   dplyr::mutate(hv105_cont = ifelse(hv105 %in% c("97", "98", "99"), NA, hv105))
 
 #.............
-# education
+# education grade
 #.............
 levels(factor(haven::as_factor(dt$hv106)))
 dt <- dt %>% 
@@ -297,6 +300,11 @@ dt <- dt %>%
   )
 
 
+#.............
+# education grade 
+#.............
+levels(factor(haven::as_factor(dt$hv106)))
+
 
 
 #------------------------------------------
@@ -305,6 +313,13 @@ dt <- dt %>%
 summary(dt$hv014) # looks clean
 dt <- dt %>% 
   dplyr::mutate(hv014_cont = hv014)
+
+#------------------------------------------
+# total household members
+#------------------------------------------
+summary(dt$hv009) # looks clean
+dt <- dt %>% 
+  dplyr::mutate(hv009_cont = hv009)
 
 
 #..........................................................................................

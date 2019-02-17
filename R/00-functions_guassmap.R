@@ -1,7 +1,7 @@
 library(tidyverse)
 library(sf)
 library(PrevMap)
-source("~/Documents/GitHub/VivID_Epi/analyses/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
 #----------------------------------------------------------------------------------------------------
 # Guassian Surface Plot

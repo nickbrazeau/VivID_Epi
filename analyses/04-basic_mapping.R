@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to explore basic maps of Plasmodium infections in the CD2013 data
 #----------------------------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_guassmap.R") 
 library(tidyverse)
 library(sf)
@@ -332,7 +332,7 @@ aperange_nhapv <- ggplot() +
    top=grid::textGrob("Case Prevalence for Vivax in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
  graphics.off()
  
- jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-vivax-prev.jpg", width = 11, height = 8, units="in", res=300)
+ jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-falcip-prev.jpg", width = 11, height = 8, units="in", res=300)
  gridExtra::grid.arrange(
    ptestmaps[[1]], 
    caseprevmaps[[1]],
@@ -348,6 +348,6 @@ aperange_nhapv <- ggplot() +
  
  out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
  if(!dir.exists(out)){dir.create(out)}
- save(prevmaps, prevhist, zscoreprevmaps, caseprevmaps, aperange_nhapv,
+ save(ptestmaps, prevhist, zscoreprevmaps, caseprevmaps, aperange_nhapv,
       mp, pr, 
       file = paste0(out, "/", "04-basic_mapping_objs.rda"))
