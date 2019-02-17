@@ -105,7 +105,7 @@ primaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
 primaryroadsosm <- primaryroadsosm$osm_lines
 
 secondaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link towns.)
+  add_osm_feature(key = "highway", value = "secondary") %>% # The next most important roads in a country's system. (Often link towns.)
   osmdata::osmdata_sf() %>%
   trim_osmdata(polybb)
 secondaryroadsosm <- secondaryroadsosm$osm_lines
