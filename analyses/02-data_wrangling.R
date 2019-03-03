@@ -169,6 +169,16 @@ dt$hv025_fctb <- haven::as_factor(dt$hv025)
 xtabs(~dt$hv025 + dt$hv025_fctb)
 
 #.............
+# cluster type of town
+#.............
+levels(factor(haven::as_factor(dt$hv026))) 
+dt$hv026_fctm <- haven::as_factor(dt$hv026)
+xtabs(~dt$hv026 + dt$hv026_fctm) # no missing so can drop
+dt <- dt %>% dplyr::mutate(
+  hv026_fctm = forcats::fct_drop(haven::as_factor(dt$hv026_fctm)),
+  hv026_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv026_fctm, .x = hv026_fctm, .fun = length)))
+
+#.............
 # drinking water and non-drink water
 #.............
 # levels(factor(haven::as_factor(dt$hv201)))
@@ -374,7 +384,8 @@ dt <- dt %>%
   dplyr::mutate(alt_dem_cont = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
                 alt_dem_fctb = factor(
                   ifelse(alt_dem_cont > median(alt_dem_cont), "high", "low"),
-                  levels = c("low", "high"))
+                  levels = c("low", "high")),
+                alt_dem_log = log(alt_dem_cont)
   )
 
 #.............

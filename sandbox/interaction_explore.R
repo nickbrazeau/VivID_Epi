@@ -119,3 +119,39 @@ exp(c2$Contrast)
 exp(c2$Lower)
 exp(c2$Upper)
 
+
+
+
+
+### TYPE OF CLUSTER
+round(
+prop.table(
+  ftable(dt[,c("hv025_fctb", "hv026_fctb", "pv18s_fctb")]),
+  margin = 1),
+3)
+tableone::CreateTableOne(data=dt, 
+                         strata = "pv18s_fctb", "hv026_fctm", includeNA = T)
+
+dt %>% 
+  group_by(hv026_fctm) %>% 
+  summarise(clst = sum(!duplicated(hv001)))
+  
+broom::tidy(glm(pv18s ~ hv026_fctm + hv270_fctm,
+           data = dt,
+           family = binomial(link = 'logit')), 
+           exponentiate=TRUE, conf.int=TRUE)
+
+dt %>% 
+    group_by(hv026_fctb) %>% 
+    summarise(clst = sum(!duplicated(hv001)))
+
+lrgcty <- dt[dt$hv026_fctm == "capital, large city", ]
+
+ggplot() + 
+  geom_sf(data = DRCprov) +
+  geom_point(data = dt, aes(x=longnum, y=latnum, group = hv026_fctm, colour = hv026_fctm)) +
+  vivid_theme +
+  theme(axis.text = element_blank(),
+        axis.line = element_blank())
+
+
