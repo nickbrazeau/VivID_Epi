@@ -3,11 +3,11 @@
 # glms
 #----------------------------------------------------------------------------------------------------
 
-fitglm <- fit_model <- function(outcome, covar){
+fitsvyglm <- fit_model <- function(outcome, covar){
   
   eq <- as.formula(paste0(outcome, "~", covar))
-  ret <- glm(eq,
-             data = dt,
+  ret <- survey::svyglm(eq,
+             design = dtsrvy,
              family=binomial(link="logit"))
   
   return(ret)

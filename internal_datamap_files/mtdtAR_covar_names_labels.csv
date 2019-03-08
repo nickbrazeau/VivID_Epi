@@ -1,8 +1,0 @@
-variable,description
-hivclust,Cluster
-hivnumb,Household
-hivline,Line
-hiv01,Bar code
-hiv02,Lab number
-hiv03,Blood test result
-hiv05,Sample weight

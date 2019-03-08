@@ -4,28 +4,56 @@
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_glms.R") 
 library(tidyverse)
+library(survey)
 library(srvyr) #wrap the survey package in dplyr syntax
 devtools::install_github("kaz-yos/tableone")
 library(tableone)
 library(stargazer)
 library(nlme)
 
+options("survey.lonely.psu"="certainty")
+
+
 #......................
 # Import Data
 #......................
-load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+
+
+
+
+
+
+dtsrvy <- survey::svydesign(ids = ~hv021 + hv002, weights = ~hiv05_wi, data = dt)
+
+s <- survey::svyglm(pv18s ~ hv025_fctb_clst, 
+                    design = dtsrvy,
+                    family = quasibinomial(link="logit"))
+
+broom::tidy(s, exponentiate = T, conf.int = T)
+
+
+
+
+dt$strata <- paste0(dt$adm1name, dt$hv001)
+svy <- dt %>%  srvyr::as_survey_design(strata=strata, weights=hiv05_wi)
+
+u <- survey::svyglm(pv18s ~ hv025_fctb_clst, 
+                    design = svy,
+                    family = quasibinomial(link="logit"))
+
+broom::tidy(u, exponentiate = T, conf.int = T)
+
+
 
 
 #----------------------------------------------------------------------------------------------------
 # Table One for Pv
 #----------------------------------------------------------------------------------------------------
-vars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
-# put drop weights and household id and continous data
-vars <- vars[!vars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb")]
-pvtbl1 <- tableone::CreateTableOne(data=dt, 
-                                   strata = "pv18s_fctb", 
-                                   vars = vars,
-                                   includeNA = T)
+vars <- colnames(dt)[grepl("_fctm|_fctb|_scaled", colnames(dt))]
+vars <- vars[vars != "pv18s_fctb_ind"]
+  
+pvtbl1 <- tableone::svyCreateTableOne(data=dtsrvy)
 
 #----------------------------------------------------------------------------------------------------
 # Table One for Pf
@@ -53,12 +81,23 @@ covars <- colnames(dt)[grepl("_fctm|_fctb|_cont", colnames(dt))]
 
 covars <- covars[!covars %in% c("hv005_cont", "hiv05_cont", "hhid_fctm", "hvdate_cont", "pv18s_fctb", "pv18sct_cont"
                                 )]
-model_parameters <- data.frame(outcome = rep("pv18s", length(covars)), 
-                               covar = covars, stringsAsFactors=FALSE)
 
-model_parameters$glmlogit <- purrr::pmap(model_parameters, .f=fitglm)
+
+
+model_parameters <- data.frame(outcome = rep("pv18s", length(vars)), 
+                               covar = vars, stringsAsFactors=FALSE)
+
+model_parameters$glmlogit <- purrr::pmap(model_parameters, .f=fitsvyglm)
 model_parameters$glmlogit_tidy <- purrr::map(model_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
 
+dt$id <- paste0(dt$hv021, dt$hv002)
+m1 <- geepack::geeglm(pfldh ~ hv025_fctb_clst, 
+          data = dt, 
+          family=binomial(link="logit"),
+          id = id
+          )
+
+broom::tidy(m1, exponentiate=TRUE, conf.int=TRUE)
 
 #----------------------------------------------------------------------------------------------------
 # Parametric, Bivariate Analysis, Province Level Random Effect

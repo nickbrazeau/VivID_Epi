@@ -27,19 +27,6 @@ vivid_theme <- theme(plot.title = element_text(famil = "Arial", face = "bold", h
                      panel.border = element_blank())
 
 
-#----------------------------------------------------------------------------------------------------
-# Tidy and DataWrangling functions
-#..................................
-merge_pr_plsmdm_ge_gc_mtdt <- function(pr = arpr, plsmdm = panplasmpcrres, ge = ge, gc = gc){
-  
-  ret <- dplyr::left_join(plsmdm, pr, by="hivrecode_barcode") %>%
-    dplyr::left_join(., ge, by = "hv001") %>% 
-    dplyr::left_join(., gc, by = c("dhsid", "dhscc", "dhsyear", "hv001"))
-  
-  return(ret)
-}
-
-
 
 #----------------------------------------------------------------------------------------------------
 # Mapping Functions
@@ -58,7 +45,7 @@ prev_point_est_summarizer <- function(data, maplvl, plsmdmspec){
   # clusters are weighted (each individual has same weight in cluster)
   ret <- data %>% 
     dplyr::mutate(count = 1) %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hiv05_wi) %>% 
     dplyr::group_by(!!maplvl) %>% 
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
