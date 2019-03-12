@@ -8,7 +8,7 @@ fitsvyglm <- fit_model <- function(outcome, covar){
   eq <- as.formula(paste0(outcome, "~", covar))
   ret <- survey::svyglm(eq,
              design = dtsrvy,
-             family=binomial(link="logit"))
+             family = quasibinomial(link="logit"))
   
   return(ret)
   

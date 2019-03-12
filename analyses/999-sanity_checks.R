@@ -53,32 +53,41 @@ dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = 
 dtsrvy_nostrat <- dt %>% srvyr::as_survey_design(ids = hv001, weights = hv005_wi)
 
 
-s <- survey::svyglm(pv18s ~ 1, 
-                    design = dtsrvy,
-                    family = binomial(link="logit"))
+base <-     survey::svyglm(pv18s ~ 1, 
+                        design = dtsrvy,
+                        family = quasibinomial(link="logit"))
 
-t <- survey::svyglm(pv18s ~ 1, 
-                    design = dtsrvy_nostrat,
-                    family = binomial(link="logit"))
+basestrat <- survey::svyglm(pv18s ~ 1, 
+                           design = dtsrvy_nostrat,
+                           family = quasibinomial(link="logit"))
 
-u <-    glm(pv18s ~ 1, 
-            data = dt,
-            weights = hv005_wi,
-            family = binomial(link="logit"))
+glmwi <-              glm(pv18s ~ 1, 
+                          data = dt,
+                          weights = hv005_wi,
+                          family = quasibinomial(link="logit"))
 
-v <-    geepack::geeglm(pv18s ~ 1, 
+geewi <-   geepack::geeglm(pv18s ~ 1, 
+                          data = dt,
+                          weights = hv005_wi,
+                          id = hv023,
+                          family = binomial(link="logit"))
+
+lme4psu <-  lme4::glmer(pv18s ~ 1 + (1|hv023), 
                         data = dt,
                         weights = hv005_wi,
-                        id = hv023,
                         family = binomial(link="logit"))
 
+lme4clst <- lme4::glmer(pv18s ~ 1 + (1|hv001), 
+                        data = dt,
+                        weights = hv005_wi,
+                        family = binomial(link="logit"))
 
-broom::tidy(s)
-broom::tidy(t)
-broom::tidy(u)
-broom::tidy(v)
-
-
+broom::tidy(base)
+broom::tidy(basestrat)
+broom::tidy(glmwi)
+broom::tidy(geewi)
+broom::tidy(lme4psu)
+broom::tidy(lme4clst)
 
 
 

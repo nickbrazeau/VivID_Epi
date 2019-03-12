@@ -33,11 +33,6 @@ dt <- dt %>%
 #--------------------------------------------------------------
 # Section 2: Looking at recodes, manual data wrangle
 #-------------------------------------------------------------- 
-# The purist in me would like to do this in a way that was automatic
-# however, it is going to be a lot of work with lifting over all the recodes
-# and the covariates are not all the same names or numbers in the various recodes
-# which makes for a ton of corner cases, that will take more time to optimize
-# than to do by hand... 
 
 #..........................
 # Exposure of Interests
@@ -117,11 +112,17 @@ dt <- dt %>%
 dt <- dt %>% 
   dplyr::mutate(
     pfldhct_cont_ind = pfctmean,
+    pfldhct_cont_ind_log = log(pfctmean),
+    pfldhct_cont_ind_log_scale = scale(pfldhct_cont_ind_log, center = T, scale = T),
     po18sct_cont_ind = poctcrrct,
+    po18sct_cont_ind_log = log(poctcrrct),
+    po18sct_cont_ind_log_scale = scale(po18sct_cont_ind_log, center = T, scale = T),
     pv18sct_cont_ind = pvctcrrct,
-    pfldh_fctb_ind = factor(pfldh, levels=c("0", "1"), labels=c("fal-", "fal+")),
-    po18s_fctb_ind = factor(po18s, levels=c("0", "1"), labels=c("ov-", "ov+")),
-    pv18s_fctb_ind = factor(pv18s, levels=c("0", "1"), labels=c("viv-", "viv+"))
+    pv18sct_cont_ind_log = log(pvctcrrct),
+    pv18sct_cont_ind_log_scale = scale(pv18sct_cont_ind_log, center = T, scale = T),
+    pfldh_fctb_ind = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
+    po18s_fctb_ind = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos")),
+    pv18s_fctb_ind = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos"))
   )
 
 #.............
@@ -383,11 +384,11 @@ table(dt$hv246) # 9 is missing
 dt <- dt %>% 
   dplyr::mutate(
     hv246_fctb_ind = haven::as_factor(dt$hv246),
-    hv246_fctb_ind = if_else(hv246_fctb_ind != 9, hv246_fctb_ind, factor(NA)),
+    hv246_fctb_ind = if_else(hv246_fctb_ind != "missing", hv246_fctb_ind, factor(NA)),
     hv246_fctb_ind =  forcats::fct_drop(hv246_fctb_ind), 
     hv246_fctb_ind = forcats::fct_relevel(hv246_fctb_ind, "no")
   ) 
-xtabs(~ dt$hv246 + dt$hv246_fctb_ind)
+xtabs(~ dt$hv246 + dt$hv246_fctb_ind, addNA = T)
 
 #------------------------------------------
 # Occupation

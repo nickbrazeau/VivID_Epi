@@ -13,27 +13,26 @@ library(PrevMap)
 #......................
 # Import Data
 #......................
-load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
-load("~/Documents/GitHub/VivID_Epi/data/vividmaps_large.rda")
-load("~/Documents/GitHub/VivID_Epi/data/IUCN_ape.rda")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+options(survey.lonely.psu="certainty")
+dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = hv005_wi)
 
 #----------------------------------------------------------------------------------------------------
 # Explore here the different prevalences/regions of Plasmodium species basic maps
 #----------------------------------------------------------------------------------------------------
 
-pfldhprov <- prev_point_est_summarizer(data = dt, maplvl = adm1name, plsmdmspec = pfldh) %>% 
+pfldhprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pfldh) %>% 
   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "adm1name")
-pv18sprov <- prev_point_est_summarizer(data = dt, maplvl = adm1name, plsmdmspec = pv18s)  %>% 
+pv18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pv18s)  %>% 
   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "adm1name")
-po18sprov <- prev_point_est_summarizer(data = dt, maplvl = adm1name, plsmdmspec = po18s) %>% 
+po18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = po18s) %>% 
   dplyr::mutate(plsmdmspec = "po18s", maplvl = "adm1name")
 
-pfldhclust <- prev_point_est_summarizer(data = dt, maplvl = hv001, plsmdmspec = pfldh) %>% 
+pfldhclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pfldh) %>% 
   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "hv001")
-pv18sclust <- prev_point_est_summarizer(data = dt, maplvl = hv001, plsmdmspec = pv18s) %>% 
+pv18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pv18s) %>% 
   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "hv001")
-po18sclust <- prev_point_est_summarizer(data = dt, maplvl = hv001, plsmdmspec = po18s) %>% 
+po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = po18s) %>% 
   dplyr::mutate(plsmdmspec = "po18s", maplvl = "hv001")
 
 
@@ -265,59 +264,6 @@ aperange_nhapv <- ggplot() +
  
  
  
- 
- 
- #----------------------------------------------------------------------------------------------------
- # Smoothed Guassian Maps
- #----------------------------------------------------------------------------------------------------
- pfldhprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pfldh) %>% 
-   dplyr::mutate(plsmdmspec = "pfldh")
- pv18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pv18s) %>% 
-   dplyr::mutate(plsmdmspec = "pv18s")
- po18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = po18s) %>% 
-   dplyr::mutate(plsmdmspec = "po18s")
- 
- 
- 
-# bind those to a tibble
- pr <- dplyr::bind_rows(pfldhprev, pv18sprev, po18sprev) %>% 
-   dplyr::group_by(plsmdmspec) %>% 
-   tidyr::nest()
- 
- 
- #.............................
- # get prev rasters
- #..............................
- # polybb <- osmdata::getbb("Democratic Republic of the Congo", featuretype = "country",  format_out = 'polygon')
- poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
- grid.pred <- splancs::gridpts(poly, xs=0.1, ys=0.1)
- colnames(grid.pred) <- c("long","lat")
- 
- pr$prevrasters <- map(pr$data, 
-                       fit_pred_spMLE, outcome = "logitplsmdprev", covar = "1", 
-                                      long_var = "longnum", lat_var = "latnum",
-                                      grid.pred = grid.pred, kappa = 0.5, 
-                                      pred.reps = 1)
- 
- pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
-
- 
- #.............................
- # plot prev rasters
- #..............................
- prevmaprasterplots <- lapply(pr$prevrasterspred,
-                     prevmaprasterplotter, smoothfct = rep(7,3))
- prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
- 
- 
- jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-guassian-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
- gridExtra::grid.arrange(
-   prevmaprasterplots[[1]], 
-   prevmaprasterplots[[2]],
-   prevmaprasterplots[[3]],
-   nrow=1, 
-   top=grid::textGrob("Smoothed Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
- graphics.off()
  
  
  #----------------------------------------------------------------------------------------------------

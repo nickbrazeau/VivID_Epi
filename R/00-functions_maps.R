@@ -4,35 +4,73 @@ library(PrevMap)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
 #----------------------------------------------------------------------------------------------------
-# Guassian Surface Plot
+# Mapping Functions
 #----------------------------------------------------------------------------------------------------
-
-load("~/Documents/GitHub/VivID_Epi/data/vividmaps_small.rda")
-load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
-
-
-guass_map_clstr_summarizer <- function(data, plsmdmspec){
+prev_point_est_summarizer <- function(design, maplvl, plsmdmspec){
   
-  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
   
+  # rlang
+  maplvl <- enquo(maplvl)
   plsmdmspec <- enquo(plsmdmspec)
+  
   # clusters are weighted (each individual has same weight in cluster)
-  ret <- data %>% 
+  ret <- design %>% 
     dplyr::mutate(count = 1) %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
-    dplyr::group_by(hv001) %>% 
+    dplyr::group_by(!!maplvl) %>% 
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
-                     plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)
-                     ) %>% 
-    dplyr::inner_join(., clustgeom, by = "hv001")
-  ret <- ret %>% 
-    dplyr::mutate(logitplsmdprev = logit(plsmdprev)) # weird how this is being held
-  
+                     plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
+    
+    dplyr::mutate(logitplsmdprev = logit(plsmdprev))
   # return
   return(ret)
 }
+
+
+
+mapplotter <- function(data, maplvl, plsmdmspec){
+  
+  ret <- ggplot() + 
+    geom_sf(data = DRCprov) +
+    ggtitle(paste(plsmdmspec)) +
+    vivid_theme +
+    theme(axis.text = element_blank(),
+          axis.line = element_blank())
+  
+  if(maplvl == "adm1name"){
+    data <- inner_join(data, DRCprov, by = "adm1name")
+    ret <- ret + geom_sf(data = data, aes(fill = plsmdprev)) +
+      # scale_fill_distiller("Prevalence", palette = "Spectral") +
+      scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+      # scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmdprev[data$plsmdprev != 0], 0.75)) + 
+      coord_sf(datum=NA)  # to get rid of gridlines
+    
+  } else if(maplvl == "hv001"){
+    clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "geometry")]
+    data <- inner_join(data, clustgeom, by = "hv001")
+    
+    ret <- ret + geom_sf(data = data, aes(fill = plsmdprev, colour = plsmdprev, size = n), alpha = 0.4) +
+      # scale_fill_distiller("Prevalence", palette = "Spectral") +
+      scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+      # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmdprev[data$plsmdprev != 0], 0.75)) + 
+      scale_size(guide = 'none') +  scale_fill_continuous(guide = 'none') +
+      coord_sf(datum=NA)  # to get rid of gridlines
+    
+  } else {
+    stop("maplvl is not in the options for this function")
+  }
+  
+  
+  return(ret)
+  
+}
+
+
+
+
+#----------------------------------------------------------------------------------------------------
+# Guassian Surface Plot
+#----------------------------------------------------------------------------------------------------
 
 
 

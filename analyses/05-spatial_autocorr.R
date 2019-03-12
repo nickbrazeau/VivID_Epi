@@ -10,24 +10,51 @@ library(tidygraph)
 library(ggraph)
 library(ape)
 library(spdep)
-load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-load("~/Documents/GitHub/VivID_Epi/data/04-basic_mapping_data.rda")
-load("~/Documents/GitHub/VivID_Epi/data/osm_roads.rda")
-#..........................................
-# setup
-#..........................................
-clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum", "geometry")]
-clstrs <- mp %>% 
-  filter(maplvl == "hv001")
-clstrs$data <- map(clstrs$data, function(x){
-  return( dplyr::inner_join(x, clustgeom, by = "hv001") )
-})
-
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
+ 
+ 
+ #......................
+ # Import Data
+ #......................
+ dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+ options(survey.lonely.psu="certainty")
+ dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = hv005_wi)
+ 
+ #spatial from the DHS -- these are cluster level vars
+ ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
+ colnames(ge) <- tolower(colnames(ge))
+ ge$adm1name <- gsub(" ", "-", ge$adm1name) # for some reason some of the char (like Kongo Central, lack a -), need this to match GADM
+ ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled this province
+ # remove clusters that were missing from the DHS, see readme
+ ge <- ge %>% 
+   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
+ 
+ #......................
+ # Summarize by Cluster
+ #......................
+ pfldhclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pfldh) %>% 
+   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "hv001") %>% 
+   dplyr::left_join(x=., y = ge)
+ pv18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pv18s) %>% 
+   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "hv001") %>% 
+   dplyr::left_join(x=., y = ge)
+ po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = po18s) %>% 
+   dplyr::mutate(plsmdmspec = "po18s", maplvl = "hv001") %>% 
+   dplyr::left_join(x=., y = ge)
+ 
 #..........................................
 # Moran's I -- several distance matrices
 #..........................................
 # Note, clusters are in same place for pf,pv,po so don't need to iterate over list. Can do once on any data
-
+ clstrs <- dplyr::bind_rows(pfldhclust, pv18sclust, po18sclust) %>% 
+   dplyr::group_by(plsmdmspec) %>% 
+   tidyr::nest()
+ 
+ # this awful hack becuase of this issue https://github.com/tidyverse/dplyr/issues/3483
+ # we are going down the rabbit hole just to try and make this stupid survey and purr package work. fine for now but return
+ clstrs$data <- lapply(list(pfldhclust, pv18sclust, po18sclust), function(x) return(x))
+ 
+ 
 #.......
 # greater circler
 #.......
@@ -40,6 +67,9 @@ clstrs$MIgc <- map(clstrs$data, function(x){
     dplyr::bind_cols(.)
   return(ret)
 })
+
+moran.test(clstrs$data[[2]]$plsmdprev, mat2listw(gc.inv), 
+           alternative = "two.sided")
 
 
 #.......
