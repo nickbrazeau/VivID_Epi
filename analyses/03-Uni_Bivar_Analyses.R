@@ -25,7 +25,7 @@ dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = 
 # identify covariates
 #......................
 vars <- colnames(dt)[grepl("_fctm|_fctb|_scaled", colnames(dt))]
-vars <- vars[vars != "pv18s_fctb_ind"]
+vars <- vars[vars %in% c("pv18s_fctb", "pv18s_fctb_sens")]
 
 #......................
 # bivariate analyses, covar vs. case
@@ -42,7 +42,7 @@ pvtbl1 <- tableone::svyCreateTableOne(data=dtsrvy)
 # Odds Ratios with Pv as the outcome
 # note, that svyglm is really doing GEE
 #----------------------------------------------------------------------------------------------------
-model_parameters <- data.frame(outcome = rep("pv18s", length(vars)), 
+model_parameters <- data.frame(outcome = rep("pv18s_sens", length(vars)), 
                                covar = vars, stringsAsFactors=FALSE)
 
 model_parameters$glmlogit <- purrr::pmap(model_parameters, .f=fitsvyglm)
@@ -99,20 +99,41 @@ m2 <- survey::svyglm(pv18s ~ hml20_fctb_ind + pfldh_fctb_ind + hml20_fctb_ind*pf
 broom::tidy(m2, exponentiate = T, conf.int = T)
 
 #----------------------------------------------------------------------------------------------------
-# Playgroun
+# Playground
 #----------------------------------------------------------------------------------------------------
 #...............
-# how strong of an effect is that pv outlier
+# how strong of an effect is that pv cluster 81
 #..............
-# not bad bc so few points in cluster 81 even though high prev of viv
 
-m1 <- glm(pv18s ~ hml20_fctb_ind + pfldh + hml20_fctb_ind*pfldh,
-          data = dt,
-          family = binomial(link = "logit"))
-broom::tidy(m1, exponentiate=TRUE, conf.int=TRUE)
-contrast::contrast(m1,
-         a=list(hml20_fctb_ind = "yes", pfldh = 1),
-         b=list(hml20_fctb_ind = "no", pfldh = 1))
+
+#...............
+# look at household level
+#..............
+houseindex <- dt %>% 
+  group_by(houseid) %>% 
+  summarise(n = n(), cases = sum(pv18s), houseinfctperc = cases/n)
+hist(houseindex$houseinfctperc)
+
+
+#...............
+# treating bednets as a confounder (if pf is a mediator)
+#..............
+m1 <- survey::svyglm(pv18s ~ pfldh_fctb + hml20_fctb + pfldh_fctb*hml20_fctb, 
+                     design = dtsrvy,
+                     family = quasibinomial("logit"))
+
+broom::tidy(m1, exponentiate = T, conf.int = T)
+
+m2 <- glm(pv18s ~ pfldh_fctb + hml20_fctb + pfldh_fctb*hml20_fctb, 
+                     data = dt,
+                     family = quasibinomial("logit"))
+
+broom::tidy(m2, exponentiate = T, conf.int = T)
+
+contrast::contrast(m2,
+         a=list(hml20_fctb = "yes", pfldh_fctb = "falneg"),
+         b=list(hml20_fctb = "no", pfldh_fctb = "falneg"))
+
 
 
 #----------------------------------------------------------------------------------------------------

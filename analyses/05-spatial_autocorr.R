@@ -62,15 +62,18 @@ gc <- geosphere::distm(x = clstrs$data[[1]][,c("longnum", "latnum")], fun = dist
 gc.inv <- 1/gc
 diag(gc.inv) <- 0
 
-clstrs$MIgc <- map(clstrs$data, function(x){
-  ret <- ape::Moran.I(x = x$plsmdprev, gc.inv) %>% 
-    dplyr::bind_cols(.)
-  return(ret)
-})
+
 
 moran.test(clstrs$data[[2]]$plsmdprev, mat2listw(gc.inv), 
-           alternative = "two.sided")
+           alternative = "two.sided") # cedar ran this in geoda and got a similar answer
 
+
+forcedar <- clstrs$data[[2]] %>% 
+  dplyr::select(c("plsmdprev", "latnum", "longnum")) %>% 
+  dplyr::arrange(., desc(plsmdprev)) %>% 
+  dplyr::rename(PvPrev = plsmdprev)
+
+write.csv(x=forcedar, file = "~/Desktop/pvprev_forgeoda.csv", quote = F, row.names = F, col.names = T)
 
 #.......
 # basic neighbors

@@ -67,7 +67,7 @@ pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
 # plot prev rasters
 #..............................
 prevmaprasterplots <- lapply(pr$prevrasterspred,
-                             prevmaprasterplotter, smoothfct = rep(7,3))
+                             prevmaprasterplotter, smoothfct = rep(7,3), alpha = 0.5)
 prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
 
 

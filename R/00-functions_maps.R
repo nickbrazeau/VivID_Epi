@@ -103,7 +103,7 @@ fit_pred_spMLE <- function(outcome, covar,
 
 
 
-prevmaprasterplotter <- function(prevrasters, smoothfct = 5){
+prevmaprasterplotter <- function(prevrasters, smoothfct = 5, alpha = 0.8){
   
   ret.rstr <- raster::rasterFromXYZ(cbind(prevrasters$grid.pred[,1],
                                           prevrasters$grid.pred[,2],
@@ -119,7 +119,7 @@ prevmaprasterplotter <- function(prevrasters, smoothfct = 5){
                                  lat = ret.smrstr.m[,2], 
                                  prev = ret.smrstr.m[,3])
   ret.smrstr.m.plot <- ggplot() + 
-    geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.8) +
+    geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = alpha) +
     scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") 
 
   return(ret.smrstr.m.plot)
