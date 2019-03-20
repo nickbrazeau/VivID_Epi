@@ -9,6 +9,7 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
+library(plotly)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
 
@@ -129,7 +130,7 @@ dt <- dt %>%
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
-    pv18s_sens = ifelse(pv18sct_cont <= 40 & !is.na(pv18sct_cont), 1, 0),
+    pv18s_sens = ifelse(pv18sct_cont <= 42 & !is.na(pv18sct_cont), 1, 0), # empirical evidence to suggest 42 is an appropriate CT cutoff
     pv18s_fctb_sens = factor(pv18s_sens, levels=c("0", "1"), labels=c("vivneg", "vivpos"))
   )
 
@@ -202,30 +203,37 @@ hist(dt$hab56_cont_scale)
 #..........................................................................................
 #                                  SOCIOECOLOGICAL VARIABLES
 #...........................................................................................
-#.............
-# Urban
-#.............
-levels(factor(haven::as_factor(dt$hv025))) # no missing
-dt$hv025_fctb <- haven::as_factor(dt$hv025)
-dt$hv025_fctb = forcats::fct_relevel(dt$hv025_fctb, "rural")
-# check
-xtabs(~hv025 + hv025_fctb, data = dt, addNA = T)
+#..............................
+#### A note on urbanicity ####
+#..............................
+# Potential (significant) misclassification bias in the DHS DRC-II coding of 
+# urban vs. rural as has been noted here https://journals.sagepub.com/doi/10.1177/0021909617698842
+# and can be seen by comparing hv025/026 with population density, light density, build, etc.
 
-
-#.............
-# cluster type of town (urbanicity)
-#.............
-levels(factor(haven::as_factor(dt$hv026))) 
-dt$hv026_fctm <- haven::as_factor(dt$hv026)
-# check
-xtabs(~hv026 + hv026_fctm, data = dt, addNA = T) # no missing so can drop
-
-dt <- dt %>% dplyr::mutate(
-  hv026_fctm = forcats::fct_drop(haven::as_factor(dt$hv026_fctm)),
-  hv026_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv026_fctm, .x = hv026_fctm, .fun = length)))
-
-# perfectly collinear (based on each other)
-xtabs(~hv025_fctb + hv026_fctm, data = dt, addNA = T)
+# #.............
+# # Urban from DHS
+# #.............
+# levels(factor(haven::as_factor(dt$hv025))) # no missing
+# dt$hv025_fctb <- haven::as_factor(dt$hv025)
+# dt$hv025_fctb = forcats::fct_relevel(dt$hv025_fctb, "rural")
+# # check
+# xtabs(~hv025 + hv025_fctb, data = dt, addNA = T)
+# 
+# 
+# #.............
+# # cluster type of town (urbanicity)
+# #.............
+# levels(factor(haven::as_factor(dt$hv026))) 
+# dt$hv026_fctm <- haven::as_factor(dt$hv026)
+# # check
+# xtabs(~hv026 + hv026_fctm, data = dt, addNA = T) # no missing so can drop
+# 
+# dt <- dt %>% dplyr::mutate(
+#   hv026_fctm = forcats::fct_drop(haven::as_factor(dt$hv026_fctm)),
+#   hv026_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv026_fctm, .x = hv026_fctm, .fun = length)))
+# 
+# # hv025 and hv026 are perfectly collinear (based on each other)
+# xtabs(~hv025_fctb + hv026_fctm, data = dt, addNA = T)
 
 
 
@@ -239,7 +247,11 @@ hist(dt$built_population_2014)
 sum(dt$built_population_2014 < 0.01)
 median( dt$built_population_2014[dt$built_population_2014 < 0.05] )
 hist( dt$built_population_2014[dt$built_population_2014 < 0.05] )
-
+# DECISION: Will use a logit transformation to get back to the real-line (and scale)
+# large number of 0s
+dt$built_population_2014_scale <- scale(logit(dt$built_population_2014, tol = 1e-3), center = T, scale = T) # use logit to transform to real line
+hist(dt$built_population_2014_scale)
+summary(dt$built_population_2014_scale); sd(dt$built_population_2014_scale) # despite skew, scale seems to work
 
 #.............
 # cluster night-time light density
@@ -250,6 +262,11 @@ summary(dt$nightlights_composite)
 hist(dt$nightlights_composite)
 hist( dt$nightlights_composite[dt$nightlights_composite < 0.05] )
 hist( dt$nightlights_composite[dt$nightlights_composite > 0.05] )
+# DECISION: Will use a log transformation (and scale)
+# large number of 0s (again)
+dt$nightlights_composite_scale <- scale(log(dt$nightlights_composite + 1e-3), center = T, scale = T)
+hist(dt$nightlights_composite_scale)
+summary(dt$nightlights_composite_scale); sd(dt$nightlights_composite_scale) # despite skew, scale seems to work
 
 
 #.............
@@ -259,17 +276,47 @@ hist( dt$nightlights_composite[dt$nightlights_composite > 0.05] )
 # NOTE, this is from 2015
 summary(dt$all_population_count_2015)
 hist(dt$all_population_count_2015)
+hist( dt$all_population_count_2015[dt$all_population_count_2015 < 5e4] )
+hist( dt$all_population_count_2015[dt$all_population_count_2015 > 5e4] )
+# DECISION: Will use a log transformation (and scale)
+# large number of 0s (again)
+dt$all_population_count_2015_scale <- scale(log(dt$all_population_count_2015), center = T, scale = T)
+hist(dt$all_population_count_2015_scale)
+summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_scale) # scale here seems to compensate
 
-plot(dt$all_population_count_2015, dt$nightlights_composite)
 
-scatterplot3d::scatterplot3d(dt$all_population_count_2015, dt$nightlights_composite, 
-                dt$built_population_2014)
+#.............
+# Accessibility from Weiss
+#.............
+# From the MAP Weiss Raster
 
-library(plotly)
-Sys.setenv("plotly_username"="nbrazeau1")
-Sys.setenv("plotly_api_key"="ePqTRUO0K7qUlYc8DffD")
 
-psample <- plot_ly(eigpoints, x = ~PC1, y = ~PC3, z = ~PC2, color = ~smpl, colors = as.character(eigpoints$colorsample)) %>%
+
+#.............
+# PCA
+#.............
+# compute PCA
+urbanmat <- dt[, c("built_population_2014_scale", "nightlights_composite_scale",
+                   "all_population_count_2015_scale")]
+pca <- prcomp(urbanmat)
+
+# compute variance explained
+pca$var <- (pca$sdev ^ 2) / sum(pca$sdev ^ 2) * 100
+
+# compute loadings from rotations
+pca$loadings <- abs(pca$rotation)
+pca$loadings <- sweep(pca$loadings, 2, colSums(pca$loadings), "/")
+
+
+screeplot(pca, type="lines",col=3)
+
+
+plot(pca$loadings[,1], pca$loadings[,2])
+# make a plot
+pcaeigplot <- tibble(smpl = rownames(pca$loadings), 
+                     pc1 = pca$loadings[,1], pc2 =pca$loadings[,2], pc3 = pca$loadings[,3])
+
+psample <- plot_ly(pcaeigplot, x = ~pc1, y = ~pc3, z = ~pc2)%>%
   add_markers() %>%
   layout(scene = list(xaxis = list(title = 'PC1'),
                       yaxis = list(title = 'PC3'),
@@ -277,6 +324,18 @@ psample <- plot_ly(eigpoints, x = ~PC1, y = ~PC3, z = ~PC2, color = ~smpl, color
 
 psample
 
+
+
+
+plot(dt$built_population_2014_scale, dt$urbanpc1)
+plot(dt$all_population_count_2015_scale, dt$urbanpc1)
+plot(dt$nightlights_composite_scale, dt$urbanpc1)
+
+
+scatterplot3d::scatterplot3d(x = dt$built_population_2014_scale, 
+                             y = dt$all_population_count_2015_scale, 
+                             z = dt$nightlights_composite_scale, 
+                             color = factor(dt$urbanpc1))
 
 
 #.............

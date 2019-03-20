@@ -93,7 +93,7 @@ vmatchPattern(reverseComplement(DNAString("TTGGTGAAGCAGTTGGCTGG")), chr12)
 
 ### _pvama_ Design
 
-From `01-Potential_Primer_interrogate.Rmd`, I would like to capture the SNPs at the positions: `r paste("1460429", "1460433", "1460434", "1460440", "1460441", "1460450", "1460494", "1460608", "1460628", "1460662")`. Al together this is a 233 base pair region. Note, end of gene is 1460945, so have some room. 
+From `01-Potential_Primer_interrogate.Rmd`, I would like to capture the SNPs at the positions: `r paste("1460429", "1460433", "1460434", "1460440", "1460441", "1460450", "1460494", "1460608", "1460628", "1460662")`. All together this is a 233 base pair region. Note, end of gene is 1460945, so have some room. 
 
 ```{r}
 
@@ -104,11 +104,6 @@ vmatchPattern(reverseComplement(DNAString("TTTCCGCCCTTTTCTCTACACA")), chr09)
 ```
 
 Get all the SNPs with these and don't hit variation that we have in our VCF (one site with one het call in ~800 samples) that is missing from blast. This is important if we want the primers to land. GC content only 45% but that should be OK. With all this in mind "Primer Set 1" was selected.
-
-#### Conditions on `Primer-Blast`
-
-Used the sequence below. Set the min PCR product size to 300 and the max 600. Then set organism "Plasmodium vivax (taxid:5855)". All other parameters were left at default.
-
 
 
 

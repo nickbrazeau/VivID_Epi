@@ -49,7 +49,8 @@ sum(!duplicated(dt$adm1name))
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 
 options(survey.lonely.psu="certainty")
-dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = hv005_wi)
+dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
+                                         strata = hv023, weights = hv005_wi)
 dtsrvy_nostrat <- dt %>% srvyr::as_survey_design(ids = hv001, weights = hv005_wi)
 
 
@@ -57,7 +58,7 @@ base <-     survey::svyglm(pv18s ~ 1,
                         design = dtsrvy,
                         family = quasibinomial(link="logit"))
 
-basestrat <- survey::svyglm(pv18s ~ 1, 
+basenostrat <- survey::svyglm(pv18s ~ 1, 
                            design = dtsrvy_nostrat,
                            family = quasibinomial(link="logit"))
 
@@ -83,7 +84,7 @@ lme4clst <- lme4::glmer(pv18s ~ 1 + (1|hv001),
                         family = binomial(link="logit"))
 
 broom::tidy(base)
-broom::tidy(basestrat)
+broom::tidy(basenostrat)
 broom::tidy(glmwi)
 broom::tidy(geewi)
 broom::tidy(lme4psu)

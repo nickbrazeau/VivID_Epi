@@ -19,8 +19,40 @@ options("survey.lonely.psu"="certainty")
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 options(survey.lonely.psu="certainty")
-dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = hv005_wi)
+dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
+                                         strata = hv023, 
+                                         weights = hv005_wi)
 
+
+
+#----------------------------------------------------------------------------------------------------
+# Basic Descriptive Statistics
+#----------------------------------------------------------------------------------------------------
+# national prevalence
+m1 <- survey::svyglm(pv18s ~ 1, design = dtsrvy)
+broom::tidy(m1, conf.int = T)
+
+# cluster-level prevalence
+clst <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count), 
+                 pv18sn = srvyr::survey_total(pv18s), 
+                 pv18sprev = srvyr::survey_mean(pv18s, vartype = c("ci"), level = 0.95))
+
+summary(clst$pv18sn)
+summary(clst$pv18sprev)
+
+
+# pfldh coinfection
+xtabs(~pv18s + pfldh, data = dt)
+
+
+
+
+#----------------------------------------------------------------------------------------------------
+# TABLE ONE
+#----------------------------------------------------------------------------------------------------
 #......................
 # identify covariates
 #......................
@@ -38,6 +70,7 @@ pvtbl1 <- tableone::svyCreateTableOne(data=dtsrvy)
 
 
 #----------------------------------------------------------------------------------------------------
+# TABLE 2
 # Parametric, Bivariate Analysis
 # Odds Ratios with Pv as the outcome
 # note, that svyglm is really doing GEE
