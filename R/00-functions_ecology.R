@@ -1,3 +1,7 @@
+#----------------------------------------------------------------------------------------------------
+# SEASONALITY
+#----------------------------------------------------------------------------------------------------
+
 # adapted from OJWatson/magenta
 # extracted from Cairns et al. 2012 PMC3621394 
 
@@ -12,14 +16,13 @@ calc_seasonality <- function(drc_admin_units_seasonal) {
   ssb1 <- drc_admin_units_seasonal$seasonal_b1
   ssb2 <- drc_admin_units_seasonal$seasonal_b2
   ssb3 <- drc_admin_units_seasonal$seasonal_b3
-  # theta_c <- drc_admin_units_seasonal$seasonal_theta_c
-  theta_c <- drc_admin_units_seasonal$ft # TEMP -- this likely isn't correct
+  theta_c <- rowMeans( drc_admin_units_seasonal[,grepl("seasonal_", colnames(drc_admin_units_seasonal))] )
     
   # define vector of times spanning one year
     tvec = 1:365
     
     # calculate Fourier series
-    y <- sapply(t, function(x) {
+    y <- sapply(tvec, function(x) {
       max((ssa0 + 
              ssa1 * cos(2 * pi * x / 365) + 
              ssa2 * cos(2 * 2 * pi * x / 365) + 
@@ -37,7 +40,7 @@ calc_seasonality <- function(drc_admin_units_seasonal) {
 # still adapted from OJWatson/magenta
 
 ####### 
-Issue with how regions are being linked
+#Issue with how regions are being linked
 ####### 
 
 

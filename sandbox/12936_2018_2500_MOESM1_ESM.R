@@ -109,7 +109,9 @@ plot(mesh) # visualise the mesh
 A <- inla.spde.make.A(mesh = mesh, loc = as.matrix(pvpr[, c('longitude', 'latitude')]))
 
 # Create spde2 object
-# Preliminary analysis of the variance of the residuals from non-spatial 'base' models suggested a reasonable penalised complexity prior for sigma of prior.sigma = c(7, 0.1)
+# Preliminary analysis of the variance of the residuals from non-spatial 
+# 'base' models suggested a reasonable penalised complexity prior for sigma of
+#  prior.sigma = c(7, 0.1)
 spde <- inla.spde2.pcmatern(mesh = mesh, alpha = 2, prior.range = c(2,0.01), prior.sigma = c(2.7,0.1))
 
 # stack spatial objects and data.
@@ -134,7 +136,10 @@ plot(model.acc, CI = TRUE)
 summary(model.acc)
 
 # predict pvpr over study area using Model 2
-pred.acc <- predictRasterINLA(model.acc, raster = covariates_trans, mesh = mesh, type = "response", method = "MAP", constants = list("B0" = 1))
+pred.acc <- predictRasterINLA(model.acc, raster = covariates_trans, 
+                              mesh = mesh, type = "response", 
+                              method = "MAP", constants = list("B0" = 1))
+
 names(pred.acc) <- "INLA prediction w/ access"
 
 # visualise predictions using malariaAtlas autoplot methods and ggplot2 adjustments

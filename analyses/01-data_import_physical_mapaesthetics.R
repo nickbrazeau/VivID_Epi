@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to download map features that will be need for later plotting
-# Will use this to make "pretty" maps but is not needed for core analyses
+# Will use this to mostly make "pretty" maps 
+# Am going to recycle the DEM
 # http://www.francescobailo.net/2018/08/how-to-quickly-enrich-a-map-with-natural-and-anthropic-details/
 #----------------------------------------------------------------------------------------------------
 # libraries
@@ -52,25 +53,12 @@ brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI
                     
                   })
 
-# brdrcnt_comb <- sf::st_union(brdrcnt[[1]], brdrcnt[[2]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[3]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[4]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[5]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[6]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[7]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[8]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[9]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[10]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[11]], by_feature = T) %>% 
-#   sf::st_union(., brdrcnt[[12]])
-# unfortunately this knocks out borders (logically)... will have to keep as seperate layers
 
 #..............................
 # Pull down ocean
 #..............................
 # https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_ocean.zip
 oceans <- sf::st_read("~/Documents/GitHub/VivID_Epi/data/map_bases/ne_10m_ocean/ne_10m_ocean.shp")
-
 
 
 #..............................
@@ -85,15 +73,12 @@ dem.raster <- raster::crop(dem.raster, sf::as_Spatial(DRCprov), snap='out')
 dem.m  <-  raster::rasterToPoints(dem.raster)
 dem.df <-  data.frame(lon = dem.m[,1], lat = dem.m[,2], alt = dem.m[,3])
 
-# raster to ggplot for hill share
+# raster to ggplot for hill shapes
 slope.raster <- raster::terrain(dem.raster, opt='slope')
 aspect.raster <- raster::terrain(dem.raster, opt='aspect')
 hill.raster <- raster::hillShade(slope.raster, aspect.raster, 40, 270, normalize = T)
-
 hill.m <- raster::rasterToPoints(hill.raster)
 hill.df <-  data.frame(lon = hill.m[,1], lat = hill.m[,2], hill = hill.m[,3])
-
-
 
 
 

@@ -1,7 +1,3 @@
-library(tidyverse)
-library(sf)
-library(srvyr) # wrap the survey package in dplyr syntax
-
 
 #----------------------------------------------------------------------------------------------------
 # Basic epi
@@ -10,6 +6,18 @@ library(srvyr) # wrap the survey package in dplyr syntax
 logit <- function(x, tol=1e-4){ 
     return( log(((x+tol)/(1-x+tol))) )
 }
+
+#----------------------------------------------------------------------------------------------------
+# Make final Survey Object to account for DHS Survey Weights
+#----------------------------------------------------------------------------------------------------
+makecd2013survey <- function(survey = dt){
+  options(survey.lonely.psu="certainty")
+  dtsrvy <- survey %>% srvyr::as_survey_design(ids = hv001, 
+                                           strata = hv023, 
+                                           weights = hv005_wi)
+  return(dtsrvy)
+}
+
 
 #----------------------------------------------------------------------------------------------------
 # ViVID Epi Theme

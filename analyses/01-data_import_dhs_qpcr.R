@@ -63,111 +63,53 @@ if(nrow(panplasmpcrres) != nrow(pfpcr) & nrow(pfpcr) != nrow(popcr) & nrow(popcr
   stop("Abandon all faith, ye who enter here. Look upstream to how the CD2013 pcr calls were made. There has been an error in barcode renaming and/or merging")
 }
 
+
+####################################################################################
+##########                          DHS MERGING                           ##########  
+####################################################################################
+# will follow this
+#  https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+
 #---------------------------------------------------------------------------------
 # Read in and match PR barcode to qpcr data
 #---------------------------------------------------------------------------------
 pr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDPR61FL.rds")
 ar <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDAR61FL.rds") %>% 
-  dplyr::rename(hivrecode_barcode = hiv01) %>% 
+  dplyr::rename(hv001 = hivclust,
+                hv002 = hivnumb,
+                hvidx = hivline,
+                hivrecode_barcode = hiv01) %>% 
   dplyr::mutate(hivrecode_barcode = gsub(" ", "", hivrecode_barcode),
-                hivrecode_barcode = tolower(hivrecode_barcode))
-
+                hivrecode_barcode = tolower(hivrecode_barcode)) # rename and fix barcode for ar
 # match HIV/PCR barcodes with the PR recode
-# The HIV recoded barcodes are under the variables HA62 (females) in the PR recode
-str(pr$ha62)
-attr(pr$ha62, "label")
-attr(pr$ha62, "labels")
-# check for other odd values
-pr$ha62[pr$ha62 %in% c("99991", as.character(seq(99997:99999)))]
-head(xtabs(~pr$ha62))
-
-# no barcode for the men
-sum(factor(pr$ha62) == "     ")
-sum(factor(pr$ha62) == "?    ")
-
-# The HIV recoded barcodes are under the variables HB62 (males) in the PR recode
-str(pr$hb62)
-attr(pr$hb62, "label")
-attr(pr$hb62, "labels")
-# check for other odd values
-pr$hb62[pr$hb62 %in% c("99991", as.character(seq(99997:99999)))]
-head(xtabs(~pr$hb62))
-
-# no barcode for the men
-sum(factor(pr$hb62) == "     ")
-sum(factor(pr$hb62) == "?    ")
-
-
-# make merge table
-infodf <- tibble(ha62 = c("     ",           "99991", "99992",     "99993",  "99994",       "99995",   "99996",  "?    ",   "     ", "     ",     "     ",  "     ",       "     ",   "     ",   "     ", "?    "),
-                 hb62 = c("     ",           "     ", "     ",     "     ",  "     ",       "     ",   "     ",  "     ",   "99991", "99992",     "99993",  "99994",       "99995",   "99996",   "?    ", "?    "),
-                 info = c("No info for F/M", "F unk", "F Incmplt", "F dmgd", "F not prsnt", "F rfsd",  "F othr", "F mssng", "M unk", "M Incmplt", "M dmgd", "M not prsnt", "M rfsd",  "M othr",  "M mssng", "both missing"))
-
-# let's make the barcode column now and join with ar
-arpr <- pr  %>% 
-  dplyr::left_join(x=., y = infodf, by=c("ha62", "hb62")) %>%
-  dplyr::mutate(hivrecode_barcode = ifelse(is.na(info) & hb62 != "     ", hb62,
-                                 ifelse(is.na(info) & ha62 != "     ", ha62, NA)
-                                 ),
-                hivrecode_barcode = tolower(factor(hivrecode_barcode))
-                ) %>% 
-  inner_join(., ar, by = "hivrecode_barcode") 
-
-# check to see if barcodes had missing in AR recode
-if(TRUE %in% as.data.frame(table(arpr$info, arpr$hivrecode_barcode))[,3] != 0){
-  stop("barcode parsing error with info missing and barcode")
-}
-
-# check to make sure every PR recode has an AR recode 
-if(sum(!is.na(arpr$hivrecode_barcode)) != nrow(ar)){
-  stop("predicted barcode number does not match barcode number in AR (HIV) recode")
-}
-
-
+arpr <- inner_join(ar,pr, by = c("hv001", "hv002", "hvidx"))
+arpr <- arpr %>% 
+  mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
 
 #---------------------------------------------------------------------------------
 # Read in MR and IR 
 #---------------------------------------------------------------------------------
-mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds")
-wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds")
+mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds") %>% 
+  dplyr::rename(hv001 = mv001,
+                hv002 = mv002,
+                hvidx = mv003,
+                caseid = mcaseid)
 
-# make some new household variables for wrangling that are not in the PR but are important 
-# note https://dhsprogram.com/data/Guide-to-DHS-Statistics/index.htm#t=HIV_Prevalence.htm&rhsearch=hiv&rhhlterm=hiv&rhsyns=%20
-# The HIV test results data (AR file) should first be merged to the women’s dataset (IR file) or the men’s dataset (MR file) by cluster number (v001/mv001/hivclust), household number (v002/mv002/hivnumb) and line number (v003/mv003/hivline)
+wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") %>% 
+  dplyr::rename(hv001 = v001,
+                hv002 = v002,
+                hvidx = v003)
+mrwr <- dplyr::full_join(mr, wr)
+mrwr <- mrwr %>% 
+  mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
 
-mrar <- ar %>% 
-  dplyr::rename(mv001 = hivclust,
-                mv002 = hivnumb,
-                mv003 = hivline) %>% 
-  dplyr::select(c("mv001", "mv002", "mv003", "hivrecode_barcode")) %>% 
-  inner_join(., mr, by = c("mv001", "mv002", "mv003") )
+wrmrprar <- dplyr::left_join(arpr, mrwr) 
 
-wrar <- ar %>% 
-  dplyr::rename(v001 = hivclust,
-                v002 = hivnumb,
-                v003 = hivline) %>% 
-  dplyr::select(c("v001", "v002", "v003", "hivrecode_barcode")) %>% 
-  inner_join(., wr, by = c("v001", "v002", "v003") )
-
-
-
-
- # WHAT IS GOING ON HERE?S??@??!
-sum(is.na(mr[, c("mv001", "mv002", "mv003")]))
-sum(is.na(wr[, c("v001", "v002", "v003")]))
-
-
-nrow(mrar) + nrow(wrar) == nrow(ar)
-
-potentialmatch <- as.data.frame(rbind(as.matrix(wr[, c("v001", "v002", "v003")]), 
-                        as.matrix(mr[, c("mv001", "mv002", "mv003")])))
-colnames(potentialmatch) <- c("hivclust", "hivnumb",  "hivline")
-
-nomatch <- ar[ !ar$hiv01 %in% c(mrar$hiv01, wrar$hiv01), ]
-
-
-mrprar <- left_join(x=arpr, y=mrar, by = "hivrecode_barcode")
-wrmrprar <- left_join(x=mrprar, y=wrar, by = "hivrecode_barcode")
+# left join because
+# IR and MR recodes only contain "de facto" individuals
+# whereas the PR recode contains "de facto" and "de jure"
+# https://dhsprogram.com/data/Guide-to-DHS-Statistics/Organization_of_DHS_Data.htm
+# relates to who slept there last night, etc
 
 
 #---------------------------------------------------------------------------------

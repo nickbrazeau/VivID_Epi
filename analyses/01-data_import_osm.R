@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to import GIS variables and perform basic GIS calculations (e.g. various distance metrics)
-# Will then merge to dhs scrape in the 01-data_import_epi file
+# Purpose of this script is to import data from open street map 
+# primarily interested in road and water networks
 #----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)

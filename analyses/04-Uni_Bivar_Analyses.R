@@ -11,17 +11,12 @@ library(tableone)
 library(stargazer)
 library(nlme)
 
-options("survey.lonely.psu"="certainty")
-
 
 #......................
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-options(survey.lonely.psu="certainty")
-dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
-                                         strata = hv023, 
-                                         weights = hv005_wi)
+
 
 
 

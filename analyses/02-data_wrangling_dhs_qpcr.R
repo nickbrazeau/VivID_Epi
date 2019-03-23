@@ -9,14 +9,15 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-library(plotly)
+devtools::install_github("malaria-atlas-project/malariaAtlas")
+library(malariaAtlas)
+library(RSAGA)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-
+tol <- 1e-3
 
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
 #-------------------------------------------------------------- 
-# this code is now located under sandbox/01-liftover_attempts.R
 # cd2013 was under phase 6
 # https://dhsprogram.com/publications/publication-DHSG4-DHS-Questionnaires-and-Manuals.cfm
 # https://dhsprogram.com/data/Guide-to-DHS-Statistics/ -- note this is version 7
@@ -45,40 +46,46 @@ dt <- dt %>%
 # 4. hv016, day of interview
 #
 #
-#
 # COINFECTIONS/BIOMARKER VARIABLES
-# 1. pfldh coinfection
-# 2. po18s coinfection
-# 3. HIV Status (HIV03)
-# 4. Currently pregnant? (HA54)
-# 5. Hemoglobin Level adjust for altitude and smoking (HA56 & HB56)
-#
+# 1. pfldh coinfection ; (personal + community)
+# 2. po18s coinfection ; (personal + community)
+# 3. HIV Status (HIV03) ; (personal + community)
+# 4. Hemoglobin Level adjust for altitude and smoking (HA56 & HB56)
+# 5. Duffy phenotype (wetlab work)
+
 # SOCIOECOLOGICAL VARIABLES
-# 1. Type of Residence i.e. Rural or Urban (HV025)
-# 2. Drinking Water (categorical: HV201)
-# 4. Main floor material (categorical: HV213)
-# 5. Main wall material (categorical: HV214)
-# 6. Main roof material (categorical: HV215)
-# 7. Shares toilet with other household (HV225)
-# 8. Wealth Index (HV270)
-# 9. Biological Sex (HV104)
-# 10. Age (HV105)
-# 11. Highest year of education completed (continous: HV108) 
-# 12. Highest grade of education completed (categorical: HV107) 
-# 13. Number of Children Under Age of 5 (continuous: HV014)
-# 14. Number of Household Members (continuous: HV009)
-# 15. Owns livestock, herds, or farm animals (hv246)
+# 1. Biological Sex (HV104)
+# 2. Age (HV105)
+# 3. Main floor material (categorical: HV213)
+# 3. Main wall material (categorical: HV214)
+# 3. Main roof material (categorical: HV215)
+# 3 -> 4. Building material (recode)
+# 5. Wealth Index (HV270)
+# 6. Highest year of education completed (continous: HV108) 
+# 7. Livestock ownership (categorical: HV246)
+# 8. Occupation (categorical: "hv717")
+# 9. Number of Household Members (continuous: HV009)
+# 10. Number of Children Under Age of 5 (continuous: HV014)
+
 
 # MALARIA-INTERVENTIONS
-# 1. Person slept under an LLIN net (HML20)/Net by Insecticide 
+# 1. Person slept under an LLIN net (HML20) ; (personal + community)
+# 2. Cluster level antimalarial use
 # 
 # PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
 # 1. Cluster altitude (HV040)
+# 2. Seasonality (ecological import)
+# 3. Temparature (ecological import)
+# 4. Precipation (ecological import)
+# 5. Wetness Index (ecological import)
+# 6. Type of Residence i.e. Rural or Urban (recode)
+# 7. Ape Habitat Overlap (ecological import)
 
 
-#..........................................................................................
-#                                         SURVEY CHARACTERISTICS
-#..........................................................................................
+
+#########################################################################################################
+##############                             SURVEY CHARACTERISTICS                          ##############
+#########################################################################################################
 #.............
 # weights
 #.............
@@ -86,6 +93,7 @@ dt <- dt %>%
   dplyr::mutate(hv005_wi = hv005/1e6,
                 hiv05_wi = hiv05/1e6
   )
+
 #.............
 # dates
 #.............
@@ -94,7 +102,6 @@ dt <- dt %>%
                 hvyrmnth_dtmnth = factor(paste0(lubridate::year(hvdate_dtdmy), "-", lubridate::month(hvdate_dtdmy)),
                                        levels = c( "2013-8", "2013-9", "2013-11", "2013-12", "2014-1", "2014-2"))
                 )
-
 
 #.............
 # households
@@ -110,62 +117,68 @@ summary(hs$housemax) # looks reasonable by cluster
 dt <- dt %>% 
   dplyr::mutate(houseid = factor(paste0(hv001, "_", hv002)))
 
+
+
+
+#########################################################################################################
+##############                          INDIVIDUAL LEVEL VARIABLES                         ##############
+#########################################################################################################
 #..........................................................................................
 #                                  COINFECTIONS/BIOMARKER VARIABLES
 #..........................................................................................
 #.............
 # pfldh/po18s
 #.............
+summary(dt$pfldh)
+summary(dt$pv18s)
+summary(dt$po18s)
+
 dt <- dt %>% 
   dplyr::mutate(
     pfldhct_cont = pfctmean,
-    pfldhct_cont_log = log(pfctmean),
+    pfldhct_cont_log = log(pfctmean + tol),
     pfldhct_cont_log_scale = scale(pfldhct_cont_log, center = T, scale = T),
     po18sct_cont = poctcrrct,
-    po18sct_cont_log = log(poctcrrct),
+    po18sct_cont_log = log(poctcrrct + tol),
     po18sct_cont_log_scale = scale(po18sct_cont_log, center = T, scale = T),
     pv18sct_cont = pvctcrrct,
-    pv18sct_cont_log = log(pvctcrrct),
+    pv18sct_cont_log = log(pvctcrrct + tol),
     pv18sct_cont_log_scale = scale(pv18sct_cont_log, center = T, scale = T),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
     pv18s_sens = ifelse(pv18sct_cont <= 42 & !is.na(pv18sct_cont), 1, 0), # empirical evidence to suggest 42 is an appropriate CT cutoff
-    pv18s_fctb_sens = factor(pv18s_sens, levels=c("0", "1"), labels=c("vivneg", "vivpos"))
+    pv18s_fctb_sens = factor(pv18s_sens, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
+    pv18s_fctb_monoinfxn = factor(ifelse(pv18s_fctb == "vivpos" &  po18s_fctb == "ovneg" & pfldh_fctb == "falneg", 1, 0), 
+                           levels=c("0", "1"), labels=c("vivmononeg", "vivmonopos"))
+    
   )
 
 dt[, colnames(dt)[grepl("pv18s|pfldh|po18s", colnames(dt))] ] %>% 
   sapply(., summary) # looks clean, all NAs are consistent except Pf but that has to do with double call strategy
+                     # Remember, CT values >cutoff (species dependent) are coded as NA in raw data. Retained here
   
-
-
-
-
- #.............
+#.............
 # HIV
 #.............
-# levels(factor(haven::as_factor(dt$hiv03)))
-# hivlabels <- names( attributes(dt$hiv03)$labels )
-# not the hiv03 covariate only has hiv negate or hiv positive, going to drop to just hiv+ or hiv-
+levels(factor(haven::as_factor(dt$hiv03)))
+hivlabels <- names( attributes(dt$hiv03)$labels ) # not the hiv03 covariate only has hiv negate or hiv positive, going to drop to just hiv+ or hiv-
 
 dt <- dt %>% 
   dplyr::mutate(
     hiv03_fctb = forcats::fct_drop(haven::as_factor(hiv03)),
     hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub(" ", "", .x, fixed = TRUE)), 
-    hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("positive", "+", .x)), 
-    hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("negative", "-", .x))
+    hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("positive", "pos", .x)), 
+    hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("negative", "neg", .x))
   ) 
 
 xtabs(~hiv03_fctb + hiv03, data = dt, addNA = T)
 
-
 #.............
 # hemoglobin
 #.............
-levels(factor(haven::as_factor(dt$ha56)))
+levels(factor(haven::as_factor(dt$ha56))) # need to divide by 10; var is separate column for men and women
 levels(factor(haven::as_factor(dt$hb56)))
-# preglabels <- names( attributes(dt$ha54)$labels )
-# note the ha54 covariate only has no/don't know or yes, so no extra missing 
 # confirm no missing sex and then can use this variable to distinguish ha56 and hv56
 xtabs(~haven::as_factor(dt$hv104), addNA = T)
 
@@ -173,9 +186,11 @@ dt <- dt %>%
   dplyr::mutate(hab56_cont = ifelse(haven::as_factor(hv104) == "female", ha56, hb56),
                 hab56_cont = ifelse(hab56_cont %in% c("997", "999"), NA, hab56_cont),
                 hab56_cont = as.numeric(hab56_cont)/10,
-                hab56_cont_scale = scale(hab56_cont, center = T, scale = T)) # this becomes (x-mu)/sd
+                hab56_cont_scale = scale(hab56_cont, center = T, scale = T)) 
 
 # check hemoglobin recode for WOMEN
+    summary(dt$ha56)
+    nrow(dt) - length(dt$ha56[dt$hv104 == 2]) # missing tracks
     summary(dt$ha56[dt$hv104 == 2 & dt$ha56 != 999 & dt$ha56 != 997])
     sum(dt$ha56 %in% c(997, 999)) # 25 missing women hbs
     # check visually
@@ -197,12 +212,389 @@ dt <- dt %>%
       geom_point(aes(x=hab56_cont, y=hb56)) + ylim(c(0,25)) + xlim(c(0,25))
     # note, 8547 "rows" missing which corresponds to the 8523 females + 24 NAs coded in the dataset
 hist(dt$hab56_cont_scale)
+# final note on hemoglobin: a Hb > 18 is pretty high Likely due to adjustment by alt and smoking (overadj).
+# Few observations, going to assume negligible
+sum(dt$hab56_cont > 18, na.rm = T)
+xtabs(~dt$hab56_cont, addNA = T)
+
+
+#.............
+# Duffy Phenotype
+#.............
+# TODO 
+
+
+#..........................................................................................
+#                               DEMOGRAPHIC/BEHAVIORAL VARIABLES
+#...........................................................................................
+#.............
+# sex
+#.............
+levels(factor(haven::as_factor(dt$hv104))) # no missing m/f but still missing factor from haven
+sum(is.na(dt$hv104))
+dt <- dt %>% 
+  dplyr::mutate(hv104_fctb = haven::as_factor(hv104),
+                hv104_fctb = if_else(hv104_fctb != "missing", hv104_fctb, factor(NA)),
+                hv104_fctb =  forcats::fct_drop(hv104_fctb), 
+                hv104_fctb = forcats::fct_rev(forcats::fct_reorder(.f = hv104_fctb, .x = hv104_fctb, .fun = length))
+  ) # female to default (b/c 0 and larger SE)
+
+#.............
+# pregnant
+#.............
+# levels(factor(haven::as_factor(dt$ha54)))
+# # preglabels <- names( attributes(dt$ha54)$labels )
+# # not the ha54 covariate only has no/don't know or yes, so no extra missing -- but note that no/don't know are collapsed 
+# 
+# dt <- dt %>% 
+#   dplyr::mutate(
+#     ha54_fctb = haven::as_factor(dt$ha54),
+#     ha54_fctb = if_else(ha54_fctb != "missing", ha54_fctb, factor(NA)),
+#     ha54_fctb =  forcats::fct_drop(ha54_fctb), 
+#     ha54_fctb = forcats::fct_relevel(ha54_fctb, "no/don't know")
+#   ) # no is obvious default based on n
+# 
+
+#.............
+# age
+#.............
+
+dt <- dt %>% 
+  dplyr::mutate(hab1_cont = ifelse(haven::as_factor(hv104) == "female", ha1, hb1),
+                hab1_cont = ifelse(hab56_cont %in% c("97", "98", "99"), NA, hab1_cont),
+                hab1_cont_scale = scale(hab1_cont, center = T, scale = T)) 
+
+summary(dt$hab1_cont) 
+plot(dt$ha1, dt$hab1_cont)
+plot(dt$hb1, dt$hab1_cont)
+
+#.............
+# main floor, wall, roof
+#.............
+# recode to rudimentary or non-rudimentary per previous manuscript (PMID: 28222094)
+# https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
+# From here going to recode to one variable -- whether house as a whole is 
+# rudimentary or non-rudimentary
+
+# floor
+floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_floor_liftover.csv")
+dt <- dt %>% 
+  dplyr::mutate(hv213 = haven::as_factor(hv213), 
+                hv213 =  forcats::fct_drop(hv213))
+dt <- dt %>%
+  left_join(x=., y=floor, by="hv213") %>% 
+  dplyr::mutate( hv213_liftover = factor(floortype) )
+
+xtabs(~dt$hv213 + dt$hv213_liftover, addNA = T)
+
+
+# wall
+wall <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_wall_liftover.csv")
+dt <- dt %>% 
+  dplyr::mutate(hv214 = haven::as_factor(hv214), 
+                hv214 =  forcats::fct_drop(hv214))
+dt <- dt %>%
+  left_join(x=., y=wall, by="hv214") %>% 
+  dplyr::mutate( hv214_liftover = factor(walltype) )
+
+xtabs(~dt$hv214 + dt$hv214_liftover, addNA = T)
+
+
+# roof
+roof <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_roof_liftover.csv")
+dt <- dt %>% 
+  dplyr::mutate(hv215 = haven::as_factor(hv215), 
+                hv215 =  forcats::fct_drop(hv215))
+dt <- dt %>%
+  left_join(x=., y=roof, by="hv215") %>% 
+  dplyr::mutate( hv215_liftover = factor(rooftype) )
+
+xtabs(~dt$hv215 + dt$hv215_liftover, addNA = T)
+
+# Final Liftover to a binary variable
+# 6 missing in floor; 5 missing in walls
+wallfloormiss <- dt %>% 
+  dplyr::select(c(hv213, hv214)) %>% 
+  dplyr::mutate(hv213 = haven::as_factor(dt$hv213),
+                hv214 = haven::as_factor(dt$hv214)) %>% 
+  dplyr::filter(hv213 == "missing" | hv214 == "missing")
+xtabs(~wallfloormiss$hv213 + wallfloormiss$hv214, addNA = T)
+# different observations missing for floor v. wall
+
+dt$hv21345_fctb <- apply(dt[,c("hv213_liftover", "hv214_liftover", "hv215_liftover")], 1,
+                      function(x){
+                        ret <- sum(x == "rudimentary", na.rm = T)/sum(!is.na(x)) # to account for 6 missing in floor and 5 missing in wall
+                        ret <- factor( ifelse(ret >= 0.5, "rudimentary", "non-rudimentary"), levels = c("rudimentary", "non-rudimentary") ) # rudimentary largest
+                      })
+xtabs(~dt$hv21345_fctb)
+
+
+#.............
+# wealth index 
+#.............
+levels(factor(haven::as_factor(dt$hv270))) 
+sum(is.na(dt$hv270)) # no missing wealth
+dt <- dt %>% 
+  dplyr::mutate(hv270_fctm = haven::as_factor(hv270),
+                hv270_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv270_fctm, .x = hv270_fctm, .fun = length)), # poorest is largest
+                hv270_fctb = factor(if_else(hv270_fctm %in% c("poorest", "poorer", "middle"), 
+                                     "poor_b", "rich_b"), levels = c("poor_b", "rich_b"))
+                )
+
+
+
+
+#.............
+# years of education (continuous)
+#.............
+hist(dt$hv108)
+summary(dt$hv108)
+dt <- dt %>% 
+  dplyr::mutate(hv108_cont = ifelse(hv108 %in% c("97", "98", "99"), NA, hv108),
+                hv108_cont_scale = scale(hv108_cont, center = T, scale = T))
+xtabs(~dt$hv108 + dt$hv108_cont, addNA = T)
+
+
+# #.............
+# # ethnicity
+# #.............
+# A note on ethnicity: resolution not great here. Really care about Duffy status. Captured with
+# genotyping. 
+# 
+# 
+# # question is whether you are congolese
+# levels(factor(haven::as_factor(dt$s113a))) 
+# levels(factor(haven::as_factor(dt$sm113a))) 
+# 
+# table(factor(haven::as_factor(dt$s113a))) 
+# table(factor(haven::as_factor(dt$sm113a))) 
+# 
+# 
+# dt <- dt %>% 
+#   dplyr::mutate(hv113a = ifelse(haven::as_factor(hv104) == "female", s113a, sm113a),
+#                 hv113a_fctb = factor(hv113a, levels = c(0,1), labels = c("no", "yes")))
+# 
+# 
+# # question of ethnicity, use liftover
+# levels(factor(haven::as_factor(dt$s114))) 
+# levels(factor(haven::as_factor(dt$sm114))) 
+# 
+# table(factor(haven::as_factor(dt$s114))) 
+# table(factor(haven::as_factor(dt$sm114))) 
+# 
+# 
+# dt <- dt %>% 
+#   dplyr::mutate(hv114a = ifelse(haven::as_factor(hv104) == "female", s114, sm114))
+# 
+# ethnic <-  readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_ethnic_liftover.csv")
+# 
+# dt <- dt %>%
+#   left_join(x=., y=ethnic, by="hv114a") %>% 
+#   dplyr::mutate(hv114a_fctm = factor(ethnicgroup),
+#                 hv114a_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv114a_fctm, .x = hv114a_fctm, .fun = length)))
+# 
+# xtabs(~dt$hv114a + dt$hv114a_fctm, addNA = T)
+# 
+
+
+#------------------------------------------
+# Owns livestock, herds, or farm animals
+#------------------------------------------
+summary(dt$hv246)
+table(dt$hv246) # 9 is missing
+
+dt <- dt %>% 
+  dplyr::mutate(
+    hv246_fctb = haven::as_factor(dt$hv246),
+    hv246_fctb = if_else(hv246_fctb != "missing", hv246_fctb, factor(NA)),
+    hv246_fctb =  forcats::fct_drop(hv246_fctb), 
+    hv246_fctb = forcats::fct_relevel(hv246_fctb, "no")
+  ) 
+xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
+
+#------------------------------------------
+# Occupation
+#------------------------------------------
+# Going to dichotomize as suspected outdoor versus indoor
+# Will code "others" as NA because cannot discern, only 2 obs
+
+dt$hab717 <- ifelse(haven::as_factor(dt$hv104) == "female", dt$v717, dt$mv717)
+table(dt$v717)
+table(dt$mv717)
+table(dt$hab717)
+
+occupation <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_occupation_liftover.csv")
+occupation$hab717 <- factor(occupation$hv717) # my mac being a pain
+
+dt <- dt %>% 
+  dplyr::mutate(hab717 = haven::as_factor(hab717), 
+                hab717 =  forcats::fct_drop(hab717))
+dt <- dt %>%
+  left_join(x=., y=occupation, by="hab717") %>% 
+  dplyr::mutate(hab717_fctb = factor(jobconditions),
+                hab717_fctb = forcats::fct_relevel(hab717_fctb, "indoors"))
+
+xtabs(~ dt$hab717 + dt$hab717_fctb, addNA = T)
+
+
+
+#------------------------------------------
+# children under 5 number
+#------------------------------------------
+summary(dt$hv014) # looks clean
+dt <- dt %>% 
+  dplyr::mutate(hv014_cont = hv014,
+                hv014_cont_scale = scale(hv014_cont, center = T, scale = T))
+
+#------------------------------------------
+# total household members
+#------------------------------------------
+summary(dt$hv009) # looks clean
+dt <- dt %>% 
+  dplyr::mutate(hv009_cont = hv009,
+                hv009_cont_scale = scale(hv009_cont, center = T, scale = T))
 
 
 
 #..........................................................................................
-#                                  SOCIOECOLOGICAL VARIABLES
-#...........................................................................................
+#                                 MALARIA-INTERVENTIONS
+#..........................................................................................
+#.............
+# LLIN for INDIVIDUAL 
+#.............
+xtabs(~haven::as_factor(dt$hml10) + haven::as_factor(dt$hml20), addNA = T)
+# there are 49 people that slept under ITN" but not LLIN and a few NAs 
+
+xtabs(~haven::as_factor(dt$hml19) + haven::as_factor(dt$hml20), addNA = T)
+# there are 122 people that slept under "ever treated net" but not LLIN
+
+xtabs(~haven::as_factor(dt$hml10) + haven::as_factor(dt$hml19), addNA = T)
+# there are 69 people that slept under "ever treated net" but not a ITN
+
+# BASED on this pattern, am just going to consider LLIN
+summary(dt$hml20) # no missing here
+
+dt <- dt %>% 
+  dplyr::mutate(hml20_fctb = haven::as_factor(hml20))
+
+#.............
+# LLIN-type of Inseciticide for INDIVIDUAL
+# Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
+#.............
+# read insecticide liftover table
+insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_insecticide_liftover.csv")
+
+dt <- dt %>%
+  dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
+  left_join(x=., y=insctcd, by="hml7") %>%
+  dplyr::mutate(insctcd_fctm = factor(ifelse(hml20_fctb == "no", "none", insctcd)),
+                insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
+  )
+
+
+# sanity checks
+xtabs(~dt$insctcd_fctm + dt$hml20_fctb, addNA=T)
+xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
+xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
+
+
+
+
+
+#########################################################################################################
+##############                             CLUSTER LEVEL VARIABLES                         ##############
+#########################################################################################################
+# ALL CLUSTER LEVEL VARIABLES WILL BE APPENDED WTIH "_clst"  
+dtsrvy <- makecd2013survey(survey = dt)
+
+#..........................................................................................
+#                                  COINFECTIONS/BIOMARKER VARIABLES
+#..........................................................................................
+Hbmiss <- dt[is.na(dt$hab56_cont),]
+table(Hbmiss$hv001) # looks well dispersed among clusters
+
+coinfxnbiomrk <- dtsrvy %>% 
+  dplyr::group_by(hv001) %>% # cluster level 
+  dplyr::summarise(
+    pfldh_cont_clst = srvyr::survey_mean(x = pfldh),
+    po18s_cont_clst = srvyr::survey_mean(x = po18s),
+    hiv03_cont_clst = srvyr::survey_mean(x = hiv03),
+    hab56_cont_clst = srvyr::survey_mean(x = hab56_cont, na.rm = T)
+  ) %>% 
+  dplyr::select(-c(dplyr::ends_with("_se")))
+
+sapply(coinfxnbiomrk, summary) # looks clean, had to remove NAs in Hb because 49 missing (spread across 39 clusters)
+
+dt <- dplyr::left_join(x = dt, y = coinfxnbiomrk)
+
+
+#..........................................................................................
+#                                ECOLOGICAL VARIABLES
+#..........................................................................................
+load("data/raw_data/ecological_imports.rda")
+source("R/00-functions_ecology.R")
+#.............
+# Seasonality
+#.............
+
+
+
+#.............
+# Wetness Index
+#.............
+
+
+#.............
+# Temperature & Precipitation
+#.............
+nrststat <- findneareststations(input = dt, urbdist = 50, rurdist = 250, latestdate = 20141231)
+gsod <- pull_station(stations = nrststat$STNID[!duplicated(nrststat$STNID)], 
+             years = 2013:2014)
+tempprecip <- dplyr::left_join(x = nrststat, y = gsod)
+
+tempprecip <- tempprecip %>% 
+  dplyr::mutate(YEARMODA = lubridate::ymd(YEARMODA)) %>% 
+  dplyr::group_by(hv001, YEARMODA) %>% 
+  dplyr::summarise(meanDailyTemp = mean(TEMP),
+                   meanDailyPrecip = mean(PRCP))
+
+
+
+#.............
+# Cluster-Level Altitude
+#.............
+dt <- dt %>% 
+  dplyr::mutate(alt_dem_cont_clust = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
+                alt_dem_fctb_clust = factor(
+                  ifelse(alt_dem_cont_clust > median(alt_dem_cont_clust), "high", "low"),
+                  levels = c("low", "high")),
+                alt_dem_clust_log = log(alt_dem_cont_clust + tol),
+                alt_dem_clust_log_scale = scale(alt_dem_clust_log, center = T, scale = T)
+  )
+
+#.............
+# Ape Habitat Overlap
+#.............
+drc_ape_simplified <- rgeos::gSimplify(
+  sf::as_Spatial(sf::st_union(drc_ape)), 
+  tol = 1e-3)
+
+dt <- dt %>% 
+  dplyr::mutate(ape_habitat_fctb = factor(
+    ifelse(rgeos::gContains(spgeom1 = drc_ape_simplified,
+                            spgeom2 = sf::as_Spatial(.),
+                            byid = T),
+           1, 0),
+    levels = c(0,1), labels = c("NoOverlap", "Overlap"))
+  )
+
+
+
+
+
+#..........................................................................................
+#                           DEMOGRAPHIC/BEHAVIORAL VARIABLES
+#..........................................................................................
 #..............................
 #### A note on urbanicity ####
 #..............................
@@ -218,23 +610,6 @@ hist(dt$hab56_cont_scale)
 # dt$hv025_fctb = forcats::fct_relevel(dt$hv025_fctb, "rural")
 # # check
 # xtabs(~hv025 + hv025_fctb, data = dt, addNA = T)
-# 
-# 
-# #.............
-# # cluster type of town (urbanicity)
-# #.............
-# levels(factor(haven::as_factor(dt$hv026))) 
-# dt$hv026_fctm <- haven::as_factor(dt$hv026)
-# # check
-# xtabs(~hv026 + hv026_fctm, data = dt, addNA = T) # no missing so can drop
-# 
-# dt <- dt %>% dplyr::mutate(
-#   hv026_fctm = forcats::fct_drop(haven::as_factor(dt$hv026_fctm)),
-#   hv026_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv026_fctm, .x = hv026_fctm, .fun = length)))
-# 
-# # hv025 and hv026 are perfectly collinear (based on each other)
-# xtabs(~hv025_fctb + hv026_fctm, data = dt, addNA = T)
-
 
 
 #.............
@@ -249,7 +624,7 @@ median( dt$built_population_2014[dt$built_population_2014 < 0.05] )
 hist( dt$built_population_2014[dt$built_population_2014 < 0.05] )
 # DECISION: Will use a logit transformation to get back to the real-line (and scale)
 # large number of 0s
-dt$built_population_2014_scale <- scale(logit(dt$built_population_2014, tol = 1e-3), center = T, scale = T) # use logit to transform to real line
+dt$built_population_2014_scale <- scale(logit(dt$built_population_2014, tol = tol), center = T, scale = T) # use logit to transform to real line
 hist(dt$built_population_2014_scale)
 summary(dt$built_population_2014_scale); sd(dt$built_population_2014_scale) # despite skew, scale seems to work
 
@@ -288,9 +663,32 @@ summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_sca
 #.............
 # Accessibility from Weiss
 #.............
-# From the MAP Weiss Raster
+# From the MAP Project
+# download raster of travel time to cities (Weiss et al 2018) for study area & visualise this
+bb <- osmdata::getbb("Democratic Republic of the Congo", 
+                     featuretype = "country")
+
+TravelToCities <- malariaAtlas::getRaster(surface = "A global map of travel time to cities to assess inequalities in accessibility in 2015",
+                                          extent = bb)
+TravelToCities <- log(TravelToCities+tol) # MAP project decided 0.1 for offest. going to keep it
+
+TravelToCities <- raster::projectRaster(from = TravelToCities, to = TravelToCities,
+                      crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+  
+ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>% 
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+
+ge <- ge %>% 
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2)) # after DHS GC manual
 
 
+travel_mean <- raster::extract(TravelToCities, 
+                               ge, 
+                               buffer = ge$buffer,
+                               fun = mean,
+                               sp = F) 
 
 #.............
 # PCA
@@ -338,314 +736,11 @@ scatterplot3d::scatterplot3d(x = dt$built_population_2014_scale,
                              color = factor(dt$urbanpc1))
 
 
-#.............
-# sex
-#.............
-levels(factor(haven::as_factor(dt$hv104))) # no missing m/f but still missing factor from haven
-sum(is.na(dt$hv104))
-dt <- dt %>% 
-  dplyr::mutate(hv104_fctb = haven::as_factor(hv104),
-                hv104_fctb = if_else(hv104_fctb != "missing", hv104_fctb, factor(NA)),
-                hv104_fctb =  forcats::fct_drop(hv104_fctb), 
-                hv104_fctb = forcats::fct_rev(forcats::fct_reorder(.f = hv104_fctb, .x = hv104_fctb, .fun = length))
-  ) # female to default (b/c 0 and larger SE)
 
-#.............
-# pregnant
-#.............
-# levels(factor(haven::as_factor(dt$ha54)))
-# # preglabels <- names( attributes(dt$ha54)$labels )
-# # not the ha54 covariate only has no/don't know or yes, so no extra missing -- but note that no/don't know are collapsed 
-# 
-# dt <- dt %>% 
-#   dplyr::mutate(
-#     ha54_fctb = haven::as_factor(dt$ha54),
-#     ha54_fctb = if_else(ha54_fctb != "missing", ha54_fctb, factor(NA)),
-#     ha54_fctb =  forcats::fct_drop(ha54_fctb), 
-#     ha54_fctb = forcats::fct_relevel(ha54_fctb, "no/don't know")
-#   ) # no is obvious default based on n
-# 
 
-#.............
-# age
-#.............
-hist(dt$hv105)
-dt <- dt %>% 
-  dplyr::mutate(hv105_cont = ifelse(hv105 %in% c("97", "98", "99"), NA, hv105),
-                hv105_cont_scale = scale(hv105_cont, center = T, scale = T))
 
 
 
-#.............
-# main floor, wall, roof
-#.............
-# recode to rudimentary or non-rudimentary like they did here 
-# https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
-# check to see how collinear wealth index and housing construction are since
-# housing construction is included in the wealth index
-
-
-# floor
-floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_floor_liftover.csv")
-dt <- dt %>% 
-  dplyr::mutate(hv213 = haven::as_factor(hv213), 
-                hv213 =  forcats::fct_drop(hv213))
-dt <- dt %>%
-  left_join(x=., y=floor, by="hv213") %>% 
-  dplyr::mutate(hv213_fctb = factor(floortype),
-                hv213_fctb = forcats::fct_relevel(hv213_fctb, "non-rudimentary")
-  )
-xtabs(~dt$hv213 + dt$hv213_fctb, addNA = T)
-
-
-# wall
-wall <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_wall_liftover.csv")
-dt <- dt %>% 
-  dplyr::mutate(hv214 = haven::as_factor(hv214), 
-                hv214 =  forcats::fct_drop(hv214))
-dt <- dt %>%
-  left_join(x=., y=wall, by="hv214") %>% 
-  dplyr::mutate(hv214_fctb = factor(walltype),
-                hv214_fctb = forcats::fct_relevel(hv214_fctb, "non-rudimentary")
-  )
-
-xtabs(~dt$hv214 + dt$hv214_fctb, addNA = T)
-
-
-
-# roof
-roof <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_roof_liftover.csv")
-dt <- dt %>% 
-  dplyr::mutate(hv215 = haven::as_factor(hv215), 
-                hv215 =  forcats::fct_drop(hv215))
-dt <- dt %>%
-  left_join(x=., y=roof, by="hv215") %>% 
-  dplyr::mutate(hv215_fctb = factor(rooftype),
-                hv215_fctb = forcats::fct_relevel(hv215_fctb, "non-rudimentary")
-  )
-
-xtabs(~dt$hv215 + dt$hv215_fctb, addNA = T)
-
-
-#.............
-# wealth index 
-#.............
-levels(factor(haven::as_factor(dt$hv270))) 
-sum(is.na(dt$hv270)) # no missing wealth
-dt <- dt %>% 
-  dplyr::mutate(hv270_fctm = haven::as_factor(hv270),
-                hv270_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv270_fctm, .x = hv270_fctm, .fun = length)), # poorest is largest
-                hv270_fctb = factor(if_else(hv270_fctm %in% c("poorest", "poorer", "middle"), 
-                                     "poor_b", "rich_b"), levels = c("poor_b", "rich_b"))
-                )
-
-
-
-#.............
-# education grade (categorical)
-#.............
-# levels(factor(haven::as_factor(dt$hv106)))
-# dt <- dt %>% 
-#   dplyr::mutate(hv106_fctm = haven::as_factor(hv106),
-#                 hv106_fctm = if_else(!hv106_fctm %in% c("don't know", "missing"), hv106_fctm, factor(NA)),
-#                 hv106_fctm =  forcats::fct_drop(hv106_fctm) # ordinal so don't relevel based on size
-#   )
-# 
-# 
-# #.............
-# # education grade 
-# #.............
-# levels(factor(haven::as_factor(dt$hv106)))
-
-#.............
-# years of education (continuous)
-#.............
-hist(dt$hv108)
-dt <- dt %>% 
-  dplyr::mutate(hv108_cont = ifelse(hv108 %in% c("97", "98", "99"), NA, hv108),
-                hv108_cont_scale = scale(hv108_cont, center = T, scale = T))
-
-
-#.............
-# ethnicity
-#.............
-# question is whether you are congolese
-levels(factor(haven::as_factor(dt$s113a))) 
-levels(factor(haven::as_factor(dt$sm113a))) 
-
-table(factor(haven::as_factor(dt$s113a))) 
-table(factor(haven::as_factor(dt$sm113a))) 
-
-
-dt <- dt %>% 
-  dplyr::mutate(hv113a = ifelse(haven::as_factor(hv104) == "female", s113a, sm113a),
-                hv113a_fctb = factor(hv113a, levels = c(0,1), labels = c("no", "yes")))
-
-
-# question of ethnicity, use liftover
-levels(factor(haven::as_factor(dt$s114))) 
-levels(factor(haven::as_factor(dt$sm114))) 
-
-table(factor(haven::as_factor(dt$s114))) 
-table(factor(haven::as_factor(dt$sm114))) 
-
-
-dt <- dt %>% 
-  dplyr::mutate(hv114a = ifelse(haven::as_factor(hv104) == "female", s114, sm114))
-
-ethnic <-  readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_ethnic_liftover.csv")
-
-dt <- dt %>%
-  left_join(x=., y=ethnic, by="hv114a") %>% 
-  dplyr::mutate(hv114a_fctm = factor(ethnicgroup),
-                hv114a_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv114a_fctm, .x = hv114a_fctm, .fun = length)))
-
-xtabs(~dt$hv114a + dt$hv114a_fctm, addNA = T)
-
-
-
-#------------------------------------------
-# Owns livestock, herds, or farm animals
-#------------------------------------------
-summary(dt$hv246)
-table(dt$hv246) # 9 is missing
-
-dt <- dt %>% 
-  dplyr::mutate(
-    hv246_fctb = haven::as_factor(dt$hv246),
-    hv246_fctb = if_else(hv246_fctb != "missing", hv246_fctb, factor(NA)),
-    hv246_fctb =  forcats::fct_drop(hv246_fctb), 
-    hv246_fctb = forcats::fct_relevel(hv246_fctb, "no")
-  ) 
-xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
-
-#------------------------------------------
-# Occupation
-#------------------------------------------
-# Going to dichotomize as suspected outdoor versus indoor
-# Will code "others" as NA because cannot discern, only 2 obs
-
-dt$hv717 <- ifelse(haven::as_factor(dt$hv104) == "female", dt$v717, dt$mv717)
-table(dt$v717)
-table(dt$mv717)
-
-occupation <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_occupation_liftover.csv")
-occupation$hv717 <- factor(occupation$hv717)
-
-dt <- dt %>% 
-  dplyr::mutate(hv717 = haven::as_factor(hv717), 
-                hv717 =  forcats::fct_drop(hv717))
-dt <- dt %>%
-  left_join(x=., y=occupation, by="hv717") %>% 
-  dplyr::mutate(hv717_fctb = factor(jobconditions),
-                hv717_fctb = forcats::fct_relevel(hv717_fctb, "indoors"))
-
-xtabs(~ dt$hv717 + dt$hv717_fctb)
-
-
-
-#------------------------------------------
-# children under 5 number
-#------------------------------------------
-summary(dt$hv014) # looks clean
-dt <- dt %>% 
-  dplyr::mutate(hv014_cont = hv014,
-                hv014_cont_scale = scale(hv014_cont, center = T, scale = T))
-
-#------------------------------------------
-# total household members
-#------------------------------------------
-summary(dt$hv009) # looks clean
-dt <- dt %>% 
-  dplyr::mutate(hv009_cont = hv009,
-                hv009_cont_scale = scale(hv009_cont, center = T, scale = T))
-
-
-
-#..........................................................................................
-#                                 MALARIA-INTERVENTIONS
-#..........................................................................................
-#.............
-# LLIN for INDIVIDUAL 
-#.............
-xtabs(~haven::as_factor(dt$hml10) + haven::as_factor(dt$hml20), addNA = T)
-# there are 49 people that slept under ITN" but not LLIN and a few NAs 
-
-xtabs(~haven::as_factor(dt$hml19) + haven::as_factor(dt$hml20), addNA = T)
-# there are 122 people that slept under "ever treated net" but not LLIN
-
-xtabs(~haven::as_factor(dt$hml10) + haven::as_factor(dt$hml19), addNA = T)
-# there are 69 people that slept under "ever treated net" but not a ITN
-
-# BASED on this pattern, am just going to consider LLIN
-
-dt <- dt %>% 
-  dplyr::mutate(hml20_fctb = haven::as_factor(hml20)) # no missing here surprisingly
-
-#.............
-# LLIN-type of Inseciticide for INDIVIDUAL 
-# Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
-#.............
-# read insecticide liftover table
-insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_insecticide_liftover.csv")
-
-dt <- dt %>% 
-  dplyr::mutate(hml7 = haven::as_factor(hml7)) %>% 
-  left_join(x=., y=insctcd, by="hml7") %>% 
-  dplyr::mutate(insctcd_fctm = factor(ifelse(hml20_fctb == "no", "none", insctcd)),
-                insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
-  )
-
-
-# sanity checks
-xtabs(~dt$insctcd_fctm + dt$hml20_fctb, addNA=T)
-xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
-xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
-
-
-
-
-
-
-
-#..........................................................................................
-#                                PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
-#..........................................................................................
-
-#.............
-# Cluster-Level Altitude
-#.............
-
-dt <- dt %>% 
-  dplyr::mutate(alt_dem_cont_clust = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
-                alt_dem_fctb_clust = factor(
-                  ifelse(alt_dem_cont_clust > median(alt_dem_cont_clust), "high", "low"),
-                  levels = c("low", "high")),
-                alt_dem_clust_log = log(alt_dem_cont_clust),
-                alt_dem_clust_log_scale = scale(alt_dem_clust_log, center = T, scale = T)
-  )
-
-#.............
-# Temperature 
-#.............
-# dt <- dt %>% 
-#   dplyr::mutate(mean_temperature_2015_cont = ifelse(mean_temperature_2015 < 0, NA, mean_temperature_2015)) # these are clearly errors but aren't labelled as such unless separate map file?
-# 
-# #.............
-# # Rainfall
-# #.............
-# dt <- dt %>% 
-#   dplyr::mutate(rainfall_2015_cont = ifelse(rainfall_2015 < 0, NA, rainfall_2015)) # these are clearly errors but aren't labelled as such unless separate map file?
-#   # however these got knocked out by the missing cluster gps coord 
-# 
-
-
-
-
-
-#..........................................................................................
-#                               CLUSTER LEVEL VARIABLES
-#..........................................................................................
 # aggregate these by cluster and then merge in with GE/hv001
 
 #.............
@@ -657,6 +752,50 @@ dt <- dt %>%
 # Antimalarial Cluster Usage
 #.............
 # chloroquine
+
+
+
+#.............
+# Cluster Level Kid RDT/Micro
+#.............
+
+kds <- pr %>% 
+  filter(hml16a < 60) %>% 
+  left_join(x=., y=ge) %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
+  dplyr::mutate(hv005_wi = hv005/1e6,
+                hml32_fctb = haven::as_factor(hml32),
+                hml32_fctb = if_else(hml32_fctb %in% c("positive", "negative"), 
+                                     hml32_fctb, factor(NA)),
+                hml32_fctb =  forcats::fct_drop(hml32_fctb),
+                hml32_numb = ifelse(hml32_fctb == "positive", 1, ifelse(hml32_fctb == "negative", 0, NA)),
+                
+                hml35_fctb = haven::as_factor(hml35),
+                hml35_fctb = if_else(hml35_fctb %in% c("positive", "negative"), 
+                                     hml35_fctb, factor(NA)),
+                hml35_fctb =  forcats::fct_drop(hml35_fctb),
+                hml35_numb = ifelse(hml35_fctb == "positive", 1, ifelse(hml35_fctb == "negative", 0, NA))
+  )
+
+options(survey.lonely.psu="certainty")
+kdsrvy <- kds %>% srvyr::as_survey_design(ids = hv001, 
+                                          strata = hv023, weights = hv005_wi)
+
+rdtmicro <- kdsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(
+    RDTprev = srvyr::survey_mean(hml35_numb, na.rm = T, vartype = c("se", "ci"), level = 0.95),
+    microprev = srvyr::survey_mean(hml32_numb, na.rm = T, vartype = c("se", "ci"), level = 0.95)
+  ) %>% 
+  mutate_if(is.numeric, round, 2)
+
+
+
+
+
+
 
 
 
