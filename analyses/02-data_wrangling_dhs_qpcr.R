@@ -14,6 +14,7 @@ library(malariaAtlas)
 library(RSAGA)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
+set.seed(42)
 
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
@@ -90,8 +91,7 @@ dt <- dt %>%
 # weights
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hv005_wi = hv005/1e6,
-                hiv05_wi = hiv05/1e6
+  dplyr::mutate(hv005_wi = hv005/1e6
   )
 
 #.............
@@ -212,8 +212,10 @@ dt <- dt %>%
       geom_point(aes(x=hab56_cont, y=hb56)) + ylim(c(0,25)) + xlim(c(0,25))
     # note, 8547 "rows" missing which corresponds to the 8523 females + 24 NAs coded in the dataset
 hist(dt$hab56_cont_scale)
-# final note on hemoglobin: a Hb > 18 is pretty high Likely due to adjustment by alt and smoking (overadj).
+# final note on hemoglobin: a Hb > 18 is pretty high Likely due to 
+# adjustment by alt and smoking (overadj).
 # Few observations, going to assume negligible
+# 49 missing. 
 sum(dt$hab56_cont > 18, na.rm = T)
 xtabs(~dt$hab56_cont, addNA = T)
 
@@ -234,26 +236,11 @@ levels(factor(haven::as_factor(dt$hv104))) # no missing m/f but still missing fa
 sum(is.na(dt$hv104))
 dt <- dt %>% 
   dplyr::mutate(hv104_fctb = haven::as_factor(hv104),
-                hv104_fctb = if_else(hv104_fctb != "missing", hv104_fctb, factor(NA)),
+                hv104_fctb = forcats::fct_recode(hv104_fctb, NULL = "missing"),
                 hv104_fctb =  forcats::fct_drop(hv104_fctb), 
                 hv104_fctb = forcats::fct_rev(forcats::fct_reorder(.f = hv104_fctb, .x = hv104_fctb, .fun = length))
   ) # female to default (b/c 0 and larger SE)
 
-#.............
-# pregnant
-#.............
-# levels(factor(haven::as_factor(dt$ha54)))
-# # preglabels <- names( attributes(dt$ha54)$labels )
-# # not the ha54 covariate only has no/don't know or yes, so no extra missing -- but note that no/don't know are collapsed 
-# 
-# dt <- dt %>% 
-#   dplyr::mutate(
-#     ha54_fctb = haven::as_factor(dt$ha54),
-#     ha54_fctb = if_else(ha54_fctb != "missing", ha54_fctb, factor(NA)),
-#     ha54_fctb =  forcats::fct_drop(ha54_fctb), 
-#     ha54_fctb = forcats::fct_relevel(ha54_fctb, "no/don't know")
-#   ) # no is obvious default based on n
-# 
 
 #.............
 # age
@@ -272,9 +259,8 @@ plot(dt$hb1, dt$hab1_cont)
 # main floor, wall, roof
 #.............
 # recode to rudimentary or non-rudimentary per previous manuscript (PMID: 28222094)
+# then recode house to modern or traditional (final covar)
 # https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
-# From here going to recode to one variable -- whether house as a whole is 
-# rudimentary or non-rudimentary
 
 # floor
 floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_floor_liftover.csv")
@@ -324,7 +310,7 @@ xtabs(~wallfloormiss$hv213 + wallfloormiss$hv214, addNA = T)
 dt$hv21345_fctb <- apply(dt[,c("hv213_liftover", "hv214_liftover", "hv215_liftover")], 1,
                       function(x){
                         ret <- sum(x == "rudimentary", na.rm = T)/sum(!is.na(x)) # to account for 6 missing in floor and 5 missing in wall
-                        ret <- factor( ifelse(ret >= 0.5, "rudimentary", "non-rudimentary"), levels = c("rudimentary", "non-rudimentary") ) # rudimentary largest
+                        ret <- factor( ifelse(ret >= 1, "modern", "traditional"), levels = c("rudimentary", "non-rudimentary") ) # rudimentary largest
                       })
 xtabs(~dt$hv21345_fctb)
 
@@ -332,14 +318,10 @@ xtabs(~dt$hv21345_fctb)
 #.............
 # wealth index 
 #.............
-levels(factor(haven::as_factor(dt$hv270))) 
-sum(is.na(dt$hv270)) # no missing wealth
-dt <- dt %>% 
-  dplyr::mutate(hv270_fctm = haven::as_factor(hv270),
-                hv270_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv270_fctm, .x = hv270_fctm, .fun = length)), # poorest is largest
-                hv270_fctb = factor(if_else(hv270_fctm %in% c("poorest", "poorer", "middle"), 
-                                     "poor_b", "rich_b"), levels = c("poor_b", "rich_b"))
-                )
+# As desrcibed in this manuscript (PMID: 28222094)
+# housing materials are  taken into consideration for wealth
+# need to recode the wealth variable to avoid controlling for part of our
+# effect when considering the covar housing materials (as they did above)
 
 
 
@@ -406,7 +388,7 @@ table(dt$hv246) # 9 is missing
 dt <- dt %>% 
   dplyr::mutate(
     hv246_fctb = haven::as_factor(dt$hv246),
-    hv246_fctb = if_else(hv246_fctb != "missing", hv246_fctb, factor(NA)),
+    hv246_fctb = forcats::fct_recode(hv246_fctb, NULL = "missing"),
     hv246_fctb =  forcats::fct_drop(hv246_fctb), 
     hv246_fctb = forcats::fct_relevel(hv246_fctb, "no")
   ) 

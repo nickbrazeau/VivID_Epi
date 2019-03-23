@@ -19,12 +19,7 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 #---------------------------------------------------------------------------------
 #spatial from GADM -- these are polygon files, doing this is legacy as raster does this nicely...but already fixed naming issue here 
 if(!dir.exists(paste0(getwd(), "/data/map_bases/gadm/"))){dir.create(paste0(getwd(), "/data/map_bases/gadm/"), recursive = T)}
-drclvl0 <- httr::GET(url = "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_COD_0_sf.rds", httr::write_disk(path="~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm_drclvl0.rds", overwrite = T))
-drclvl1 <- httr::GET(url = "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_COD_1_sf.rds", httr::write_disk(path="~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm_drclvl1.rds", overwrite = T))
-drclvl2 <- httr::GET(url = "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_COD_2_sf.rds", httr::write_disk(path="~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm_drclvl2.rds", overwrite = T))
-drclvl3 <- httr::GET(url = "https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_COD_3_sf.rds", httr::write_disk(path="~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm_drclvl3.rds", overwrite = T))
-
-DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm_drclvl1.rds")
+DRCprov <- sf::st_as_sf( raster::getData(name = "GADM", country = "CD", level = 1, path = "data/map_bases/gadm/") )
 colnames(DRCprov) <- tolower(colnames(DRCprov))
 colnames(DRCprov)[4] <- "adm1name" # to match the DHS province names
 # need to strip accent marks also to match the DHS province names
