@@ -610,7 +610,7 @@ for(i in 1:nrow(wthrnd)){
 wthrnd <- wthrnd %>% 
   dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag", "precip_lag_cont_clst", "temp_lag_cont_clst")) %>% 
   dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-
+sf::st_geometry(wthrnd) <- NULL
 dt <- dt %>% 
   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
   dplyr::mutate(precip_lag_cont_log_clst = log(precip_lag_cont_clst + tol),

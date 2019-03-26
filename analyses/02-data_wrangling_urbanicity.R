@@ -1,6 +1,7 @@
 # IMPORTS and dependencies
 library(tidyverse)
 library(sf)
+library(plotly)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 

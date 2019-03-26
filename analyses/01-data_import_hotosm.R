@@ -31,7 +31,12 @@ wtrply <- sf::read_sf("data/raw_data/hotosm_data/hotosm_cod_waterways_polygons_s
 wtr <-sf::st_combine(rbind(wtrlns, wtrply))
 wtr <-  sf::st_union( wtr )
 
-
+wtrdist <- sf::st_distance(x = ge,
+                            y = wtr)
+wtrdist_out <- data.frame(
+  hv001 = ge$dhsclust,
+  hlthdist_cont_clst = apply(wtrdist, 1, min)
+)
 #----------------------------------------------------------------------------------------------------
 # Health Sites
 #----------------------------------------------------------------------------------------------------
@@ -50,5 +55,5 @@ htlhdist_out <- data.frame(
 #----------------------------------------------------------------------------------------------------
 # write out
 #----------------------------------------------------------------------------------------------------
-saveRDS(object = wtrdist, file = "data/derived_data/hotosm_waterways_dist.rds")
+saveRDS(object = wtrdist_out, file = "data/derived_data/hotosm_waterways_dist.rds")
 saveRDS(object = htlhdist_out, file = "data/derived_data/hotosm_healthsites_dist.rds")
