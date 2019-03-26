@@ -58,7 +58,7 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
 #.......
 # greater circler
 #.......
-gc <- geosphere::distm(x = clstrs$data[[1]][,c("longnum", "latnum")], fun = distGeo)
+gc <- geosphere::distm(x = clstrs$data[[1]][,c("longnum", "latnum")], fun = distGeo) # JUST USE st_distance -- same return as geosphre
 gc.inv <- 1/gc
 diag(gc.inv) <- 0
 

@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to import data from open street map 
-# primarily interested in road and water networks
+# primarily interested health sites and waterways
 #----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)
@@ -22,8 +22,8 @@ api_list <- c('http://overpass-api.de/api/interpreter',
 
 
 # https://github.com/ropensci/osmdata
-bb <- getbb("Democratic Republic of the Congo", featuretype = "country")
-polybb <- getbb("Democratic Republic of the Congo", featuretype = "country",  format_out = 'polygon')
+bb <- osmdata::getbb("Democratic Republic of the Congo", featuretype = "country")
+polybb <- osmdata::getbb("Democratic Republic of the Congo", featuretype = "country",  format_out = 'polygon')
 
 # https://wiki.openstreetmap.org/wiki/Map_Features
 
@@ -58,9 +58,9 @@ polybb <- getbb("Democratic Republic of the Congo", featuretype = "country",  fo
 #   trim_osmdata(polybb) 
 # tertiaryroadsosm <- tertiaryroadsosm$osm_lines
 
-roadnet <- sf::st_union(trunkroadsosm, primaryroadsosm) %>% 
-  sf::st_union(., secondaryroadsosm) %>% 
-  rgeos::gSimplify(., tol = tol)
+# roadnet <- sf::st_union(trunkroadsosm, primaryroadsosm) %>% 
+#   sf::st_union(., secondaryroadsosm) %>% 
+#   rgeos::gSimplify(., tol = tol)
 
 #---------------------------------------------------------------------------------
 # Hospitals & Clinics & Practices
@@ -74,7 +74,8 @@ hospitalosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   trim_osmdata(polybb)
 hospitalosm <- hospitalosm$osm_points %>% 
   dplyr::select(c("osm_id", "geometry")) %>% 
-  dplyr::mutate(level = "hosp")
+  dplyr::mutate(level = "hosp") %>% 
+  sf::st_as_sf(.)
 
 clinosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   add_osm_feature(key = "amenity", value = "clinic") %>% # A medium-sized medical facility or health centre.
@@ -82,7 +83,8 @@ clinosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   trim_osmdata(polybb)
 clinosm <- clinosm$osm_points %>% 
   dplyr::select(c("osm_id", "geometry")) %>% 
-  dplyr::mutate(level = "clin")
+  dplyr::mutate(level = "clin") %>% 
+  sf::st_as_sf(.)
 
 
 docosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
@@ -91,53 +93,60 @@ docosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
   trim_osmdata(polybb)
 docosm <- docosm$osm_points %>% 
   dplyr::select(c("osm_id", "geometry")) %>% 
-  dplyr::mutate(level = "dctr")
+  dplyr::mutate(level = "dctr") %>% 
+  sf::st_as_sf(.)
 
-hlthoffc <- sf::st_union(hospitalosm, clinosm) %>% 
-  sf::st_union(., docosm)
+
+hlthoffc <-rbind(hospitalosm, clinosm, docosm) 
 
 #---------------------------------------------------------------------------------
-# Bodies of Water 
+# Bodies of Water
 #---------------------------------------------------------------------------------
-api_to_use <- sample(1:length(api_list), 1)
-set_overpass_url(api_list[api_to_use]) 
+# api_to_use <- sample(1:length(api_list), 1)
+# set_overpass_url(api_list[api_to_use])
+# 
+# riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+#   add_osm_feature(key = "waterway", value = "river") %>%
+#   osmdata::osmdata_sf() %>%
+#   trim_osmdata(polybb, exclude = F)
+# riverout <- rbind(riverosm$osm_lines, riverosm$osm_polygons, 
+#                   riverosm$osm_multilines, 
+#                   riverosm$osm_multipolygons)
+# 
+# 
+# streamosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+#   add_osm_feature(key = "waterway", value = "stream") %>% # The linear flow of a river, in flow direction.
+#   trim_osmdata(polybb) %>%
+#   osmdata::osmdata_sf()
+# streamout <-rbdin(streamosm$osm_lines, streamosm$osm_polygons, 
+#                   streamosm$osm_multilines, 
+#                   streamosm$osm_multipolygons)
+# 
+# 
+# lakeosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+#   add_osm_feature(key = "water", value = "lake") %>% # Any body of water, from natural such as a lake or pond to artificial like moat or canal
+#   osmdata::osmdata_sf() %>%
+#   trim_osmdata(polybb, exclude = F)
+# lakeout <- rbind(lakeosm$osm_lines, 
+#                  lakeosm$osm_polygons,
+#                  lakeosm$osm_multilines,
+#                  lakeosm$osm_multipolygons)
+# 
+# 
+# 
+# wtr <- sf::st_union(riverosm, streamosm) %>%
+#   sf::st_union(., lakeosm) %>%
+#   rgeos::gSimplify(., tol = tol)
 
-riverosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "water", value = "river") %>% 
-  osmdata::osmdata_sf() %>%
-  trim_osmdata(polybb, exclude = F)
-riverout <- sf::st_union(x = riverosm$osm_lines, y = riverosm$osm_polygons) %>% 
-  sf::st_union(x = ., y = riverosm$osm_multilines) %>% 
-  sf::st_union(x = ., y = riverosm$osm_multipolygons)
 
-
-streamosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "water", value = "stream") %>% # The linear flow of a river, in flow direction.
-  trim_osmdata(polybb) %>%
-  osmdata::osmdata_sf()
-streamout <- sf::st_union(x= streamosm$osm_lines, y = streamosm$osm_polygons) %>% 
-  sf::st_union(x = ., y = streamosm$osm_multilines) %>% 
-  sf::st_union(x = ., y = streamosm$osm_multipolygons)
-
-  
-lakeosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "water", value = "lake") %>% # Any body of water, from natural such as a lake or pond to artificial like moat or canal
-  osmdata::osmdata_sf() %>%
-  trim_osmdata(polybb, exclude = F)
-lakeout <- sf::st_union(x= lakeosm$osm_lines, y = lakeosm$osm_polygons) %>% 
-  sf::st_union(x = ., y = lakeosm$osm_multilines) %>% 
-  sf::st_union(x = ., y = lakeosm$osm_multipolygons)
-
-
-
-wtr <- sf::st_union(riverosm, streamosm) %>% 
-  sf::st_union(., lakeosm) %>% 
-  rgeos::gSimplify(., tol = tol)
+#---------------------------------------------------------------------------------
+# Bodies of Water
+#---------------------------------------------------------------------------------
 
 
 # saveRDS(roadnet, file = "data/derived_data/osm_roads.rds")
-saveRDS(hlthoffc, file = "data/derived_data/osm_healthoffices.rds")
-saveRDS(majrivers, file = "data/derived_data/osm_majrivers.rds")
-saveRDS(wtr, file = "data/derived_data/osm_water.rds")
-
+saveRDS(hlthoffc, file = "data/raw_data/osm_data/osm_healthoffices.rds")
+# saveRDS(majrivers, file = "data/derived_data/osm_majrivers.rds")
+# saveRDS(wtr, file = "data/derived_data/osm_water.rds")
+# manually downloaded water for now
 

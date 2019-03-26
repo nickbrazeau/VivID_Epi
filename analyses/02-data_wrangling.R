@@ -653,10 +653,6 @@ xtabs(~dt$ape_habitat_fctb_clst)
 #.............
 # Distance to Water Source
 #.............
-# TODO 
-# Use IDW for raster distance
-# clsts <- dt[!duplicated(dt$hv001), c("hv001", "geometry", "urban_rura")]
-# wtrdist <- geosphere::dist2Line(p = clsts, line = wtr, distfun = distGeo)
 
 
 #..........................................................................................
@@ -680,8 +676,6 @@ xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025)) # looks OK. Some r
 #.............
 # Distance to Health Site
 #.............
-# TODO 
-# htlhdist <- geosphere::distm(x = clsts, y=hlthoffc, fun = distGeo)
 
 
 #.............
