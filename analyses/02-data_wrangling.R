@@ -9,8 +9,6 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-devtools::install_github("malaria-atlas-project/malariaAtlas")
-library(malariaAtlas)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 set.seed(42)

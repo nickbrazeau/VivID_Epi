@@ -1,5 +1,6 @@
 # IMPORTS and dependencies
 library(tidyverse)
+library(sf)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 
@@ -8,6 +9,7 @@ tol <- 1e-3
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")  %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum))
+sf::st_geometry(dt) <- NULL
 #.............
 # weights
 #.............
@@ -95,41 +97,17 @@ summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_sca
 #.............
 # Accessibility from Weiss
 #.............
-# From the MAP Project
-# download raster of travel time to cities (Weiss et al 2018) for study area & visualise this
-bb <- osmdata::getbb("Democratic Republic of the Congo", 
-                     featuretype = "country")
-
-TravelToCities <- malariaAtlas::getRaster(surface = "A global map of travel time to cities to assess inequalities in accessibility in 2015",
-                                          extent = bb)
-TravelToCities <- raster::projectRaster(from = TravelToCities, to = TravelToCities,
-                                        crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
-
-
-clstsrch <- dt %>% 
-  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2)) %>%  # after DHS GC manual
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(buffer = mean(buffer))
-
-
-clstsrch$travel_mean <- raster::extract(x = TravelToCities, 
-                                        y = sf::as_Spatial( clstsrch$geometry ), 
-                                        buffer = clstsrch$buffer,
-                                        fun = mean,
-                                        sp = F) 
-
-clstsrch <- clstsrch %>% 
-  dplyr::select(-c("geometry")) %>% 
-  as.data.frame(.) # for easier merge below
-
+# see explanation in the DHS GC manual 
+# NOTE, this is from 2015
+summary(dt$travel_times_2015)
+hist(dt$travel_times_2015)
 dt <- dt %>% 
-  dplyr::left_join(x = dt, y = clstsrch, by = "hv001") %>% 
-  dplyr::mutate(travel_mean_scale = scale(log(travel_mean + tol), center = T, scale = T))
+  dplyr::mutate(travel_times_2015_scale = scale(log(travel_times_2015 + tol), center = T, scale = T))
 
-summary(dt$travel_mean)
-hist(dt$travel_mean) # many, many 0s 
-hist(dt$travel_mean_scale) # standardization doesn't look as good, but should capture urban v. rural well
-summary(dt$travel_mean_scale); sd(dt$travel_mean_scale) 
+summary(dt$travel_times_2015_scale)
+hist(dt$travel_times_2015_scale) # many, many 0s 
+hist(dt$travel_times_2015_scale) # standardization doesn't look as good, but should capture urban v. rural well
+summary(dt$travel_times_2015_scale); sd(dt$travel_times_2015_scale) 
 
 
 
@@ -141,11 +119,10 @@ summary(dt$travel_mean_scale); sd(dt$travel_mean_scale)
 # Otherwise inflate our degree of certainty in our PCA
 urbanmat <- dt[!duplicated(dt$hv001), 
                c("hv001", "hv025", "built_population_2014_scale", "nightlights_composite_scale",
-                 "all_population_count_2015_scale", "travel_mean_scale")] 
-sf::st_geometry(urbanmat) <- NULL
+                 "all_population_count_2015_scale", "travel_times_2015_scale")] 
 
 urbanmatpca <- prcomp(urbanmat[, c("built_population_2014_scale", "nightlights_composite_scale",
-                                   "all_population_count_2015_scale", "travel_mean_scale")])
+                                   "all_population_count_2015_scale", "travel_times_2015_scale")])
 
 # compute variance explained and Zi values 
 urbanmatpca$var <- (urbanmatpca$sdev ^ 2) / sum(urbanmatpca$sdev ^ 2) * 100
