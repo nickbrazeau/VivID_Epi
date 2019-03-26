@@ -30,26 +30,26 @@ polybb <- getbb("Democratic Republic of the Congo", featuretype = "country",  fo
 #---------------------------------------------------------------------------------
 # Road Network
 #---------------------------------------------------------------------------------
-api_to_use <- sample(1:length(api_list), 1)
-set_overpass_url(api_list[api_to_use]) 
-
-trunkroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
-  add_osm_feature(key = "highway", value = "trunk") %>% # The most important roads in a country's system that aren't motorways. (Need not necessarily be a divided highway.) 
-  osmdata::osmdata_sf() %>% 
-  trim_osmdata(polybb) 
-trunkroadsosm <- trunkroadsosm$osm_lines
-
-primaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e11 ) %>%
-  add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link larger towns.)
-  osmdata::osmdata_sf() %>% 
-  trim_osmdata(polybb) 
-primaryroadsosm <- primaryroadsosm$osm_lines
-
-secondaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e11 ) %>%
-  add_osm_feature(key = "highway", value = "secondary") %>% # The next most important roads in a country's system. (Often link towns.)
-  osmdata::osmdata_sf() %>%
-  trim_osmdata(polybb)
-secondaryroadsosm <- secondaryroadsosm$osm_lines
+# api_to_use <- sample(1:length(api_list), 1)
+# set_overpass_url(api_list[api_to_use]) 
+# 
+# trunkroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
+#   add_osm_feature(key = "highway", value = "trunk") %>% # The most important roads in a country's system that aren't motorways. (Need not necessarily be a divided highway.) 
+#   osmdata::osmdata_sf() %>% 
+#   trim_osmdata(polybb) 
+# trunkroadsosm <- trunkroadsosm$osm_lines
+# 
+# primaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e11 ) %>%
+#   add_osm_feature(key = "highway", value = "primary") %>% # The next most important roads in a country's system. (Often link larger towns.)
+#   osmdata::osmdata_sf() %>% 
+#   trim_osmdata(polybb) 
+# primaryroadsosm <- primaryroadsosm$osm_lines
+# 
+# secondaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e11 ) %>%
+#   add_osm_feature(key = "highway", value = "secondary") %>% # The next most important roads in a country's system. (Often link towns.)
+#   osmdata::osmdata_sf() %>%
+#   trim_osmdata(polybb)
+# secondaryroadsosm <- secondaryroadsosm$osm_lines
 
 # 
 # tertiaryroadsosm <- osmdata::opq(bbox = bb, memsize = 1e9 ) %>%
@@ -135,7 +135,7 @@ wtr <- sf::st_union(riverosm, streamosm) %>%
   rgeos::gSimplify(., tol = tol)
 
 
-saveRDS(roadnet, file = "data/derived_data/osm_roads.rds")
+# saveRDS(roadnet, file = "data/derived_data/osm_roads.rds")
 saveRDS(hlthoffc, file = "data/derived_data/osm_healthoffices.rds")
 saveRDS(majrivers, file = "data/derived_data/osm_majrivers.rds")
 saveRDS(wtr, file = "data/derived_data/osm_water.rds")

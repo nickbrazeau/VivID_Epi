@@ -34,7 +34,8 @@ dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
 # drop observations with missing geospatial data 
 dt <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
+  dplyr::filter(hv103 == 1) # subset to de-facto https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
 
 #--------------------------------------------------------------
 # Section 2: Looking at recodes, manual data wrangle
@@ -406,6 +407,29 @@ dt <- dt %>%
   ) 
 xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
 
+#------------------------------------------
+# Occupation
+#------------------------------------------
+# Going to dichotomize as suspected outdoor versus indoor
+# Will code "others" as NA because cannot discern, only 2 obs
+
+dt$hab717 <- ifelse(haven::as_factor(dt$hv104) == "female", dt$v717, dt$mv717)
+table(dt$v717)
+table(dt$mv717)
+table(dt$hab717)
+
+occupation <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_occupation_liftover.csv")
+occupation$hab717 <- factor(occupation$hv717) # my mac being a pain
+
+dt <- dt %>% 
+  dplyr::mutate(hab717 = haven::as_factor(hab717), 
+                hab717 =  forcats::fct_drop(hab717))
+dt <- dt %>%
+  left_join(x=., y=occupation, by="hab717") %>% 
+  dplyr::mutate(hab717_fctb = factor(jobconditions),
+                hab717_fctb = forcats::fct_relevel(hab717_fctb, "indoors"))
+
+xtabs(~dt$hab717 + dt$hab717_fctb, addNA = T)
 
 #------------------------------------------
 # children under 5 number
@@ -427,6 +451,14 @@ dt <- dt %>%
 #..........................................................................................
 #                                 MALARIA-INTERVENTIONS
 #..........................................................................................
+#.............
+# Health Insurance
+#.............
+dt <- dt %>% 
+  dplyr::mutate(hab481 =  ifelse(haven::as_factor(hv104) == "female", v481, mv481),
+                hab481 = ifelse(hab481 == 9, NA, hab481))
+xtabs(~dt$hab481, addNA = T)
+
 #.............
 # LLIN for INDIVIDUAL 
 #.............
@@ -596,7 +628,7 @@ dt <- dt %>%
                 alt_dem_fctb_clst = factor(
                   ifelse(alt_dem_cont_clst > median(alt_dem_cont_clst), "high", "low"),
                   levels = c("low", "high")),
-                alt_dem_clst_log = log(alt_dem_cont_clst, tol = tol),
+                alt_dem_clst_log = log(alt_dem_cont_clst + tol),
                 alt_dem_clst_log_scale = scale(alt_dem_clst_log, center = T, scale = T)
   )
 
@@ -653,7 +685,7 @@ xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025)) # looks OK. Some r
 
 
 #.............
-# LLIN Cluster Usage; median wealth; median educ
+# LLIN Cluster Usage; median wealth; median educ; health insur
 #.............
 summary(dt$hml20) # no missing
 summary(dt$wlthrcde_fctm)
@@ -668,14 +700,16 @@ democlust <- dtsrvy %>%
   dplyr::summarise(
     hml20_cont_clst = srvyr::survey_mean(hml20, vartype = c("se")),
     wlthrcde_fctm_clst = srvyr::survey_median(wlthrcde_fctm_ord_num, quantiles = c(0.5), vartype = c("se")),
-    hv108_cont_clst = srvyr::survey_median(hv108_cont, quantiles = c(0.5), vartype = c("se"), na.rm = T)
+    hv108_cont_clst = srvyr::survey_median(hv108_cont, quantiles = c(0.5), vartype = c("se"), na.rm = T),
+    hab481_cont_clst = srvyr::survey_mean(hab481, vartype = c("se"), na.rm = T)
   ) %>% 
   dplyr::mutate(
     hml20_cont_scale_clst = scale(logit(hml20_cont_clst, tol = tol), center = T, scale = T),
     hv108_cont_scale_clst = scale(log(hv108_cont_clst_q50 + tol), center = T, scale = T),
     wlthrcde_fctm_clst_q50_fctm = factor(floor(wlthrcde_fctm_clst_q50), # taking lower bracket of wealth if median was split
                                          levels = c(1,2,3,4,5),
-                                         labels = c("poorest", "poor", "middle", "rich", "richest"))
+                                         labels = c("poorest", "poor", "middle", "rich", "richest")),
+    hab481_cont_scale_clst = scale(logit(hab481_cont_clst, tol = tol), center = T, scale = T)
           )
 
 
@@ -741,7 +775,8 @@ kdsrv_fvr_clst <- kdsrv_fvr  %>%
     other_cont_scale_clst = scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
     anyatm_cont_scale_clst = scale(logit(anyatm_cont_clst, tol = tol), center = T, scale = T)
     ) %>% 
-  dplyr::rename(hv001 = as.numeric( v001) ) %>% 
+  dplyr::rename(hv001 = v001)  %>% 
+  dplyr::mutate(hv001 = as.numeric(hv001)) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
 
 dt <- dplyr::left_join(dt, kdsrv_fvr_clst, by = "hv001")
