@@ -7,7 +7,10 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 set.seed(42)
 
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")  %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+sf::st_geometry(dt) <- NULL
 #.............
 # weights
 #.............
@@ -38,13 +41,12 @@ dt <- dt %>%
 # 9. Watch (HV243B)
 
 wlth <- dt %>% 
+  as.data.frame(.) %>% # drop tibble and sf classes
   dplyr::select(c(
     "hv201", "hv205", "hv226", 
     "hv206", "hv207", "hv208",  "hv225", "hv210", "hv243a", "hv243b" # binary vars
-    
   )) %>% 
-  haven::as_factor(.) %>% 
-  as.data.frame(.) # drop tibble classes
+  haven::as_factor(.) 
 
 wlth_fct <- wlth
 for(i in 1:ncol(wlth_fct)){
@@ -211,7 +213,7 @@ wlth_scores <- wlth_scores %>%
 # check
 sum(is.na(wlth_scores$combscor))
 
-##############################
+ ##############################
 # Account for Sampling Weights
 ##############################
 dtsub <- dt %>% 
@@ -219,14 +221,20 @@ dtsub <- dt %>%
   dplyr::left_join(., wlth_scores)
 
 dtsrvy <- makecd2013survey(survey = dtsub)
-quants <- survey::svyquantile(x = ~combscor, design = dtsrvy, quantiles = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+quants <- survey::svyquantile(x = ~combscor, design = dtsrvy, 
+                              quantiles = c(0, 0.2, 0.4, 0.6, 0.8, 1))
 
 dtsub <- dtsub %>% 
-  dplyr::mutate(wlthrcde_fctm = base::cut(x = dtsub$combscor, breaks = quants, 
-                                           labels = c("poorest", "poor", "middle", "rich", "richest"))
+  dplyr::mutate(wlthrcde_fctm = base::cut(x = .$combscor, breaks = quants, 
+                                           labels = c("poorest", "poor", 
+                                                      "middle", "rich", "richest"),
+                                          include.lowest = T)
   ) %>% 
-  dplyr::select(c("hivrecode_barcode", "wlthrcde_fctm"))
+  dplyr::select(c("hivrecode_barcode", "combscor", "wlthrcde_fctm"))
 
+summary(dtsub$combscor)
+summary(dtsub$wlthrcde_fctm)
+quants
 
 saveRDS(file = "data/derived_data/vividepi_wealth_recoded.rds", object = dtsub)
 

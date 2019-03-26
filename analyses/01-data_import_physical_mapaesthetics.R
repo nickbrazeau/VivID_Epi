@@ -168,9 +168,9 @@ prettybasemap_hillgrey <- list(
 
 
 
-save(prettybasemap_terraincolors, prettybasemap_hillgrey, prettybasemap_nodrc, DRCprov,
-     file = "~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
-
+save(prettybasemap_terraincolors, prettybasemap_hillgrey, prettybasemap_nodrc,
+     file = "data/map_bases/vivid_maps_bases.rda")
+saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")
 
 
 

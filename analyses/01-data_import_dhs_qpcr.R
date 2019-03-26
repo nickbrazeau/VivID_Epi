@@ -89,21 +89,21 @@ arpr <- arpr %>%
 #---------------------------------------------------------------------------------
 # Read in MR and IR 
 #---------------------------------------------------------------------------------
-mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds") %>% 
-  dplyr::rename(hv001 = mv001,
-                hv002 = mv002,
-                hvidx = mv003,
-                caseid = mcaseid)
-
-wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") %>% 
-  dplyr::rename(hv001 = v001,
-                hv002 = v002,
-                hvidx = v003)
-mrwr <- dplyr::full_join(mr, wr)
-mrwr <- mrwr %>% 
-  mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
-
-wrmrprar <- dplyr::left_join(arpr, mrwr) 
+# mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds") %>% 
+#   dplyr::rename(hv001 = mv001,
+#                 hv002 = mv002,
+#                 hvidx = mv003,
+#                 caseid = mcaseid)
+# 
+# wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") %>% 
+#   dplyr::rename(hv001 = v001,
+#                 hv002 = v002,
+#                 hvidx = v003)
+# mrwr <- dplyr::full_join(mr, wr)
+# mrwr <- mrwr %>% 
+#   mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
+# 
+# wrmrprar <- dplyr::left_join(arpr, mrwr) 
 
 # left join because
 # IR and MR recodes only contain "de facto" individuals
@@ -125,7 +125,7 @@ ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled thi
 ge <- ge %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
-gewrmrprar <- left_join(x=wrmrprar, y=ge, by = "hv001") 
+geprar <- left_join(x=arpr, y=ge, by = "hv001") 
 
 #---------------------------------------------------------------------------------
 # DHS Geospatial Covariates
@@ -134,14 +134,14 @@ gc <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/CDGC62
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
-gcgewrmrprar <- dplyr::left_join(gewrmrprar, gc, by = c("dhsid", "dhscc", "dhsyear", "hv001"))
+gcgeprar <- dplyr::left_join(geprar, gc, by = c("dhsid", "dhscc", "dhsyear", "hv001"))
 
 
 
 #---------------------------------------------------------------------------------
 # FINAL -- subset the DHS data to just the PCR data 
 #---------------------------------------------------------------------------------
-panplasmpcrres_gcgewrmrprar <- dplyr::inner_join(panplasmpcrres, gcgewrmrprar, by = "hivrecode_barcode")
+panplasmpcrres_gcgeprar <- dplyr::inner_join(panplasmpcrres, gcgeprar, by = "hivrecode_barcode")
 
 
 
@@ -151,12 +151,10 @@ panplasmpcrres_gcgewrmrprar <- dplyr::inner_join(panplasmpcrres, gcgewrmrprar, b
 #---------------------------------------------------------------------------------
 
 # write out joined HIV recode to PR, IR, MR, GE, and GC with our plasmodium PCR results 
+# in order to perserve sf features, covert to sf (and dataframe)
+panplasmpcrres_gcgeprar <- sf::st_as_sf(panplasmpcrres_gcgeprar)
+saveRDS(panplasmpcrres_gcgeprar, file = "~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
 
-saveRDS(panplasmpcrres_gcgewrmrprar, file = "~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
 
 
-# set up figure dir for later storage
-if(!dir.exists("figures")){
-  dir.create("figures")
-}
 

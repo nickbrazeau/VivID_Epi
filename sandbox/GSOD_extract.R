@@ -75,5 +75,18 @@ pull_station <- function(stations, years){
 }
 
 
+nrststat <- findneareststations(input = dt, urbdist = 50, rurdist = 250, latestdate = 20141231)
+gsod <- pull_station(stations = nrststat$STNID[!duplicated(nrststat$STNID)], 
+                     years = 2013:2014)
+tempprecip <- dplyr::left_join(x = nrststat, y = gsod)
+
+tempprecip <- tempprecip %>% 
+  dplyr::mutate(YEARMODA = lubridate::ymd(YEARMODA)) %>% 
+  dplyr::group_by(hv001, YEARMODA) %>% 
+  dplyr::summarise(meanDailyTemp = mean(TEMP),
+                   meanDailyPrecip = mean(PRCP))
+
+
+
 
 

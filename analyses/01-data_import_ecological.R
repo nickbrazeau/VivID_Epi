@@ -65,15 +65,16 @@ ggplot() +
 #---------------------------------------------------------------------------------
 # Precipation Data
 #---------------------------------------------------------------------------------
+heavyRain::getCHIRPS(region = "africa",
+                     format = "tifs",
+                     tres = "monthly", 
+                     sres = 0.05, # near same resolution as Manny pulled down
+                     begin = as.Date("2013-01-01"),
+                     end = as.Date("2014-12-31"),
+                     dsn = "data/raw_data/weather_data/CHIRPS/",
+                     overwrite = T)
 
-
-
-
-
-
-
-
-
+system('gunzip data/raw_data/weather_data/CHIRPS/*')
 
 
 
@@ -84,18 +85,7 @@ ggplot() +
 ape <- sf::read_sf("data/redlist_species_data_primate/data_0.shp")
 ape <- ape[grepl("pan paniscus|pan troglodytes|gorilla", tolower(ape$BINOMIAL)), ] %>%  # pan trog, pan panisus, gorilla sp
   dplyr::rename(species = BINOMIAL)
-drc_ape <- sf::st_crop(x = ape, y = bb_sf)
+drc_ape <- sf::st_crop(x = ape, y = bb)
 
 
-
-
-
-
-
-
-
-
-
-
-
-save(drc_ape, file = "data/raw_data/ecological_imports.rda")
+saveRDS(drc_ape, file = "data/redlist_species_data_primate/drc_ape.rds")

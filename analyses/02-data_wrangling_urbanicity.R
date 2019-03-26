@@ -1,0 +1,196 @@
+# IMPORTS and dependencies
+library(tidyverse)
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+tol <- 1e-3
+
+
+# spatial from the DHS -- these are cluster level vars
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")  %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+#.............
+# weights
+#.............
+dt <- dt %>% 
+  dplyr::mutate(hv005_wi = hv005/1e6
+  )
+
+
+ge <- sf::st_as_sf(readRDS(file = "data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
+ge <- ge %>% 
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::rename(hv001 = dhsclust) %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+
+#..............................
+#### A note on urbanicity ####
+#..............................
+
+# Potential (significant) misclassification bias in the DHS DRC-II coding of 
+# urban vs. rural as has been noted here https://journals.sagepub.com/doi/10.1177/0021909617698842
+# and can be seen by comparing hv025/026 with population density, light density, build, etc.
+
+# #.............
+# # Urban from DHS
+# #.............
+# levels(factor(haven::as_factor(dt$hv025))) # no missing
+# dt$hv025_fctb <- haven::as_factor(dt$hv025)
+# dt$hv025_fctb = forcats::fct_relevel(dt$hv025_fctb, "rural")
+# # check
+# xtabs(~hv025 + hv025_fctb, data = dt, addNA = T)
+
+
+#.............
+# cluster degree of "build"
+#.............
+# see explanation in the DHS GC manual 
+# NOTE, this is from 2014
+summary(dt$built_population_2014)
+hist(dt$built_population_2014)
+sum(dt$built_population_2014 < 0.01)
+median( dt$built_population_2014[dt$built_population_2014 < 0.05] )
+hist( dt$built_population_2014[dt$built_population_2014 < 0.05] )
+# DECISION: Will use a logit transformation to get back to the real-line (and scale)
+# large number of 0s
+dt$built_population_2014_scale <- scale(logit(dt$built_population_2014, tol = tol), center = T, scale = T) # use logit to transform to real line
+hist(dt$built_population_2014_scale)
+summary(dt$built_population_2014_scale); sd(dt$built_population_2014_scale) # despite skew, scale seems to work
+
+#.............
+# cluster night-time light density
+#.............
+# see explanation in the DHS GC manual 
+# NOTE, this is from 2015
+summary(dt$nightlights_composite)
+hist(dt$nightlights_composite)
+hist( dt$nightlights_composite[dt$nightlights_composite < 0.05] )
+hist( dt$nightlights_composite[dt$nightlights_composite > 0.05] )
+# DECISION: Will use a log transformation (and scale)
+# large number of 0s (again)
+dt$nightlights_composite_scale <- scale(log(dt$nightlights_composite + tol), center = T, scale = T)
+hist(dt$nightlights_composite_scale)
+summary(dt$nightlights_composite_scale); sd(dt$nightlights_composite_scale) # despite skew, scale seems to work
+
+
+#.............
+# cluster worldpop population-density estimate
+#.............
+# see explanation in the DHS GC manual 
+# NOTE, this is from 2015
+summary(dt$all_population_count_2015)
+hist(dt$all_population_count_2015)
+hist( dt$all_population_count_2015[dt$all_population_count_2015 < 5e4] )
+hist( dt$all_population_count_2015[dt$all_population_count_2015 > 5e4] )
+# DECISION: Will use a log transformation (and scale)
+# large number of 0s (again)
+dt$all_population_count_2015_scale <- scale(log(dt$all_population_count_2015), center = T, scale = T)
+hist(dt$all_population_count_2015_scale)
+summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_scale) # scale here seems to compensate
+
+
+#.............
+# Accessibility from Weiss
+#.............
+# From the MAP Project
+# download raster of travel time to cities (Weiss et al 2018) for study area & visualise this
+bb <- osmdata::getbb("Democratic Republic of the Congo", 
+                     featuretype = "country")
+
+TravelToCities <- malariaAtlas::getRaster(surface = "A global map of travel time to cities to assess inequalities in accessibility in 2015",
+                                          extent = bb)
+TravelToCities <- raster::projectRaster(from = TravelToCities, to = TravelToCities,
+                                        crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+
+
+clstsrch <- dt %>% 
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2)) %>%  # after DHS GC manual
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(buffer = mean(buffer))
+
+
+clstsrch$travel_mean <- raster::extract(x = TravelToCities, 
+                                        y = sf::as_Spatial( clstsrch$geometry ), 
+                                        buffer = clstsrch$buffer,
+                                        fun = mean,
+                                        sp = F) 
+
+clstsrch <- clstsrch %>% 
+  dplyr::select(-c("geometry")) %>% 
+  as.data.frame(.) # for easier merge below
+
+dt <- dt %>% 
+  dplyr::left_join(x = dt, y = clstsrch, by = "hv001") %>% 
+  dplyr::mutate(travel_mean_scale = scale(log(travel_mean + tol), center = T, scale = T))
+
+summary(dt$travel_mean)
+hist(dt$travel_mean) # many, many 0s 
+hist(dt$travel_mean_scale) # standardization doesn't look as good, but should capture urban v. rural well
+summary(dt$travel_mean_scale); sd(dt$travel_mean_scale) 
+
+
+
+
+#.............
+# PCA
+#.............
+# compute PCA, drop to single observations (since clusters all have some obs)
+# Otherwise inflate our degree of certainty in our PCA
+urbanmat <- dt[!duplicated(dt$hv001), 
+               c("hv001", "hv025", "built_population_2014_scale", "nightlights_composite_scale",
+                 "all_population_count_2015_scale", "travel_mean_scale")] 
+sf::st_geometry(urbanmat) <- NULL
+
+urbanmatpca <- prcomp(urbanmat[, c("built_population_2014_scale", "nightlights_composite_scale",
+                                   "all_population_count_2015_scale", "travel_mean_scale")])
+
+# compute variance explained and Zi values 
+urbanmatpca$var <- (urbanmatpca$sdev ^ 2) / sum(urbanmatpca$sdev ^ 2) * 100
+urbanmatpca$loadings <- abs(urbanmatpca$rotation)
+urbanmatpca$loadings <- sweep(urbanmatpca$loadings, 2, colSums(urbanmatpca$loadings), "/")
+
+
+#.............
+# Analyze PCA Seperation
+#.............
+# make a plot
+pcaeigplot <- tibble(rururb = haven::as_factor(urbanmat$hv025), 
+                     pc1 = urbanmatpca$x[,1], pc2 =urbanmatpca$x[,2], pc3 = urbanmatpca$x[,3])
+
+plotly::plot_ly(pcaeigplot, x = ~pc1, y = ~pc3, z = ~pc2, color = ~rururb)%>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'PC1'),
+                      yaxis = list(title = 'PC3'),
+                      zaxis = list(title = 'PC2')))
+
+#.............
+# Degree of Urbanicity
+#.............
+urbanicity <- cbind(urbanmat[,c("hv001", "hv025")], urbanscore = urbanmatpca$x[,1]) %>% 
+  left_join(x = ., y = ge, by = "hv001")
+
+ggplot() +
+  geom_sf(data = DRCprov) +
+  geom_point(data = urbanicity, aes(x = longnum, y = latnum, color = urbanscore))
+
+
+#.............
+# write out
+#.............
+# don't need to apply weights in the same way as wealth because at cluster level
+
+quants <- quantile(urbanicity$urbanscore, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+urbanicity <- urbanicity %>% 
+  dplyr::mutate(urbanscore_fctm_clust = base::cut(x = .$urbanscore, breaks = quants, 
+                                          labels = c("rural", "less rural", "middle", 
+                                                     "less urban", "urban"))
+  ) %>% 
+  dplyr::rename(urbanscore_cont_clust = urbanscore) %>% 
+  dplyr::select(c("hv001", "urbanscore_fctm_clust", "urbanscore_cont_clust"))
+
+
+
+saveRDS(urbanicity, file = "data/derived_data/vividepi_urban_recoded.rds")
