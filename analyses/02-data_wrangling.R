@@ -311,17 +311,16 @@ wallfloormiss <- dt %>%
 xtabs(~wallfloormiss$hv213 + wallfloormiss$hv214, addNA = T)
 # different observations missing for floor v. wall
 
+wallfloorroofrecode <- dt[,c("hv213_liftover", "hv214_liftover", "hv215_liftover")]
+sf::st_geometry(wallfloorroofrecode) <- NULL
 dt <- dt %>% 
-  dplyr::mutate(hv21345_fctb = ifelse(apply(dt[,c("hv213_liftover", "hv214_liftover", "hv215_liftover")], 
-                                            1, 
-                                            function(x){
-                                              return( all(x == "non-rudimentary", na.rm = F) ) # na.rm F to perserve missing
-                                              }), 
-                                      "modern", "traditional"),
-                hv21345_fctb = factor(hv21345_fctb))
+  dplyr::mutate(
+    housecount = apply(wallfloorroofrecode, 1, function(x){return(sum(x == "non-rudimentary"))}),
+    hv21345_fctb = ifelse(housecount == 3, "modern", "traditional"), # per PMID: 28222094
+    hv21345_fctb = factor(hv21345_fctb))
                 
-# check -- seems reasonabl
-xtabs(~dt$hv21345_fctb)
+# check -- seems reasonable
+xtabs(~dt$hv21345_fctb, addNA = T)
 
 
 #.............
@@ -454,8 +453,9 @@ dt <- dt %>%
 #.............
 dt <- dt %>% 
   dplyr::mutate(hab481 =  ifelse(haven::as_factor(hv104) == "female", v481, mv481),
-                hab481 = ifelse(hab481 == 9, NA, hab481))
-xtabs(~dt$hab481, addNA = T)
+                hab481 = ifelse(hab481 == 9, NA, hab481),
+                hab481_fctb = factor(hab481, levels = c(0,1), labels = c("no", "yes")))
+xtabs(~dt$hab481_fctb, addNA = T)
 
 #.............
 # LLIN for INDIVIDUAL 
@@ -614,7 +614,9 @@ sf::st_geometry(wthrnd) <- NULL
 dt <- dt %>% 
   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
   dplyr::mutate(precip_lag_cont_log_clst = log(precip_lag_cont_clst + tol),
-                temp_lag_cont_log_clst = log(temp_lag_cont_clst + tol))
+                temp_lag_cont_log_clst = log(temp_lag_cont_clst + tol),
+                precip_lag_cont_log_scale_clst = scale(precip_lag_cont_log_clst, center = T, scale = T),
+                temp_lag_cont_log_scale_clst = scale(temp_lag_cont_log_clst, center = T, scale = T))
 
 
 
@@ -669,7 +671,7 @@ xtabs(~dt$ape_habitat_fctb_clst)
 
 urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds")
 dt <- dplyr::left_join(dt, urb, by = "hv001")
-xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025)) # looks OK. Some rural places are now urban, which is consistent with what I expected
+xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025), addNA = T) # looks OK. Some rural places are now urban, which is consistent with what I expected
 
 #.............
 # Distance to Health Site
@@ -702,7 +704,8 @@ democlust <- dtsrvy %>%
                                          levels = c(1,2,3,4,5),
                                          labels = c("poorest", "poor", "middle", "rich", "richest")),
     hab481_cont_scale_clst = scale(logit(hab481_cont_clst, tol = tol), center = T, scale = T)
-          )
+          ) %>% 
+  dplyr::select(-c(dplyr::ends_with("_se")))
 
 
 sapply(democlust, summary) # looks clean
@@ -775,9 +778,7 @@ dt <- dplyr::left_join(dt, kdsrv_fvr_clst, by = "hv001")
 
 dt %>% 
   group_by(hv001) %>% 
-  dplyr::summarise(n = sum(anyatm_cont_clst))
-
-# some clusters missing kids with fevers, so have NAs
+  dplyr::summarise(n = sum(anyatm_cont_clst)) # some clusters missing kids with fevers, so have NAs
 
 #.............
 # Cluster Level Kid RDT/Micro
@@ -827,14 +828,14 @@ dt <- dplyr::left_join(dt, rdtmicro_sum, by = "hv001")
 #..........................................................................................
 #                               Final Write Out
 #..........................................................................................
-keep <- colnames(dt)[ grepl("_cont|_fctm|_fctb|_scale", colnames(dt)) ]
-keep <- c(keep, "hv001", "hv023", "hv005", "hv005_wi",
-          "houseid", "hvdate_dtdmy", "hvyrmnth_dtmnth", "hvyrmnth_dtmnth_lag",
-          "urban_rura", "latnum", "longnum", "geometry", "adm1name")
+# keep <- colnames(dt)[ grepl("_cont|_fctm|_fctb|_scale", colnames(dt)) ]
+# keep <- c("pv18s", keep, "hv001", "hv023", "hv005", "hv005_wi",
+#           "houseid", "hvdate_dtdmy", "hvyrmnth_dtmnth", "hvyrmnth_dtmnth_lag",
+#           "urban_rura", "latnum", "longnum", "geometry", "adm1name")
+# 
+# 
+# dtkp <- dt[, keep]
 
-
-dtkp <- dt[, keep]
-
-saveRDS(dtkp, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+saveRDS(dt, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 
 

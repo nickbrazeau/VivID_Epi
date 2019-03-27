@@ -90,7 +90,7 @@ hist( dt$all_population_count_2015[dt$all_population_count_2015 < 5e4] )
 hist( dt$all_population_count_2015[dt$all_population_count_2015 > 5e4] )
 # DECISION: Will use a log transformation (and scale)
 # large number of 0s (again)
-dt$all_population_count_2015_scale <- scale(log(dt$all_population_count_2015), center = T, scale = T)
+dt$all_population_count_2015_scale <- scale(log(dt$all_population_count_2015 + tol), center = T, scale = T)
 hist(dt$all_population_count_2015_scale)
 summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_scale) # scale here seems to compensate
 
@@ -164,7 +164,8 @@ quants <- quantile(urbanicity$urbanscore, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1))
 urbanicity <- urbanicity %>% 
   dplyr::mutate(urbanscore_fctm_clust = base::cut(x = .$urbanscore, breaks = quants, 
                                           labels = c("rural", "less rural", "middle", 
-                                                     "less urban", "urban"))
+                                                     "less urban", "urban"),
+                                          include.lowest = T)
   ) %>% 
   dplyr::rename(urbanscore_cont_clust = urbanscore) %>% 
   dplyr::select(c("hv001", "urbanscore_fctm_clust", "urbanscore_cont_clust"))
