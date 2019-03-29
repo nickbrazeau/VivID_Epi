@@ -8,30 +8,53 @@ library(srvyr)
 library(ggcorrplot)
 source("R/00-functions_basic.R")
 
+
+# https://cran.r-project.org/web/packages/jtools/vignettes/svycor.html
+# ^ rewrite with weights! 
+
 #......................
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 dcdr <- readxl::read_excel(path = "internal_datamap_files/DERIVED_covariate_map.xlsx", sheet = 1) %>% 
-  dplyr::mutate(risk_factor = ifelse(is.na(risk_factor), "n", risk_factor))
+  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
+                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
 dtsrvy <- makecd2013survey(survey = dt)
 
 
 #......................
 # Analyze for Corr
 #......................
-rskfctr <- dcdr$column_name[dcdr$risk_factor == "y"]
+rskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
 dtrskfctr <- dt[,rskfctr]
 sf::st_geometry(dtrskfctr) <- NULL
-dtrskfctr_exp <- fastDummies::dummy_columns(dtrskfctr, remove_first_dummy = T)
+dtrskfctr_exp <- fastDummies::dummy_columns(dtrskfctr, remove_first_dummy = F)
 dtrskfctr_exp <- dtrskfctr_exp[, (length(rskfctr)+1):ncol(dtrskfctr_exp)]
 
-# sort columns
+# drop one of the binary pairs (they are opposite of each other)
+binarykeep <- tibble::tibble(
+  column_names = colnames(dtrskfctr_exp),
+  base_name = stringr::str_split_fixed(string = column_names, 
+                                       pattern = "_(?!.*_)",
+                                       n=2)[,1],
+  level = stringr::str_split_fixed(string = column_names, 
+                                       pattern = "_(?!.*_)",
+                                       n=2)[,2]
+  ) %>% 
+  dplyr::filter(level != "NA") %>% 
+  dplyr::filter(grepl("_fctb", base_name)) %>% 
+  dplyr::group_by(base_name) %>% 
+  dplyr::sample_n(., size = 1, replace = F) 
+
+
+
+# sort columns and drop binary 
 dtrskfctr_exp <- dtrskfctr_exp %>% 
   dplyr::select(c(
     dplyr::ends_with("NA"),
     dplyr::ends_with("_clst"),
-    dplyr::everything()
+    dplyr::contains("_fctm"),
+    binarykeep$column_names
   ))
 
 
@@ -47,7 +70,12 @@ dtrskfctr.corr_high <- dtrskfctr.corr %>%
 corrplot <- ggcorrplot::ggcorrplot(dtrskfctr.corr, 
                        type = "lower",
                        outline.color = "white",
-                       hc.order = F)
+                       colors = c("#313695", "#ffffbf", "#a50026"),
+                       hc.order = F) +
+  ggtitle("Covariate Correlation Matrix") +
+  vivid_theme +
+  theme(legend.position = "right", 
+        legend.text = element_text(angle = 0))
 
 #......................
 # Look at vif
@@ -82,7 +110,6 @@ car::vif(model.sat_oldwlth) # old wealth is even worse
 
 
 # no house
-
 rskfctr_ind_nohouse <- rskfctr_ind[!grepl("hv21345", rskfctr_ind)]
 eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_nohouse, collapse = "+")))
 model.sat.nohouse <- survey::svyglm(eq,
@@ -95,7 +122,9 @@ car::vif(model.sat.nohouse) # no house nearly halves it
 # Results & Out
 #......................
 saveRDS(corrplot, file = "results/covariate_correlation_plot.rds")
-
+jpeg(filename = "results/figures/covariate_correlation_plot.jpg", width = 12, height = 12, units = "in", res = 500)
+corrplot
+graphics.off()
 
 
 

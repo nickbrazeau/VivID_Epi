@@ -18,6 +18,17 @@ makecd2013survey <- function(survey = dt){
   return(dtsrvy)
 }
 
+#----------------------------------------------------------------------------------------------------
+# Change return from scale
+#----------------------------------------------------------------------------------------------------
+my.scale <- function(x, ...){
+  ret <- scale(x, ...)
+  if(ncol(ret) == 1){
+    return(as.numeric(ret)) # coerce matrix of 1 col to numeric vector
+  } else{
+    stop("Matrix has more than one column")
+    }
+}
 
 #----------------------------------------------------------------------------------------------------
 # ViVID Epi Theme

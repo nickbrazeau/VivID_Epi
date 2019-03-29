@@ -141,13 +141,13 @@ dt <- dt %>%
   dplyr::mutate(
     pfldhct_cont = pfctmean,
     pfldhct_cont_log = log(pfctmean + tol),
-    pfldhct_cont_log_scale = scale(pfldhct_cont_log, center = T, scale = T),
+    pfldhct_cont_log_scale = my.scale(pfldhct_cont_log, center = T, scale = T),
     po18sct_cont = poctcrrct,
     po18sct_cont_log = log(poctcrrct + tol),
-    po18sct_cont_log_scale = scale(po18sct_cont_log, center = T, scale = T),
+    po18sct_cont_log_scale = my.scale(po18sct_cont_log, center = T, scale = T),
     pv18sct_cont = pvctcrrct,
     pv18sct_cont_log = log(pvctcrrct + tol),
-    pv18sct_cont_log_scale = scale(pv18sct_cont_log, center = T, scale = T),
+    pv18sct_cont_log_scale = my.scale(pv18sct_cont_log, center = T, scale = T),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
@@ -190,7 +190,7 @@ dt <- dt %>%
   dplyr::mutate(hab56_cont = ifelse(haven::as_factor(hv104) == "female", ha56, hb56),
                 hab56_cont = ifelse(hab56_cont %in% c("997", "999"), NA, hab56_cont),
                 hab56_cont = as.numeric(hab56_cont)/10,
-                hab56_cont_scale = scale(hab56_cont, center = T, scale = T)) 
+                hab56_cont_scale = my.scale(hab56_cont, center = T, scale = T)) 
 
 # check hemoglobin recode for WOMEN
     summary(dt$ha56)
@@ -253,7 +253,7 @@ dt <- dt %>%
 dt <- dt %>% 
   dplyr::mutate(hab1_cont = ifelse(haven::as_factor(hv104) == "female", ha1, hb1),
                 hab1_cont = ifelse(hab56_cont %in% c("97", "98", "99"), NA, hab1_cont),
-                hab1_cont_scale = scale(hab1_cont, center = T, scale = T)) 
+                hab1_cont_scale = my.scale(hab1_cont, center = T, scale = T)) 
 
 summary(dt$hab1_cont) 
 plot(dt$ha1, dt$hab1_cont)
@@ -343,7 +343,7 @@ hist(dt$hv108)
 summary(dt$hv108)
 dt <- dt %>% 
   dplyr::mutate(hv108_cont = ifelse(hv108 %in% c("97", "98", "99"), NA, hv108),
-                hv108_cont_scale = scale(hv108_cont, center = T, scale = T))
+                hv108_cont_scale = my.scale(hv108_cont, center = T, scale = T))
 xtabs(~dt$hv108 + dt$hv108_cont, addNA = T)
 
 
@@ -434,7 +434,7 @@ xtabs(~dt$hab717 + dt$hab717_fctb, addNA = T)
 summary(dt$hv014) # looks clean
 dt <- dt %>% 
   dplyr::mutate(hv014_cont = hv014,
-                hv014_cont_scale = scale(hv014_cont, center = T, scale = T))
+                hv014_cont_scale = my.scale(hv014_cont, center = T, scale = T))
 
 #------------------------------------------
 # total household members
@@ -442,7 +442,7 @@ dt <- dt %>%
 summary(dt$hv009) # looks clean
 dt <- dt %>% 
   dplyr::mutate(hv009_cont = hv009,
-                hv009_cont_scale = scale(hv009_cont, center = T, scale = T))
+                hv009_cont_scale = my.scale(hv009_cont, center = T, scale = T))
 
 
 #..........................................................................................
@@ -475,27 +475,27 @@ summary(dt$hml20) # no missing here
 dt <- dt %>% 
   dplyr::mutate(hml20_fctb = haven::as_factor(hml20))
 
-#.............
-# LLIN-type of Inseciticide for INDIVIDUAL
-# Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
-#.............
-# read insecticide liftover table
-insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_insecticide_liftover.csv")
-
-dt <- dt %>%
-  dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
-  left_join(x=., y=insctcd, by="hml7") %>%
-  dplyr::mutate(insctcd_fctm = factor(ifelse(hml20_fctb == "no", "none", insctcd)),
-                insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
-  )
-
-
-# sanity checks
-xtabs(~dt$insctcd_fctm + dt$hml20_fctb, addNA=T)
-xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
-xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
-
-
+# #.............
+# # LLIN-type of Inseciticide for INDIVIDUAL
+# # Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
+# #.............
+# # read insecticide liftover table
+# insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_insecticide_liftover.csv")
+# 
+# dt <- dt %>%
+#   dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
+#   left_join(x=., y=insctcd, by="hml7") %>%
+#   dplyr::mutate(insctcd_fctm = factor(ifelse(hml20_fctb == "no", "none", insctcd)),
+#                 insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
+#   )
+# 
+# 
+# # sanity checks
+# xtabs(~dt$insctcd_fctm + dt$hml20_fctb, addNA=T)
+# xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
+# xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
+# 
+# 
 
 
 
@@ -519,10 +519,10 @@ coinfxnbiomrk <- dtsrvy %>%
     hiv03_cont_clst = srvyr::survey_mean(x = hiv03),
     hab56_cont_clst = srvyr::survey_quantile(hab56_cont, quantiles = c(0.5), vartype = c("se"), na.rm = T)) %>% 
   dplyr::mutate(
-    pfldh_cont_scale_clst = scale(logit(pfldh_cont_clst, tol = tol), center = T, scale = T),
-    po18s_cont_scale_clst = scale(logit(po18s_cont_clst, tol = tol), center = T, scale = T),
-    hiv03_cont_scale_clst = scale(logit(hiv03_cont_clst, tol = tol), center = T, scale = T),
-    hab56_cont_scale_clst = scale(hab56_cont_clst_q50, center = T, scale = T)
+    pfldh_cont_scale_clst = my.scale(logit(pfldh_cont_clst, tol = tol), center = T, scale = T),
+    po18s_cont_scale_clst = my.scale(logit(po18s_cont_clst, tol = tol), center = T, scale = T),
+    hiv03_cont_scale_clst = my.scale(logit(hiv03_cont_clst, tol = tol), center = T, scale = T),
+    hab56_cont_scale_clst = my.scale(hab56_cont_clst_q50, center = T, scale = T)
   ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
 
@@ -615,8 +615,8 @@ dt <- dt %>%
   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
   dplyr::mutate(precip_lag_cont_log_clst = log(precip_lag_cont_clst + tol),
                 temp_lag_cont_log_clst = log(temp_lag_cont_clst + tol),
-                precip_lag_cont_log_scale_clst = scale(precip_lag_cont_log_clst, center = T, scale = T),
-                temp_lag_cont_log_scale_clst = scale(temp_lag_cont_log_clst, center = T, scale = T))
+                precip_lag_cont_log_scale_clst = my.scale(precip_lag_cont_log_clst, center = T, scale = T),
+                temp_lag_cont_log_scale_clst = my.scale(temp_lag_cont_log_clst, center = T, scale = T))
 
 
 
@@ -629,7 +629,7 @@ dt <- dt %>%
                   ifelse(alt_dem_cont_clst > median(alt_dem_cont_clst), "high", "low"),
                   levels = c("low", "high")),
                 alt_dem_clst_log = log(alt_dem_cont_clst + tol),
-                alt_dem_clst_log_scale = scale(alt_dem_clst_log, center = T, scale = T)
+                alt_dem_clst_log_scale = my.scale(alt_dem_clst_log, center = T, scale = T)
   )
 
 #.............
@@ -698,12 +698,12 @@ democlust <- dtsrvy %>%
     hab481_cont_clst = srvyr::survey_mean(hab481, vartype = c("se"), na.rm = T)
   ) %>% 
   dplyr::mutate(
-    hml20_cont_scale_clst = scale(logit(hml20_cont_clst, tol = tol), center = T, scale = T),
-    hv108_cont_scale_clst = scale(log(hv108_cont_clst_q50 + tol), center = T, scale = T),
+    hml20_cont_scale_clst = my.scale(logit(hml20_cont_clst, tol = tol), center = T, scale = T),
+    hv108_cont_scale_clst = my.scale(log(hv108_cont_clst_q50 + tol), center = T, scale = T),
     wlthrcde_fctm_clst_q50_fctm = factor(floor(wlthrcde_fctm_clst_q50), # taking lower bracket of wealth if median was split
                                          levels = c(1,2,3,4,5),
                                          labels = c("poorest", "poor", "middle", "rich", "richest")),
-    hab481_cont_scale_clst = scale(logit(hab481_cont_clst, tol = tol), center = T, scale = T)
+    hab481_cont_scale_clst = my.scale(logit(hab481_cont_clst, tol = tol), center = T, scale = T)
           ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
 
@@ -761,14 +761,14 @@ kdsrv_fvr_clst <- kdsrv_fvr  %>%
     other_cont_clst = srvyr::survey_mean(ml13h),
     anyatm_cont_clst = srvyr::survey_mean(anyatm)) %>% 
   dplyr::mutate(
-    fansidar_cont_scale_clst = scale(logit(fansidar_cont_clst, tol = tol), center = T, scale = T),
-    chloroquine_cont_scale_clst = scale(logit(chloroquine_cont_clst, tol = tol), center = T, scale = T),
-    amodiaquine_cont_scale_clst = scale(logit(amodiaquine_cont_clst, tol = tol), center = T, scale = T),
-    quinine_cont_scale_clst = scale(logit(quinine_cont_clst, tol = tol), center = T, scale = T),
-    act_cont_scale_clst = scale(logit(act_cont_clst, tol = tol), center = T, scale = T),
-    otherartm_cont_scale_clst = scale(logit(otherartm_cont_clst, tol = tol), center = T, scale = T),
-    other_cont_scale_clst = scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
-    anyatm_cont_scale_clst = scale(logit(anyatm_cont_clst, tol = tol), center = T, scale = T)
+    fansidar_cont_scale_clst = my.scale(logit(fansidar_cont_clst, tol = tol), center = T, scale = T),
+    chloroquine_cont_scale_clst = my.scale(logit(chloroquine_cont_clst, tol = tol), center = T, scale = T),
+    amodiaquine_cont_scale_clst = my.scale(logit(amodiaquine_cont_clst, tol = tol), center = T, scale = T),
+    quinine_cont_scale_clst = my.scale(logit(quinine_cont_clst, tol = tol), center = T, scale = T),
+    act_cont_scale_clst = my.scale(logit(act_cont_clst, tol = tol), center = T, scale = T),
+    otherartm_cont_scale_clst = my.scale(logit(otherartm_cont_clst, tol = tol), center = T, scale = T),
+    other_cont_scale_clst = my.scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
+    anyatm_cont_scale_clst = my.scale(logit(anyatm_cont_clst, tol = tol), center = T, scale = T)
     ) %>% 
   dplyr::rename(hv001 = v001)  %>% 
   dplyr::mutate(hv001 = as.numeric(hv001)) %>% 
@@ -816,8 +816,8 @@ rdtmicro_sum <- rdtmicro_srvy %>%
     microprev_cont_clst = srvyr::survey_mean(hml32_numb, na.rm = T, vartype = c("se"))
   ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se"))) %>% 
-  dplyr::mutate(RDTprev_cont_scale_clst = scale(logit(RDTprev_cont_clst, tol = tol)),
-                microprev_cont_scale_clst = scale(logit(microprev_cont_clst, tol=tol)),
+  dplyr::mutate(RDTprev_cont_scale_clst = my.scale(logit(RDTprev_cont_clst, tol = tol)),
+                microprev_cont_scale_clst = my.scale(logit(microprev_cont_clst, tol=tol)),
                 hv001 = as.numeric(hv001))
 
 dt <- dplyr::left_join(dt, rdtmicro_sum, by = "hv001")

@@ -2,7 +2,7 @@
 # Purpose of this script is to do basic bivariate analyses
 #----------------------------------------------------------------------------------------------------
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_glms.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R") 
 library(tidyverse)
 library(survey)
 library(srvyr) #wrap the survey package in dplyr syntax
@@ -10,14 +10,19 @@ devtools::install_github("kaz-yos/tableone")
 library(tableone)
 library(stargazer)
 library(nlme)
-
+options(scipen=999)
 
 #......................
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-
-
+dcdr <- readxl::read_excel(path = "internal_datamap_files/DERIVED_covariate_map.xlsx", sheet = 1) %>% 
+  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
+                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
+dtsrvy <- makecd2013survey(survey = dt)
+dtnogeo <- dt
+sf::st_geometry(dtnogeo) <- NULL
+dtsrvy <- makecd2013survey(survey = dtnogeo)
 
 
 #----------------------------------------------------------------------------------------------------
@@ -46,39 +51,121 @@ xtabs(~pv18s + pfldh, data = dt)
 
 
 #----------------------------------------------------------------------------------------------------
-# TABLE ONE
+# TABLE ONE -- bivariate analyses, descriptive
 #----------------------------------------------------------------------------------------------------
 #......................
-# identify covariates
+# identify risk factors
 #......................
-vars <- colnames(dt)[grepl("_fctm|_fctb|_scaled", colnames(dt))]
-vars <- vars[vars %in% c("pv18s_fctb", "pv18s_fctb_sens")]
-
-#......................
-# bivariate analyses, covar vs. case
-#......................
-pvtbl1 <- tableone::svyCreateTableOne(data=dtsrvy)
+pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
+pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y" & dcdr$column_name != "pfldh_fctb"]
+pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 
 
-
-
+#.......................
+# Pvivax 
+#.......................
+pvivtbl1 <- tableone::svyCreateTableOne(
+                                      data = dtsrvy,
+                                      strata = "pv18s_fctb",
+                                      vars = pvivrskfctr,
+                                      includeNA = T,
+                                      test = F)
+#.......................
+# Pfalciparum 
+#.......................
+pfaltbl1 <- tableone::svyCreateTableOne(
+  data = dtsrvy,
+  strata = "pfldh_fctb",
+  vars = pvivrskfctr,
+  includeNA = T,
+  test = F)
 
 
 #----------------------------------------------------------------------------------------------------
 # TABLE 2
 # Parametric, Bivariate Analysis
-# Odds Ratios with Pv as the outcome
 # note, that svyglm is really doing GEE
 #----------------------------------------------------------------------------------------------------
-model_parameters <- data.frame(outcome = rep("pv18s_sens", length(vars)), 
-                               covar = vars, stringsAsFactors=FALSE)
+#.......................
+# Pvivax 
+#.......................
+pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
+pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
+                               covar = pvivrskfctr, stringsAsFactors=FALSE)
 
-model_parameters$glmlogit <- purrr::pmap(model_parameters, .f=fitsvyglm)
-model_parameters$glmlogit_tidy <- purrr::map(model_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
-options(scipen=999)
-est <- model_parameters$glmlogit_tidy %>% 
+pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
+pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlogit,
+                                             .f=function(x){
+                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+                                             )
+pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
+
+
+#.......................
+# Pfalciparum 
+#.......................
+pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y" & dcdr$column_name != "pfldh_fctb"]
+pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
+pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
+                               covar = pfalrskfctr, stringsAsFactors=FALSE)
+
+pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlogit)
+pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
+                                             .f=function(x){
+                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+)
+pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2)
+
+#----------------------------------------------------------------------------------------------------
+# Combine Table 1 and 2
+#----------------------------------------------------------------------------------------------------
+#.......................
+# Pvivax
+#.......................
+pvivtbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
+                                                           "Pvivax-Negative",
+                                                           "Pvivax-Positive",
+                                                           "matchcol"))
+
+pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
+                                           tabletwoestdf = pvivrskfctr_est)
+
+
+#.......................
+# Pfalciparum 
+#.......................
+pfaltbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
+                                                           "Pvivax-Negative",
+                                                           "Pvivax-Positive",
+                                                           "matchcol"))
+
+pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,
+                                           tabletwoestdf = pfalrskfctr_est)
+
+printriskfactortable2html(pfalriskfactortable) 
+
+
+# %>%
+#  row_spec(sig, bold = FALSE, background = "#FFD0D0FF")
+
+
+#----------------------------------------------------------------------------------------------------
+# Save out
+#----------------------------------------------------------------------------------------------------
+save(pvivtbl1, pfaltbl1, # table one output 
+     pvivrskfctr_models, pfalrskfctr_models, # model datatframes
+     pvivriskfactortable, pfalriskfactortable, # final out table for report
+     file = "results/bivariate_model_results.rda")
+
+
+#----------------------------------------------------------------------------------------------------
+# Playground
+#----------------------------------------------------------------------------------------------------
+
 
 
 m1 <- survey::svyglm(pv18s ~ hv025_fctb_clst, 
@@ -126,9 +213,6 @@ m2 <- survey::svyglm(pv18s ~ hml20_fctb_ind + pfldh_fctb_ind + hml20_fctb_ind*pf
                      family = quasibinomial("log"))
 broom::tidy(m2, exponentiate = T, conf.int = T)
 
-#----------------------------------------------------------------------------------------------------
-# Playground
-#----------------------------------------------------------------------------------------------------
 #...............
 # how strong of an effect is that pv cluster 81
 #..............
