@@ -2,23 +2,23 @@
 # Purpose of this script is to explore basic maps of Plasmodium infections in the CD2013 data
 #----------------------------------------------------------------------------------------------------
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_guassmap.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
 library(tidyverse)
 library(sf)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(RColorBrewer)
-library(PrevMap)
 
 
 #......................
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-options(survey.lonely.psu="certainty")
-dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = hv005_wi)
+dtsrvy <- makecd2013survey(survey = dt)
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+load("data/map_bases/vivid_maps_bases.rda")
 
 #----------------------------------------------------------------------------------------------------
-# Explore here the different prevalences/regions of Plasmodium species basic maps
+# Plasmodium Point Prevalence Maps (Province & Cluster)
 #----------------------------------------------------------------------------------------------------
 
 pfldhprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pfldh) %>% 
@@ -51,36 +51,9 @@ mp$data <- lapply(list(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, 
 #.............................
 # Plot Summary/Point Est Maps
 #..............................
-ptestmaps <- pmap(mp, mapplotter)
-ptestmaps <- map(ptestmaps, function(x){return(x + prettybasemap_nodrc)})
+pntestmaps <- pmap(mp, mapplotter)
+pntestmaps <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
 
-
-jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-prevmaps.jpg", width = 11, height = 8, units = "in", res=300)
-gridExtra::grid.arrange(
-                        ptestmaps[[1]], 
-                        ptestmaps[[2]], 
-                        ptestmaps[[3]], 
-                        ptestmaps[[4]], 
-                        ptestmaps[[5]], 
-                        ptestmaps[[6]], 
-                        nrow=2, top=grid::textGrob("Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-graphics.off()
-
-#..............................
-# Plot terrain cluster Maps
-#..............................
-# terrmaps <- mp %>% 
-#   dplyr::filter(maplvl == "hv001") %>% 
-#   dplyr::select(-c(maplvl)) %>% 
-#   purrr::pmap(., mapplotter_clust_terrain)
-# 
-# 
-# jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-pointpretty_terrainprevmaps.jpg", width = 11, height = 8, units = "in", res=300)
-# gridExtra::grid.arrange(terrmaps[[1]], 
-#                         terrmaps[[2]],
-#                         terrmaps[[3]],
-#                         ncol=3, top=grid::textGrob("Prevalence by Species in CD2013 DHS, Stamen Terrain Maps", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-# graphics.off()
 
 
 #----------------------------------------------------------------------------------------------------
@@ -145,19 +118,6 @@ prevhist <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspe
 
 
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
-gridExtra::grid.arrange(prevhist[[1]],
-                        prevhist[[2]],
-                        prevhist[[3]],
-                        zscoreprevmaps[[1]], 
-                        zscoreprevmaps[[2]],
-                        zscoreprevmaps[[3]],
-                        nrow=2, 
-                        top=grid::textGrob("Histograms and Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-graphics.off()
-
- 
-
 #......................
 # Plot logit zscores
 #......................
@@ -184,17 +144,6 @@ logitzscoremapplotter <- function(data, plsmdmspec){
 }
 
 logitzscoremapplotterprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), logitzscoremapplotter)
-
-
-jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-logit-zscoremaps.jpg", width = 11, height = 8, units="in", res=300)
-gridExtra::grid.arrange(
-                        logitzscoremapplotterprevmaps[[1]],
-                        logitzscoremapplotterprevmaps[[2]],
-                        logitzscoremapplotterprevmaps[[3]],
-                        nrow=1,
-                        top=grid::textGrob("Logit Standardized Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold")))
-graphics.off()
-
 
 
 
@@ -232,68 +181,30 @@ caseprevmaps <- pmap(list(data = clusters$data, plsmdmspec = clusters$plsmdmspec
 caseprevmaps <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
 
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-case-maps.jpg", width = 11, height = 8, units="in", res=300)
-gridExtra::grid.arrange(
-  caseprevmaps[[1]], 
-  caseprevmaps[[2]],
-  caseprevmaps[[3]],
-  nrow=1, 
-  top=grid::textGrob("Case Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-graphics.off()
-
 
  
  #----------------------------------------------------------------------------------------------------
  # Ape Map Distributions
  #----------------------------------------------------------------------------------------------------
+ape <- readRDS("data/redlist_species_data_primate/drc_ape.rds")
 aperange_nhapv <- ggplot() +
    geom_sf(data = DRCprov, fill = "#d9d9d9") +
    geom_point(data = left_join(mp$data[[5]], dt[,c("hv001", "latnum", "longnum")], by = "hv001"), 
               aes(x=longnum, y=latnum, colour = plsmdprev, size = n), alpha = 0.8) +
    scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
    scale_size(guide = 'none') +
-   geom_sf(data = ape, aes(fill = BINOMIAL), alpha = 0.4) +
+   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
    scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3")) +
    prettybasemap_nodrc +
    theme(legend.position = "bottom",
          plot.background = element_blank())
 
- jpeg("~/Documents/GitHub/VivID_Epi/figures/04-aperange_nhapvprev.jpg", width = 8, height = 8, res = 400, units = "in")
- plot(aperange_nhapv)
- graphics.off()
- 
- 
- 
- 
- 
+
  #----------------------------------------------------------------------------------------------------
- # Pv & Pf Figure out
+ # Save Objects & Write out
  #----------------------------------------------------------------------------------------------------
- jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-vivax-prev.jpg", width = 11, height = 8, units="in", res=300)
- gridExtra::grid.arrange(
-   ptestmaps[[2]], 
-   caseprevmaps[[2]],
-   prevmaprasterplots[[2]],
-   nrow=1, 
-   top=grid::textGrob("Case Prevalence for Vivax in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
- graphics.off()
  
- jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-falcip-prev.jpg", width = 11, height = 8, units="in", res=300)
- gridExtra::grid.arrange(
-   ptestmaps[[1]], 
-   caseprevmaps[[1]],
-   prevmaprasterplots[[1]],
-   nrow=1, 
-   top=grid::textGrob("Case Prevalence for Falciparum in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
- graphics.off()
- #----------------------------------------------------------------------------------------------------
- # Save Objects for Reports
- # Write out
- #----------------------------------------------------------------------------------------------------
- save(mp, pr, file = "data/04-basic_mapping_data.rda")
- 
- out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
- if(!dir.exists(out)){dir.create(out)}
- save(ptestmaps, prevhist, zscoreprevmaps, caseprevmaps, aperange_nhapv,
-      mp, pr, 
-      file = paste0(out, "/", "04-basic_mapping_objs.rda"))
+saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
+
+save(pntestmaps, prevhist, zscoreprevmaps, caseprevmaps, aperange_nhapv,
+      file = "results/basic_maps_results.rda")

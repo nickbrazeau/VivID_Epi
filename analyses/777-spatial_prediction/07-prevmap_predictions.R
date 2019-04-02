@@ -1,14 +1,22 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to create a spatial prediction model
 #----------------------------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+library(tidyverse)
+library(sf)
+library(srvyr) #wrap the survey package in dplyr syntax
+library(PrevMap)
 
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-options(survey.lonely.psu="certainty")
-dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, strata = hv023, weights = hv005_wi)
+load("data/map_bases/vivid_maps_bases.rda")
+
+# Summarize by Cluster
+mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+mp <- mp %>% 
+  dplyr::filter(maplvl == "hv001") 
 
 #spatial from the DHS -- these are cluster level vars
 ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
@@ -19,19 +27,14 @@ ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled thi
 ge <- ge %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
+mp$data <- lapply(mp$data, function(x){
+  return( dplyr::left_join(x = x, y = ge, by ="hv001") )
+})
+
 
 #......................
 # Summarize by Cluster
 #......................
-pfldhclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pfldh) %>% 
-  dplyr::mutate(plsmdmspec = "pfldh", maplvl = "hv001") %>% 
-  dplyr::left_join(x=., y = ge)
-pv18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pv18s) %>% 
-  dplyr::mutate(plsmdmspec = "pv18s", maplvl = "hv001") %>% 
-  dplyr::left_join(x=., y = ge)
-po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = po18s) %>% 
-  dplyr::mutate(plsmdmspec = "po18s", maplvl = "hv001") %>% 
-  dplyr::left_join(x=., y = ge)
 
 
 
@@ -40,7 +43,7 @@ po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdms
 #----------------------------------------------------------------------------------------------------
 
 # bind those to a tibble
-pr <- dplyr::bind_rows(pfldhclust, pv18sclust, po18sclust) %>% 
+pr <- dplyr::bind_rows(mp$data) %>% 
   dplyr::group_by(plsmdmspec) %>% 
   tidyr::nest()
 
@@ -71,41 +74,37 @@ prevmaprasterplots <- lapply(pr$prevrasterspred,
 prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
 
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/figures/04-guassian-prev-maps.jpg", width = 11, height = 8, units="in", res=300)
-gridExtra::grid.arrange(
-  prevmaprasterplots[[1]], 
-  prevmaprasterplots[[2]],
-  prevmaprasterplots[[3]],
-  nrow=1, 
-  top=grid::textGrob("Smoothed Prevalence by Species in CD2013 DHS", gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
-graphics.off()
 
 
+#----------------------------------------------------------------------------------------------------
+# Save Objects & Write out
+#----------------------------------------------------------------------------------------------------
 
-#.............................
-# prev clusters
-#..............................
+saveRDS(pr, file = "data/derived_data/basic_prevmap_mapping_data.rds")
+saveRDS(prevmaprasterplots, file = "results/prevmap_raster_plots.rds")
+
+
 
 #..........................
 # spatial kernel densities
 #..........................
-cases <- dt[dt$pv18s == 1, ]
-
-casedens <- MASS::kde2d(x = cases$longnum, 
-                 y = cases$latnum,
-                 n=1e3,
-            lims = c(bb[1,], bb[2,]))
-
-contour(casedens)
-
-
-controls <- dt[dt$pv18s == 0, ]
-condens <- MASS::kde2d(x = controls$longnum, 
-                    y = controls$latnum,
-                    n=1e3,
-                    lims = c(bb[1,], bb[2,]))
-
-contour(condens)
+# cases <- dt[dt$pv18s == 1, ]
+# 
+# casedens <- MASS::kde2d(x = cases$longnum, 
+#                  y = cases$latnum,
+#                  n=1e3,
+#             lims = c(bb[1,], bb[2,]))
+# 
+# contour(casedens)
+# 
+# 
+# controls <- dt[dt$pv18s == 0, ]
+# condens <- MASS::kde2d(x = controls$longnum, 
+#                     y = controls$latnum,
+#                     n=1e3,
+#                     lims = c(bb[1,], bb[2,]))
+# 
+# contour(condens)
 
 
 

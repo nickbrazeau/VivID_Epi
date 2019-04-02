@@ -75,13 +75,15 @@ corrplot <- ggcorrplot::ggcorrplot(dtrskfctr.corr,
   ggtitle("Covariate Correlation Matrix") +
   vivid_theme +
   theme(legend.position = "right", 
-        legend.text = element_text(angle = 0))
+        legend.text = element_text(angle = 0),
+        axis.text = element_text(size = 5),
+        panel.border = element_blank())
 
 #......................
 # Look at vif
 #......................
 rskfctr_ind <- dcdr %>% 
-  dplyr::filter(risk_factor == "y" & level == "individual") %>% 
+  dplyr::filter(risk_factor_model == "y" & level == "individual") %>% 
   dplyr::filter(! column_name %in% c("insctcd_fctm")) %>%   # takes into account hml20 -- will be perfectly collinear for NO. This is an exploratory var only
   dplyr::select("column_name") %>% 
   unlist(.)
@@ -121,10 +123,8 @@ car::vif(model.sat.nohouse) # no house nearly halves it
 #......................
 # Results & Out
 #......................
-saveRDS(corrplot, file = "results/covariate_correlation_plot.rds")
-jpeg(filename = "results/figures/covariate_correlation_plot.jpg", width = 12, height = 12, units = "in", res = 500)
-corrplot
-graphics.off()
+saveRDS(dtrskfctr.corr, file = "data/derived_data/covariate_correlation_data.rds")
+
 
 
 

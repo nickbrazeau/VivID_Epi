@@ -653,6 +653,11 @@ xtabs(~dt$ape_habitat_fctb_clst)
 #.............
 # Distance to Water Source
 #.............
+wtrdist_out <- readRDS("data/derived_data/hotosm_waterways_dist.rds")
+dt <- dt %>% 
+  dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
+  dplyr::mutate(wtrdist_cont_log_scale_clst = my.scale(log(wtrdist_cont_clst + tol), center = T, scale = T)
+                )
 
 
 #..........................................................................................
@@ -676,7 +681,11 @@ xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025), addNA = T) # looks
 #.............
 # Distance to Health Site
 #.............
-
+hlthdist_out <- readRDS("data/derived_data/hotosm_healthsites_dist.rds")
+dt <- dt %>% 
+  dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
+  dplyr::mutate(hlthdist_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T)
+                )
 
 #.............
 # LLIN Cluster Usage; median wealth; median educ; health insur

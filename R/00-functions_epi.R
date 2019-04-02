@@ -19,6 +19,8 @@ tableone2dataframe <- function(x, columnnames){
                   pos = gsub("\\(", " (", pos),
                   matchcol = stringr::str_split_fixed(covarsraw, " ", n = 2)[,1]) %>% 
     magrittr::set_colnames(columnnames)
+  
+  return(out)
 }
 
 

@@ -28,14 +28,14 @@ wtrply <- sf::read_sf("data/raw_data/hotosm_data/hotosm_cod_waterways_polygons_s
   dplyr::filter(water == "lake") %>% 
   dplyr::select(c("osm_id", "water", "geometry"))
 
-wtr <-sf::st_combine(rbind(wtrlns, wtrply))
+wtr <- sf::st_combine(rbind(wtrlns, wtrply))
 wtr <-  sf::st_union( wtr )
 
 wtrdist <- sf::st_distance(x = ge,
                             y = wtr)
 wtrdist_out <- data.frame(
   hv001 = ge$dhsclust,
-  hlthdist_cont_clst = apply(wtrdist, 1, min)
+  wtrdist_cont_clst = apply(wtrdist, 1, min)
 )
 #----------------------------------------------------------------------------------------------------
 # Health Sites
@@ -45,7 +45,7 @@ hlthsites <- sf::read_sf("data/raw_data/hotosm_data/hotosm_drc_healthsites_shape
 htlhdist <- sf::st_distance(x = ge,
                              y = hlthsites)
 
-htlhdist_out <- data.frame(
+hlthdist_out <- data.frame(
   hv001 = ge$dhsclust,
   hlthdist_cont_clst = apply(htlhdist, 1, min)
 )
@@ -56,4 +56,4 @@ htlhdist_out <- data.frame(
 # write out
 #----------------------------------------------------------------------------------------------------
 saveRDS(object = wtrdist_out, file = "data/derived_data/hotosm_waterways_dist.rds")
-saveRDS(object = htlhdist_out, file = "data/derived_data/hotosm_healthsites_dist.rds")
+saveRDS(object = hlthdist_out, file = "data/derived_data/hotosm_healthsites_dist.rds")

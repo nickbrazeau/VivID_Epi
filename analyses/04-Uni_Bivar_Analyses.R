@@ -130,6 +130,17 @@ pvivtbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
                                                            "Pvivax-Negative",
                                                            "Pvivax-Positive",
                                                            "matchcol"))
+pvivtbl1df <- dcdr %>% 
+  dplyr::select(c("column_name", "var_label")) %>% 
+  dplyr::rename(matchcol = column_name) %>% 
+  dplyr::left_join(pvivtbl1df, ., by = "matchcol") %>% 
+  dplyr::select(c("var_label", dplyr::everything()))
+
+# Remember, all continuous variables are scaled in the models but not in the original distributions
+pvivtbl1df <- pvivtbl1df %>% 
+  dplyr::mutate(matchcol = ifelse(stringr::str_detect(matchcol, "_cont"), paste0(matchcol, "_scale"), matchcol))
+
+
 
 pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
                                            tabletwoestdf = pvivrskfctr_est)
@@ -139,18 +150,24 @@ pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
 # Pfalciparum 
 #.......................
 pfaltbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
-                                                           "Pvivax-Negative",
-                                                           "Pvivax-Positive",
+                                                           "Pfalciparum-Negative",
+                                                           "Pfalciparum-Positive",
                                                            "matchcol"))
+
+pfaltbl1df <- dcdr %>% 
+  dplyr::select(c("column_name", "var_label")) %>% 
+  dplyr::rename(matchcol = column_name) %>% 
+  dplyr::left_join(pfaltbl1df, ., by = "matchcol") %>% 
+  dplyr::select(c("var_label", dplyr::everything()))
+
+# Remember, all continuous variables are scaled in the models but not in the original distributions
+pfaltbl1df <- pfaltbl1df %>% 
+  dplyr::mutate(ifelse(stringr::str_detect(matchcol, "_cont"), paste0(matchcol, "_scale"), matchcol))
+
 
 pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,
                                            tabletwoestdf = pfalrskfctr_est)
 
-printriskfactortable2html(pfalriskfactortable) 
-
-
-# %>%
-#  row_spec(sig, bold = FALSE, background = "#FFD0D0FF")
 
 
 #----------------------------------------------------------------------------------------------------
@@ -164,95 +181,95 @@ save(pvivtbl1, pfaltbl1, # table one output
 
 #----------------------------------------------------------------------------------------------------
 # Playground
-#----------------------------------------------------------------------------------------------------
-
-
-
-m1 <- survey::svyglm(pv18s ~ hv025_fctb_clst, 
-                           design = dtsrvy,
-                           family = quasibinomial(link = "log"))
-broom::tidy(m1, exponentiate = T, conf.int=TRUE)
-
-contrast::contrast(m1,
-         a=list(hv025_fctb_clst = "rural"),
-         b=list(hv025_fctb_clst = "urban"))
-
-
-
-
-
-
-
-
-
-pfmodel_parameters <- data.frame(outcome = rep("pfldh", length(vars)), 
-                               covar = vars, stringsAsFactors=FALSE)
-
-pfmodel_parameters$glmlogit <- purrr::pmap(pfmodel_parameters, .f=fitsvyglm)
-pfmodel_parameters$glmlogit_tidy <- purrr::map(pfmodel_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
-
-
-pomodel_parameters <- data.frame(outcome = rep("po18s", length(vars)), 
-                                 covar = vars, stringsAsFactors=FALSE)
-
-pomodel_parameters$glmlogit <- purrr::pmap(pomodel_parameters, .f=
-                                             )
-pomodel_parameters$glmlogit_tidy <- purrr::map(pomodel_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
-poest <- pomodel_parameters$glmlogit_tidy %>% 
-  bind_rows() %>% filter(term != "(Intercept)") %>% 
-  mutate_if(is.numeric, round, 2)
-
-
-m1 <- survey::svyglm(pv18s ~ hml20_fctb_ind + pfldh_fctb_ind, 
-                     design = dtsrvy, 
-                     family = quasibinomial("log"))
-broom::tidy(m1, exponentiate = T, conf.int = T)
-
-m2 <- survey::svyglm(pv18s ~ hml20_fctb_ind + pfldh_fctb_ind + hml20_fctb_ind*pfldh_fctb_ind, 
-                     design = dtsrvy, 
-                     family = quasibinomial("log"))
-broom::tidy(m2, exponentiate = T, conf.int = T)
-
-#...............
-# how strong of an effect is that pv cluster 81
-#..............
-
-
-#...............
-# look at household level
-#..............
-houseindex <- dt %>% 
-  group_by(houseid) %>% 
-  summarise(n = n(), cases = sum(pv18s), houseinfctperc = cases/n)
-hist(houseindex$houseinfctperc)
-
-
-#...............
-# treating bednets as a confounder (if pf is a mediator)
-#..............
-m1 <- survey::svyglm(pv18s ~ pfldh_fctb + hml20_fctb + pfldh_fctb*hml20_fctb, 
-                     design = dtsrvy,
-                     family = quasibinomial("logit"))
-
-broom::tidy(m1, exponentiate = T, conf.int = T)
-
-m2 <- glm(pv18s ~ pfldh_fctb + hml20_fctb + pfldh_fctb*hml20_fctb, 
-                     data = dt,
-                     family = quasibinomial("logit"))
-
-broom::tidy(m2, exponentiate = T, conf.int = T)
-
-contrast::contrast(m2,
-         a=list(hml20_fctb = "yes", pfldh_fctb = "falneg"),
-         b=list(hml20_fctb = "no", pfldh_fctb = "falneg"))
-
-
-
-#----------------------------------------------------------------------------------------------------
-# Save Objects for Reports
-#----------------------------------------------------------------------------------------------------
-out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
-if(!dir.exists(out)){dir.create(out)}
-
-save(pftbl1, pvtbl1, model_parameters, file = paste0(out, "/", "03-Uni_Bivar_analyses.rda"))
-
+# #----------------------------------------------------------------------------------------------------
+# 
+# 
+# 
+# m1 <- survey::svyglm(pv18s ~ hv025_fctb_clst, 
+#                            design = dtsrvy,
+#                            family = quasibinomial(link = "log"))
+# broom::tidy(m1, exponentiate = T, conf.int=TRUE)
+# 
+# contrast::contrast(m1,
+#          a=list(hv025_fctb_clst = "rural"),
+#          b=list(hv025_fctb_clst = "urban"))
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# pfmodel_parameters <- data.frame(outcome = rep("pfldh", length(vars)), 
+#                                covar = vars, stringsAsFactors=FALSE)
+# 
+# pfmodel_parameters$glmlogit <- purrr::pmap(pfmodel_parameters, .f=fitsvyglm)
+# pfmodel_parameters$glmlogit_tidy <- purrr::map(pfmodel_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
+# 
+# 
+# pomodel_parameters <- data.frame(outcome = rep("po18s", length(vars)), 
+#                                  covar = vars, stringsAsFactors=FALSE)
+# 
+# pomodel_parameters$glmlogit <- purrr::pmap(pomodel_parameters, .f=
+#                                              )
+# pomodel_parameters$glmlogit_tidy <- purrr::map(pomodel_parameters$glmlogit, .f=function(x) broom::tidy(x, exponentiate=TRUE, conf.int=TRUE))
+# poest <- pomodel_parameters$glmlogit_tidy %>% 
+#   bind_rows() %>% filter(term != "(Intercept)") %>% 
+#   mutate_if(is.numeric, round, 2)
+# 
+# 
+# m1 <- survey::svyglm(pv18s ~ hml20_fctb_ind + pfldh_fctb_ind, 
+#                      design = dtsrvy, 
+#                      family = quasibinomial("log"))
+# broom::tidy(m1, exponentiate = T, conf.int = T)
+# 
+# m2 <- survey::svyglm(pv18s ~ hml20_fctb_ind + pfldh_fctb_ind + hml20_fctb_ind*pfldh_fctb_ind, 
+#                      design = dtsrvy, 
+#                      family = quasibinomial("log"))
+# broom::tidy(m2, exponentiate = T, conf.int = T)
+# 
+# #...............
+# # how strong of an effect is that pv cluster 81
+# #..............
+# 
+# 
+# #...............
+# # look at household level
+# #..............
+# houseindex <- dt %>% 
+#   group_by(houseid) %>% 
+#   summarise(n = n(), cases = sum(pv18s), houseinfctperc = cases/n)
+# hist(houseindex$houseinfctperc)
+# 
+# 
+# #...............
+# # treating bednets as a confounder (if pf is a mediator)
+# #..............
+# m1 <- survey::svyglm(pv18s ~ pfldh_fctb + hml20_fctb + pfldh_fctb*hml20_fctb, 
+#                      design = dtsrvy,
+#                      family = quasibinomial("logit"))
+# 
+# broom::tidy(m1, exponentiate = T, conf.int = T)
+# 
+# m2 <- glm(pv18s ~ pfldh_fctb + hml20_fctb + pfldh_fctb*hml20_fctb, 
+#                      data = dt,
+#                      family = quasibinomial("logit"))
+# 
+# broom::tidy(m2, exponentiate = T, conf.int = T)
+# 
+# contrast::contrast(m2,
+#          a=list(hml20_fctb = "yes", pfldh_fctb = "falneg"),
+#          b=list(hml20_fctb = "no", pfldh_fctb = "falneg"))
+# 
+# 
+# 
+# #----------------------------------------------------------------------------------------------------
+# # Save Objects for Reports
+# #----------------------------------------------------------------------------------------------------
+# out <- "~/Documents/GitHub/VivID_Epi/reports/report_obj"
+# if(!dir.exists(out)){dir.create(out)}
+# 
+# save(pftbl1, pvtbl1, model_parameters, file = paste0(out, "/", "03-Uni_Bivar_analyses.rda"))
+# 

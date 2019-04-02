@@ -11,7 +11,6 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 #----------------------------------------------------------------------------------------------------
 prev_point_est_summarizer <- function(design, maplvl, plsmdmspec){
   
-  
   # rlang
   maplvl <- enquo(maplvl)
   plsmdmspec <- enquo(plsmdmspec)
@@ -23,8 +22,8 @@ prev_point_est_summarizer <- function(design, maplvl, plsmdmspec){
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
                      plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
-    
-    dplyr::mutate(logitplsmdprev = logit(plsmdprev))
+    dplyr::mutate(logitplsmdprev = logit(plsmdprev, tol = 1e-3))
+  
   # return
   return(ret)
 }
