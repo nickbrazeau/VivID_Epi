@@ -14,16 +14,16 @@ editor_options:
   chunk_output_type: console
 --- 
 
-<style>
-  .col2 {
-    columns: 2 200px;         /* number of columns and width in pixels*/
-    -webkit-columns: 2 200px; /* chrome, safari */
-    -moz-columns: 2 200px;    /* firefox */
-  }
-<style>
+<!-- <style> -->
+<!--   .col2 { -->
+<!--     columns: 2 200px;         /* number of columns and width in pixels*/ -->
+<!--     -webkit-columns: 2 200px; /* chrome, safari */ -->
+<!--     -moz-columns: 2 200px;    /* firefox */ -->
+<!--   } -->
+<!-- <style> -->
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+knitr::opts_chunk$set(echo = T, warning = F, message = F)
 ```
 ```{r, imports}
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
@@ -67,11 +67,13 @@ Extensive recoding was performed both for merging samples to the CD2013 DHS data
 ## Risk Factors -- Traditional Epi 
 See "Covariate Recoding" and "Covariate Association Predictions" above for a complete list of predicted asscociations. Of note, among the ~500 potential infections, only three individuals were Duffy-positive (heterozygtoe genotype). Given this near fixation of the Duffy negative phenotype, it was not considered further in risk factor analyses. 
 ```{r import risk factors}
+
 load("~/Documents/GitHub/VivID_Epi/results/bivariate_model_results.rda")
+
 ```
 
 ### Distributions & Bivariate Estimates {.tabset .tabset-fade .tabset-pill}
-All continuous variables are scaled for parametric estimates.   Signficant variables are highlighted in blue and all cluster-level covariates are italicized. 
+All continuous variables are scaled for parametric estimates.   Signficant variables are highlighted in blue and all _cluster-level covariates are italicized_. 
   
 
 #### _P. vivax_ Risk Factors 
@@ -84,14 +86,14 @@ pvivriskfactortable <- pvivriskfactortable %>%
        stringr::str_detect(Covariates,
                     "\\s\\s\\s[a-z]|\\s\\s\\s[A-Z]"), "", Covariates)
   ) %>% 
-  dplyr::select(c("Covariates", "levels", "Pvivax-Negative", "Pvivax-Positive", "estimate", "conf.low", "conf.high"))
+  dplyr::select(c("var_label", "Covariates", "levels", "Pvivax-Negative", "Pvivax-Positive", "estimate", "conf.low", "conf.high"))
 
 sigrows <- which(pvivriskfactortable$conf.low < 1 & pvivriskfactortable$conf.high < 1 
                  | pvivriskfactortable$conf.low > 1 & pvivriskfactortable$conf.high > 1)
 
 clusterrows <- which(grepl("_clst", pvivriskfactortable$Covariates))
 
-
+pvivriskfactortable[is.na(pvivriskfactortable)] <- ""
 pvivriskfactortable %>% 
   knitr::kable(., "html") %>%  # note must tell kableExtra html or latex
   kableExtra::kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>% 
@@ -111,14 +113,14 @@ pfalriskfactortable <- pfalriskfactortable %>%
        stringr::str_detect(Covariates,
             "\\s\\s\\s[a-z]|\\s\\s\\s[A-Z]"), "", Covariates)
   ) %>% 
-  dplyr::select(c("Covariates", "levels", "Pfalciparum-Negative", "Pfalciparum-Positive", "estimate", "conf.low", "conf.high"))
+  dplyr::select(c("var_label", "Covariates", "levels", "Pfalciparum-Negative", "Pfalciparum-Positive", "estimate", "conf.low", "conf.high"))
 
 sigrows <- which(pfalriskfactortable$conf.low < 1 & pfalriskfactortable$conf.high < 1 
                  | pfalriskfactortable$conf.low > 1 & pfalriskfactortable$conf.high > 1)
 
 clusterrows <- which(grepl("_clst", pfalriskfactortable$Covariates))
 
-
+pfalriskfactortable[is.na(pfalriskfactortable)] <- ""
 pfalriskfactortable %>% 
   knitr::kable(., "html") %>%  # note must tell kableExtra html or latex
   kableExtra::kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>% 
@@ -218,9 +220,8 @@ These interventions were all identified in the literature as recent, scalable, c
 
 #### Due Diligence
 ```{r import due diligence}
+
 dtrskfctr.corr <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/covariate_correlation_data.rds")
-
-
 
 ```
 
@@ -274,12 +275,17 @@ load("~/Documents/GitHub/VivID_Epi/results/llin_iptw_models.rda")
 
 #### LLIN
 
-<div class="col2">
+<!-- <div class="col2"> -->
+##### Unweighted "Table One"
 ```{r}
 tableone::kableone(llintable_orig)
+```
+
+##### IPTW-weighted "Table One"
+```{r}
 tableone::kableone(llintable_iptw)
 ```
-</div>
+<!-- </div> -->
 
 ```{r}
 

@@ -8,15 +8,14 @@ library(survey)
 library(srvyr) #wrap the survey package in dplyr syntax
 devtools::install_github("kaz-yos/tableone")
 library(tableone)
-library(stargazer)
-library(nlme)
+
 options(scipen=999)
 
 #......................
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "internal_datamap_files/DERIVED_covariate_map.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
 dtsrvy <- makecd2013survey(survey = dt)
@@ -57,7 +56,7 @@ xtabs(~pv18s + pfldh, data = dt)
 # identify risk factors
 #......................
 pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
-pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y" & dcdr$column_name != "pfldh_fctb"]
+pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y" & dcdr$column_name != "pfldh_fctb" & dcdr$column_name != "pfldh_cont_clst" ]
 pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 
 
@@ -76,7 +75,7 @@ pvivtbl1 <- tableone::svyCreateTableOne(
 pfaltbl1 <- tableone::svyCreateTableOne(
   data = dtsrvy,
   strata = "pfldh_fctb",
-  vars = pvivrskfctr,
+  vars = pfalrskfctr,
   includeNA = T,
   test = F)
 
@@ -120,6 +119,9 @@ pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>%
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
+
+
+
 #----------------------------------------------------------------------------------------------------
 # Combine Table 1 and 2
 #----------------------------------------------------------------------------------------------------
@@ -138,8 +140,8 @@ pvivtbl1df <- dcdr %>%
 
 # Remember, all continuous variables are scaled in the models but not in the original distributions
 pvivtbl1df <- pvivtbl1df %>% 
-  dplyr::mutate(matchcol = ifelse(stringr::str_detect(matchcol, "_cont"), paste0(matchcol, "_scale"), matchcol))
-
+  dplyr::mutate(matchcol = gsub("_cont_clst", "_cont_scale_clst", matchcol),
+                matchcol = gsub("_cont$", "_cont_scale", matchcol))
 
 
 pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
@@ -149,7 +151,7 @@ pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
 #.......................
 # Pfalciparum 
 #.......................
-pfaltbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
+pfaltbl1df <- tableone2dataframe(pfaltbl1, columnnames = c("Covariates",
                                                            "Pfalciparum-Negative",
                                                            "Pfalciparum-Positive",
                                                            "matchcol"))
@@ -162,7 +164,8 @@ pfaltbl1df <- dcdr %>%
 
 # Remember, all continuous variables are scaled in the models but not in the original distributions
 pfaltbl1df <- pfaltbl1df %>% 
-  dplyr::mutate(ifelse(stringr::str_detect(matchcol, "_cont"), paste0(matchcol, "_scale"), matchcol))
+  dplyr::mutate(matchcol = gsub("_cont_", "_cont_scale_", matchcol),
+                matchcol = gsub("_cont$", "_cont_scale", matchcol))
 
 
 pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,

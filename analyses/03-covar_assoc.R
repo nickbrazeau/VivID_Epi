@@ -87,6 +87,7 @@ rskfctr_ind <- dcdr %>%
   dplyr::filter(! column_name %in% c("insctcd_fctm")) %>%   # takes into account hml20 -- will be perfectly collinear for NO. This is an exploratory var only
   dplyr::select("column_name") %>% 
   unlist(.)
+# rskfctr_ind <- c(rskfctr_ind, "urbanscore_fctm_clust")
 
 eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind, collapse = "+")))
 model.sat <- survey::svyglm(eq,
@@ -94,6 +95,7 @@ model.sat <- survey::svyglm(eq,
                family = quasibinomial(link="logit"))
 summary(model.sat)
 car::vif(model.sat)
+
 
 # old wealth
 rskfctr_ind_old_wlth <- rskfctr_ind[!grepl("wlth", rskfctr_ind)]
@@ -119,6 +121,43 @@ model.sat.nohouse <- survey::svyglm(eq,
                             family = quasibinomial(link="logit"))
 summary(model.sat.nohouse)
 car::vif(model.sat.nohouse) # no house nearly halves it
+
+# no insurance
+rskfctr_ind_noinsu <- rskfctr_ind[!grepl("hab481_fctb", rskfctr_ind)]
+eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_noinsu, collapse = "+")))
+model.sat.insur <- survey::svyglm(eq,
+                                    design = dtsrvy,
+                                    family = quasibinomial(link="logit"))
+summary(model.sat.insur)
+car::vif(model.sat.insur) # no insurance doesn't make a dent
+
+# no house & no insurance
+rskfctr_ind_nohousenoinsu <- rskfctr_ind[!grepl("hv21345|hab481_fctb", rskfctr_ind)]
+eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_nohousenoinsu, collapse = "+")))
+model.sat.nohousenoinsu <- survey::svyglm(eq,
+                                    design = dtsrvy,
+                                    family = quasibinomial(link="logit"))
+summary(model.sat.nohousenoinsu)
+car::vif(model.sat.nohousenoinsu) # no house nearly halves it
+
+
+# just looking at insurance
+insu <- survey::svyglm("pv18s ~ wlthrcde_fctm + hab481_fctb",
+               design = dtsrvy,
+               family = quasibinomial(link="logit"))
+
+summary(insu)
+car::vif(insu) # no house nearly halves it
+
+# just looking at insurance
+wlth <- survey::svyglm("pv18s ~ wlthrcde_fctm + urbanscore_fctm_clust",
+                       design = dtsrvy,
+                       family = quasibinomial(link="logit"))
+
+summary(wlth)
+car::vif(wlth) # no house nearly halves it
+
+
 
 #......................
 # Results & Out

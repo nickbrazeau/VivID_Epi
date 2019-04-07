@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this to calculate IPW for LLIN
+# Purpose of this to calculate IPW for Health Insurance
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(srvyr)
@@ -19,7 +19,6 @@ dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.
                 bldmtrl_causal_model = ifelse(is.na(bldmtrl_causal_model), "n", bldmtrl_causal_model)
                 
   )
-
 sf::st_geometry(dt) <- NULL
 
 
@@ -29,24 +28,25 @@ sf::st_geometry(dt) <- NULL
 # Based on our DAG (http://dagitty.net/development/dags.html?id=jKNQhB#)
 # we have identified wealth, education, age, and sex as confounders 
 # but will use all potential confounders
-llinmdl <- dcdr$column_name[dcdr$llin_causal_model == "y"]
+hlthinsnmdl <- dcdr$column_name[dcdr$hlthinsrnc_causal_model == "y"]
 
-llin <- dt %>% 
-  dplyr::select(c("pv18s" , "pfldh", "hv005_wi", llinmdl, 
+hlthins <- dt %>% 
+  dplyr::select(c("pv18s" , "pfldh", "hv005_wi", hlthinsnmdl, 
                   "longnum", "latnum"))
+
 #......................
 # final preprocess
 #......................
 # check for class imbalance
-xtabs(~llin$hml20_fctb)
+xtabs(~hlthins$hab481_fctb)
 # make sure recoding worked
-mlr::summarizeColumns(llin) %>% 
+mlr::summarizeColumns(hlthins) %>% 
   dplyr::mutate_if(is.numeric, round, 2)
 # check missingness
-mice::md.pattern(llin, rotate.names = T)
+mice::md.pattern(hlthins, rotate.names = T)
 
 # MCAR assumption (revisit)
-llin <- llin %>% 
+hlthins <- hlthins %>% 
   dplyr::filter(complete.cases(.))
 
 
@@ -58,30 +58,30 @@ llin <- llin %>%
 resamp_sp <- mlr::makeResampleDesc("SpRepCV", fold = 5, reps = 100)
 
 # TRAIN set & TEST set
-n <- nrow(llin)
+n <- nrow(hlthins)
 partition <- sample(1:n, size = n*0.8)
-full <-   llin[,           !colnames(llin) %in% c("pfldh", "pv18s", "hv005_wi")]
-train <-  llin[partition,  !colnames(llin) %in% c("pfldh", "pv18s", "hv005_wi")]
-test <-   llin[-partition, !colnames(llin) %in% c("pfldh", "pv18s", "hv005_wi")]
+full <-   hlthins[,           !colnames(hlthins) %in% c("pfldh", "pv18s", "hv005_wi")]
+train <-  hlthins[partition,  !colnames(hlthins) %in% c("pfldh", "pv18s", "hv005_wi")]
+test <-   hlthins[-partition, !colnames(hlthins) %in% c("pfldh", "pv18s", "hv005_wi")]
 
 # TASK
-llin.classif.train <- mlr::makeClassifTask(id = "LLIN_IPW", 
-                                           data = train, 
-                                           target = "hml20_fctb",
-                                           positive = "yes",
-                                           coordinates = train[,c("longnum", "latnum")])
+hlthins.classif.train <- mlr::makeClassifTask(id = "HealthInsurance_IPW", 
+                                              data = train, 
+                                              target = "hab481_fctb",
+                                              positive = "yes",
+                                              coordinates = train[,c("longnum", "latnum")])
 
-llin.classif.test <- mlr::makeClassifTask( id = "LLIN_IPW", 
-                                           data = test, 
-                                           target = "hml20_fctb",
-                                           positive = "yes",
-                                           coordinates = test[,c("longnum", "latnum")])
+hlthins.classif.test <- mlr::makeClassifTask( id = "HealthInsurance_IPW", 
+                                              data = test, 
+                                              target = "hab481_fctb",
+                                              positive = "yes",
+                                              coordinates = test[,c("longnum", "latnum")])
 
-llin.classif <- mlr::makeClassifTask(      id = "LLIN_IPW", 
-                                           data = full, 
-                                           target = "hml20_fctb",
-                                           positive = "yes",
-                                           coordinates = full[,c("longnum", "latnum")])
+hlthins.classif <- mlr::makeClassifTask(      id = "HealthInsurance_IPW", 
+                                              data = full, 
+                                              target = "hab481_fctb",
+                                              positive = "yes",
+                                              coordinates = full[,c("longnum", "latnum")])
 
 
 #-------------------------------------------------------------------
@@ -90,22 +90,31 @@ llin.classif <- mlr::makeClassifTask(      id = "LLIN_IPW",
 # https://mlr.mlr-org.com/articles/tutorial/integrated_learners.html
 base.lrns <- lapply(c("classif.logreg",
                       "classif.glmnet", 
-#                      "classif.svm",
-#                      "classif.gausspr",
-#                      "classif.gbm",
-#                      "classif.kknn",
+                      #                      "classif.svm",
+                      #                      "classif.gausspr",
+                      #                      "classif.gbm",
+                      #                      "classif.kknn",
                       "classif.randomForest"
-),
-makeLearner, predict.type = "prob")
+                      ),
+                    makeLearner, predict.type = "prob")
 
 stckd.lrn = makeStackedLearner(base.learners = base.lrns,
                                predict.type = "prob", method = "hill.climb")
 
-mlr::getLearnerParamSet(stckd.lrn)
+#-------------------------------------------------------------------
+##########           Deal with Class Imbalance            ##########
+#-------------------------------------------------------------------
+# https://mlr.mlr-org.com/articles/tutorial/over_and_undersampling.html#tuning-the-probability-threshold
+ovrsmpl <- sum(hlthins$hab481_fctb == "no")/sum(hlthins$hab481_fctb == "yes")
+stckd.lrn.smote <- mlr::makeSMOTEWrapper(stckd.lrn, 
+                                         sw.rate = floor(ovrsmpl), 
+                                         sw.nn = 5)
+
 
 #-------------------------------------------------------------------
 ##########                 Tune Ensebmble                 ##########
 #-------------------------------------------------------------------
+mlr::getLearnerParamSet(stckd.lrn)
 
 # 
 # # tune S
@@ -134,8 +143,7 @@ mlr::getLearnerParamSet(stckd.lrn)
 #                                 keep.pred = F)
 # make full model
 stckd.mod <- train(learner = stckd.lrn,
-                    task = llin.classif.train)
-
+                   task = hlthins.classif.train)
 
 #-------------------------------------------------------------------
 ##########            Ensebmble Performance                ##########
@@ -154,80 +162,80 @@ stckd.mod <- train(learner = stckd.lrn,
 #-------------------------------------------------------------------
 # predict on full model
 stckd.full <- predict(stckd.mod, 
-                      task = llin.classif)
-llin <- llin %>% 
-  dplyr::mutate(hml20_b = ifelse(hml20_fctb == "no", 0, 1), # conver to binary
-                pexp = mean(hml20_b)
+                      task = hlthins.classif)
+hlthins <- hlthins %>% 
+  dplyr::mutate(hab481_b = ifelse(hab481_fctb == "no", 0, 1), # conver to binary
+                pexp = mean(hab481_b)
   ) %>% 
   dplyr::bind_cols(., stckd.full$data) %>%
-  dplyr::mutate(iptw_u = ifelse(hml20_fctb == "yes",
+  dplyr::mutate(iptw_u = ifelse(hab481_fctb == "yes",
                                 1/prob.yes,
                                 1/(1-prob.yes)),
                 iptw_s = pexp * iptw_u,
                 iptwipsw = iptw_s * hv005_wi
-                )
+  )
 
 #-------------------------------------------------------------------
 ##########                Check Weights                   ##########
 #-------------------------------------------------------------------
 # check weight stability
-summary(llin$iptw_u)
-summary(llin$iptw_s)
+summary(hlthins$iptw_u)
+summary(hlthins$iptw_s)
 
 # check weight distribution
-weighted_llin <- llin %>% srvyr::as_survey_design(weights = iptwipsw)
+weighted_hlthins <- hlthins %>% srvyr::as_survey_design(weights = iptwipsw)
 
-llintable_orig <- tableone::CreateTableOne(vars = llinmdl[!llinmdl %in% c("pv18s", "pfldh", "hml20_fctb", "hv005_wi", "latnum", "longnum")], 
-                                           strata = "hml20_fctb", test = F, 
-                                           data = llin)
+hlthinstable_orig <- tableone::CreateTableOne(vars = hlthinsnmdl[!hlthinsnmdl %in% c("pv18s", "pfldh", "hab481_fctb", "hv005_wi", "latnum", "longnum")], 
+                                           strata = "hab481_fctb", test = F, 
+                                           data = hlthins)
 
-llintable_iptw <- tableone::svyCreateTableOne(vars = llinmdl[!llinmdl %in% c("pv18s", "pfldh", "hml20_fctb", "hv005_wi", "latnum", "longnum")], 
-                                              strata = "hml20_fctb", test = F, 
-                                              data = weighted_llin)
+hlthinstable_iptw <- tableone::svyCreateTableOne(vars = hlthinsnmdl[!hlthinsnmdl %in% c("pv18s", "pfldh", "hab481_fctb", "hv005_wi", "latnum", "longnum")], 
+                                              strata = "hab481_fctb", test = F, 
+                                              data = weighted_hlthins)
 
 
 #-------------------------------------------------------------------
 ##########                Get Effects                     ##########
 #-------------------------------------------------------------------
-pv.llin.cest <- llin %>% 
+pv.hlthins.cest <- hlthins %>% 
   dplyr::mutate(id = 1:nrow(.)) %>% 
-  geepack::geeglm(pv18s ~ hml20_fctb,
+  geepack::geeglm(pv18s ~ hab481_fctb,
                   weights = iptwipsw,
                   data = .,
                   id = id,
                   family = binomial(link = "log"))
 
-# broom::tidy(pv.llin.cest, exponentiate = T, conf.int = T)
+# broom::tidy(pv.hlthins.cest, exponentiate = T, conf.int = T)
 
-pf.llin.cest <- llin %>% 
+pf.hlthins.cest <- hlthins %>% 
   dplyr::mutate(id = 1:nrow(.)) %>% 
-  geepack::geeglm(pfldh ~ hml20_fctb,
+  geepack::geeglm(pfldh ~ hab481_fctb,
                   weights = iptwipsw,
                   data = .,
                   id = id,
                   family = binomial(link = "log"))
 
-# broom::tidy(pf.llin.cest, exponentiate = T, conf.int = T)
+# broom::tidy(pf.hlthins.cest, exponentiate = T, conf.int = T)
 
 
-pv.llin.cest.tidy <- broom::tidy(pv.llin.cest, exponentiate = T, conf.int = T) %>% 
+pv.hlthins.cest.tidy <- broom::tidy(pv.hlthins.cest, exponentiate = T, conf.int = T) %>% 
   dplyr::mutate(species = "P. vivax")
 
-pf.llin.cest.tidy <- broom::tidy(pf.llin.cest, exponentiate = T, conf.int = T) %>% 
+pf.hlthins.cest.tidy <- broom::tidy(pf.hlthins.cest, exponentiate = T, conf.int = T) %>% 
   dplyr::mutate(species = "P. falciparum")
 
-pan.llin.cest.tidy <- dplyr::bind_rows(pv.llin.cest.tidy, pf.llin.cest.tidy) %>% 
+pan.hlthins.cest.tidy <- dplyr::bind_rows(pv.hlthins.cest.tidy, pf.hlthins.cest.tidy) %>% 
   dplyr::select(c("species", "term", "estimate", "conf.low", "conf.high")) %>% 
   dplyr::filter(term != "(Intercept)") %>% 
   magrittr::set_colnames(c("species", "term", "OR", "L95", "U95")) 
 
 
 
-save(llin, 
-     llintable_orig, llintable_iptw,
-     pv.llin.cest, pf.llin.cest,
-     pan.llin.cest.tidy,
-     file = "results/llin_iptw_models.rda")
+save(hlthins, 
+     hlthinstable_orig, hlthinstable_iptw,
+     pv.hlthins.cest, pf.hlthins.cest,
+     pan.hlthins.cest.tidy,
+     file = "results/hlthins_iptw_models.rda")
 
 
 

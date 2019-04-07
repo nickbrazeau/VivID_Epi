@@ -32,11 +32,15 @@ mergetableone2table <- function(tableonedf, tabletwoestdf){
     dplyr::mutate(matchcol = ifelse(matchcol == "", NA, matchcol),
                   matchcol = zoo::na.locf(matchcol),
                   lvl = ifelse(
-                    grepl("SD|q50|n", matchcol),
+                    grepl("cont|q50", matchcol),
                     "cont",
                     "factor"
                   ),
                   details = stringr::str_split_fixed(tableonedf$Covariates, " ", n = 2)[,2])
+  
+  # fix n and wealth from tableone
+  tableonedf$lvl[tableonedf$Covariates == "n"] <- "cont"
+  tableonedf$lvl[tableonedf$Covariates == "wlthrcde_fctm_clst_q50 (mean (SD))"] <- "factor"
   
   fctlvls <- stringr::str_extract_all(tableonedf$details[tableonedf$lvl == "factor"], 
                                       "[A-Z]|[a-z]|_", simplify=F)
@@ -46,7 +50,10 @@ mergetableone2table <- function(tableonedf, tabletwoestdf){
   tableonedf$matchcol_exp <- NA
   tableonedf$matchcol_exp[tableonedf$lvl == "factor"] <- fctlvls
   tableonedf$matchcol_exp[tableonedf$lvl == "cont"] <- ""
-  tableonedf$matchcol = paste0(tableonedf$matchcol, tableonedf$matchcol_exp)
+  tableonedf$matchcol <- paste0(tableonedf$matchcol, tableonedf$matchcol_exp)
+  
+  # final fix for q50
+  tableonedf$matchcol <- gsub("_q50", "",  tableonedf$matchcol)
   
   # drop extra columns 
   tableonedf <- tableonedf %>% 

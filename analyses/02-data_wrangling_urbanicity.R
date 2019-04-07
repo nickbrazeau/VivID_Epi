@@ -163,8 +163,8 @@ ggplot() +
 quants <- quantile(urbanicity$urbanscore, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1))
 urbanicity <- urbanicity %>% 
   dplyr::mutate(urbanscore_fctm_clust = base::cut(x = .$urbanscore, breaks = quants, 
-                                          labels = c("rural", "less rural", "middle", 
-                                                     "less urban", "urban"),
+                                          labels = c("rural", "lessrural", "middle", 
+                                                     "lessurban", "urban"),
                                           include.lowest = T)
   ) %>% 
   dplyr::rename(urbanscore_cont_clust = urbanscore) %>% 

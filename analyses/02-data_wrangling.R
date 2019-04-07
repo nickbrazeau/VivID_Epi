@@ -6,6 +6,9 @@
 #        that I have manipulated/investigated that variable.
 #        Men/Women recode combinations (i.e. ha in one and hb in other for same covariate)
 #        will be combined to be hab##
+#        
+#        https://dhsprogram.com/pubs/pdf/FR300/FR300.pdf
+#        
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
@@ -615,8 +618,8 @@ dt <- dt %>%
   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
   dplyr::mutate(precip_lag_cont_log_clst = log(precip_lag_cont_clst + tol),
                 temp_lag_cont_log_clst = log(temp_lag_cont_clst + tol),
-                precip_lag_cont_log_scale_clst = my.scale(precip_lag_cont_log_clst, center = T, scale = T),
-                temp_lag_cont_log_scale_clst = my.scale(temp_lag_cont_log_clst, center = T, scale = T))
+                precip_lag_cont_scale_clst = my.scale(precip_lag_cont_log_clst, center = T, scale = T),
+                temp_lag_cont_scale_clst = my.scale(temp_lag_cont_log_clst, center = T, scale = T))
 
 
 
@@ -629,7 +632,7 @@ dt <- dt %>%
                   ifelse(alt_dem_cont_clst > median(alt_dem_cont_clst), "high", "low"),
                   levels = c("low", "high")),
                 alt_dem_clst_log = log(alt_dem_cont_clst + tol),
-                alt_dem_clst_log_scale = my.scale(alt_dem_clst_log, center = T, scale = T)
+                alt_dem_cont_scale_clst = my.scale(alt_dem_clst_log, center = T, scale = T)
   )
 
 #.............
@@ -656,7 +659,7 @@ xtabs(~dt$ape_habitat_fctb_clst)
 wtrdist_out <- readRDS("data/derived_data/hotosm_waterways_dist.rds")
 dt <- dt %>% 
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
-  dplyr::mutate(wtrdist_cont_log_scale_clst = my.scale(log(wtrdist_cont_clst + tol), center = T, scale = T)
+  dplyr::mutate(wtrdist_cont_scale_clst = my.scale(log(wtrdist_cont_clst + tol), center = T, scale = T)
                 )
 
 
@@ -684,7 +687,7 @@ xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025), addNA = T) # looks
 hlthdist_out <- readRDS("data/derived_data/hotosm_healthsites_dist.rds")
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
-  dplyr::mutate(hlthdist_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T)
+  dplyr::mutate(hlthdist_cont_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T)
                 )
 
 #.............
