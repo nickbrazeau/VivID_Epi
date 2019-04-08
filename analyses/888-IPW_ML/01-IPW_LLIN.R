@@ -98,7 +98,7 @@ base.lrns <- lapply(c("classif.logreg",
 ),
 makeLearner, predict.type = "prob")
 
-stckd.lrn = makeStackedLearner(base.learners = base.lrns,
+stckd.lrn <- makeStackedLearner(base.learners = base.lrns,
                                predict.type = "prob", method = "hill.climb")
 
 mlr::getLearnerParamSet(stckd.lrn)
