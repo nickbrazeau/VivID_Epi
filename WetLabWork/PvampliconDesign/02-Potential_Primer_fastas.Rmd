@@ -27,6 +27,9 @@ library(vcfR)
 library(Biostrings)
 ```
 
+# Update
+Updated on April 25, 2019 to design an outer primer set (nested pcr approach) for _Pvama1_, as it showed some promise on initial run ( _Pvs47_ failed) and _pvmsp1_ is already a nested primer design. 
+
 # Overview
 Overall, uninspiring results. Will design for: 
 
@@ -107,14 +110,53 @@ Get all the SNPs with these and don't hit variation that we have in our VCF (one
 
 
 
+### _pvama_ Nested Design
+Now going to design outer primers for a nested approach. Above, we know that our forward and reverse primers (eg set 1 from above) fall here, respectively: 
+```{r}
+prmrs <- rbind( data.frame( vmatchPattern("ATACCAAACCGACTTGCCTCA", chr09)[[1]] ),
+         data.frame( vmatchPattern(reverseComplement(DNAString("TTTCCGCCCTTTTCTCTACACA")), chr09)[[1]] )
+  ) %>% 
+    cbind(Primer = c("Forward", "Reverse"), .)
+
+prmrs %>% 
+  DT::datatable()
+
+```
+  
+Now going to leverage that information for outer primers. Going to expand out another 250 bp from the ends of the primers and ask for `Primer-blast` to find a proce with the settings: min PCR product size to 400 and the max 600. Then set organism "Plasmodium vivax (taxid:5855)". All other parameters were left at default.
+```{r}
+
+ama1.outer <- toString(subseq(chr09, 
+                              (prmrs$start[prmrs$Primer == "Forward"]-250), 
+                              (prmrs$end[prmrs$Primer == "Reverse"]+250)))
 
 
+```
+
+`Primer-Blast` asked to match on this *"XM_001615397.1	Plasmodium vivax apical merozoite antigen 1 (PVX_092275), partial mRNA"* .... which is a Sal1 version...which should be fine (annoying default behavior). Will check that they match and work below. The third primer set fit the bill with falling approximately 100-bp upstream and downstream of each of the inner primers designed above. Plus GC content is 55% and the reverse has a GC hammer at beginning. 
 
 
+```{r}
 
 
+vmatchPattern("AGTGCCTTTCTTCCAGTGGG", chr09)
+vmatchPattern(reverseComplement(DNAString("GCACACGCCACCAGTTATTC")), chr09)
 
 
+prmrs.all <- cbind(status = "inner", prmrs) %>% 
+  rbind.data.frame(
+    rbind( data.frame( vmatchPattern("AGTGCCTTTCTTCCAGTGGG", chr09)[[1]] ),
+           data.frame( vmatchPattern(reverseComplement(DNAString("GCACACGCCACCAGTTATTC")), chr09)[[1]]
+                       )
+           ) %>% 
+      cbind(status = "outer", Primer = c("Forward", "Reverse"), .)
+    )
+
+prmrs.all %>% 
+  DT::datatable()
+
+
+```
 
 
 
