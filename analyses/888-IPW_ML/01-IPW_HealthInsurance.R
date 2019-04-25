@@ -34,10 +34,12 @@ hlthins <- dt %>%
   dplyr::select(c("pv18s" , "pfldh", "hv005_wi", hlthinsnmdl, 
                   "longnum", "latnum"))
 
+#------------------------------------------------------------------------------------
+######                            final preprocess                             ######
+#------------------------------------------------------------------------------------
 #......................
-# final preprocess
+# check for class imbalance & missingness 
 #......................
-# check for class imbalance
 xtabs(~hlthins$hab481_fctb)
 # make sure recoding worked
 mlr::summarizeColumns(hlthins) %>% 
@@ -49,6 +51,19 @@ mice::md.pattern(hlthins, rotate.names = T)
 hlthins <- hlthins %>% 
   dplyr::filter(complete.cases(.))
 
+#......................
+# positivity  
+#......................
+# focus in on factor variables because continous variables will be
+# able to smooth over
+xtabs(paste("~", paste0(hlthinsnmdl[!grepl("cont", hlthinsnmdl)], collapse="+")),
+      data = hlthins)
+
+# lots of issue of positivity 
+
+
+xtabs(paste("~", paste0(hlthinsnmdl[!grepl("cont|hab481", hlthinsnmdl)], collapse="+")),
+      data = hlthins)
 
 
 #-------------------------------------------------------------------
