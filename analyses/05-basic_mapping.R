@@ -56,97 +56,6 @@ pntestmaps <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
 
 
 
-#----------------------------------------------------------------------------------------------------
-# Explore here the different clusters of Plasmodium species z scores
-#----------------------------------------------------------------------------------------------------
-
-clusters <- mp %>% 
-  dplyr::filter(maplvl == "hv001")
-
-transformprev <- function(data){
-  data <- data %>% 
-    dplyr::mutate(meanplsmdprev = mean(plsmdprev, na.rm=T),
-                  sdplsmdprev = sd(plsmdprev, na.rm=T),
-                  zscore = (plsmdprev - meanplsmdprev)/sdplsmdprev,
-                  logitplsmdprev = logit(plsmdprev, tol = 1e4),
-                  meanlogitplsmdprev = mean(logitplsmdprev, na.rm=T),
-                  sdlogitplsmdprev = sd(logitplsmdprev, na.rm=T),
-                  zscorelogitplsmdprev = (logitplsmdprev - meanlogitplsmdprev)/sdlogitplsmdprev
-                  )
-  return(data)
-}
-
-
-clusters$transform <- lapply(clusters$data,
-                          transformprev)
-
-#......................
-# Plot standard zscores
-#......................
-zscoremapplotter <- function(data, plsmdmspec){
-  # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
-  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "geometry")]
-  ret <- data %>% 
-    ggplot() + 
-    geom_sf(data = DRCprov) +
-    geom_sf(data = inner_join(data, clustgeom, by = "hv001"),
-            aes(colour = zscore, size = n), alpha = 0.4) +
-    scale_color_gradient2("Prevalence Z-Scores", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-    scale_size(guide = 'none') +
-    ggtitle(paste(plsmdmspec)) +
-    coord_sf(datum=NA) + # to get rid of gridlines
-    vivid_theme
-  
-  return(ret)
-  
-}
-
-zscoreprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), zscoremapplotter)
-zscoreprevmaps <- map(zscoreprevmaps, function(x){return(x + prettybasemap_nodrc)})
-
-prevhist <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), function(data, plsmdmspec){
-  data %>% 
-    dplyr::filter(plsmdprev != 0) %>% 
-  ggplot(.) +
-    geom_histogram(mapping = aes(x=plsmdprev)) + 
-    ggtitle(paste(plsmdmspec)) + ylab("Count") +
-    vivid_theme +
-    theme(axis.text = element_blank(),
-          axis.line = element_blank(), 
-          legend.position = "bottom")
-})
-
-
-
-#......................
-# Plot logit zscores
-#......................
-logitzscoremapplotter <- function(data, plsmdmspec){
-  # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
-
-    clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "geometry")]
-    ret <- data %>%
-    ggplot() +
-    geom_sf(data = DRCprov) +
-    geom_sf(data = inner_join(data, clustgeom, by = "hv001"),
-            aes(colour = zscorelogitplsmdprev, size = n), alpha = 0.4) +
-    scale_color_gradient2("Prevalence Logit Z-Scores", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
-    scale_size(guide = 'none') +
-    ggtitle(paste(plsmdmspec)) +
-    coord_sf(datum=NA) + # to get rid of gridlines
-    vivid_theme +
-    theme(axis.text = element_blank(),
-          axis.line = element_blank(),
-          legend.position = "bottom")
-
-  return(ret)
-
-}
-
-logitzscoremapplotterprevmaps <- pmap(list(data = clusters$transform, plsmdmspec = clusters$plsmdmspec), logitzscoremapplotter)
-
-
-
 #......................
 # Plot Cases
 #......................
@@ -206,5 +115,5 @@ aperange_nhapv <- ggplot() +
  
 saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
 
-save(pntestmaps, prevhist, zscoreprevmaps, caseprevmaps, aperange_nhapv,
+save(pntestmaps, caseprevmaps, aperange_nhapv,
       file = "results/basic_maps_results.rda")
