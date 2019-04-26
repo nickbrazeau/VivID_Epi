@@ -5,6 +5,8 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
 library(tidyverse)
 library(sf)
+library(geosphere)
+library(spdep)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(RColorBrewer)
 
@@ -59,33 +61,6 @@ pntestmaps <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
 #......................
 # Plot Cases
 #......................
-casemapplotter <- function(data, plsmdmspec){
-  # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
-  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
-  data <- inner_join(data, clustgeom, by = "hv001")
-  pos <- data %>% 
-    dplyr::filter(plsmdprev > 0)
-  neg <- data %>% 
-    dplyr::filter(plsmdprev == 0)
-  
-  ret <- ggplot() + 
-    geom_sf(data = DRCprov) +
-    geom_jitter(data = neg, aes(x=longnum, y=latnum, size = n), shape = 4, show.legend = F, colour = "#377eb8") +
-    geom_point(data = pos, aes(x=longnum, y=latnum, colour = plsmdprev, size = n), alpha = 0.4) +
-    scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-    scale_size(guide = 'none') +
-    ggtitle(paste(plsmdmspec)) +
-    coord_sf(datum=NA) + # to get rid of gridlines
-    vivid_theme +
-    theme(axis.text = element_blank(),
-          axis.line = element_blank(), 
-          axis.title = element_blank(),
-          legend.position = "bottom")
-  
-  return(ret)
-  
-}
-
 caseprevmaps <- pmap(list(data = clusters$data, plsmdmspec = clusters$plsmdmspec), casemapplotter)
 caseprevmaps <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
 
@@ -107,6 +82,26 @@ aperange_nhapv <- ggplot() +
    prettybasemap_nodrc +
    theme(legend.position = "bottom",
          plot.background = element_blank())
+
+
+
+
+
+#----------------------------------------------------------------------------------------------------
+# SPATIAL AUTOCORRELATION
+#----------------------------------------------------------------------------------------------------
+
+#.................................................................
+# Moran's I -- greater circler
+#.................................................................
+
+gc <- geosphere::distm(x = mp$data[[1]][,c("longnum", "latnum")], fun = geosphere::distGeo) # JUST USE st_distance -- same return as geosphre
+gc.inv <- 1/gc
+diag(gc.inv) <- 0
+
+mp$moranI <- lapply(mp$plsmdprev, moran.test, listw = spdep::mat2listw(gc.inv), alternative = "two.sided")
+# Note, Cedar ran this in geoda for Pv and got a similar answer
+
 
 
  #----------------------------------------------------------------------------------------------------

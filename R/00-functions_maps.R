@@ -21,7 +21,10 @@ prev_point_est_summarizer <- function(design, maplvl, plsmdmspec){
     dplyr::group_by(!!maplvl) %>% 
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
-                     plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
+                     plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95),
+                     latnum = srvyr::survey_mean(latnum),
+                     longnum = srvyr::survey_mean(longnum) # cluster weighted centroid for adm1 and identical values for clusters (i.e. self)
+                     ) %>% 
     dplyr::mutate(logitplsmdprev = logit(plsmdprev, tol = 1e-3))
   
   # return
@@ -67,6 +70,33 @@ mapplotter <- function(data, maplvl, plsmdmspec){
   
 }
 
+
+casemapplotter <- function(data, plsmdmspec){
+  # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
+  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
+  data <- inner_join(data, clustgeom, by = "hv001")
+  pos <- data %>% 
+    dplyr::filter(plsmdprev > 0)
+  neg <- data %>% 
+    dplyr::filter(plsmdprev == 0)
+  
+  ret <- ggplot() + 
+    geom_sf(data = DRCprov) +
+    geom_jitter(data = neg, aes(x=longnum, y=latnum, size = n), shape = 4, show.legend = F, colour = "#377eb8") +
+    geom_point(data = pos, aes(x=longnum, y=latnum, colour = plsmdprev, size = n), alpha = 0.4) +
+    scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+    scale_size(guide = 'none') +
+    ggtitle(paste(plsmdmspec)) +
+    coord_sf(datum=NA) + # to get rid of gridlines
+    vivid_theme +
+    theme(axis.text = element_blank(),
+          axis.line = element_blank(), 
+          axis.title = element_blank(),
+          legend.position = "bottom")
+  
+  return(ret)
+  
+}
 
 
 

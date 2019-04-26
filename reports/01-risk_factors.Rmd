@@ -139,13 +139,13 @@ Province and cluster point estimates were calculated directly from the CD2013 sa
 ```{r}
 prevmaprasterplots <- readRDS("~/Documents/GitHub/VivID_Epi/results/prevmap_raster_plots.rds")
 load("~/Documents/GitHub/VivID_Epi/results/basic_maps_results.rda")
-morani <- readRDS("~/Documents/GitHub/VivID_Epi/results/basic_map_moranI.rds")
+
 ```
 
 #### _P. vivax_
 
 ```{r, fig.width=11, fig.height=8, fig.align="center"}
-morani$moranI[[2]]
+prevmaprasterplots$moranI[[2]]
 
 gridExtra::grid.arrange(
                         pntestmaps[[2]], 
@@ -157,7 +157,7 @@ gridExtra::grid.arrange(
 
 #### _P. falciparum_
 ```{r, fig.width=11, fig.height=8, fig.align="center"}
-morani$moranI[[1]]
+prevmaprasterplots$moranI[[1]]
 
 gridExtra::grid.arrange(
                         pntestmaps[[1]], 
@@ -170,7 +170,7 @@ gridExtra::grid.arrange(
 
 #### _P. ovale_
 ```{r, fig.width=11, fig.height=8, fig.align="center"}
-morani$moranI[[3]]
+prevmaprasterplots$moranI[[3]]
 
 gridExtra::grid.arrange(
                         pntestmaps[[3]], 
