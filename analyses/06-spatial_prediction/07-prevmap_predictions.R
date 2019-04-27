@@ -18,25 +18,6 @@ mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 mp <- mp %>% 
   dplyr::filter(maplvl == "hv001") 
 
-#spatial from the DHS -- these are cluster level vars
-ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
-colnames(ge) <- tolower(colnames(ge))
-ge$adm1name <- gsub(" ", "-", ge$adm1name) # for some reason some of the char (like Kongo Central, lack a -), need this to match GADM
-ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled this province
-# remove clusters that were missing from the DHS, see readme
-ge <- ge %>% 
-  dplyr::rename(hv001 = dhsclust) # for easier merge with PR
-
-mp$data <- lapply(mp$data, function(x){
-  return( dplyr::left_join(x = x, y = ge, by ="hv001") )
-})
-
-
-#......................
-# Summarize by Cluster
-#......................
-
-
 
 #----------------------------------------------------------------------------------------------------
 # Smoothed Guassian Maps
@@ -82,29 +63,5 @@ prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasem
 
 saveRDS(pr, file = "data/derived_data/basic_prevmap_mapping_data.rds")
 saveRDS(prevmaprasterplots, file = "results/prevmap_raster_plots.rds")
-
-
-
-#..........................
-# spatial kernel densities
-#..........................
-# cases <- dt[dt$pv18s == 1, ]
-# 
-# casedens <- MASS::kde2d(x = cases$longnum, 
-#                  y = cases$latnum,
-#                  n=1e3,
-#             lims = c(bb[1,], bb[2,]))
-# 
-# contour(casedens)
-# 
-# 
-# controls <- dt[dt$pv18s == 0, ]
-# condens <- MASS::kde2d(x = controls$longnum, 
-#                     y = controls$latnum,
-#                     n=1e3,
-#                     lims = c(bb[1,], bb[2,]))
-# 
-# contour(condens)
-
 
 
