@@ -16,153 +16,204 @@ source("R/00-functions_basic.R")
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "internal_datamap_files/DERIVED_covariate_map.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
 dtsrvy <- makecd2013survey(survey = dt)
 
+rskfctr <- dcdr %>% 
+  dplyr::filter(risk_factor_model == "y" ) %>% 
+  dplyr::select("column_name") %>% 
+  unlist(.)
 
+#------------------------------------------------------------------------------------------
+# Analyze for Collinearity 
+#-------------------------------------------------------------------------------------------
 #......................
-# Analyze for Corr
+# Non-parametric Approach
 #......................
-rskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
-dtrskfctr <- dt[,rskfctr]
-sf::st_geometry(dtrskfctr) <- NULL
-dtrskfctr_exp <- fastDummies::dummy_columns(dtrskfctr, remove_first_dummy = F)
-dtrskfctr_exp <- dtrskfctr_exp[, (length(rskfctr)+1):ncol(dtrskfctr_exp)]
+my.smd <- function(Var1, Var2, design = dtsrvy){
+  
+  
+  fctrq <- rlang::sym(Var1)
 
-# drop one of the binary pairs (they are opposite of each other)
-binarykeep <- tibble::tibble(
-  column_names = colnames(dtrskfctr_exp),
-  base_name = stringr::str_split_fixed(string = column_names, 
-                                       pattern = "_(?!.*_)",
-                                       n=2)[,1],
-  level = stringr::str_split_fixed(string = column_names, 
-                                       pattern = "_(?!.*_)",
-                                       n=2)[,2]
-  ) %>% 
-  dplyr::filter(level != "NA") %>% 
-  dplyr::filter(grepl("_fctb", base_name)) %>% 
-  dplyr::group_by(base_name) %>% 
-  dplyr::sample_n(., size = 1, replace = F) 
-
-
-
-# sort columns and drop binary 
-dtrskfctr_exp <- dtrskfctr_exp %>% 
-  dplyr::select(c(
-    dplyr::ends_with("NA"),
-    dplyr::ends_with("_clst"),
-    dplyr::contains("_fctm"),
-    binarykeep$column_names
-  ))
-
-
-dtrskfctr.corr <- cor(dtrskfctr_exp)
-
-dtrskfctr.corr_high <- dtrskfctr.corr %>% 
-  as.dist(.) %>% 
-  broom::tidy(.) %>% 
-  dplyr::mutate(abscorr = abs(distance)) %>% 
-  dplyr::filter(abscorr >= 0.5 )
+  fctrqdf <- design %>% 
+    dplyr::select(!!fctrq) 
+  
+  if( is.factor(unlist( fctrqdf$variables ) ) ){
+    contq <- rlang::sym(Var2)
+  } else { # need to reverse now
+    contq <- rlang::sym(Var1)
+    fctrq <- rlang::sym(Var2)
+  }
+  
+  ret <- design %>% 
+    dplyr::mutate(count = 1) %>% 
+    dplyr::group_by(!!fctrq) %>% 
+    dplyr::summarise(studyn = srvyr::survey_total(count),
+                     groupmean = srvyr::survey_mean(!!contq, na.rm = T, vartype = c("var"))
+    )
+  
+  # find min and max if this is a polytomous categorical variable
+  ret <- ret %>% 
+    dplyr::filter(groupmean %in% c(min(groupmean), max(groupmean)))
+  # find smd
+  # https://onlinelibrary.wiley.com/doi/epdf/10.1002/sim.6607
+  ret <- (ret$groupmean[1] - ret$groupmean[2]) / sqrt(  (ret$groupmean_var[1] + ret$groupmean_var[2] ) / 2)
+  
+  return(ret)
+  
+}
 
 
-corrplot <- ggcorrplot::ggcorrplot(dtrskfctr.corr, 
-                       type = "lower",
-                       outline.color = "white",
-                       colors = c("#313695", "#ffffbf", "#a50026"),
-                       hc.order = F) +
-  ggtitle("Covariate Correlation Matrix") +
+
+findcorreval <- function(Var1, Var2){
+  var1evalu <- stringr::str_extract(Var1, "cont|fctb|fctm")
+  var2evalu <- stringr::str_extract(Var2, "cont|fctb|fctm")
+  cb <- cbind(var1evalu, var2evalu)
+  cb <- apply(cb, 1, function(x){
+    return(
+      paste(x[order(x)], collapse = "")
+    )
+  })
+
+  ret <- unname(
+    sapply(cb, function(x){
+    switch(x,
+           "contcont" = "pearson",
+           "fctbfctb" = "chisq",
+           "fctmfctm" = "chisq",
+           "contfctb" = "smd",
+           "contfctm" = "smd",
+           "fctbfctm" = "chisq"
+           )}) )
+  return(ret)
+}
+
+docorreval <- function(Var1, Var2, typeeval){
+ if(typeeval == "chisq"){
+      ret <- survey::svychisq(as.formula(paste0("~", paste(Var1, Var2, sep = "+"))), design = dtsrvy)
+      ret <- unname( unlist( ret$statistic ) )
+      
+ } else if(typeeval == "pearson"){
+      ret <- cov2cor( as.matrix( survey::svyvar(as.formula(paste0("~", paste(
+        paste0("as.numeric(", Var1, ")"),
+        paste0("as.numeric(", Var2, ")"),
+        sep = "+"))), 
+        design = dtsrvy, na.rm = T) ) )
+      # clean up
+      ret <- unname( unlist( ret[2,1] ) )
+      
+ } else if(typeeval == "smd"){
+      ret <- my.smd(as.character(Var1), 
+                    as.character(Var2), 
+                    design = dtsrvy)
+      
+ } else {
+      stop("Error")
+ }
+  return(ret)
+}
+
+# make corr grid 
+corr.grid <- data.frame(t(combn(rskfctr, 2))) %>% 
+  magrittr::set_colnames(., c("Var1", "Var2")) %>% 
+  dplyr::mutate(
+    typeeval = findcorreval(Var1, Var2)
+    )
+  
+
+corr.grid$corrret <- purrr::pmap(corr.grid, docorreval)
+corr.grid$corrret <- unlist(corr.grid$corrret)
+
+# quick viz for both categoricals
+corr.grid %>% 
+  dplyr::filter(typeeval == "chisq") %>% 
+  dplyr::mutate(corrret_scale = my.scale(corrret)) %>% 
+  dplyr::select(-c("typeeval", "corrret")) %>% 
+  dplyr::mutate(Var1 = forcats::fct_rev(forcats::fct_reorder(.f = Var1, .x = Var1, .fun = length)),
+                Var2 = forcats::fct_rev(forcats::fct_reorder(.f = Var2, .x = Var2, .fun = length))) %>% 
+  ggplot() +
+  geom_tile(aes(x=Var1, y=Var2, fill= corrret_scale)) + 
+  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu"))) +
+  ggtitle("Scaled Chi-Square Statistics for Caterogical Variables") +
   vivid_theme +
   theme(legend.position = "right", 
         legend.text = element_text(angle = 0),
-        axis.text = element_text(size = 5),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12, angle = 90),
         panel.border = element_blank())
 
-#......................
-# Look at vif
-#......................
-rskfctr_ind <- dcdr %>% 
-  dplyr::filter(risk_factor_model == "y" & level == "individual") %>% 
-  dplyr::filter(! column_name %in% c("insctcd_fctm")) %>%   # takes into account hml20 -- will be perfectly collinear for NO. This is an exploratory var only
-  dplyr::select("column_name") %>% 
-  unlist(.)
-# rskfctr_ind <- c(rskfctr_ind, "urbanscore_fctm_clust")
 
-eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind, collapse = "+")))
+# quick viz for continuous
+corr.grid %>% 
+  dplyr::filter(typeeval == "pearson") %>% 
+  dplyr::mutate(corrret_scale = abs(corrret)) %>% 
+  dplyr::select(-c("typeeval", "corrret")) %>% 
+  dplyr::mutate(Var1 = forcats::fct_rev(forcats::fct_reorder(.f = Var1, .x = Var1, .fun = length)),
+                Var2 = forcats::fct_rev(forcats::fct_reorder(.f = Var2, .x = Var2, .fun = length))) %>% 
+  ggplot() +
+  geom_tile(aes(x=Var1, y=Var2, fill= corrret_scale)) + 
+  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu"))) +
+  ggtitle("Absolute Pearson Correlations for Continuous Variables") +
+  vivid_theme +
+  theme(legend.position = "right", 
+        legend.text = element_text(angle = 0),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12, angle = 90),
+        panel.border = element_blank())
+
+
+# quick viz for cont-categorical
+corr.grid %>% 
+  dplyr::filter(typeeval == "smd") %>% 
+  dplyr::mutate(corrret_scale = abs(corrret)) %>% 
+  dplyr::select(-c("typeeval", "corrret")) %>% 
+  dplyr::mutate(Var1 = forcats::fct_rev(forcats::fct_reorder(.f = Var1, .x = Var1, .fun = length)),
+                Var2 = forcats::fct_rev(forcats::fct_reorder(.f = Var2, .x = Var2, .fun = length))) %>% 
+  ggplot() +
+  geom_tile(aes(x=Var1, y=Var2, fill= corrret_scale)) + 
+  scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu"))) +
+  ggtitle("Absolute SMD for Continuous-Categorical Variables") +
+  vivid_theme +
+  theme(legend.position = "right", 
+        legend.text = element_text(angle = 0),
+        axis.title = element_blank(),
+        axis.text.y = element_text(size = 12),
+        axis.text.x = element_text(size = 12, angle = 90),
+        panel.border = element_blank())
+
+
+#......................
+# Parametric Approach
+#......................
+# VIF
+eq <- as.formula(paste0("pv18s~", paste(rskfctr, collapse = "+")))
 model.sat <- survey::svyglm(eq,
                design = dtsrvy,
                family = quasibinomial(link="logit"))
 summary(model.sat)
-car::vif(model.sat)
-
-
-# old wealth
-rskfctr_ind_old_wlth <- rskfctr_ind[!grepl("wlth", rskfctr_ind)]
-dt$hv270_fctm <- haven::as_factor(dt$hv270)
-xtabs(~dt$hv270_fctm + dt$hv270, addNA = T)
-
-rskfctr_ind_old_wlth <- c(rskfctr_ind_old_wlth, "hv270_fctm")
-eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_old_wlth, collapse = "+")))
-dtsrvy <- makecd2013survey(dt)
-model.sat_oldwlth <- survey::svyglm(eq,
-                            design = dtsrvy,
-                            family = quasibinomial(link="logit"))
-summary(model.sat_oldwlth)
-car::vif(model.sat_oldwlth) # old wealth is even worse
+vifs <- car::vif(model.sat)
+summary(vifs)
 
 
 
-# no house
-rskfctr_ind_nohouse <- rskfctr_ind[!grepl("hv21345", rskfctr_ind)]
-eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_nohouse, collapse = "+")))
-model.sat.nohouse <- survey::svyglm(eq,
-                            design = dtsrvy,
-                            family = quasibinomial(link="logit"))
-summary(model.sat.nohouse)
-car::vif(model.sat.nohouse) # no house nearly halves it
-
-# no insurance
-rskfctr_ind_noinsu <- rskfctr_ind[!grepl("hab481_fctb", rskfctr_ind)]
-eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_noinsu, collapse = "+")))
-model.sat.insur <- survey::svyglm(eq,
-                                    design = dtsrvy,
-                                    family = quasibinomial(link="logit"))
-summary(model.sat.insur)
-car::vif(model.sat.insur) # no insurance doesn't make a dent
-
-# no house & no insurance
-rskfctr_ind_nohousenoinsu <- rskfctr_ind[!grepl("hv21345|hab481_fctb", rskfctr_ind)]
-eq <- as.formula(paste0("pv18s~", paste(rskfctr_ind_nohousenoinsu, collapse = "+")))
-model.sat.nohousenoinsu <- survey::svyglm(eq,
-                                    design = dtsrvy,
-                                    family = quasibinomial(link="logit"))
-summary(model.sat.nohousenoinsu)
-car::vif(model.sat.nohousenoinsu) # no house nearly halves it
-
-
-# just looking at insurance
-insu <- survey::svyglm("pv18s ~ wlthrcde_fctm + hab481_fctb",
-               design = dtsrvy,
-               family = quasibinomial(link="logit"))
-
-summary(insu)
-car::vif(insu) # no house nearly halves it
-
-# just looking at insurance
-wlth <- survey::svyglm("pv18s ~ wlthrcde_fctm + urbanscore_fctm_clust",
-                       design = dtsrvy,
-                       family = quasibinomial(link="logit"))
-
-summary(wlth)
-car::vif(wlth) # no house nearly halves it
+#------------------------------------------------------------------------------------------
+# Analyze for Missing Data
+#-------------------------------------------------------------------------------------------
+dtsrvy %>% 
+  dplyr::select(rskfctr) %>% 
+  as.data.frame(.) %>% 
+  mice::md.pattern(., plot=T)
 
 
 
 #......................
 # Results & Out
 #......................
-saveRDS(dtrskfctr.corr, file = "data/derived_data/covariate_correlation_data.rds")
+saveRDS(corr.grid, file = "data/derived_data/covariate_correlation_data.rds")
 
 
 

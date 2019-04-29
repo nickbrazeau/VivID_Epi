@@ -10,16 +10,71 @@ set.seed(42)
 #......................
 # Import Data
 #......................
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
-  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
-                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model),
+  dplyr::mutate(risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model),
                 llin_causal_model = ifelse(is.na(llin_causal_model), "n", llin_causal_model),
                 hlthinsrnc_causal_model = ifelse(is.na(hlthinsrnc_causal_model), "n", hlthinsrnc_causal_model),
                 bldmtrl_causal_model = ifelse(is.na(bldmtrl_causal_model), "n", bldmtrl_causal_model)
                 
   )
 sf::st_geometry(dt) <- NULL
+
+
+#......................
+# Due Diligence
+#......................
+# is insurance just a factor of wealth or urbanicity (we know they are collinear)
+xtabs(~hab481_fctb+wlthrcde_fctm, data = dt)
+xtabs(~hab481_fctb+wlthrcde_fctm + urbanscore_fctm_clust, data = dt)
+xtabs(~hab481_fctb+wlthrcde_fctm + haven::as_factor(hv025), data = dt)
+
+# distance to healthcare center scales with access to health care
+t.test(dt$hlthdist_cont_scale_clst[dt$hab481_fctb == "yes"],
+       dt$hlthdist_cont_scale_clst[dt$hab481_fctb == "no"])
+boxplot(dt$hlthdist_cont_scale_clst ~ dt$hab481_fctb)
+
+
+plot(dt$hlthdist_cont_scale_clst ~ log(dt$travel_times_2015 + 1e-3))
+
+dt[dt$travel_times_2015 == 0,] %>% 
+  group_by(hv001) %>% 
+  dplyr::summarise(hlthdistmean = mean(hlthdist_cont_scale_clst),
+                   longnum = mean(longnum),
+                   latnum = mean(latnum),
+                   hv025 = mean(hv025)) %>% 
+  filter(hlthdistmean > -1) %>% 
+  ggplot() +
+  geom_sf(data=DRCprov) +
+  geom_point(aes(x=longnum, y=latnum))
+
+  
+
+
+dt %>% 
+  group_by(hv001) %>% 
+  dplyr::mutate(hab481_num = ifelse(hab481_fctb == "yes", 1, 0)) %>% 
+  dplyr::summarise(
+    htlhins = mean(hab481_num, na.rm = T),
+    longnum = mean(longnum),
+    latnum = mean(latnum),
+    hv025 = mean(hv025)
+  ) %>% 
+  dplyr::mutate(htlhins = ifelse(htlhins == 0, NA, htlhins)) %>% 
+  ggplot() +
+  geom_sf(data=DRCprov) +
+  geom_point(aes(x=longnum, y=latnum, size = htlhins, color = haven::as_factor(hv025)))
+
+
+
+
+
+
+
+
+
+
 
 
 #......................

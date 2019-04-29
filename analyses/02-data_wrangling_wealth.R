@@ -236,9 +236,10 @@ dtsub <- dtsub %>%
                                                       "middle", "rich", "richest"),
                                           include.lowest = T)
   ) %>% 
-  dplyr::select(c("hivrecode_barcode", "combscor", "wlthrcde_fctm"))
+  dplyr::select(c("hivrecode_barcode", "combscor", "wlthrcde_fctm")) %>% 
+  dplyr::rename(wlthrcde_combscor_cont = combscor)
 
-summary(dtsub$combscor)
+summary(dtsub$wlthrcde_combscor_cont)
 summary(dtsub$wlthrcde_fctm)
 quants
 

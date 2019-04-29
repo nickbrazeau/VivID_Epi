@@ -143,6 +143,16 @@ plotly::plot_ly(pcaeigplot, x = ~pc1, y = ~pc3, z = ~pc2, color = ~rururb)%>%
   layout(scene = list(xaxis = list(title = 'PC1'),
                       yaxis = list(title = 'PC3'),
                       zaxis = list(title = 'PC2')))
+#.............
+# View on Biplot
+#.............
+library(ggfortify)
+ggplot2::autoplot(urbanmatpca,
+                  loadings = TRUE, 
+                  loadings.label = TRUE, 
+                  loadings.label.size  = 3)
+
+
 
 #.............
 # Degree of Urbanicity

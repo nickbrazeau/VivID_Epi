@@ -23,18 +23,18 @@ load("data/map_bases/vivid_maps_bases.rda")
 # Plasmodium Point Prevalence Maps (Province & Cluster)
 #----------------------------------------------------------------------------------------------------
 
-pfldhprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pfldh) %>% 
+pfldhprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pfldh, adm1shp = DRCprov) %>% 
   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "adm1name")
-pv18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pv18s)  %>% 
+pv18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pv18s, adm1shp = DRCprov)  %>% 
   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "adm1name")
-po18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = po18s) %>% 
+po18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = po18s, adm1shp = DRCprov) %>% 
   dplyr::mutate(plsmdmspec = "po18s", maplvl = "adm1name")
 
-pfldhclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pfldh) %>% 
+pfldhclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pfldh, adm1shp = DRCprov) %>% 
   dplyr::mutate(plsmdmspec = "pfldh", maplvl = "hv001")
-pv18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pv18s) %>% 
+pv18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pv18s, adm1shp = DRCprov) %>% 
   dplyr::mutate(plsmdmspec = "pv18s", maplvl = "hv001")
-po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = po18s) %>% 
+po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = po18s, adm1shp = DRCprov) %>% 
   dplyr::mutate(plsmdmspec = "po18s", maplvl = "hv001")
 
 
@@ -61,28 +61,8 @@ pntestmaps <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
 #......................
 # Plot Cases
 #......................
-caseprevmaps <- pmap(list(data = clusters$data, plsmdmspec = clusters$plsmdmspec), casemapplotter)
+caseprevmaps <- pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemapplotter)
 caseprevmaps <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
-
-
-
- 
- #----------------------------------------------------------------------------------------------------
- # Ape Map Distributions
- #----------------------------------------------------------------------------------------------------
-ape <- readRDS("data/redlist_species_data_primate/drc_ape.rds")
-aperange_nhapv <- ggplot() +
-   geom_sf(data = DRCprov, fill = "#d9d9d9") +
-   geom_point(data = left_join(mp$data[[5]], dt[,c("hv001", "latnum", "longnum")], by = "hv001"), 
-              aes(x=longnum, y=latnum, colour = plsmdprev, size = n), alpha = 0.8) +
-   scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-   scale_size(guide = 'none') +
-   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
-   scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3")) +
-   prettybasemap_nodrc +
-   theme(legend.position = "bottom",
-         plot.background = element_blank())
-
 
 
 
@@ -95,12 +75,40 @@ aperange_nhapv <- ggplot() +
 # Moran's I -- greater circler
 #.................................................................
 
-gc <- geosphere::distm(x = mp$data[[1]][,c("longnum", "latnum")], fun = geosphere::distGeo) # JUST USE st_distance -- same return as geosphre
+gc <- mp %>% 
+  dplyr::filter(maplvl == "hv001" & plsmdmspec == "pfldh") %>% # pfldh just so we can have one data obj at correct map level
+  tidyr::unnest() %>% 
+  dplyr::select(c("longnum", "latnum")) %>% 
+  geosphere::distm(x =., fun = geosphere::distGeo) 
+
 gc.inv <- 1/gc
 diag(gc.inv) <- 0
 
-mp$moranI <- lapply(mp$plsmdprev, moran.test, listw = spdep::mat2listw(gc.inv), alternative = "two.sided")
+mp.moranI <- mp %>% 
+  dplyr::filter(maplvl == "hv001") %>% 
+  .$data %>% 
+  purrr::map(., "plsmdprev") 
+
+mp.moranI.ret <- lapply(mp.moranI, spdep::moran.test, 
+                    listw = spdep::mat2listw(gc.inv), 
+                    alternative = "two.sided")
+
+mp$moranI <- NA
+mp$moranI[4:6] <- mp.moranI.ret
 # Note, Cedar ran this in geoda for Pv and got a similar answer
+
+
+
+#----------------------------------------------------------------------------------------------------
+# Ape Map Distribution for Pv
+#----------------------------------------------------------------------------------------------------
+ape <- readRDS("data/redlist_species_data_primate/drc_ape.rds")
+aperange_nhapv <- 
+  caseprevmaps[[5]] +
+  geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
+  scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
+
+
 
 
 

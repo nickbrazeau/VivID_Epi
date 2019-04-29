@@ -40,8 +40,7 @@ wtrdist_out <- data.frame(
 #----------------------------------------------------------------------------------------------------
 # Health Sites
 #----------------------------------------------------------------------------------------------------
-hlthsites <- sf::read_sf("data/raw_data/hotosm_data/hotosm_drc_healthsites_shapefiles/healthsites.shp") %>% 
-  dplyr::filter(type %in% c("hospital", "clinic"))
+hlthsites <- sf::read_sf("data/raw_data/hotosm_data/hotosm_drc_healthsites_shapefiles/healthsites.shp") 
 htlhdist <- sf::st_distance(x = ge,
                              y = hlthsites)
 

@@ -9,7 +9,7 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 #----------------------------------------------------------------------------------------------------
 # Mapping Functions
 #----------------------------------------------------------------------------------------------------
-prev_point_est_summarizer <- function(design, maplvl, plsmdmspec){
+prev_point_est_summarizer <- function(design, maplvl, plsmdmspec, adm1shp){
   
   # rlang
   maplvl <- enquo(maplvl)
@@ -21,11 +21,25 @@ prev_point_est_summarizer <- function(design, maplvl, plsmdmspec){
     dplyr::group_by(!!maplvl) %>% 
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
-                     plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95),
-                     latnum = srvyr::survey_mean(latnum),
-                     longnum = srvyr::survey_mean(longnum) # cluster weighted centroid for adm1 and identical values for clusters (i.e. self)
+                     plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)
                      ) %>% 
     dplyr::mutate(logitplsmdprev = logit(plsmdprev, tol = 1e-3))
+  
+  
+  if( quo_name(maplvl) == "adm1name" ){
+    ret <- inner_join(ret, adm1shp, by = "adm1name")
+   
+  } else if( quo_name(maplvl) == "hv001" ){
+    clustgeom <- design %>% 
+      dplyr::select(c("hv001", "longnum", "latnum", "geometry")) %>% 
+      as.data.frame(.) %>% 
+      dplyr::filter(!duplicated(.))
+    
+    ret <- inner_join(ret, clustgeom, by = "hv001")
+    
+  } else {
+    stop("maplvl is not in the options for this function")
+  }
   
   # return
   return(ret)
@@ -43,7 +57,7 @@ mapplotter <- function(data, maplvl, plsmdmspec){
           axis.line = element_blank())
   
   if(maplvl == "adm1name"){
-    data <- inner_join(data, DRCprov, by = "adm1name")
+    
     ret <- ret + geom_sf(data = data, aes(fill = plsmdprev)) +
       # scale_fill_distiller("Prevalence", palette = "Spectral") +
       scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
@@ -51,8 +65,6 @@ mapplotter <- function(data, maplvl, plsmdmspec){
       coord_sf(datum=NA)  # to get rid of gridlines
     
   } else if(maplvl == "hv001"){
-    clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "geometry")]
-    data <- inner_join(data, clustgeom, by = "hv001")
     
     ret <- ret + geom_sf(data = data, aes(fill = plsmdprev, colour = plsmdprev, size = n), alpha = 0.4) +
       # scale_fill_distiller("Prevalence", palette = "Spectral") +

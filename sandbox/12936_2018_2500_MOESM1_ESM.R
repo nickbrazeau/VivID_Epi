@@ -122,7 +122,7 @@ stk.acc <- inla.stack(tag = 'estimation',
                                      data.frame(B0 = 1, pvpr[,c("NightTimeTemp.scaled", "logElevation.scaled","Rainfall.scaled","logTravelToCities.scaled")]))
 )
 
-# define model formula and run INLA model
+# %>% %>% %>% %>% %>% define model formula and run INLA model
 formula.acc <- pos ~ -1 + B0 +  NightTimeTemp.scaled + logElevation.scaled + Rainfall.scaled+ logTravelToCities.scaled+ f(space, model = spde)## RF term
 model.acc <- inla(formula.acc, 
                   family = 'binomial',
