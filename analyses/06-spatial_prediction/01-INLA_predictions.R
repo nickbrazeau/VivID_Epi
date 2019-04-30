@@ -21,6 +21,34 @@ pvprev <- mp %>%
   tidyr::unnest(.)
 
 
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
+  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
+                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
+dtsrvy <- makecd2013survey(survey = dt)
+
+rskfctr <- dcdr %>% 
+  dplyr::filter(risk_factor_model == "y" ) %>% 
+  dplyr::select("column_name") %>% 
+  unlist(.)
+
+
+dt.sp <- dt[,c("pv18s", rskfctr, "hv001", "hv005_wi", "longnum", "latnum")]
+
+#----------------------------------------------------------------------------------------------------
+# Mixed Effects Model, Non-Spatial
+#----------------------------------------------------------------------------------------------------
+eq <- as.formula(   paste("pv18s ~", paste(rskfctr, collapse = "+")), "+ (1|hv001)"  ) 
+
+mme.sat.nonsp <- lme4::glmer(pv18s ~ pfldh_fctb + (1|hv001),
+                             family = binomial(link="logit"),
+                             weights = hv005_wi,
+                             data = dt.sp )
+
+merTools::fastdisp(mme.sat.nonsp)
+
+broom::tidy(mme.sat.nonsp, conf.int = T, exponentiate = T)
+
 #----------------------------------------------------------------------------------------------------
 # GEOSTATISTICAL MODELING with INLA
 #----------------------------------------------------------------------------------------------------
