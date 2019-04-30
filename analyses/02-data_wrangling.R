@@ -100,11 +100,41 @@ dt <- dt %>%
 # dates
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")),
-                hvyrmnth_dtmnth = factor(paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")),
-                hvyrmnth_dtmnth_lag = factor(paste(lubridate::year(lubridate::rollback(hvdate_dtdmy, roll_to_first = F)), 
-                                                   lubridate::month(lubridate::rollback(hvdate_dtdmy, roll_to_first = F)), sep = "-"))
-  )
+  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
+
+# NOTE, some clusters have survey start and end dates that are in two months 
+# (eg boundaries aren't clean/coinciding with a month. Naturally). Given
+# grouping by month, need to assign a clusters "month" on the majority of days 
+# that were spent surveying that clusters
+
+# clusters without clean boundaries
+clst_mnth_bounds <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
+  dplyr::mutate(mnth = lubridate::month(hvdate_dtdmy)) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(moremnths = length(unique(mnth))) %>% 
+  dplyr::filter(moremnths > 1)
+
+clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
+  dplyr::filter(hv001 %in% clst_mnth_bounds$hv001) %>% 
+  dplyr::mutate(hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
+  dplyr::group_by(hv001, hvyrmnth_dtmnth) %>% 
+  dplyr::summarise(n = n()) %>% 
+  dplyr::filter(n == max(n)) %>% 
+  dplyr::select(-c("n"))
+
+sf::st_geometry(clst_mnth_bounds.assign) <- NULL
+
+dt <- dt %>% 
+  dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
+  dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
+                                         paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"),
+                                         hvyrmnth_dtmnth))
+
+dates <- readr::read_csv("internal_datamap_files/pr_date_liftover.csv")
+dt <- dt %>% 
+  dplyr::left_join(x=., y=dates, by = "hvyrmnth_dtmnth") %>% 
+  dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
+
 xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
 #.............
@@ -311,7 +341,8 @@ wallfloormiss <- dt %>%
 xtabs(~wallfloormiss$hv213 + wallfloormiss$hv214, addNA = T)
 # different observations missing for floor v. wall
 
-wallfloorroofrecode <- dt[,c("hv213_liftover", "hv214_liftover", "hv215_liftover")]
+wallfloorroofrecode <- dt %>% 
+  dplyr::select(c("hv213_liftover", "hv214_liftover", "hv215_liftover"))
 sf::st_geometry(wallfloorroofrecode) <- NULL
 dt <- dt %>% 
   dplyr::mutate(
@@ -695,7 +726,7 @@ dt <- dt %>%
 #.............
 summary(dt$hml20) # no missing
 summary(dt$wlthrcde_fctm)
-summary(dt$hv108_cont)
+summary(dt$hv106_fctb)
 
 democlust <- dtsrvy %>% 
   dplyr::group_by(hv001) %>% 

@@ -17,21 +17,35 @@ source("R/00-functions_basic.R")
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
-  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
-                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
-dtsrvy <- makecd2013survey(survey = dt)
+  dplyr::mutate( colllinear_level = ifelse(is.na(colllinear_level), "n", colllinear_level) )
 
-rskfctr <- dcdr %>% 
-  dplyr::filter(risk_factor_model == "y" ) %>% 
+# make id framework 
+rskfctr.id <- dcdr %>% 
+  dplyr::filter(colllinear_level == "id" ) %>% 
   dplyr::select("column_name") %>% 
   unlist(.)
 
+dtsrvy <- makecd2013survey(survey = dt)
+
+# make cluster-level framework
+rskfctr.sp <- dcdr %>% 
+  dplyr::filter(colllinear_level == "sp" ) %>% 
+  dplyr::select("column_name") %>% 
+  unlist(.)
+
+clst <- dt[,c("hv001", rskfctr.sp)] %>% 
+  dplyr::filter(!duplicated(.))
+
+
 #------------------------------------------------------------------------------------------
 # Analyze for Collinearity 
-#-------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------
 #......................
 # Non-parametric Approach
 #......................
+#######################
+# Functions
+#######################
 my.smd <- function(Var1, Var2, design = dtsrvy){
   
   
@@ -115,6 +129,29 @@ docorreval <- function(Var1, Var2, typeeval){
   return(ret)
 }
 
+
+
+decode_corrgrid <- function(decoder = dcdr, longcorrdf){
+  decoder1 <- decoder %>% 
+    dplyr::select(c("column_name", "var_label")) %>% 
+    magrittr::set_colnames(c("Var1", "Var1_label"))
+  
+  decoder2 <- decoder %>% 
+    dplyr::select(c("column_name", "var_label")) %>% 
+    magrittr::set_colnames(c("Var2", "Var2_label"))
+  
+  longcorrdf <- longcorrdf %>% 
+    dplyr::left_join(x=., y=decoder1) %>% 
+    dplyr::left_join(x=., y=decoder2)
+  
+  return(longcorrdf)
+  
+}
+
+#######################
+# RUN IT 
+#######################
+
 # make corr grid 
 corr.grid <- data.frame(t(combn(rskfctr, 2))) %>% 
   magrittr::set_colnames(., c("Var1", "Var2")) %>% 
@@ -126,15 +163,17 @@ corr.grid <- data.frame(t(combn(rskfctr, 2))) %>%
 corr.grid$corrret <- purrr::pmap(corr.grid, docorreval)
 corr.grid$corrret <- unlist(corr.grid$corrret)
 
+corr.grid.decoded <- decode_corrgrid(decoder = dcdr, longcorrdf = corr.grid)
+
 # quick viz for both categoricals
-corr.grid %>% 
+corr.cat.plot <- corr.grid.decoded %>% 
   dplyr::filter(typeeval == "chisq") %>% 
   dplyr::mutate(corrret_scale = my.scale(corrret)) %>% 
   dplyr::select(-c("typeeval", "corrret")) %>% 
-  dplyr::mutate(Var1 = forcats::fct_rev(forcats::fct_reorder(.f = Var1, .x = Var1, .fun = length)),
-                Var2 = forcats::fct_rev(forcats::fct_reorder(.f = Var2, .x = Var2, .fun = length))) %>% 
+  dplyr::mutate(Var1_label = forcats::fct_rev(forcats::fct_reorder(.f = Var1_label, .x = Var1_label, .fun = length)),
+                Var2_label = forcats::fct_rev(forcats::fct_reorder(.f = Var2_label, .x = Var2_label, .fun = length))) %>% 
   ggplot() +
-  geom_tile(aes(x=Var1, y=Var2, fill= corrret_scale)) + 
+  geom_tile(aes(x=Var1_label, y=Var2_label, fill= corrret_scale)) + 
   scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu"))) +
   ggtitle("Scaled Chi-Square Statistics for Caterogical Variables") +
   vivid_theme +
@@ -147,42 +186,42 @@ corr.grid %>%
 
 
 # quick viz for continuous
-corr.grid %>% 
+corr.cat.plot <- corr.grid.decoded %>% 
   dplyr::filter(typeeval == "pearson") %>% 
-  dplyr::mutate(corrret_scale = abs(corrret)) %>% 
+  dplyr::mutate(corrret_scale = corrret) %>% 
   dplyr::select(-c("typeeval", "corrret")) %>% 
-  dplyr::mutate(Var1 = forcats::fct_rev(forcats::fct_reorder(.f = Var1, .x = Var1, .fun = length)),
-                Var2 = forcats::fct_rev(forcats::fct_reorder(.f = Var2, .x = Var2, .fun = length))) %>% 
+  dplyr::mutate(Var1_label = forcats::fct_rev(forcats::fct_reorder(.f = Var1_label, .x = Var1_label, .fun = length)),
+                Var2_label = forcats::fct_rev(forcats::fct_reorder(.f = Var2_label, .x = Var2_label, .fun = length))) %>% 
   ggplot() +
-  geom_tile(aes(x=Var1, y=Var2, fill= corrret_scale)) + 
+  geom_tile(aes(x=Var1_label, y=Var2_label, fill= corrret_scale)) + 
   scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu"))) +
-  ggtitle("Absolute Pearson Correlations for Continuous Variables") +
+  ggtitle("Pearson Correlations for Continuous Variables") +
   vivid_theme +
   theme(legend.position = "right", 
         legend.text = element_text(angle = 0),
         axis.title = element_blank(),
         axis.text.y = element_text(size = 12),
-        axis.text.x = element_text(size = 12, angle = 90),
+        axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
         panel.border = element_blank())
 
 
 # quick viz for cont-categorical
-corr.grid %>% 
+corr.smd.plot <- corr.grid.decoded %>% 
   dplyr::filter(typeeval == "smd") %>% 
-  dplyr::mutate(corrret_scale = abs(corrret)) %>% 
+  dplyr::mutate(corrret_scale = my.scale(corrret)) %>% 
   dplyr::select(-c("typeeval", "corrret")) %>% 
-  dplyr::mutate(Var1 = forcats::fct_rev(forcats::fct_reorder(.f = Var1, .x = Var1, .fun = length)),
-                Var2 = forcats::fct_rev(forcats::fct_reorder(.f = Var2, .x = Var2, .fun = length))) %>% 
+  dplyr::mutate(Var1_label = forcats::fct_rev(forcats::fct_reorder(.f = Var1_label, .x = Var1_label, .fun = length)),
+                Var2_label = forcats::fct_rev(forcats::fct_reorder(.f = Var2_label, .x = Var2_label, .fun = length))) %>% 
   ggplot() +
   geom_tile(aes(x=Var1, y=Var2, fill= corrret_scale)) + 
   scale_fill_gradientn(colors = rev(RColorBrewer::brewer.pal(11, "RdYlBu"))) +
-  ggtitle("Absolute SMD for Continuous-Categorical Variables") +
+  ggtitle("Scaled SMD for Continuous-Categorical Variables") +
   vivid_theme +
   theme(legend.position = "right", 
         legend.text = element_text(angle = 0),
         axis.title = element_blank(),
         axis.text.y = element_text(size = 12),
-        axis.text.x = element_text(size = 12, angle = 90),
+        axis.text.x = element_text(size = 12, angle = 90, hjust = 1),
         panel.border = element_blank())
 
 
