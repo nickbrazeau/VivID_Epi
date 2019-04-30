@@ -88,8 +88,12 @@ for(i in 1:ncol(wlth_fct_multi_recode)){
   print(xtabs(~wlth_fct_multi[,i] + wlth_fct_multi_recode[,i], addNA = T))
 }
 
+# RECODE Water Sources
+# TODO 
+# Check that surface water is OK... should I be collapsing rain water? Is that an "etc"?
+
 # RECODE Toilet Facilities
-# This is based on Rutstein point 3b.3
+# This is based on Rutstein point 3b.2.b
 wlth_fct <- dplyr::bind_cols(wlth_fct_multi_recode, wlth_fct_binary_recode)
 wlth_fct <- wlth_fct %>% 
   dplyr::mutate(toiletfacil = paste(hv205, hv225, sep = "_"),

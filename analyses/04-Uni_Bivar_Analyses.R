@@ -19,9 +19,6 @@ dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
 dtsrvy <- makecd2013survey(survey = dt)
-dtnogeo <- dt
-sf::st_geometry(dtnogeo) <- NULL
-dtsrvy <- makecd2013survey(survey = dtnogeo)
 
 
 #----------------------------------------------------------------------------------------------------

@@ -41,6 +41,8 @@ prev_point_est_summarizer <- function(design, maplvl, plsmdmspec, adm1shp){
     stop("maplvl is not in the options for this function")
   }
   
+  # get sf class back
+  ret <- sf::st_as_sf(ret)
   # return
   return(ret)
 }
@@ -83,7 +85,7 @@ mapplotter <- function(data, maplvl, plsmdmspec){
 }
 
 
-casemapplotter <- function(data, plsmdmspec){
+casemap_prev_plotter <- function(data, plsmdmspec){
   # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
 
   pos <- data %>% 
@@ -108,6 +110,35 @@ casemapplotter <- function(data, plsmdmspec){
   return(ret)
   
 }
+
+
+
+casemap_n_plotter <- function(data, plsmdmspec){
+  # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
+  
+  pos <- data %>% 
+    dplyr::filter(plsmdn > 0)
+  neg <- data %>% 
+    dplyr::filter(plsmdn == 0)
+  
+  ret <- ggplot() + 
+    geom_sf(data = DRCprov) +
+    geom_jitter(data = neg, aes(x=longnum, y=latnum, size = n), shape = 4, show.legend = F, colour = "#377eb8") +
+    geom_point(data = pos, aes(x=longnum, y=latnum, colour = plsmdn, size = n), alpha = 0.4) +
+    scale_color_gradient2("Absolute \n Count", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+    scale_size(guide = 'none') +
+    ggtitle(paste(plsmdmspec)) +
+    coord_sf(datum=NA) + # to get rid of gridlines
+    vivid_theme +
+    theme(axis.text = element_blank(),
+          axis.line = element_blank(), 
+          axis.title = element_blank(),
+          legend.position = "bottom")
+  
+  return(ret)
+  
+}
+
 
 
 

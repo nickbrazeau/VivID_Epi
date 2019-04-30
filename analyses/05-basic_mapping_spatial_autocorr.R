@@ -17,7 +17,6 @@ library(RColorBrewer)
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-load("data/map_bases/vivid_maps_bases.rda")
 
 #----------------------------------------------------------------------------------------------------
 # Plasmodium Point Prevalence Maps (Province & Cluster)
@@ -54,19 +53,18 @@ mp$data <- lapply(list(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, 
 # Plot Summary/Point Est Maps
 #..............................
 pntestmaps <- pmap(mp, mapplotter)
-pntestmaps <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
-
 
 
 #......................
 # Plot Cases
 #......................
-caseprevmaps <- mp %>% 
+clst <- mp %>% 
   dplyr::filter(maplvl == "hv001") %>% 
-  pmap(list(data = .$data, plsmdmspec = .$plsmdmspec), casemapplotter)
+  dplyr::select(-c("maplvl"))
 
-caseprevmaps <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
+caseprevmaps <- purrr::pmap(list(data = clst$data, plsmdmspec = clst$plsmdmspec), casemap_prev_plotter)
 
+case_n_maps <- purrr::pmap(list(data = clst$data, plsmdmspec = clst$plsmdmspec), casemap_n_plotter)
 
 
 
@@ -121,5 +119,5 @@ aperange_nhapv <-
  
 saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
 
-save(pntestmaps, caseprevmaps, aperange_nhapv,
+save(pntestmaps, caseprevmaps, case_n_maps, aperange_nhapv,
       file = "results/basic_maps_results.rda")

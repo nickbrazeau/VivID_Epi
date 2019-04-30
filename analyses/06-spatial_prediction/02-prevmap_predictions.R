@@ -11,9 +11,7 @@ library(PrevMap)
 #......................
 # Import Data
 #......................
-load("data/map_bases/vivid_maps_bases.rda")
-
-# Summarize by Cluster
+# Summarized by Cluster
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 mp <- mp %>% 
   dplyr::filter(maplvl == "hv001") 
@@ -52,9 +50,6 @@ pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
 #..............................
 prevmaprasterplots <- lapply(pr$prevrasterspred,
                              prevmaprasterplotter, smoothfct = rep(7,3), alpha = 0.5)
-prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
-
-
 
 
 #----------------------------------------------------------------------------------------------------
