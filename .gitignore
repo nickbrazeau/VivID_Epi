@@ -16,7 +16,7 @@ db/
 data/
 rdhs.json
 figures/
-# internal_datamap_files/
+
 
 # RStudio files
 .Rproj.user/
