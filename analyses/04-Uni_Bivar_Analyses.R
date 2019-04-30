@@ -18,9 +18,8 @@ dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rd
 dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
+sf::st_geometry(dt) <- NULL
 dtsrvy <- makecd2013survey(survey = dt)
-
-
 #----------------------------------------------------------------------------------------------------
 # Basic Descriptive Statistics
 #----------------------------------------------------------------------------------------------------

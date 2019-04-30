@@ -267,7 +267,7 @@ plot(dt$hb1, dt$hab1_cont)
 # https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
 
 # floor
-floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_floor_liftover.csv")
+floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_floor_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv213 = haven::as_factor(hv213), 
                 hv213 =  forcats::fct_drop(hv213))
@@ -279,7 +279,7 @@ xtabs(~dt$hv213 + dt$hv213_liftover, addNA = T)
 
 
 # wall
-wall <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_wall_liftover.csv")
+wall <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_wall_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv214 = haven::as_factor(hv214), 
                 hv214 =  forcats::fct_drop(hv214))
@@ -291,7 +291,7 @@ xtabs(~dt$hv214 + dt$hv214_liftover, addNA = T)
 
 
 # roof
-roof <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_roof_liftover.csv")
+roof <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_roof_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv215 = haven::as_factor(hv215), 
                 hv215 =  forcats::fct_drop(hv215))
@@ -337,15 +337,18 @@ xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks OK. Some poor/poor
 
 
 #.............
-# years of education (continuous)
+# years of education (categorical)
 #.............
-hist(dt$hv108)
-summary(dt$hv108)
+edu <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_education_liftover.csv")
+xtabs(~haven::as_factor(dt$hv106))
 dt <- dt %>% 
-  dplyr::mutate(hv108_cont = ifelse(hv108 %in% c("97", "98", "99"), NA, hv108),
-                hv108_cont_scale = my.scale(hv108_cont, center = T, scale = T))
-xtabs(~dt$hv108 + dt$hv108_cont, addNA = T)
+  dplyr::mutate(hv106 = haven::as_factor(hv106), 
+                hv106 =  forcats::fct_drop(hv106))
+dt <- dt %>%
+  left_join(x=., y=edu, by="hv106") %>% 
+  dplyr::mutate( hv106_fctb = factor(hv106_fctb, levels = c("lower", "higher")) )
 
+xtabs(~dt$hv106 + dt$hv106_fctb, addNA = T)
 
 # #.............
 # # ethnicity
@@ -378,7 +381,7 @@ xtabs(~dt$hv108 + dt$hv108_cont, addNA = T)
 # dt <- dt %>% 
 #   dplyr::mutate(hv114a = ifelse(haven::as_factor(hv104) == "female", s114, sm114))
 # 
-# ethnic <-  readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_ethnic_liftover.csv")
+# ethnic <-  readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_ethnic_liftover.csv")
 # 
 # dt <- dt %>%
 #   left_join(x=., y=ethnic, by="hv114a") %>% 
@@ -415,7 +418,7 @@ xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
 # table(dt$mv717)
 # table(dt$hab717)
 # 
-# occupation <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_occupation_liftover.csv")
+# occupation <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_occupation_liftover.csv")
 # occupation$hab717 <- factor(occupation$hv717) # my mac being a pain
 # 
 # dt <- dt %>% 
@@ -480,7 +483,7 @@ dt <- dt %>%
 # # Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
 # #.............
 # # read insecticide liftover table
-# insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/internal_datamap_files/pr_insecticide_liftover.csv")
+# insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_insecticide_liftover.csv")
 # 
 # dt <- dt %>%
 #   dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
@@ -688,31 +691,23 @@ dt <- dt %>%
                 )
 
 #.............
-# LLIN Cluster Usage; median wealth; median educ; health insur
+# LLIN Cluster Usage; mean wealth; prop educ
 #.............
 summary(dt$hml20) # no missing
 summary(dt$wlthrcde_fctm)
 summary(dt$hv108_cont)
 
 democlust <- dtsrvy %>% 
-  dplyr::mutate(wlthrcde_fctm_ord = factor(wlthrcde_fctm,
-                                           levels = c("poorest", "poor", "middle", "rich", "richest"),
-                                           ordered = T),
-                wlthrcde_fctm_ord_num = as.numeric(wlthrcde_fctm_ord)) %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(
-    hml20_cont_clst = srvyr::survey_mean(hml20, vartype = c("se")),
-    wlthrcde_fctm_clst = srvyr::survey_median(wlthrcde_fctm_ord_num, quantiles = c(0.5), vartype = c("se")),
-    hv108_cont_clst = srvyr::survey_median(hv108_cont, quantiles = c(0.5), vartype = c("se"), na.rm = T),
-    hab481_cont_clst = srvyr::survey_mean(hab481, vartype = c("se"), na.rm = T)
+    hml20_cont_clst = srvyr::survey_mean((hml20_fctb == "yes"), vartype = c("se")),
+    wlthrcde_combscor_cont_clst = srvyr::survey_mean(wlthrcde_combscor_cont, vartype = c("se")),
+    hv106_cont_clst = srvyr::survey_mean((hv106_fctb == "higher"), vartype = c("se"), na.rm = T)
   ) %>% 
   dplyr::mutate(
     hml20_cont_scale_clst = my.scale(logit(hml20_cont_clst, tol = tol), center = T, scale = T),
-    hv108_cont_scale_clst = my.scale(log(hv108_cont_clst_q50 + tol), center = T, scale = T),
-    wlthrcde_fctm_clst_q50_fctm = factor(floor(wlthrcde_fctm_clst_q50), # taking lower bracket of wealth if median was split
-                                         levels = c(1,2,3,4,5),
-                                         labels = c("poorest", "poor", "middle", "rich", "richest")),
-    hab481_cont_scale_clst = my.scale(logit(hab481_cont_clst, tol = tol), center = T, scale = T)
+    wlthrcde_combscor_cont_scale_clst = my.scale(wlthrcde_combscor_cont_clst, center = T, scale = T),
+    hv106_cont_scale_clst = my.scale(logit(hv106_cont_clst, tol = tol), center = T, scale = T)
           ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
 
