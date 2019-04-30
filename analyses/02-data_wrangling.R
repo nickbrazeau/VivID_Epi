@@ -83,10 +83,7 @@ dt <- dt %>%
 # 2. Seasonality (ecological import)
 # 3. Temparature (ecological import)
 # 4. Precipation (ecological import)
-# 5. Wetness Index (ecological import)
 # 6. Type of Residence i.e. Rural or Urban (recode)
-# 7. Ape Habitat Overlap (ecological import)
-
 
 
 #########################################################################################################
@@ -635,23 +632,23 @@ dt <- dt %>%
                 alt_dem_cont_scale_clst = my.scale(alt_dem_clst_log, center = T, scale = T)
   )
 
-#.............
-# Ape Habitat Overlap
-#.............
-drc_ape <- readRDS(file = "data/redlist_species_data_primate/drc_ape.rds")
-drc_ape_simplified <- rgeos::gSimplify(
-  sf::as_Spatial(sf::st_union(drc_ape)), 
-  tol = 1e-3)
-
-dt <- dt %>% 
-  dplyr::mutate(ape_habitat_fctb_clst = factor(
-    ifelse(rgeos::gContains(spgeom1 = drc_ape_simplified,
-                            spgeom2 = sf::as_Spatial(sf::st_as_sf(.)),
-                            byid = T),
-           1, 0),
-    levels = c(0,1), labels = c("NoOverlap", "Overlap"))
-  )
-xtabs(~dt$ape_habitat_fctb_clst)
+# #.............
+# # Ape Habitat Overlap
+# #.............
+# drc_ape <- readRDS(file = "data/redlist_species_data_primate/drc_ape.rds")
+# drc_ape_simplified <- rgeos::gSimplify(
+#   sf::as_Spatial(sf::st_union(drc_ape)), 
+#   tol = 1e-3)
+# 
+# dt <- dt %>% 
+#   dplyr::mutate(ape_habitat_fctb_clst = factor(
+#     ifelse(rgeos::gContains(spgeom1 = drc_ape_simplified,
+#                             spgeom2 = sf::as_Spatial(sf::st_as_sf(.)),
+#                             byid = T),
+#            1, 0),
+#     levels = c(0,1), labels = c("NoOverlap", "Overlap"))
+#   )
+# xtabs(~dt$ape_habitat_fctb_clst)
 
 #.............
 # Distance to Water Source
@@ -764,22 +761,22 @@ kdsrv_fvr_clst <- kdsrv_fvr  %>%
   dplyr::group_by(v001) %>% 
   dplyr::summarise(
     n = srvyr::survey_total(count),
-    fansidar_cont_clst = srvyr::survey_mean(ml13a),
-    chloroquine_cont_clst = srvyr::survey_mean(ml13b),
-    amodiaquine_cont_clst = srvyr::survey_mean(ml13c),
-    quinine_cont_clst = srvyr::survey_mean(ml13d),
-    act_cont_clst = srvyr::survey_mean(ml13e),
-    otherartm_cont_clst = srvyr::survey_mean(ml13f),
-    other_cont_clst = srvyr::survey_mean(ml13h),
+    # fansidar_cont_clst = srvyr::survey_mean(ml13a),
+    # chloroquine_cont_clst = srvyr::survey_mean(ml13b),
+    # amodiaquine_cont_clst = srvyr::survey_mean(ml13c),
+    # quinine_cont_clst = srvyr::survey_mean(ml13d),
+    # act_cont_clst = srvyr::survey_mean(ml13e),
+    # otherartm_cont_clst = srvyr::survey_mean(ml13f),
+    # other_cont_clst = srvyr::survey_mean(ml13h),
     anyatm_cont_clst = srvyr::survey_mean(anyatm)) %>% 
   dplyr::mutate(
-    fansidar_cont_scale_clst = my.scale(logit(fansidar_cont_clst, tol = tol), center = T, scale = T),
-    chloroquine_cont_scale_clst = my.scale(logit(chloroquine_cont_clst, tol = tol), center = T, scale = T),
-    amodiaquine_cont_scale_clst = my.scale(logit(amodiaquine_cont_clst, tol = tol), center = T, scale = T),
-    quinine_cont_scale_clst = my.scale(logit(quinine_cont_clst, tol = tol), center = T, scale = T),
-    act_cont_scale_clst = my.scale(logit(act_cont_clst, tol = tol), center = T, scale = T),
-    otherartm_cont_scale_clst = my.scale(logit(otherartm_cont_clst, tol = tol), center = T, scale = T),
-    other_cont_scale_clst = my.scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
+    # fansidar_cont_scale_clst = my.scale(logit(fansidar_cont_clst, tol = tol), center = T, scale = T),
+    # chloroquine_cont_scale_clst = my.scale(logit(chloroquine_cont_clst, tol = tol), center = T, scale = T),
+    # amodiaquine_cont_scale_clst = my.scale(logit(amodiaquine_cont_clst, tol = tol), center = T, scale = T),
+    # quinine_cont_scale_clst = my.scale(logit(quinine_cont_clst, tol = tol), center = T, scale = T),
+    # act_cont_scale_clst = my.scale(logit(act_cont_clst, tol = tol), center = T, scale = T),
+    # otherartm_cont_scale_clst = my.scale(logit(otherartm_cont_clst, tol = tol), center = T, scale = T),
+    # other_cont_scale_clst = my.scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
     anyatm_cont_scale_clst = my.scale(logit(anyatm_cont_clst, tol = tol), center = T, scale = T)
     ) %>% 
   dplyr::rename(hv001 = v001)  %>% 
