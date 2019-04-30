@@ -38,16 +38,16 @@ dt.sp <- dt[,c("pv18s", rskfctr, "hv001", "hv005_wi", "longnum", "latnum")]
 #----------------------------------------------------------------------------------------------------
 # Mixed Effects Model, Non-Spatial
 #----------------------------------------------------------------------------------------------------
-eq <- as.formula(   paste("pv18s ~", paste(rskfctr, collapse = "+")), "+ (1|hv001)"  ) 
+eq <- as.formula(   paste("pv18s ~", paste(rskfctr, collapse = "+"), "+ (1|hv001)")  ) 
 
-mme.sat.nonsp <- lme4::glmer(pv18s ~ pfldh_fctb + (1|hv001),
+mme.sat.nonsp <- lme4::glmer(eq,
                              family = binomial(link="logit"),
                              weights = hv005_wi,
                              data = dt.sp )
 
 merTools::fastdisp(mme.sat.nonsp)
 
-broom::tidy(mme.sat.nonsp, conf.int = T, exponentiate = T)
+sat.coef <- broom.mixed::tidy(mme.sat.nonsp, conf.int = T, exponentiate = T)
 
 #----------------------------------------------------------------------------------------------------
 # GEOSTATISTICAL MODELING with INLA
