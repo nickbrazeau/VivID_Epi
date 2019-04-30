@@ -1,0 +1,15 @@
+label,hv717,jobconditions
+not working,0,outdoors
+professional/technical/managerial,1,indoors
+clerical,2,indoors
+sales,3,indoors
+agricultural - self employed,4,outdoors
+agricultural - employee,5,outdoors
+household and domestic,6,indoors
+services,7,indoors
+skilled manual,8,outdoors
+unskilled manual,9,outdoors
+army,10,outdoors
+others,96,NA
+don't know,98,NA
+missing,99,NA
