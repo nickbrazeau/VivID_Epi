@@ -138,6 +138,7 @@ Province and cluster point estimates were calculated directly from the CD2013 sa
 
 ```{r}
 prevmaprasterplots <- readRDS("~/Documents/GitHub/VivID_Epi/results/prevmap_raster_plots.rds")
+mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
 load("~/Documents/GitHub/VivID_Epi/results/basic_maps_results.rda")
 
 ```
@@ -145,7 +146,7 @@ load("~/Documents/GitHub/VivID_Epi/results/basic_maps_results.rda")
 #### _P. vivax_
 
 ```{r, fig.width=11, fig.height=8, fig.align="center"}
-prevmaprasterplots$moranI[[2]]
+mp$moranI[[5]]
 
 gridExtra::grid.arrange(
                         pntestmaps[[2]], 
@@ -157,7 +158,7 @@ gridExtra::grid.arrange(
 
 #### _P. falciparum_
 ```{r, fig.width=11, fig.height=8, fig.align="center"}
-prevmaprasterplots$moranI[[1]]
+mp$moranI[[4]]
 
 gridExtra::grid.arrange(
                         pntestmaps[[1]], 
@@ -170,7 +171,7 @@ gridExtra::grid.arrange(
 
 #### _P. ovale_
 ```{r, fig.width=11, fig.height=8, fig.align="center"}
-prevmaprasterplots$moranI[[3]]
+mp$moranI[[6]]
 
 gridExtra::grid.arrange(
                         pntestmaps[[3]], 
@@ -221,24 +222,24 @@ These interventions were all identified in the literature as recent, scalable, c
 #### Due Diligence
 ```{r import due diligence}
 
-dtrskfctr.corr <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/covariate_correlation_data.rds")
+
 
 ```
 
 ##### Model Multicollinearity 
 ```{r, fig.width = 8, fig.height = 8 }
-ggcorrplot::ggcorrplot(dtrskfctr.corr, 
-                       type = "lower",
-                       outline.color = "white",
-                       ggtheme = ggplot2::theme_gray,
-                       colors = c("#313695", "#ffffbf", "#a50026"),
-                       hc.order = F) +
-  ggtitle("Covariate Correlation Matrix") +
-  theme(plot.title = element_text(size = 14, family = "Arial", face = "bold", vjust = 0.5, hjust = 0.5),
-        legend.position = "right", 
-        legend.text = element_text(angle = 0),
-        axis.text = element_text(size = 5),
-        panel.border = element_blank())
+# ggcorrplot::ggcorrplot(dtrskfctr.corr, 
+#                        type = "lower",
+#                        outline.color = "white",
+#                        ggtheme = ggplot2::theme_gray,
+#                        colors = c("#313695", "#ffffbf", "#a50026"),
+#                        hc.order = F) +
+#   ggtitle("Covariate Correlation Matrix") +
+#   theme(plot.title = element_text(size = 14, family = "Arial", face = "bold", vjust = 0.5, hjust = 0.5),
+#         legend.position = "right", 
+#         legend.text = element_text(angle = 0),
+#         axis.text = element_text(size = 5),
+#         panel.border = element_blank())
 
 ```
 

@@ -85,8 +85,7 @@ mapplotter <- function(data, maplvl, plsmdmspec){
 
 casemapplotter <- function(data, plsmdmspec){
   # Set some colors ; took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/ ; Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
-  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
-  data <- inner_join(data, clustgeom, by = "hv001")
+
   pos <- data %>% 
     dplyr::filter(plsmdprev > 0)
   neg <- data %>% 

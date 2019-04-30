@@ -61,7 +61,10 @@ pntestmaps <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
 #......................
 # Plot Cases
 #......................
-caseprevmaps <- pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemapplotter)
+caseprevmaps <- mp %>% 
+  dplyr::filter(maplvl == "hv001") %>% 
+  pmap(list(data = .$data, plsmdmspec = .$plsmdmspec), casemapplotter)
+
 caseprevmaps <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
 
 
@@ -104,7 +107,7 @@ mp$moranI[4:6] <- mp.moranI.ret
 #----------------------------------------------------------------------------------------------------
 ape <- readRDS("data/redlist_species_data_primate/drc_ape.rds")
 aperange_nhapv <- 
-  caseprevmaps[[5]] +
+  caseprevmaps[[2]] +
   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
   scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
 
