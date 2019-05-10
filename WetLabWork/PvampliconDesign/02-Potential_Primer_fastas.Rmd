@@ -52,6 +52,7 @@ bd <- bd %>%
 pvp01 <- Biostrings::readDNAStringSet("~/Documents/MountPoints/mountIDEEL/resources/genomes/Pvivax/genomes/PvP01.fasta", "fasta")
 chr12 <- pvp01[ pvp01@ranges@NAMES == "PvP01_12_v1" ]  # for pvs47
 chr09 <- pvp01[ pvp01@ranges@NAMES == "PvP01_09_v1" ]  # for ama1
+chr07 <- pvp01[ pvp01@ranges@NAMES == "PvP01_07_v1" ]  # for msp1
 # pvmsp1 already designed
 
 
@@ -159,7 +160,31 @@ prmrs.all %>%
 ```
 
 
+### _pvmsp1_ 
+
+Where do they land?
+```{r}
+# inner primers published by JESS
+vmatchPattern("GAGCTCTACAAGACGCACTT", chr07)
+vmatchPattern(reverseComplement(DNAString("CTCCARCTCGGCCTTTTT")), chr07, max.mismatch = 1)
 
 
+```
+
+### _pv18s snounou_ 
+
+Where do they land?
+```{r}
+# snounou primers
+snounouhitF <-vmatchPattern(reverseComplement(DNAString( "CGCTTCTAGCTTAATCCACATAACTGATAC" )), pvp01[ !grepl("Transfer", pvp01@ranges@NAMES) ] )
+snounouhitR <- vmatchPattern("ACTTCCAAGCCGAAGCAAAGAAAGTCCTTA", pvp01[ !grepl("Transfer", pvp01@ranges@NAMES) ])
+
+# apparently it is only hitting on CHR2 even though it is a multicopy gene?
+vmatchPattern(reverseComplement(DNAString( "CGCTTCTAGCTTAATCCACATAACTGATAC" )), pvp01[  pvp01@ranges@NAMES == "PvP01_02_v1" ] )
+vmatchPattern("ACTTCCAAGCCGAAGCAAAGAAAGTCCTTA",  pvp01[  pvp01@ranges@NAMES == "PvP01_02_v1" ] )
+
+
+
+```
 
 
