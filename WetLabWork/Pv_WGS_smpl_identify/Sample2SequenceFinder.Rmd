@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = F, warning = F, message = F)
 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
 library(tidyverse)
-load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 
 
 pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v1.csv", 
