@@ -46,8 +46,8 @@ plt_colnum <- rep(seq(1:12), 8)
 #---------------
 # Pulli in recode so this is from the actual 16363 smpls 
 #---------------
-load("~/Documents/GitHub/VivID_Epi/data/vividepi_recode.rda")
-pvpos <- dt[dt$pv18s_fctb == "viv+",]
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+pvpos <- dt[dt$pv18s_fctb == "vivpos",]
 
 
 
