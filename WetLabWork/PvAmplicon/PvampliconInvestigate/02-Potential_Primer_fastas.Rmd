@@ -40,7 +40,7 @@ Overall, uninspiring results. Will design for:
 
 ```{r}
 
-load("~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/potential_primer_variants.rda")
+load("~/Documents/GitHub/VivID_Epi/WetLabWork/PvAmplicon/PvampliconInvestigate/potential_primer_variants.rda")
 
 # subset to ama1 and pvs47
 
@@ -103,7 +103,7 @@ From `01-Potential_Primer_interrogate.Rmd`, I would like to capture the SNPs at 
 
 ama1 <- toString(subseq(chr09, (1460429-100), (1460628+100)))
 
-vmatchPattern("ATACCAAACCGACTTGCCTCA", chr09)
+vmatchPattern("TCAAATGTCCCTGCGAACCT", chr09)
 vmatchPattern(reverseComplement(DNAString("TTTCCGCCCTTTTCTCTACACA")), chr09)
 ```
 
@@ -159,6 +159,29 @@ prmrs.all %>%
 
 ```
 
+### _pvama_ Even Smaller Nested Design
+On June 5, 2019, we decided to go after a smaller region on AMA1. I am going to nest inside the 300-bp target that I designed above. I still would like to capture the SNP at position: `r paste("1460608")`. *Going to use a heminested approach*. As above, `Primer-Blast` asked to match on this *"XM_001615397.1	Plasmodium vivax apical merozoite antigen 1 (PVX_092275), partial mRNA"* .... which is a Sal1 version...which should be fine (annoying default behavior). Found a good forward primer in primer-set 13 50% GC content and similar melting temperature (59.6 vs. 59.89).
+
+
+```{r}
+
+
+
+prmrs.all.newer <- cbind(status = "very_inner", Primer = c("Forward", "Reverse"),
+                         rbind( data.frame( vmatchPattern("TCAAATGTCCCTGCGAACCT", chr09)[[1]] ),
+                                data.frame( vmatchPattern(reverseComplement(DNAString("TTTCCGCCCTTTTCTCTACACA")), chr09)[[1]])))
+
+
+
+
+prmrs.all.newer <- rbind.data.frame(prmrs.all, prmrs.all.newer)
+
+prmrs.all.newer %>% 
+  DT::datatable()
+
+```
+                         
+                         
 
 ### _pvmsp1_ 
 

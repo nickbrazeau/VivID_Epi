@@ -37,12 +37,13 @@ From Hupalo et al. 2016 [PMID: 27348298](https://www.ncbi.nlm.nih.gov/pubmed/273
 
 
 #.................................
-# read in
+# read in.
 #.................................
 # note, I subsetted this vcf on the command line previously
 dv <- vcfR::read.vcfR(file = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/WetLabWork/PvampliconDesign/vcf/prop-primers_snps.VQSR900.human_only.vcf.gz")
-bd <- readr::read_tsv(file = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/primerbed_fastas/pv_p01_prop-primers.bed")
-mt <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/curated_samples_20181211.xlsx")
+bd <- readr::read_tsv(file = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvAmplicon/PvampliconInvestigate/primerbed_fastas/pv_p01_prop-primers.bed")
+mt <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvAmplicon/PvampliconInvestigate/curated_samples_20181211.xlsx") %>% 
+  dplyr::mutate(c)
 
 bd <- rbind.data.frame(bd, data.frame( 
   chr = "PvP01_02_v1",
@@ -83,16 +84,6 @@ bd$plotdf <- purrr::map(bd$vcfRobj, function(x, metadata = mt){
               
 })
 
-bd$plotdf[[13]] %>% 
-  dplyr::filter(POS > 147667 & POS < 147605) %>% 
-  dplyr::arrange(POS) %>% 
-                                  ggplot() +
-                                  geom_tile(aes(x=factor(iid), y = factor(POS), fill = gt_fct)) + 
-                                  facet_wrap(cont + country_fct ~ ., scales = "free_x", nrow = 1) +
-                                  ggtitle(paste("Nucleotide variation for Gene Pv18s Snounou")) +
-                                  theme_classic() +
-                                  theme(axis.text.x = element_blank(),
-                                        plot.title = element_text(size = 12, face = "bold", hjust = 0.5))
 
 #.................................
 # Make Plots
@@ -121,6 +112,6 @@ bd$vcfplots
 
 
 
-save(bd, file = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvampliconDesign/potential_primer_variants.rda")
+save(bd, file = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvAmplicon/PvampliconInvestigate/potential_primer_variants.rda")
 
 ```
