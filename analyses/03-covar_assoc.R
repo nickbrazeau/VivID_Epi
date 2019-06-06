@@ -1,3 +1,4 @@
+
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to examine the associations
 # between covariates
@@ -16,25 +17,17 @@ source("R/00-functions_basic.R")
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
-  dplyr::mutate( colllinear_level = ifelse(is.na(colllinear_level), "n", colllinear_level) )
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map.xlsx", sheet = 1) %>% 
+  dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
-# make id framework 
-rskfctr.id <- dcdr %>% 
-  dplyr::filter(colllinear_level == "id" ) %>% 
+# grab risk factors
+rskfctr <- dcdr %>% 
+  dplyr::filter(risk_factor_model == "y" ) %>% 
   dplyr::select("column_name") %>% 
-  unlist(.)
+  unlist(.) %>% 
+  unname(.)
 
 dtsrvy <- makecd2013survey(survey = dt)
-
-# make cluster-level framework
-rskfctr.sp <- dcdr %>% 
-  dplyr::filter(colllinear_level == "sp" ) %>% 
-  dplyr::select("column_name") %>% 
-  unlist(.)
-
-clst <- dt[,c("hv001", rskfctr.sp)] %>% 
-  dplyr::filter(!duplicated(.))
 
 
 #------------------------------------------------------------------------------------------
@@ -186,7 +179,7 @@ corr.cat.plot <- corr.grid.decoded %>%
 
 
 # quick viz for continuous
-corr.cat.plot <- corr.grid.decoded %>% 
+corr.cont.plot <- corr.grid.decoded %>% 
   dplyr::filter(typeeval == "pearson") %>% 
   dplyr::mutate(corrret_scale = corrret) %>% 
   dplyr::select(-c("typeeval", "corrret")) %>% 
@@ -225,6 +218,13 @@ corr.smd.plot <- corr.grid.decoded %>%
         panel.border = element_blank())
 
 
+
+plot(corr.cat.plot)
+plot(corr.cont.plot)
+plot(corr.smd.plot)
+
+
+
 #......................
 # Parametric Approach
 #......................
@@ -245,9 +245,46 @@ summary(vifs)
 dtsrvy %>% 
   dplyr::select(rskfctr) %>% 
   as.data.frame(.) %>% 
-  mice::md.pattern(., plot=T)
+  mice::md.pattern(., plot=T, rotate.names = T)
+
+# Are my missing cases fundamentally different?
+dt.cmpl <- dt %>% 
+  dplyr::select(c("hv001", "hv023", "hv005_wi", rskfctr)) %>% 
+  dplyr::mutate(
+    ismissing = ifelse(rowSums(is.na(.)) == 0, "no", "yes"),
+    ismissing = factor(ismissing))
+
+sf::st_geometry(dt.cmpl) <- NULL
+dt.cmpl.srvy <- makecd2013survey(dt.cmpl)
 
 
+misstbl1 <- tableone::svyCreateTableOne(
+  data = dt.cmpl.srvy,
+  strata = "ismissing",
+  vars = rskfctr,
+  includeNA = T,
+  smd = T,
+  test = F)
+
+print(misstbl1, smd = TRUE)
+
+# are missing samples spread out?
+dt.cmpl %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::filter(ismissing == "yes") %>% 
+  dplyr::summarise(
+    n = n()
+  ) %>% 
+  DT::datatable()
+
+
+#................................
+# Note to any reading this code: 
+# This data does not appear to be MCAR... there do appear to be some biases (more or less, poor, rural people with lots of household members)
+# However, given that this 0.44% of the unweighted data and 0.43% of the weighted data, we are well within the range of the rule of thumb
+# that missing data less than 5-10% (even if it is MNAR) is largely inconsequential (see Bennett 2001). As a result, I feel comfortable subsetting to complete
+# cases from here on out without worrying about the effect of any MNAR bias that may or may not be present and would affect my results
+#................................
 
 #......................
 # Results & Out

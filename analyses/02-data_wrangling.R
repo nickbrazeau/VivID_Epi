@@ -492,22 +492,38 @@ dt <- dt %>%
 # xtabs(~dt$hab481_fctb, addNA = T)
 
 #.............
-# LLIN for INDIVIDUAL 
+# ITN for INDIVIDUAL 
 #.............
-xtabs(~haven::as_factor(dt$hml10) + haven::as_factor(dt$hml20), addNA = T)
-# there are 49 people that slept under ITN" but not LLIN and a few NAs 
+# https://dhsprogram.com/Data/Guide-to-DHS-Statistics/index.cfm
+# Use of Mosquito Nets by Persons in the Household
+# Going to use the definition by Tusting et al. 2017 PMC5319641
 
-xtabs(~haven::as_factor(dt$hml19) + haven::as_factor(dt$hml20), addNA = T)
-# there are 122 people that slept under "ever treated net" but not LLIN
+xtabs(~haven::as_factor(dt$hml12)) # note, we have no one who slept under a both treated and untreated net
+# and based on above, we have no missing net information
 
-xtabs(~haven::as_factor(dt$hml10) + haven::as_factor(dt$hml19), addNA = T)
-# there are 69 people that slept under "ever treated net" but not a ITN
+xtabs(~haven::as_factor(dt$hml12)) 
+xtabs(~haven::as_factor(dt$hml10))
 
-# BASED on this pattern, am just going to consider LLIN
-summary(dt$hml20) # no missing here
-
+# using PMC5319641 definition
 dt <- dt %>% 
-  dplyr::mutate(hml20_fctb = haven::as_factor(hml20))
+  dplyr::mutate(
+    ITN_fctb = ifelse(
+      # (i) long-lasting insecticidal nets that were <= 3 y old at the time of survey
+      !(haven::as_factor(hml4) %in% c("36", "more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
+      # (ii) conventional ITNs that were 1 y old 
+      ifelse(haven::as_factor(hml4) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
+             # or were retreated within the year before the survey
+             ifelse(haven::as_factor(hml9) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
+                    0))), # we know no missing net from above. they either reported yes or no at some level
+    ITN_fctb = factor(ITN_fctb, levels = c(0,1), labels = c("no", "yes")),
+    ITN_fctb = forcats::fct_drop(ITN_fctb)
+  )
+
+
+# sanity check
+xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml10)) 
+xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml12)) 
+xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml20)) 
 
 # #.............
 # # LLIN-type of Inseciticide for INDIVIDUAL
@@ -519,17 +535,19 @@ dt <- dt %>%
 # dt <- dt %>%
 #   dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
 #   left_join(x=., y=insctcd, by="hml7") %>%
-#   dplyr::mutate(insctcd_fctm = factor(ifelse(hml20_fctb == "no", "none", insctcd)),
+#   dplyr::mutate(insctcd_fctm = factor(ifelse(haven::as_factor(hml20) == "no", "none", insctcd)),
 #                 insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
 #   )
 # 
 # 
 # # sanity checks
-# xtabs(~dt$insctcd_fctm + dt$hml20_fctb, addNA=T)
+# xtabs(~dt$insctcd_fctm + haven::as_factor(dt$hml20), addNA=T)
 # xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
 # xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
 # 
 # 
+# # is this confounded by age?
+# xtabs(~dt$hml4 + dt$insctcd_fctm, addNA=T) # nope
 
 
 
@@ -551,12 +569,12 @@ coinfxnbiomrk <- dtsrvy %>%
     pfldh_cont_clst = srvyr::survey_mean(x = pfldh),
     po18s_cont_clst = srvyr::survey_mean(x = po18s),
     hiv03_cont_clst = srvyr::survey_mean(x = hiv03),
-    hab56_cont_clst = srvyr::survey_quantile(hab56_cont, quantiles = c(0.5), vartype = c("se"), na.rm = T)) %>% 
+    hab56_cont_clst = srvyr::survey_mean(hab56_cont, na.rm = T)) %>% 
   dplyr::mutate(
     pfldh_cont_scale_clst = my.scale(logit(pfldh_cont_clst, tol = tol), center = T, scale = T),
     po18s_cont_scale_clst = my.scale(logit(po18s_cont_clst, tol = tol), center = T, scale = T),
     hiv03_cont_scale_clst = my.scale(logit(hiv03_cont_clst, tol = tol), center = T, scale = T),
-    hab56_cont_scale_clst = my.scale(hab56_cont_clst_q50, center = T, scale = T)
+    hab56_cont_scale_clst = my.scale(hab56_cont_clst, center = T, scale = T)
   ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
 
@@ -610,7 +628,7 @@ tempdf <- tibble::tibble(orignnames = names(temp),
 
 wthrnd <- dt[,c("hv001", "hvyrmnth_dtmnth_lag", "geometry", "urban_rura")] %>% 
   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
-wthrnd <- wthrnd[!duplicated(wthrnd),]
+wthrnd <- wthrnd[!duplicated(wthrnd$hv001),]
 
 wthrnd <- wthrnd %>% 
   dplyr::left_join(., tempdf) %>% 
@@ -659,11 +677,7 @@ dt <- dt %>%
 #.............
 dt <- dt %>% 
   dplyr::mutate(alt_dem_cont_clst = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
-                alt_dem_fctb_clst = factor(
-                  ifelse(alt_dem_cont_clst > median(alt_dem_cont_clst), "high", "low"),
-                  levels = c("low", "high")),
-                alt_dem_clst_log = log(alt_dem_cont_clst + tol),
-                alt_dem_cont_scale_clst = my.scale(alt_dem_clst_log, center = T, scale = T)
+                alt_dem_cont_scale_clst = my.scale(log(alt_dem_cont_clst + tol), center = T, scale = T)
   )
 
 # #.............
@@ -722,7 +736,7 @@ dt <- dt %>%
                 )
 
 #.............
-# LLIN Cluster Usage; mean wealth; prop educ
+# ITN Cluster Usage; mean wealth; prop educ
 #.............
 summary(dt$hml20) # no missing
 summary(dt$wlthrcde_fctm)
@@ -731,16 +745,37 @@ summary(dt$hv106_fctb)
 democlust <- dtsrvy %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(
-    hml20_cont_clst = srvyr::survey_mean((hml20_fctb == "yes"), vartype = c("se")),
-    wlthrcde_combscor_cont_clst = srvyr::survey_mean(wlthrcde_combscor_cont, vartype = c("se")),
+    ITN_cont_clst = srvyr::survey_mean((ITN_fctb == "yes"), vartype = c("se")),
     hv106_cont_clst = srvyr::survey_mean((hv106_fctb == "higher"), vartype = c("se"), na.rm = T)
   ) %>% 
   dplyr::mutate(
-    hml20_cont_scale_clst = my.scale(logit(hml20_cont_clst, tol = tol), center = T, scale = T),
-    wlthrcde_combscor_cont_scale_clst = my.scale(wlthrcde_combscor_cont_clst, center = T, scale = T),
+    hml20_cont_scale_clst = my.scale(logit(ITN_cont_clst, tol = tol), center = T, scale = T),
     hv106_cont_scale_clst = my.scale(logit(hv106_cont_clst, tol = tol), center = T, scale = T)
           ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
+
+# find median wealth and then recode it as a factor 
+clstwlth <- dtsrvy %>% 
+  dplyr::group_by(hv001) %>%
+  dplyr::summarise(
+    wlthrcde_fctm_clst = srvyr::survey_quantile(as.numeric(wlthrcde_fctm), quantiles = 0.5)
+  ) %>% 
+  dplyr::select(c("hv001", "wlthrcde_fctm_clst_q50")) %>% 
+  dplyr::mutate(
+    wlthrcde_fctm_clst_q50 = floor(wlthrcde_fctm_clst_q50) # in case of ties
+  )
+
+# decode this
+wlthliftover <- data.frame(
+  wlthrcde_fctm_clst_q50 = 1:5,
+  wlthrcde_fctm_clst = levels(dt$wlthrcde_fctm)
+)
+
+clstwlth <- dplyr::left_join(clstwlth, wlthliftover, by = "wlthrcde_fctm_clst_q50") %>% 
+  dplyr::select(-c("wlthrcde_fctm_clst_q50"))
+
+# now merge back into democlust
+democlust <- dplyr::left_join(democlust, clstwlth, by = "hv001")
 
 
 sapply(democlust, summary) # looks clean
@@ -752,68 +787,15 @@ dt <- dplyr::left_join(x = dt, y = democlust)
 # Antimalarial Cluster Usage
 #.............
 #https://dhsprogram.com/data/Guide-to-DHS-Statistics/
-kr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDKR61FL.rds")
-# liftover drug function
-# per document, missing goes to NO
-missingliftover <- function(x){
-  x <- ifelse(x == 9 | is.na(x), 0, x) # 9 is missing
-  return(x)
-}
-
-denom <- kr %>% 
-  dplyr::filter(v012 < 60) %>% # less than 5 years
-  dplyr::filter(haven::as_factor(b5) == "yes") %>% # currently alive
-  dplyr::filter(haven::as_factor(h22) == "yes") %>% # had fever in last two weeks
-  dplyr::select(c(paste0("ml13", letters[1:8]), "v001", "v005", "v023")) %>% 
-  dplyr::select(-c("ml13g")) %>% 
-  dplyr::mutate(v005 = v005/1e6)
-
-# clean up
-denom[, grepl("ml13", colnames(denom))] <- lapply(denom[, grepl("ml13", colnames(denom))], 
-       missingliftover) %>% dplyr::bind_cols(.)
-# check
-sapply(denom, summary)
-# add any use in
-denom$anyatm = as.numeric( apply(denom[,grepl("ml13", colnames(denom))],
-                                 1, function(x){return(any( x == 1))}) )
-# Note, some individuals took multiple drugs. OK because small percent 36/1560
-
-kdsrv_fvr <- denom %>% srvyr:::as_survey_design(ids = v001, 
-                                                strata = v023, 
-                                                weights = v005)
-
-kdsrv_fvr_clst <- kdsrv_fvr  %>% 
-  dplyr::mutate(count = 1) %>% 
-  dplyr::group_by(v001) %>% 
-  dplyr::summarise(
-    n = srvyr::survey_total(count),
-    # fansidar_cont_clst = srvyr::survey_mean(ml13a),
-    # chloroquine_cont_clst = srvyr::survey_mean(ml13b),
-    # amodiaquine_cont_clst = srvyr::survey_mean(ml13c),
-    # quinine_cont_clst = srvyr::survey_mean(ml13d),
-    # act_cont_clst = srvyr::survey_mean(ml13e),
-    # otherartm_cont_clst = srvyr::survey_mean(ml13f),
-    # other_cont_clst = srvyr::survey_mean(ml13h),
-    anyatm_cont_clst = srvyr::survey_mean(anyatm)) %>% 
-  dplyr::mutate(
-    # fansidar_cont_scale_clst = my.scale(logit(fansidar_cont_clst, tol = tol), center = T, scale = T),
-    # chloroquine_cont_scale_clst = my.scale(logit(chloroquine_cont_clst, tol = tol), center = T, scale = T),
-    # amodiaquine_cont_scale_clst = my.scale(logit(amodiaquine_cont_clst, tol = tol), center = T, scale = T),
-    # quinine_cont_scale_clst = my.scale(logit(quinine_cont_clst, tol = tol), center = T, scale = T),
-    # act_cont_scale_clst = my.scale(logit(act_cont_clst, tol = tol), center = T, scale = T),
-    # otherartm_cont_scale_clst = my.scale(logit(otherartm_cont_clst, tol = tol), center = T, scale = T),
-    # other_cont_scale_clst = my.scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
-    anyatm_cont_scale_clst = my.scale(logit(anyatm_cont_clst, tol = tol), center = T, scale = T)
-    ) %>% 
-  dplyr::rename(hv001 = v001)  %>% 
-  dplyr::mutate(hv001 = as.numeric(hv001)) %>% 
-  dplyr::select(-c(dplyr::ends_with("_se")))
-
-dt <- dplyr::left_join(dt, kdsrv_fvr_clst, by = "hv001")
-
+actuse <- readRDS(file = "data/derived_data/vividepi_kids_act_use_imputed.rds")
+dt <- dplyr::left_join(dt, actuse, by = "hv001")
 dt %>% 
-  group_by(hv001) %>% 
-  dplyr::summarise(n = sum(anyatm_cont_clst)) # some clusters missing kids with fevers, so have NAs
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(
+    actuse = mean(anyatm_cont_clst),
+    actuse.scale = mean(anyatm_cont_scale_clst)) # looks good
+
+
 
 #.............
 # Cluster Level Kid RDT/Micro

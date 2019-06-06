@@ -15,11 +15,12 @@ options(scipen=999)
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "internal_datamap_files/DECODER_covariate_map.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map.xlsx", sheet = 1) %>% 
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
 sf::st_geometry(dt) <- NULL
 dtsrvy <- makecd2013survey(survey = dt)
+
 #----------------------------------------------------------------------------------------------------
 # Basic Descriptive Statistics
 #----------------------------------------------------------------------------------------------------
@@ -118,11 +119,6 @@ pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>%
 
 
 
-#.......................
-# Map the results 
-#.......................
-ggplot() +
-  geom_pointrange()
 
 #----------------------------------------------------------------------------------------------------
 # Combine Table 1 and 2
