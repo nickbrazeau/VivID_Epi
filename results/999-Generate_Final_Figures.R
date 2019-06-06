@@ -6,7 +6,7 @@ library(tidyverse)
 #......................
 # Import Results
 #......................
-load("results/basic_maps_results.rda")
+load("data/map_bases/vivid_maps_bases.rda")
 prevmaprasterplots <- readRDS(file = "results/prevmap_raster_plots.rds")
 
 
@@ -55,7 +55,7 @@ graphics.off()
 # Ape Overlap
 ##############################
 jpeg("results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
-aperange_nhapv
+aperange_nhapv + prettybasemap_nodrc
 graphics.off()
 
 
