@@ -3,7 +3,8 @@
 # using INLA 
 # Using MAP's codefrom their publication (PMC )
 # https://github.com/malaria-atlas-project/malariaAtlas
-# as guidance
+# as guidance as well as several INLA tutorials:
+# http://www.r-inla.org/events/newtutorialsonspatialmodelsininla
 #----------------------------------------------------------------------------------------------------
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
