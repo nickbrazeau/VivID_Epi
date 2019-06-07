@@ -171,12 +171,39 @@ pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,
 
 
 
+
+#----------------------------------------------------------------------------------------------------
+# Make Pv Cases, Pf Cases, and Non-Cases Table
+#----------------------------------------------------------------------------------------------------
+dt.cases <- dt %>% 
+  dplyr::mutate(
+    case = ifelse(( pv18s == 1 | pfldh ==1 ), 1, 0),
+    case_fctb = factor(case, levels = c(0,1), labels = c("noncase", "case"))
+  )
+
+dt.cases.srvy <- makecd2013survey(dt.cases)
+
+casestbl1 <- tableone::svyCreateTableOne(
+  data = dt.cases.srvy,
+  strata = "case_fctb",
+  vars = pvivrskfctr,
+  includeNA = T,
+  test = F)
+
+
+casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
+                                                           "Case-Negative",
+                                                           "Case-Positive",
+                                                           "matchcol"))
+
+
 #----------------------------------------------------------------------------------------------------
 # Save out
 #----------------------------------------------------------------------------------------------------
 save(pvivtbl1, pfaltbl1, # table one output 
      pvivrskfctr_models, pfalrskfctr_models, # model datatframes
      pvivriskfactortable, pfalriskfactortable, # final out table for report
+     casestbl1df, # for prettier table 1
      file = "results/bivariate_model_results.rda")
 
 
