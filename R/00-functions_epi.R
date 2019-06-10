@@ -1,3 +1,33 @@
+#----------------------------------------------------------------------------------------------------
+# glms
+#----------------------------------------------------------------------------------------------------
+
+fitsvyglmlogit <- function(outcome, covar){
+  dtsrvy_sub <- dtsrvy %>% 
+    dplyr::select(c(outcome, covar))
+  
+  eq <- as.formula(paste0(outcome, "~", covar))
+  ret <- survey::svyglm(eq,
+                        design = dtsrvy_sub,
+                        family = quasibinomial(link="logit"))
+  
+  return(ret)
+  
+}
+
+fitsvyglmlog <- function(outcome, covar){
+  dtsrvy_sub <- dtsrvy %>% 
+    dplyr::select(c(outcome, covar))
+  
+  eq <- as.formula(paste0(outcome, "~", covar))
+  ret <- survey::svyglm(eq,
+                        design = dtsrvy_sub,
+                        family = quasibinomial(link="log"))
+  
+  return(ret)
+  
+}
+
 
 #----------------------------------------------------------------------------------------------------
 # tableone manipulations
@@ -38,9 +68,18 @@ mergetableone2table <- function(tableonedf, tabletwoestdf){
                   ),
                   details = stringr::str_split_fixed(tableonedf$Covariates, " ", n = 2)[,2])
   
+  # Remember, all continuous variables are scaled in the models but not in the original distributions
+  # with the exception of wealth and urbanicity, which are kept as their original scores
+  tableonedf <- tableonedf %>% 
+    dplyr::mutate(matchcol = gsub("_cont_clst", "_cont_scale_clst", matchcol),
+                  matchcol = gsub("_cont$", "_cont_scale", matchcol),
+                  matchcol = ifelse(matchcol == "urbanscore_cont_scale_clst", "urbanscore_cont_clst", matchcol),
+                  matchcol = ifelse(matchcol == "wlthrcde_combscor_cont_scale", "wlthrcde_combscor_cont", matchcol)
+                  )
+  
+  
   # fix n and wealth from tableone
   tableonedf$lvl[tableonedf$Covariates == "n"] <- "cont"
-  tableonedf$lvl[tableonedf$Covariates == "wlthrcde_fctm_clst_q50 (mean (SD))"] <- "factor"
   
   fctlvls <- stringr::str_extract_all(tableonedf$details[tableonedf$lvl == "factor"], 
                                       "[A-Z]|[a-z]|_", simplify=F)
@@ -51,10 +90,8 @@ mergetableone2table <- function(tableonedf, tabletwoestdf){
   tableonedf$matchcol_exp[tableonedf$lvl == "factor"] <- fctlvls
   tableonedf$matchcol_exp[tableonedf$lvl == "cont"] <- ""
   tableonedf$matchcol <- paste0(tableonedf$matchcol, tableonedf$matchcol_exp)
-  
-  # final fix for q50
-  tableonedf$matchcol <- gsub("_q50", "",  tableonedf$matchcol)
-  
+
+
   # drop extra columns 
   tableonedf <- tableonedf %>% 
     dplyr::select(-c("lvl", "details", "matchcol_exp"))
@@ -75,20 +112,5 @@ printriskfactortable2html <- function(rskfcttbl){
 
 
 
-#----------------------------------------------------------------------------------------------------
-# glms
-#----------------------------------------------------------------------------------------------------
 
-fitsvyglmlogit <- function(outcome, covar){
-  dtsrvy_sub <- dtsrvy %>% 
-    dplyr::select(c(outcome, covar))
-  
-  eq <- as.formula(paste0(outcome, "~", covar))
-  ret <- survey::svyglm(eq,
-             design = dtsrvy_sub,
-             family = quasibinomial(link="logit"))
-  
-  return(ret)
-  
-}
 

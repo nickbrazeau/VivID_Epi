@@ -1,0 +1,31 @@
+Covariates,Pvivax-Negative,Pvivax-Positive,matchcol
+n,15667.69,479.33,n
+precip_lag_cont_clst (mean (SD)),163.94 (81.13),179.40 (70.01),precip_lag_cont_clst
+temp_lag_cont_clst (mean (SD)),23.82 (2.18),23.62 (2.45),temp_lag_cont_clst
+alt_dem_cont_clst (mean (SD)),709.96 (435.30),768.90 (488.85),alt_dem_cont_clst
+wtrdist_cont_clst (mean (SD)),5712.06 (7500.98),5365.87 (7502.85),wtrdist_cont_clst
+urbanscore_cont_clst (mean (SD)),0.46 (1.91),0.36 (1.87),urbanscore_cont_clst
+hlthdist_cont_clst (mean (SD)),72357.47 (72123.25),75314.81 (70578.37),hlthdist_cont_clst
+anyatm_cont_clst (mean (SD)),0.31 (0.24),0.29 (0.22),anyatm_cont_clst
+"pfldh_fctb, falpos (%)",4741.1 (30.3),151.7 (31.7),pfldh_fctb
+"po18s_fctb, ovpos (%)",121.3 (0.8),2.6 (0.5),po18s_fctb
+"hiv03_fctb, hivpos (%)",149.4 (1.0),8.3 (1.7),hiv03_fctb
+hab56_cont (mean (SD)),13.10 (2.03),13.16 (1.90),hab56_cont
+"hv104_fctb, male (%)",7315.8 (46.7),243.9 (50.9),hv104_fctb
+hab1_cont (mean (SD)),29.68 (10.93),29.41 (11.48),hab1_cont
+hv21345_fctb (%),"","",hv21345_fctb
+   modern,3033.3 (19.4),68.6 (14.3),""
+   traditional,12627.4 (80.6),410.7 (85.7),""
+   NA,7.0 (0.0),0.0 (0.0),""
+wlthrcde_combscor_cont (mean (SD)),0.12 (1.14),0.04 (0.97),wlthrcde_combscor_cont
+hv106_fctb (%),"","",hv106_fctb
+   lower,6363.3 (40.6),193.0 (40.3),""
+   higher,9289.2 (59.3),286.3 (59.7),""
+   NA,15.2 (0.1),0.0 (0.0),""
+hv246_fctb (%),"","",hv246_fctb
+   no,8206.8 (52.4),236.6 (49.4),""
+   yes,7459.8 (47.6),242.7 (50.6),""
+   NA,1.1 (0.0),0.0 (0.0),""
+hv014_cont (mean (SD)),1.46 (1.19),1.45 (1.16),hv014_cont
+hv009_cont (mean (SD)),6.76 (3.22),6.56 (3.06),hv009_cont
+"ITN_fctb, yes (%)",7327.3 (46.8),237.4 (49.5),ITN_fctb

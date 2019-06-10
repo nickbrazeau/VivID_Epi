@@ -8,7 +8,6 @@ library(survey)
 library(srvyr) #wrap the survey package in dplyr syntax
 devtools::install_github("kaz-yos/tableone")
 library(tableone)
-
 options(scipen=999)
 
 #......................
@@ -107,11 +106,13 @@ pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
                                covar = pfalrskfctr, stringsAsFactors=FALSE)
 
-pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlogit)
+pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlog)
+
+
 pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
                                              .f=function(x){
-                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
-)
+                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
+
 pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
@@ -135,11 +136,7 @@ pvivtbl1df <- dcdr %>%
   dplyr::rename(matchcol = column_name) %>% 
   dplyr::left_join(pvivtbl1df, ., by = "matchcol") %>% 
   dplyr::select(c("var_label", dplyr::everything()))
-
-# Remember, all continuous variables are scaled in the models but not in the original distributions
-pvivtbl1df <- pvivtbl1df %>% 
-  dplyr::mutate(matchcol = gsub("_cont_clst", "_cont_scale_clst", matchcol),
-                matchcol = gsub("_cont$", "_cont_scale", matchcol))
+ 
 
 
 pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
@@ -159,11 +156,6 @@ pfaltbl1df <- dcdr %>%
   dplyr::rename(matchcol = column_name) %>% 
   dplyr::left_join(pfaltbl1df, ., by = "matchcol") %>% 
   dplyr::select(c("var_label", dplyr::everything()))
-
-# Remember, all continuous variables are scaled in the models but not in the original distributions
-pfaltbl1df <- pfaltbl1df %>% 
-  dplyr::mutate(matchcol = gsub("_cont_", "_cont_scale_", matchcol),
-                matchcol = gsub("_cont$", "_cont_scale", matchcol))
 
 
 pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,
@@ -203,13 +195,13 @@ casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
 save(pvivtbl1, pfaltbl1, # table one output 
      pvivrskfctr_models, pfalrskfctr_models, # model datatframes
      pvivriskfactortable, pfalriskfactortable, # final out table for report
-     casestbl1df, # for prettier table 1
+     casestbl1, # for prettier table 1
      file = "results/bivariate_model_results.rda")
 
 
 #----------------------------------------------------------------------------------------------------
 # Playground
-# #----------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------
 # 
 # 
 # 

@@ -56,7 +56,7 @@ dt <- dt %>%
 # 1. pfldh coinfection ; (personal + community)
 # 2. po18s coinfection ; (personal + community)
 # 3. HIV Status (HIV03) ; (personal + community)
-# 4. Hemoglobin Level adjust for altitude and smoking (HA56 & HB56)
+# 4. Anemia Level (HA57 & HB57)
 # 5. Duffy phenotype (wetlab work)
 
 # SOCIOECOLOGICAL VARIABLES
@@ -75,7 +75,7 @@ dt <- dt %>%
 
 
 # MALARIA-INTERVENTIONS
-# 1. Person slept under an LLIN net (HML20) ; (personal + community)
+# 1. ITN Use
 # 2. Cluster level antimalarial use
 # 
 # PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
@@ -171,13 +171,10 @@ dt <- dt %>%
   dplyr::mutate(
     pfldhct_cont = pfctmean,
     pfldhct_cont_log = log(pfctmean + tol),
-    pfldhct_cont_log_scale = my.scale(pfldhct_cont_log, center = T, scale = T),
     po18sct_cont = poctcrrct,
     po18sct_cont_log = log(poctcrrct + tol),
-    po18sct_cont_log_scale = my.scale(po18sct_cont_log, center = T, scale = T),
     pv18sct_cont = pvctcrrct,
     pv18sct_cont_log = log(pvctcrrct + tol),
-    pv18sct_cont_log_scale = my.scale(pv18sct_cont_log, center = T, scale = T),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
@@ -209,50 +206,27 @@ dt <- dt %>%
 xtabs(~hiv03_fctb + hiv03, data = dt, addNA = T)
 
 #.............
-# hemoglobin
+# Anemia/Hemoglobin
 #.............
-levels(factor(haven::as_factor(dt$ha56))) # need to divide by 10; var is separate column for men and women
-levels(factor(haven::as_factor(dt$hb56)))
+levels(factor(haven::as_factor(dt$ha57))) 
+levels(factor(haven::as_factor(dt$hb57)))
 # confirm no missing sex and then can use this variable to distinguish ha56 and hv56
 xtabs(~haven::as_factor(dt$hv104), addNA = T)
+# no missing anemia (that isn't dhs-recode dependent)
+xtabs(~haven::as_factor(dt$ha57), addNA = T)
+xtabs(~haven::as_factor(dt$hb57), addNA = T)
 
 dt <- dt %>% 
-  dplyr::mutate(hab56_cont = ifelse(haven::as_factor(hv104) == "female", ha56, hb56),
-                hab56_cont = ifelse(hab56_cont %in% c("997", "999"), NA, hab56_cont),
-                hab56_cont = as.numeric(hab56_cont)/10,
-                hab56_cont_scale = my.scale(hab56_cont, center = T, scale = T)) 
-
-# check hemoglobin recode for WOMEN
-    summary(dt$ha56)
-    nrow(dt) - length(dt$ha56[dt$hv104 == 2]) # missing tracks
-    summary(dt$ha56[dt$hv104 == 2 & dt$ha56 != 999 & dt$ha56 != 997])
-    sum(dt$ha56 %in% c(997, 999)) # 25 missing women hbs
-    # check visually
-    dt %>% 
-      dplyr::mutate(ha56 = ha56/10,
-                    ha56 = ifelse(ha56 %in% c(997, 999), NA, ha56)) %>% 
-      ggplot(.) +
-      geom_point(aes(x=hab56_cont, y=ha56)) + ylim(c(0,25)) + xlim(c(0,25))
-    # note, 7865 "rows" missing which corresponds to the 7840 males + 25 NAs coded in the dataset
-
-# check hemoglobin recode for MEN
-    summary(dt$hb56[dt$hv104 == 1 & dt$hb56 != 999 & dt$hb56 != 997])
-    sum(dt$hb56 %in% c(997, 999)) # 25 missing women hbs
-    # check visually
-    dt %>% 
-      dplyr::mutate(hb56 = hb56/10,
-                    hb56 = ifelse(hb56 %in% c(997, 999), NA, hb56)) %>% 
-      ggplot(.) +
-      geom_point(aes(x=hab56_cont, y=hb56)) + ylim(c(0,25)) + xlim(c(0,25))
-    # note, 8547 "rows" missing which corresponds to the 8523 females + 24 NAs coded in the dataset
-hist(dt$hab56_cont_scale)
-# final note on hemoglobin: a Hb > 18 is pretty high Likely due to 
-# adjustment by alt and smoking (overadj).
-# Few observations, going to assume negligible
-# 49 missing. 
-sum(dt$hab56_cont > 18, na.rm = T)
-xtabs(~dt$hab56_cont, addNA = T)
-
+  dplyr::mutate(hab57_fctb = ifelse(haven::as_factor(hv104) == "female", ha57, hb57),
+                hab57_fctb = ifelse(hab57_fctb == 9, NA, hab57_fctb),
+                hab57_fctb = ifelse(hab57_fctb == 4, "no", ifelse(
+                  hab57_fctb %in% c(1:3), "yes", NA)),
+                hab57_fctb = factor(hab57_fctb, levels = c("no", "yes"))
+                )
+            
+# check recode
+xtabs(~dt$hab57_fctb + haven::as_factor(dt$ha57) + haven::as_factor(dt$hv104), addNA = T)  
+xtabs(~dt$hab57_fctb + haven::as_factor(dt$hb57) + haven::as_factor(dt$hv104), addNA = T)  
 
 #.............
 # Duffy Phenotype
@@ -282,7 +256,7 @@ dt <- dt %>%
 
 dt <- dt %>% 
   dplyr::mutate(hab1_cont = ifelse(haven::as_factor(hv104) == "female", ha1, hb1),
-                hab1_cont = ifelse(hab56_cont %in% c("97", "98", "99"), NA, hab1_cont),
+                hab1_cont = ifelse(hab1_cont %in% c("97", "98", "99"), NA, hab1_cont),
                 hab1_cont_scale = my.scale(hab1_cont, center = T, scale = T)) 
 
 summary(dt$hab1_cont) 
@@ -560,27 +534,27 @@ dtsrvy <- makecd2013survey(survey = dt)
 #..........................................................................................
 #                                  COINFECTIONS/BIOMARKER VARIABLES
 #..........................................................................................
-Hbmiss <- dt[is.na(dt$hab56_cont),]
-table(Hbmiss$hv001) # looks well dispersed among clusters
-
-coinfxnbiomrk <- dtsrvy %>% 
-  dplyr::group_by(hv001) %>% # cluster level 
-  dplyr::summarise(
-    pfldh_cont_clst = srvyr::survey_mean(x = pfldh),
-    po18s_cont_clst = srvyr::survey_mean(x = po18s),
-    hiv03_cont_clst = srvyr::survey_mean(x = hiv03),
-    hab56_cont_clst = srvyr::survey_mean(hab56_cont, na.rm = T)) %>% 
-  dplyr::mutate(
-    pfldh_cont_scale_clst = my.scale(logit(pfldh_cont_clst, tol = tol), center = T, scale = T),
-    po18s_cont_scale_clst = my.scale(logit(po18s_cont_clst, tol = tol), center = T, scale = T),
-    hiv03_cont_scale_clst = my.scale(logit(hiv03_cont_clst, tol = tol), center = T, scale = T),
-    hab56_cont_scale_clst = my.scale(hab56_cont_clst, center = T, scale = T)
-  ) %>% 
-  dplyr::select(-c(dplyr::ends_with("_se")))
-
-sapply(coinfxnbiomrk, summary) # looks clean, had to remove NAs in Hb because 49 missing (spread across 39 clusters)
-
-dt <- dplyr::left_join(x = dt, y = coinfxnbiomrk)
+# Hbmiss <- dt[is.na(dt$hab56_cont),]
+# table(Hbmiss$hv001) # looks well dispersed among clusters
+# 
+# coinfxnbiomrk <- dtsrvy %>% 
+#   dplyr::group_by(hv001) %>% # cluster level 
+#   dplyr::summarise(
+#     pfldh_cont_clst = srvyr::survey_mean(x = pfldh),
+#     po18s_cont_clst = srvyr::survey_mean(x = po18s),
+#     hiv03_cont_clst = srvyr::survey_mean(x = hiv03),
+#     hab56_cont_clst = srvyr::survey_mean(hab56_cont, na.rm = T)) %>% 
+#   dplyr::mutate(
+#     pfldh_cont_scale_clst = my.scale(pfldh_cont_clst, center = T, scale = T),
+#     po18s_cont_scale_clst = my.scale(po18s_cont_clst, center = T, scale = T),
+#     hiv03_cont_scale_clst = my.scale(hiv03_cont_clst, center = T, scale = T),
+#     hab56_cont_scale_clst = my.scale(hab56_cont_clst, center = T, scale = T)
+#   ) %>% 
+#   dplyr::select(-c(dplyr::ends_with("_se")))
+# 
+# sapply(coinfxnbiomrk, summary) # looks clean, had to remove NAs in Hb because 49 missing (spread across 39 clusters)
+# 
+# dt <- dplyr::left_join(x = dt, y = coinfxnbiomrk)
 
 
 #..........................................................................................
@@ -665,10 +639,10 @@ wthrnd <- wthrnd %>%
 sf::st_geometry(wthrnd) <- NULL
 dt <- dt %>% 
   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
-  dplyr::mutate(precip_lag_cont_log_clst = log(precip_lag_cont_clst + tol),
-                temp_lag_cont_log_clst = log(temp_lag_cont_clst + tol),
-                precip_lag_cont_scale_clst = my.scale(precip_lag_cont_log_clst, center = T, scale = T),
-                temp_lag_cont_scale_clst = my.scale(temp_lag_cont_log_clst, center = T, scale = T))
+  dplyr::mutate(
+                precip_lag_cont_scale_clst = my.scale(precip_lag_cont_clst, center = T, scale = T),
+                temp_lag_cont_scale_clst = my.scale(temp_lag_cont_clst, center = T, scale = T)
+                )
 
 
 
@@ -677,7 +651,7 @@ dt <- dt %>%
 #.............
 dt <- dt %>% 
   dplyr::mutate(alt_dem_cont_clst = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
-                alt_dem_cont_scale_clst = my.scale(log(alt_dem_cont_clst + tol), center = T, scale = T)
+                alt_dem_cont_scale_clst = my.scale(alt_dem_cont_clst, center = T, scale = T)
   )
 
 # #.............
@@ -704,7 +678,7 @@ dt <- dt %>%
 wtrdist_out <- readRDS("data/derived_data/hotosm_waterways_dist.rds")
 dt <- dt %>% 
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
-  dplyr::mutate(wtrdist_cont_scale_clst = my.scale(log(wtrdist_cont_clst + tol), center = T, scale = T)
+  dplyr::mutate(wtrdist_cont_scale_clst = my.scale(wtrdist_cont_clst, center = T, scale = T)
                 )
 
 
@@ -724,7 +698,7 @@ dt <- dt %>%
 
 urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds")
 dt <- dplyr::left_join(dt, urb, by = "hv001")
-xtabs(~dt$urbanscore_fctm_clust + haven::as_factor(dt$hv025), addNA = T) # looks OK. Some rural places are now urban, which is consistent with what I expected
+xtabs(~dt$urbanscore_fctm_clst + haven::as_factor(dt$hv025), addNA = T) # looks OK. Some rural places are now urban, which is consistent with what I expected
 
 #.............
 # Distance to Health Site
@@ -746,6 +720,7 @@ democlust <- dtsrvy %>%
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(
     ITN_cont_clst = srvyr::survey_mean((ITN_fctb == "yes"), vartype = c("se")),
+    hab57_cont_clst = srvyr::survey_mean((hab57_fctb == "yes"), vartype = c("se")),
     hv106_cont_clst = srvyr::survey_mean((hv106_fctb == "higher"), vartype = c("se"), na.rm = T)
   ) %>% 
   dplyr::mutate(

@@ -1,0 +1,31 @@
+Covariates,Case-Negative,Case-Positive,matchcol
+n,10926.63,5220.40,n
+precip_lag_cont_scale_clst (mean (SD)),-0.15 (1.19),0.09 (0.94),precip_lag_cont_scale_clst
+temp_lag_cont_scale_clst (mean (SD)),-0.37 (1.31),0.14 (0.87),temp_lag_cont_scale_clst
+alt_dem_cont_scale_clst (mean (SD)),0.09 (1.11),-0.10 (0.93),alt_dem_cont_scale_clst
+wtrdist_cont_scale_clst (mean (SD)),-0.15 (1.01),0.07 (0.99),wtrdist_cont_scale_clst
+urbanscore_cont_clst (mean (SD)),0.64 (2.00),0.07 (1.63),urbanscore_cont_clst
+hlthdist_cont_scale_clst (mean (SD)),-0.24 (1.08),0.07 (0.97),hlthdist_cont_scale_clst
+anyatm_cont_scale_clst (mean (SD)),0.02 (0.99),0.12 (0.91),anyatm_cont_scale_clst
+"pfldh_fctb, falpos (%)",0.0 (0.0),4892.8 (93.7),pfldh_fctb
+"po18s_fctb, ovpos (%)",47.4 (0.4),76.5 (1.5),po18s_fctb
+"hiv03_fctb, hivpos (%)",118.2 (1.1),39.6 (0.8),hiv03_fctb
+hab56_cont_scale (mean (SD)),0.09 (1.00),-0.08 (0.99),hab56_cont_scale
+"hv104_fctb, male (%)",4873.4 (44.6),2686.3 (51.5),hv104_fctb
+hab1_cont_scale (mean (SD)),0.04 (0.99),-0.15 (0.98),hab1_cont_scale
+hv21345_fctb (%),"","",hv21345_fctb
+   modern,2452.1 (22.4),649.8 (12.4),""
+   traditional,8469.5 (77.5),4568.6 (87.5),""
+   NA,5.0 (0.0),2.0 (0.0),""
+wlthrcde_combscor_cont (mean (SD)),0.22 (1.19),-0.11 (0.96),wlthrcde_combscor_cont
+hv106_fctb (%),"","",hv106_fctb
+   lower,4323.1 (39.6),2233.2 (42.8),""
+   higher,6593.2 (60.3),2982.3 (57.1),""
+   NA,10.3 (0.1),4.9 (0.1),""
+hv246_fctb (%),"","",hv246_fctb
+   no,5944.1 (54.4),2499.3 (47.9),""
+   yes,4982.6 (45.6),2720.0 (52.1),""
+   NA,0.0 (0.0),1.1 (0.0),""
+hv014_cont_scale (mean (SD)),0.01 (1.00),-0.00 (0.99),hv014_cont_scale
+hv009_cont_scale (mean (SD)),0.06 (1.03),0.03 (0.96),hv009_cont_scale
+"ITN_fctb, yes (%)",5294.0 (48.5),2270.7 (43.5),ITN_fctb

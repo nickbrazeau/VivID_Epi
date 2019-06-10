@@ -59,7 +59,7 @@ median( dt$built_population_2014[dt$built_population_2014 < 0.05] )
 hist( dt$built_population_2014[dt$built_population_2014 < 0.05] )
 # DECISION: Will use a logit transformation to get back to the real-line (and scale)
 # large number of 0s
-dt$built_population_2014_scale <- scale(logit(dt$built_population_2014, tol = tol), center = T, scale = T) # use logit to transform to real line
+dt$built_population_2014_scale <- my.scale(logit(dt$built_population_2014, tol = tol), center = T, scale = T) # use logit to transform to real line
 hist(dt$built_population_2014_scale)
 summary(dt$built_population_2014_scale); sd(dt$built_population_2014_scale) # despite skew, scale seems to work
 
@@ -72,9 +72,8 @@ summary(dt$nightlights_composite)
 hist(dt$nightlights_composite)
 hist( dt$nightlights_composite[dt$nightlights_composite < 0.05] )
 hist( dt$nightlights_composite[dt$nightlights_composite > 0.05] )
-# DECISION: Will use a log transformation (and scale)
 # large number of 0s (again)
-dt$nightlights_composite_scale <- scale(log(dt$nightlights_composite + tol), center = T, scale = T)
+dt$nightlights_composite_scale <- my.scale(dt$nightlights_composite, center = T, scale = T)
 hist(dt$nightlights_composite_scale)
 summary(dt$nightlights_composite_scale); sd(dt$nightlights_composite_scale) # despite skew, scale seems to work
 
@@ -88,9 +87,8 @@ summary(dt$all_population_count_2015)
 hist(dt$all_population_count_2015)
 hist( dt$all_population_count_2015[dt$all_population_count_2015 < 5e4] )
 hist( dt$all_population_count_2015[dt$all_population_count_2015 > 5e4] )
-# DECISION: Will use a log transformation (and scale)
-# large number of 0s (again)
-dt$all_population_count_2015_scale <- scale(log(dt$all_population_count_2015 + tol), center = T, scale = T)
+# no 0s here but a lot of small pops
+dt$all_population_count_2015_scale <- my.scale(dt$all_population_count_2015, center = T, scale = T)
 hist(dt$all_population_count_2015_scale)
 summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_scale) # scale here seems to compensate
 
@@ -103,10 +101,9 @@ summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_sca
 summary(dt$travel_times_2015)
 hist(dt$travel_times_2015)
 dt <- dt %>% 
-  dplyr::mutate(travel_times_2015_scale = scale(log(travel_times_2015 + tol), center = T, scale = T))
+  dplyr::mutate(travel_times_2015_scale = scale(travel_times_2015, center = T, scale = T))
 
-summary(dt$travel_times_2015_scale)
-hist(dt$travel_times_2015_scale) # many, many 0s 
+hist(dt$travel_times_2015_scale) # many, many 0s -- these are urban centers/places near big towns
 hist(dt$travel_times_2015_scale) # standardization doesn't look as good, but should capture urban v. rural well
 summary(dt$travel_times_2015_scale); sd(dt$travel_times_2015_scale) 
 
@@ -162,7 +159,8 @@ urbanicity <- cbind(urbanmat[,c("hv001", "hv025")], urbanscore = urbanmatpca$x[,
 
 ggplot() +
   geom_sf(data = DRCprov) +
-  geom_point(data = urbanicity, aes(x = longnum, y = latnum, color = urbanscore))
+  geom_point(data = urbanicity, aes(x = longnum, y = latnum, color = urbanscore)) +
+  viridis::scale_color_viridis("viridis")
 
 
 #.............
@@ -172,13 +170,13 @@ ggplot() +
 
 quants <- quantile(urbanicity$urbanscore, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1))
 urbanicity <- urbanicity %>% 
-  dplyr::mutate(urbanscore_fctm_clust = base::cut(x = .$urbanscore, breaks = quants, 
+  dplyr::mutate(urbanscore_fctm_clst = base::cut(x = .$urbanscore, breaks = quants, 
                                           labels = c("rural", "lessrural", "middle", 
                                                      "lessurban", "urban"),
                                           include.lowest = T)
   ) %>% 
-  dplyr::rename(urbanscore_cont_clust = urbanscore) %>% 
-  dplyr::select(c("hv001", "urbanscore_fctm_clust", "urbanscore_cont_clust"))
+  dplyr::rename(urbanscore_cont_clst = urbanscore) %>% 
+  dplyr::select(c("hv001", "urbanscore_fctm_clst", "urbanscore_cont_clst"))
 
 
 

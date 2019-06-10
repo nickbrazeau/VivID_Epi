@@ -15,19 +15,12 @@ prevmaprasterplots <- readRDS(file = "results/prevmap_raster_plots.rds")
 
 
 #----------------------------------------------------------------------------------------------------
-# CRUDE MAPS
+# MAIN FIGURES
 #----------------------------------------------------------------------------------------------------
 
-pntestmaps_lrg <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
-caseprevmaps_lrg <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
-case_n_maps_lrg <- map(case_n_maps, function(x){return(x + prettybasemap_nodrc)})
-prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
-
-
-
-#----------------------------------------------------------------------------------------------------
+#----------------------------------------------
 # Figure 1B
-#----------------------------------------------------------------------------------------------------
+#----------------------------------------------
 pvcasen <- case_n_maps[[2]] +
   ggtitle("") +
   prettybasemap_nodrc + 
@@ -73,11 +66,23 @@ cowplot::ggdraw() +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 graphics.off()
 
+#----------------------------------------------------------------------------------------------------
+# SUPPLEMENTAL FIGURES
+#----------------------------------------------------------------------------------------------------
 
 
 #----------------------------------------------------------------------------------------------------
 # Additional Figures
 #----------------------------------------------------------------------------------------------------
+
+
+############################################################
+#########               MORE MAPS                  ######### 
+############################################################
+pntestmaps_lrg <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
+caseprevmaps_lrg <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
+case_n_maps_lrg <- map(case_n_maps, function(x){return(x + prettybasemap_nodrc)})
+prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
 
 
 ##############################
