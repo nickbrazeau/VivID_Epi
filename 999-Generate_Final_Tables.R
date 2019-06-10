@@ -14,20 +14,6 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
 #----------------------------------------------
 load("results/bivariate_model_results.rda")
 
-pvivtbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
-                                                           "Pvivax-Negative",
-                                                           "Pvivax-Positive",
-                                                           "matchcol"))
-pfaltbl1df <- tableone2dataframe(pfaltbl1, columnnames = c("Covariates",
-                                                           "Pfalciparum-Negative",
-                                                           "Pfalciparum-Positive",
-                                                           "matchcol"))
-
-casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
-                                                           "Case-Negative",
-                                                           "Case-Positive",
-                                                           "matchcol"))
-
 readr::write_csv(x = pvivtbl1df, 
                  path = "results/tables/Tbl1_col1_pvivtbl1.csv",
                  na = "")

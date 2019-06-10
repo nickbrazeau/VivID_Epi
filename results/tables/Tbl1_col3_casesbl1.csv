@@ -1,18 +1,21 @@
 Covariates,Case-Negative,Case-Positive,matchcol
 n,10926.63,5220.40,n
-precip_lag_cont_scale_clst (mean (SD)),-0.15 (1.19),0.09 (0.94),precip_lag_cont_scale_clst
-temp_lag_cont_scale_clst (mean (SD)),-0.37 (1.31),0.14 (0.87),temp_lag_cont_scale_clst
-alt_dem_cont_scale_clst (mean (SD)),0.09 (1.11),-0.10 (0.93),alt_dem_cont_scale_clst
-wtrdist_cont_scale_clst (mean (SD)),-0.15 (1.01),0.07 (0.99),wtrdist_cont_scale_clst
+precip_lag_cont_clst (mean (SD)),158.99 (83.41),175.73 (74.00),precip_lag_cont_clst
+temp_lag_cont_clst (mean (SD)),23.52 (2.36),24.44 (1.60),temp_lag_cont_clst
+alt_dem_cont_clst (mean (SD)),751.10 (475.20),629.28 (328.99),alt_dem_cont_clst
+wtrdist_cont_clst (mean (SD)),5211.53 (7119.76),6727.90 (8147.91),wtrdist_cont_clst
 urbanscore_cont_clst (mean (SD)),0.64 (2.00),0.07 (1.63),urbanscore_cont_clst
-hlthdist_cont_scale_clst (mean (SD)),-0.24 (1.08),0.07 (0.97),hlthdist_cont_scale_clst
-anyatm_cont_scale_clst (mean (SD)),0.02 (0.99),0.12 (0.91),anyatm_cont_scale_clst
+hlthdist_cont_clst (mean (SD)),65468.97 (69629.66),87047.08 (74880.40),hlthdist_cont_clst
+anyatm_cont_clst (mean (SD)),0.31 (0.24),0.32 (0.24),anyatm_cont_clst
 "pfldh_fctb, falpos (%)",0.0 (0.0),4892.8 (93.7),pfldh_fctb
 "po18s_fctb, ovpos (%)",47.4 (0.4),76.5 (1.5),po18s_fctb
 "hiv03_fctb, hivpos (%)",118.2 (1.1),39.6 (0.8),hiv03_fctb
-hab56_cont_scale (mean (SD)),0.09 (1.00),-0.08 (0.99),hab56_cont_scale
+hab57_fctb (%),"","",hab57_fctb
+   no,8297.7 (75.9),3660.0 (70.1),""
+   yes,2606.1 (23.9),1537.3 (29.4),""
+   NA,22.8 (0.2),23.1 (0.4),""
 "hv104_fctb, male (%)",4873.4 (44.6),2686.3 (51.5),hv104_fctb
-hab1_cont_scale (mean (SD)),0.04 (0.99),-0.15 (0.98),hab1_cont_scale
+hab1_cont (mean (SD)),30.34 (10.94),28.27 (10.84),hab1_cont
 hv21345_fctb (%),"","",hv21345_fctb
    modern,2452.1 (22.4),649.8 (12.4),""
    traditional,8469.5 (77.5),4568.6 (87.5),""
@@ -26,6 +29,6 @@ hv246_fctb (%),"","",hv246_fctb
    no,5944.1 (54.4),2499.3 (47.9),""
    yes,4982.6 (45.6),2720.0 (52.1),""
    NA,0.0 (0.0),1.1 (0.0),""
-hv014_cont_scale (mean (SD)),0.01 (1.00),-0.00 (0.99),hv014_cont_scale
-hv009_cont_scale (mean (SD)),0.06 (1.03),0.03 (0.96),hv009_cont_scale
+hv014_cont (mean (SD)),1.46 (1.20),1.45 (1.19),hv014_cont
+hv009_cont (mean (SD)),6.79 (3.28),6.68 (3.07),hv009_cont
 "ITN_fctb, yes (%)",5294.0 (48.5),2270.7 (43.5),ITN_fctb

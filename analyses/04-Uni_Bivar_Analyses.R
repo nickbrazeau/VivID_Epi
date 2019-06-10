@@ -88,12 +88,12 @@ pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
 pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
                                covar = pvivrskfctr, stringsAsFactors=FALSE)
 
-pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
-pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlogit,
+pvivrskfctr_models$glmlog <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlog)
+pvivrskfctr_models$glmlog_tidy <- purrr::map(pvivrskfctr_models$glmlog,
                                              .f=function(x){
-                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+                                             broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
                                              )
-pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>% 
+pvivrskfctr_est <- pvivrskfctr_models$glmlog_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
@@ -106,18 +106,17 @@ pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
                                covar = pfalrskfctr, stringsAsFactors=FALSE)
 
-pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlog)
+pfalrskfctr_models$glmlog <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlog)
 
 
-pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
+pfalrskfctr_models$glmlog_tidy <- purrr::map(pfalrskfctr_models$glmlog,
                                              .f=function(x){
-                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
+                                             broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
 
-pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
+
+pfalrskfctr_est <- pfalrskfctr_models$glmlog_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
-
-
 
 
 
@@ -174,11 +173,11 @@ dt.cases <- dt %>%
   )
 
 dt.cases.srvy <- makecd2013survey(dt.cases)
-
+casesrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
 casestbl1 <- tableone::svyCreateTableOne(
   data = dt.cases.srvy,
   strata = "case_fctb",
-  vars = pvivrskfctr,
+  vars = casesrskfctr,
   includeNA = T,
   test = F)
 
@@ -192,10 +191,10 @@ casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
 #----------------------------------------------------------------------------------------------------
 # Save out
 #----------------------------------------------------------------------------------------------------
-save(pvivtbl1, pfaltbl1, # table one output 
+save(pvivtbl1df, pfaltbl1df, # table one output 
      pvivrskfctr_models, pfalrskfctr_models, # model datatframes
      pvivriskfactortable, pfalriskfactortable, # final out table for report
-     casestbl1, # for prettier table 1
+     casestbl1df, # for prettier table 1
      file = "results/bivariate_model_results.rda")
 
 

@@ -1,12 +1,19 @@
-#----------------------------------------------------------------------------------------------------
-# Purpose of this script is to investigate if the pv and pf data are correlated
-# considering both space and other epi variables
+ #----------------------------------------------------------------------------------------------------
+# Purpose of this script is to investigate spatial autocorrelations in the Pv data
+# this is to determine if space is actually affecting hotspots
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(sf)
-library(srvyr)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
+ 
+ 
+ 
+
+
+
+#----------------------------------------------------------------------------------------------------
+# SPECIES AUTOCORRELATION
+#----------------------------------------------------------------------------------------------------
 
 #......................
 # Import Data
@@ -172,74 +179,6 @@ clst0s <- dt[dt$hv001 %in% clst0s$hv001, ]
 
 
 #...........................................................................................
-# Perform a Monte Carlo Sampling Scheme to Assess for Interference at the national level
-#...........................................................................................
-
-spclftvr <- data.frame(
-  pfldh_fctb = c("falpos", "falpos", "falpos", "falpos",   "falneg", "falneg", "falneg"),
-  pv18s_fctb = c("vivneg", "vivpos", "vivneg", "vivpos",   "vivpos", "vivpos", "vivneg"),
-  po18s_fctb = c("ovneg",  "ovneg",  "ovpos",  "ovpos",    "ovpos",  "ovneg",  "ovpos"),
-  species =    c("Pfmono", "Pf/Pv",  "Pf/Po",  "Pf/Pv/Po", "Pv/Po",  "Pvmono", "Pomono")
-)
-
-
-dt$malariastatus <- as.numeric( apply(dt[,c("pfldh", "pv18s", "po18s")], 1, sum) >= 1 ) # malaria cases
-
-df <- dt %>% 
-  dplyr::filter(malariastatus == 1 ) %>% 
-  dplyr::left_join(x=., y = spclftvr) %>% 
-  dplyr::mutate(species = factor(species))
-
-test_prop <- c("Pf"=sum(df$pfldh),
-               "Po"=sum(df$po18s),
-               "Pv"=sum(df$pv18s))
-
-#test_prop_prob <- test_prop/sum(test_prop)
-test_prop_prob <- test_prop/nrow(df)
-
-probs = c("Pfmono"   =  test_prop_prob["Pf"] * (1-test_prop_prob["Po"]) * (1 - test_prop_prob["Pv"]),
-          "Pf/Pv"    =  test_prop_prob["Pf"] * (1-test_prop_prob["Po"]) * test_prop_prob["Pv"],  
-          "Pf/Po"    =  test_prop_prob["Pf"] * test_prop_prob["Po"] * (1-test_prop_prob["Pv"]),  
-          "Pf/Pv/Po" =  test_prop_prob["Pf"] * test_prop_prob["Po"] * test_prop_prob["Pv"], 
-          "Pv/Po"    =  (1-test_prop_prob["Pf"]) * test_prop_prob["Po"] * test_prop_prob["Pv"],  
-          "Pvmono"   =  (1-test_prop_prob["Pf"]) * (1-test_prop_prob["Po"]) * test_prop_prob["Pv"], 
-          "Pomono"   =  (1-test_prop_prob["Pf"]) * test_prop_prob["Po"] * (1-test_prop_prob["Pv"])
-)
-names(probs) <- gsub(".Pf", "", names(probs)) # weird R behavior for vector names -- whoops
-
-probs <- probs[sort(names(probs))] # to cooperate with table
-chi <- chisq.test(table(df$species),
-                  p = probs/sum(probs))
-chi$expected
-chi$observed
-chi$residuals
-
-siminfxn <- function(smplsz = 1e3, gamma, species){
-  ret <- sample(x = species, size = smplsz, replace = T, prob = gamma)
-  return(ret)
-}
-
-reps <- 1e4
-exp <- replicate(reps, siminfxn(smplsz = nrow(df), gamma = probs, 
-                                species = names(probs))) %>% 
-  as.data.frame(.) %>% 
-  magrittr::set_colnames(., paste0("sim", seq(1:ncol(.)))) %>% 
-  tidyr::gather(., key = "simnum", value = "species") %>% 
-  dplyr::mutate(species = factor(species))
-
-# group_by does not respect the 0 levels for factors, can just use xtabs for simple cae
-exp <- as.data.frame( xtabs(~species + simnum, data = out) )
-
-obs <- as.data.frame( xtabs(~species, data = df) )
-# plot it
-ggplot() +
-  geom_bar(data = exp, aes(x = Freq, y=..count..)) +
-  geom_vline(data = obs, aes(xintercept = Freq), color = "red") +
-  facet_wrap(~species, scales="free")
-
-
-
-#...........................................................................................
 # At the Household level are Pf and Pv interferring
 #...........................................................................................
 # dtsrvy %>% 
@@ -286,9 +225,9 @@ pvmono <- dtsrvy %>%
   dplyr::filter(pv18s == 1) %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(
-                   pvcases = srvyr::survey_total(pv18s, na.rm = T),
-                   pvmono = srvyr::survey_total(pv18s == 1 & pfldh ==0, na.rm = T)) 
-                     
+    pvcases = srvyr::survey_total(pv18s, na.rm = T),
+    pvmono = srvyr::survey_total(pv18s == 1 & pfldh ==0, na.rm = T)) 
+
 pvmono$pvmonoprop <- pvmono$pvmono/pvmono$pvcases
 pvmono <- pvmono %>% 
   left_join(., y=ge) 
@@ -302,10 +241,10 @@ pvmonomap <- pvmono %>%
 plot(pvmonomap)
 
 prevmaprasterplots[[1]] + list(
-    geom_sf(data = DRCprov, fill = "NA"),
-    geom_point(data = pvmono, aes(x=longnum, y=latnum, color = pvmonoprop)),
-    scale_colour_gradient(low = "#2b8cbe", high = "#de2d26") 
-    )
+  geom_sf(data = DRCprov, fill = "NA"),
+  geom_point(data = pvmono, aes(x=longnum, y=latnum, color = pvmonoprop)),
+  scale_colour_gradient(low = "#2b8cbe", high = "#de2d26") 
+)
 
 
 
@@ -341,3 +280,10 @@ plot(pvnosing)
 
 
 
+
+
+
+
+
+
+  

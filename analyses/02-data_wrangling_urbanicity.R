@@ -73,7 +73,7 @@ hist(dt$nightlights_composite)
 hist( dt$nightlights_composite[dt$nightlights_composite < 0.05] )
 hist( dt$nightlights_composite[dt$nightlights_composite > 0.05] )
 # large number of 0s (again)
-dt$nightlights_composite_scale <- my.scale(dt$nightlights_composite, center = T, scale = T)
+dt$nightlights_composite_scale <- my.scale(log(dt$nightlights_composite + tol), center = T, scale = T)
 hist(dt$nightlights_composite_scale)
 summary(dt$nightlights_composite_scale); sd(dt$nightlights_composite_scale) # despite skew, scale seems to work
 
@@ -88,7 +88,7 @@ hist(dt$all_population_count_2015)
 hist( dt$all_population_count_2015[dt$all_population_count_2015 < 5e4] )
 hist( dt$all_population_count_2015[dt$all_population_count_2015 > 5e4] )
 # no 0s here but a lot of small pops
-dt$all_population_count_2015_scale <- my.scale(dt$all_population_count_2015, center = T, scale = T)
+dt$all_population_count_2015_scale <- my.scale(log(dt$all_population_count_2015 + tol), center = T, scale = T)
 hist(dt$all_population_count_2015_scale)
 summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_scale) # scale here seems to compensate
 
@@ -101,7 +101,7 @@ summary(dt$all_population_count_2015_scale); sd(dt$all_population_count_2015_sca
 summary(dt$travel_times_2015)
 hist(dt$travel_times_2015)
 dt <- dt %>% 
-  dplyr::mutate(travel_times_2015_scale = scale(travel_times_2015, center = T, scale = T))
+  dplyr::mutate(travel_times_2015_scale = my.scale(log(travel_times_2015 + tol), center = T, scale = T))
 
 hist(dt$travel_times_2015_scale) # many, many 0s -- these are urban centers/places near big towns
 hist(dt$travel_times_2015_scale) # standardization doesn't look as good, but should capture urban v. rural well

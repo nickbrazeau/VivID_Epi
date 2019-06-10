@@ -1,31 +1,34 @@
 var_label,Covariates,Pvivax-Negative,Pvivax-Positive,matchcol,estimate,std.error,statistic,p.value,conf.low,conf.high
 ,n,15667.69,479.33,n,,,,,,
-Mean monthly lagged precipitation,precip_lag_cont_clst (mean (SD)),163.94 (81.13),179.40 (70.01),precip_lag_cont_scale_clst,1.37,0.12,2.61,0.01,1.08,1.74
-Mean monthly lagged temperature,temp_lag_cont_clst (mean (SD)),23.82 (2.18),23.62 (2.45),temp_lag_cont_scale_clst,0.92,0.13,-0.61,0.55,0.72,1.19
-Altitude,alt_dem_cont_clst (mean (SD)),709.96 (435.30),768.90 (488.85),alt_dem_cont_scale_clst,1.12,0.13,0.84,0.4,0.86,1.45
-Distance to Water,wtrdist_cont_clst (mean (SD)),5712.06 (7500.98),5365.87 (7502.85),wtrdist_cont_scale_clst,0.95,0.1,-0.45,0.65,0.78,1.17
+Mean monthly lagged precipitation,precip_lag_cont_clst (mean (SD)),163.94 (81.13),179.40 (70.01),precip_lag_cont_scale_clst,1.2,0.11,1.76,0.08,0.98,1.48
+Mean monthly lagged temperature,temp_lag_cont_clst (mean (SD)),23.82 (2.18),23.62 (2.45),temp_lag_cont_scale_clst,0.93,0.13,-0.58,0.56,0.73,1.19
+Altitude,alt_dem_cont_clst (mean (SD)),709.96 (435.30),768.90 (488.85),alt_dem_cont_scale_clst,1.12,0.12,0.94,0.35,0.88,1.42
+Distance to Water,wtrdist_cont_clst (mean (SD)),5712.06 (7500.98),5365.87 (7502.85),wtrdist_cont_scale_clst,0.95,0.1,-0.46,0.64,0.78,1.17
 Urbanicity Score,urbanscore_cont_clst (mean (SD)),0.46 (1.91),0.36 (1.87),urbanscore_cont_clst,0.97,0.06,-0.44,0.66,0.86,1.1
-Distance to Healthcare Center,hlthdist_cont_clst (mean (SD)),72357.47 (72123.25),75314.81 (70578.37),hlthdist_cont_scale_clst,1.11,0.11,0.98,0.33,0.9,1.37
-Any antimalarial Use (percent),anyatm_cont_clst (mean (SD)),0.31 (0.24),0.29 (0.22),anyatm_cont_scale_clst,0.9,0.12,-0.93,0.36,0.72,1.13
-Falciparum infxn,"pfldh_fctb, falpos (%)",4741.1 (30.3),151.7 (31.7),pfldh_fctbfalpos,1.07,0.13,0.5,0.62,0.83,1.38
-Ovale Infxn,"po18s_fctb, ovpos (%)",121.3 (0.8),2.6 (0.5),po18s_fctbovpos,0.71,0.71,-0.49,0.62,0.18,2.83
-HIV status,"hiv03_fctb, hivpos (%)",149.4 (1.0),8.3 (1.7),hiv03_fctbhivpos,1.84,0.46,1.33,0.18,0.75,4.52
-Hemoglobin,hab56_cont (mean (SD)),13.10 (2.03),13.16 (1.90),hab56_cont_scale,1.03,0.06,0.5,0.62,0.92,1.16
-Sex,"hv104_fctb, male (%)",7315.8 (46.7),243.9 (50.9),hv104_fctbmale,1.18,0.14,1.21,0.23,0.9,1.55
+Distance to Healthcare Center,hlthdist_cont_clst (mean (SD)),72357.47 (72123.25),75314.81 (70578.37),hlthdist_cont_scale_clst,1.11,0.1,0.97,0.33,0.9,1.36
+Any antimalarial Use (percent),anyatm_cont_clst (mean (SD)),0.31 (0.24),0.29 (0.22),anyatm_cont_scale_clst,0.9,0.11,-0.92,0.36,0.72,1.12
+Falciparum infxn,"pfldh_fctb, falpos (%)",4741.1 (30.3),151.7 (31.7),pfldh_fctbfalpos,1.07,0.13,0.5,0.62,0.83,1.36
+Ovale Infxn,"po18s_fctb, ovpos (%)",121.3 (0.8),2.6 (0.5),po18s_fctbovpos,0.71,0.69,-0.49,0.62,0.18,2.77
+HIV status,"hiv03_fctb, hivpos (%)",149.4 (1.0),8.3 (1.7),hiv03_fctbhivpos,1.8,0.43,1.35,0.18,0.77,4.21
+Anemia,hab57_fctb (%),"","",hab57_fctb,,,,,,
+,   no,11595.3 (74.0),362.5 (75.6),hab57_fctbno,,,,,,
+,   yes,4026.5 (25.7),116.9 (24.4),hab57_fctbyes,0.93,0.12,-0.61,0.55,0.74,1.17
+,   NA,46.0 (0.3),0.0 (0.0),hab57_fctbNA,,,,,,
+Sex,"hv104_fctb, male (%)",7315.8 (46.7),243.9 (50.9),hv104_fctbmale,1.18,0.13,1.21,0.23,0.9,1.53
 Age,hab1_cont (mean (SD)),29.68 (10.93),29.41 (11.48),hab1_cont_scale,0.98,0.05,-0.48,0.63,0.88,1.08
 Building Materials,hv21345_fctb (%),"","",hv21345_fctb,,,,,,
 ,   modern,3033.3 (19.4),68.6 (14.3),hv21345_fctbmodern,,,,,,
-,   traditional,12627.4 (80.6),410.7 (85.7),hv21345_fctbtraditional,1.44,0.24,1.5,0.13,0.89,2.31
+,   traditional,12627.4 (80.6),410.7 (85.7),hv21345_fctbtraditional,1.42,0.24,1.49,0.14,0.9,2.27
 ,   NA,7.0 (0.0),0.0 (0.0),hv21345_fctbNA,,,,,,
-Wealth,wlthrcde_combscor_cont (mean (SD)),0.12 (1.14),0.04 (0.97),wlthrcde_combscor_cont,0.94,0.07,-0.89,0.37,0.81,1.08
+Wealth,wlthrcde_combscor_cont (mean (SD)),0.12 (1.14),0.04 (0.97),wlthrcde_combscor_cont,0.94,0.07,-0.89,0.37,0.82,1.08
 Education,hv106_fctb (%),"","",hv106_fctb,,,,,,
 ,   lower,6363.3 (40.6),193.0 (40.3),hv106_fctblower,,,,,,
-,   higher,9289.2 (59.3),286.3 (59.7),hv106_fctbhigher,1.02,0.15,0.11,0.92,0.76,1.36
+,   higher,9289.2 (59.3),286.3 (59.7),hv106_fctbhigher,1.02,0.15,0.11,0.92,0.76,1.35
 ,   NA,15.2 (0.1),0.0 (0.0),hv106_fctbNA,,,,,,
 Owns Livestock,hv246_fctb (%),"","",hv246_fctb,,,,,,
 ,   no,8206.8 (52.4),236.6 (49.4),hv246_fctbno,,,,,,
-,   yes,7459.8 (47.6),242.7 (50.6),hv246_fctbyes,1.13,0.13,0.95,0.34,0.88,1.45
+,   yes,7459.8 (47.6),242.7 (50.6),hv246_fctbyes,1.12,0.12,0.95,0.34,0.88,1.43
 ,   NA,1.1 (0.0),0.0 (0.0),hv246_fctbNA,,,,,,
-Number of Children Under 5,hv014_cont (mean (SD)),1.46 (1.19),1.45 (1.16),hv014_cont_scale,0.99,0.07,-0.11,0.91,0.86,1.15
-Number of Household Members,hv009_cont (mean (SD)),6.76 (3.22),6.56 (3.06),hv009_cont_scale,0.94,0.1,-0.64,0.53,0.78,1.14
-ITN Use,"ITN_fctb, yes (%)",7327.3 (46.8),237.4 (49.5),ITN_fctbyes,1.12,0.15,0.72,0.47,0.83,1.51
+Number of Children Under 5,hv014_cont (mean (SD)),1.46 (1.19),1.45 (1.16),hv014_cont_scale,0.99,0.07,-0.11,0.91,0.86,1.14
+Number of Household Members,hv009_cont (mean (SD)),6.76 (3.22),6.56 (3.06),hv009_cont_scale,0.94,0.09,-0.63,0.53,0.78,1.13
+ITN Use,"ITN_fctb, yes (%)",7327.3 (46.8),237.4 (49.5),ITN_fctbyes,1.11,0.15,0.72,0.47,0.83,1.49
