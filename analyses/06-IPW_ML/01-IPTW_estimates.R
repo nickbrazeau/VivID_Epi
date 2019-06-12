@@ -2,7 +2,7 @@ source("R/00-simple_Ensemble_Wrapper.R")
 library(tidyverse)
 library(mlr)
 
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
 sf::st_geometry(dt) <- NULL
 #........................
 # manipulate tx map
