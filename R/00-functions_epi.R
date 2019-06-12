@@ -1,4 +1,36 @@
 #----------------------------------------------------------------------------------------------------
+# iptw prob
+#----------------------------------------------------------------------------------------------------
+
+get_iptw_prob <- function(data, type, preds, task){
+  # pull out data from list return
+  preds <- preds$data
+  
+  if(type == "binary"){
+    
+   poscol <- which(grepl(task$task.desc$positive, colnames(preds)))
+   probs = preds[, c(2, poscol)] # 2 is always truth
+   pexp <- sum(data[, task$task.desc$target] == task$task.desc$positive)/nrow(data) # prob of exposure
+   iptw_u <- ifelse(probs$truth == task$task.desc$positive,
+                    1/prob[,2],
+                    1/(1-prob[,2]))
+   
+   iptw_s <- pexp*iptw_u
+   
+  } else if(type == "continuous"){
+    
+    #TODO
+    return(NA)
+    
+  } else{
+    stop("Type must be either binary or continous")
+  }
+
+}
+
+
+
+#----------------------------------------------------------------------------------------------------
 # glms
 #----------------------------------------------------------------------------------------------------
 
