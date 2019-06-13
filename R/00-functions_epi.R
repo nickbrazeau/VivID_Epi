@@ -19,12 +19,25 @@ get_iptw_prob <- function(data, type, preds, task){
    
   } else if(type == "continuous"){
     
-    #TODO
-    return(NA)
+    # following assumptions in Robbins 2000/Zhu 2015 PMC4749263
+    model.num <- lm(preds$truth~1) # this is the intercept in the classic way
+    #TODO check if sigma truly necessary 
+    # divide residuals by model variance to put on standard normal
+    ps.num <- dnorm(
+      (preds$truth - model.num$fitted)/summary(model.num)$sigma,
+      mean = 0, sd = 1, log = F)
     
+    ps.den = dnorm(
+      (preds$truth - preds$response)/( sd( (preds$truth - preds$response)) ),
+      mean = 0, sd = 1, log = F)
+    
+     iptw_s <- ps.num/ps.denom
+     
   } else{
     stop("Type must be either binary or continous")
   }
+  
+  return(iptw_s)
 
 }
 
