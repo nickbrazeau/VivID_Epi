@@ -60,16 +60,51 @@ txs$learner <- purrr::map(txs$type, make_simple_Stack,
                           learners = baselearners.list)
 
 # make full model
-txs$fullmodel <- purrr::map2(.x = txs$learner, .y = txs$task,
-                             train)
+# txs$fullmodel <- purrr::map2(.x = txs$learner, .y = txs$task,
+#                             train)
 
 
 # get predictions
-txs$preds <- purrr::map2(.x = txs$fullmodel, .y = txs$task,
-                             predict)
+# txs$preds <- purrr::map2(.x = txs$fullmodel, .y = txs$task,
+#                             predict)
+
+#.....................................
+# SLURM 
+#.....................................
+
+slurm_trainpredict <- function(learner = learner, task=task){
+  fullmodel <- mlr::train(learner = learner,
+                          task = task)
+  predictions <- predict(fullmodel, task = task)
+  
+  ret <- list(
+    fullmodel = fullmodel,
+    predictions = predictions
+  )
+  return(ret)
+  
+}
+
+paramsdf <- txs[,c("learner", "task")]
 
 
-saveRDS(object = txs, file = "results/ensemble_predictive_probs.RDS")
+
+sjob <- rlurm::slurm_apply(f = slurm_trainpredict, 
+                    params = paramsdf, 
+                    jobname = 'vivid_preds',
+                    nodes = 18, 
+                    cpus_per_node = 1, 
+                    submit = T,
+                    slurm_options = list(mem = 32000,
+                                         array = sprintf("0-%d%%%d", 
+                                                         ntry - 1, 
+                                                         16),
+                                         'cpus-per-task' = 8,
+                                         error =  "%A_%a.err",
+                                         output = "%A_%a.out",
+                                         time = "5-00:00:00"))
+
+# saveRDS(object = txs, file = "results/ensemble_predictive_probs.RDS")
 
 
 
