@@ -69,12 +69,108 @@ graphics.off()
 #----------------------------------------------------------------------------------------------------
 # SUPPLEMENTAL FIGURES
 #----------------------------------------------------------------------------------------------------
+#----------------------------------------------
+# Bivariate Analysis
+#----------------------------------------------
+load("results/bivariate_model_results.rda")
+covarmap <- readxl::read_excel("model_datamaps/sub_DECODER_covariate_map.xlsx")
+
+
+pvriskest <- pvivrskfctr_models$glmlog_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  dplyr::rename(column_name = term) %>% 
+  dplyr::mutate(
+    column_name = ifelse(grepl("_fctb", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb"),
+                         column_name)
+  )
+
+pvriskest <- dplyr::left_join(pvriskest, covarmap, by = "column_name")
+orderrf <- pvriskest %>% 
+  dplyr::arrange(level) %>% 
+  dplyr::select(abridged_var_label) %>% 
+  unlist(.)
+
+pv_bivar_rf_plot <- pvriskest %>% 
+  dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>% 
+  ggplot() +
+  geom_hline(yintercept = 1, color = "#cb181d", linetype = "dashed") +
+  geom_pointrange(aes(x = abridged_var_label, y = estimate, 
+                      ymin = conf.low, ymax = conf.high,
+                      color = factor(level))) +
+  scale_color_manual("Level", values = c("#0868ac", "#4eb3d3")) +
+  coord_flip() + 
+  ggtitle(expression(paste(bold("Bivariate Risk Factor Estimates for "), bolditalic("P. vivax")))) +
+  
+  ylab("Risk Ratio") + 
+  theme(
+    plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
+    axis.title.y = element_blank(),
+    legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    legend.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 10, angle = 0),
+    legend.position = "right",
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent"),
+    panel.grid = element_blank(),
+    panel.border = element_blank())
+    
+# PF
+pfriskest <- pfalrskfctr_models$glmlog_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  dplyr::rename(column_name = term) %>% 
+  dplyr::mutate(
+    column_name = ifelse(grepl("_fctb", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb"),
+                         column_name)
+  )
+
+pfriskest <- dplyr::left_join(pfriskest, covarmap, by = "column_name")
+orderrf <- pfriskest %>% 
+  dplyr::arrange(level) %>% 
+  dplyr::select(abridged_var_label) %>% 
+  unlist(.)
+
+pf_bivar_rf_plot <- pfriskest %>% 
+  dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>% 
+  ggplot() +
+  geom_hline(yintercept = 1, color = "#cb181d", linetype = "dashed") +
+  geom_pointrange(aes(x = abridged_var_label, y = estimate, 
+                      ymin = conf.low, ymax = conf.high,
+                      color = factor(level))) +
+  scale_color_manual("Level", values = c("#006d2c", "#41ae76")) +
+  coord_flip() + 
+  ggtitle(expression(paste(bold("Bivariate Risk Factor Estimates for "), bolditalic("P. falciparum")))) +
+  
+  ylab("Risk Ratio") + 
+  theme(
+    plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
+    axis.title.y = element_blank(),
+    legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    legend.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 10, angle = 0),
+    legend.position = "right",
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent"),
+    panel.grid = element_blank(),
+    panel.border = element_blank())
+
+
+# svglite::svglite(file = "results/figures/Figure1B.svg")
+jpeg("results/figures/Covar_SuppFig.jpg", width = 11, height = 8, units = "in", res = 500)
+cowplot::plot_grid(pv_bivar_rf_plot, 
+                   pf_bivar_rf_plot, 
+                   nrow = 1)
+graphics.off()
 
 
 #----------------------------------------------------------------------------------------------------
 # Additional Figures
 #----------------------------------------------------------------------------------------------------
-
 
 ############################################################
 #########               MORE MAPS                  ######### 
