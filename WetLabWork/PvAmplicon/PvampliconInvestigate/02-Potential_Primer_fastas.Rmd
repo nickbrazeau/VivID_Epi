@@ -211,3 +211,55 @@ vmatchPattern("ACTTCCAAGCCGAAGCAAAGAAAGTCCTTA",  pvp01[  pvp01@ranges@NAMES == "
 ```
 
 
+
+```{r}
+mtdna <-  pvp01[ grepl("PvP01_MIT_v1", pvp01@ranges@NAMES) ]
+
+
+vmatchPattern("ACTGTA", mtdna)
+
+
+vmatchPattern("GGAGGAGGTACTGGATGGACT", mtdna)
+
+vmatchPattern(reverseComplement(DNAString("AGGATCTCCAGCAAATGTAGGAT")), mtdna)
+
+
+vmatchPattern("TTATATCCACCATTAAGTACATCACTT", mtdna)
+vmatchPattern(reverseComplement(DNAString("AGTGTTAAACCTTTAGATCTTAGATG")), mtdna)
+
+
+
+
+```
+
+
+```{r}
+# GenBank: MF197850.1
+# Plasmodium simium isolate
+
+psim <- Biostrings::readDNAStringSet("~/Downloads/sequence.fasta")
+
+vmatchPattern("TTATATCCACCATTAAGTACATCACTT", psim)
+vmatchPattern(reverseComplement(DNAString("AGTGTTAAACCTTTAGATCTTAGATG")), psim)
+
+# GenBank: KX645965.1
+# Plasmodium cf. inui
+pinfui <- Biostrings::readDNAStringSet("~/Downloads/sequence (1).fasta")
+vmatchPattern("TTATATCCACCATTAAGTACATCACTT", pinfui)
+vmatchPattern(reverseComplement(DNAString("AGTGTTAAACCTTTAGATCTTAGATG")), pinfui)
+
+
+
+# Can't tell the difference to psim but its a NMW isolate... not OWM?
+toString(subseq(mtdna, 3726, 3880))
+toString(subseq(psim, 3727, 3881))
+
+
+toString(subseq(pinfui, 2985, 3880))
+
+
+
+
+```
+
+

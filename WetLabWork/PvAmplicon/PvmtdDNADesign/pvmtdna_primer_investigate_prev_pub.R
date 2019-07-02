@@ -1,6 +1,5 @@
 library(Biostrings)
 library(tidyverse)
-devtools::install_github("mhahsler/rBLAST")
 
 #-----------------------------
 # import mtdna
@@ -152,6 +151,19 @@ ggplot() +
         plot.background = element_rect(fill = "transparent"),
         panel.grid = element_blank(),
         panel.border = element_blank())
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
