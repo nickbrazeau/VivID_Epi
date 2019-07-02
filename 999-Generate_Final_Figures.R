@@ -217,10 +217,28 @@ graphics.off()
 
 
 
+##############################
+# Pf, Pv, together
+##############################
+pfprevmap <-  prevmaprasterplots[[1]] +
+  ggtitle(expression(paste(bold("Prevalence of "), bolditalic("P. falciparum"), bold(" Across the DRC")))) +
+  prettybasemap_nodrc + 
+  theme(
+    legend.position = "right",
+    legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
+  )
 
+pvprevmap <-  prevmaprasterplots[[2]] +
+  ggtitle(expression(paste(bold("Prevalence of "), bolditalic("P. vivax"), bold(" Across the DRC")))) +
+  prettybasemap_nodrc + 
+  theme(
+    legend.position = "right",
+    legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
+  )
 
-
-
-
-
+jpeg("results/figures/pv-pf-prevmap2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+cowplot::plot_grid(pfprevmap, 
+                   pvprevmap, 
+                   nrow = 1)
+graphics.off()
 

@@ -102,7 +102,22 @@ make_simple_Stack <- function(
 
 
 
+make_IPTW_weights <- function(data, predictions){
   
+  
+  bldmtrl <- bldmtrl %>% 
+    dplyr::mutate(hv21345_b = ifelse(hv21345_fctb == "traditional", 0, 1), # conver to binary
+                  pexp = mean(hv21345_b)
+    ) %>% 
+    dplyr::bind_cols(., stckd.full$data) %>%
+    dplyr::mutate(iptw_u = ifelse(hv21345_fctb == "modern",
+                                  1/prob.modern,
+                                  1/(1-prob.modern)),
+                  iptw_s = pexp * iptw_u,
+                  iptwipsw = iptw_s * hv005_wi
+    )
+  
+}  
   
 
   
