@@ -27,13 +27,20 @@ dtsrvy <- makecd2013survey(survey = dt)
 m1 <- survey::svyglm(pv18s ~ 1, design = dtsrvy)
 broom::tidy(m1, conf.int = T)
 
-# cluster-level prevalence
-clst <- dtsrvy %>% 
+# cluster-level prevalence, because everyone is weighted the same in the cluster, don't use weights here
+# note, the numerators will be slightly different (e.g. N) but the denomminators adjust for this
+# Going to report whole numbers/unadjusted for clusters
+clst <- dt %>% 
   dplyr::mutate(count = 1) %>% 
   dplyr::group_by(hv001) %>% 
-  dplyr::summarise(n = srvyr::survey_total(count), 
-                 pv18sn = srvyr::survey_total(pv18s), 
-                 pv18sprev = srvyr::survey_mean(pv18s, vartype = c("ci"), level = 0.95))
+  dplyr::summarise(n = n(), 
+                   pv18sn = sum(pfldh), 
+                   pv18sprev = mean(pv18sn),
+                   pv18sse = sqrt(pv18sn * pv18sprev * (1 - pv18sprev)) / sqrt(pv18sn),
+                   pv18sprevU95 = pv18sprev + 1.96 * pv18sse,
+                   pv18sprevL95 = pv18sprev - 1.96 * pv18sse
+                   )
+                   
 
 summary(clst$pv18sn)
 summary(clst$pv18sprev)

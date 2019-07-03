@@ -1,6 +1,8 @@
 source("R/00-simple_Ensemble_Wrapper.R")
+set.seed(48, "L'Ecuyer")
 library(tidyverse)
 library(mlr)
+library(rslurm)
 
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
 sf::st_geometry(dt) <- NULL
@@ -94,7 +96,7 @@ sjob <- rlurm::slurm_apply(f = slurm_trainpredict,
                     jobname = 'vivid_preds',
                     nodes = 18, 
                     cpus_per_node = 1, 
-                    submit = T,
+                    submit = F,
                     slurm_options = list(mem = 32000,
                                          array = sprintf("0-%d%%%d", 
                                                          ntry - 1, 

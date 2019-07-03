@@ -4,7 +4,9 @@ library(sf)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 
-
+# Notes on Lonely PSUs
+# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
+options(survey.lonely.psu="certainty")
 
 #...........................................................
 # Antimalarial Cluster Usage
