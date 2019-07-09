@@ -2,16 +2,12 @@ baselearners.list <- list(
   classif =  c("classif.logreg",
                "classif.glmnet", 
                "classif.kknn",
-               "classif.svm",
-               "classif.gamboost",
-               "classif.gausspr",
+               "classif.ksvm",
                "classif.randomForest"),
   regress = c("regr.lm",
               "regr.glmnet", 
               "regr.kknn",
-              "regr.svm",
-              "regr.gamboost",
-              "regr.gausspr", 
+              "regr.ksvm",
               "regr.randomForest")
 )
 
