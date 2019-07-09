@@ -145,3 +145,13 @@ points(SimData$lat, SimData$long)
 
 
 
+
+ret.smrstr.m  <-  raster::rasterToPoints(ret.smrstr)
+ret.smrstr.m.df <-  data.frame(lon = ret.smrstr.m[,1], 
+                               lat = ret.smrstr.m[,2], 
+                               prev = ret.smrstr.m[,3])
+ret.smrstr.m.plot <- ggplot() + 
+  geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = alpha) +
+  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") 
+
+
