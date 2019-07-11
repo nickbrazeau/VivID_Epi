@@ -92,7 +92,7 @@ mp.moranI <- mp %>%
 
 mp.moranI.ret <- lapply(mp.moranI, spdep::moran.test, 
                     listw = spdep::mat2listw(gc.inv), 
-                    alternative = "two.sided")
+                    alternative = "greater")
 
 mp$moranI <- NA
 mp$moranI[4:6] <- mp.moranI.ret
