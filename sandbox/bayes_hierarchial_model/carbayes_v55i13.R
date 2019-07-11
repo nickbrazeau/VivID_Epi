@@ -1,9 +1,7 @@
-  ````
-
-
 ################################################
 #### Run the model on simulated data on a lattice
 #################################################
+library(CARBayes)
 #### Load other libraries required
 library(MASS)
 
@@ -31,6 +29,7 @@ Y <- rbinom(n=K, size=trials, prob=prob)
 
 #### Run the Leroux model
 formula <- Y ~ x1 + x2
+
 ## Not run: model <- S.CARleroux(formula=formula, family="binomial",  trials=trials, W=W, burnin=20000, n.sample=100000)
 ## End(Not run)
 
@@ -40,7 +39,11 @@ model.spatial <- S.CARleroux(formula=formula, family="binomial",
 
 
 
-model.spatial
-predict(model.spatial)
+model.spatial$fitted.values
+length(model.spatial$fitted.values)
+length(Y)
+
+plot(Y ~ model.spatial$fitted.values)
+
 
 

@@ -2,6 +2,7 @@
 # Goal of this script is to simulate a process that depends 
 # on space and has baseline confounding
 #--------------------------------------------------------
+source("R/00-functions_basic.R")
 library(tidyverse)
 library(raster)
 library(sp)
@@ -109,14 +110,13 @@ extract.PN_grid_values <- function(mean.n.clust = 50, sd.n.clust = 10, nclusts =
 # make spatial data
 # create space probabilities based on perline noise (smoothly varying)
 PN <- perlin_noise(n=2, m=3, N=100, M=100)
-
-plot(raster(PN)) # going to treat the output of this as a probability mass
-data <- extract.PN_grid_values(mean.n.clust = 50, sd.n.clust = 10,
-                       PN.matrix = PN, buffer = 0.1)
+sprob.data <- extract.PN_grid_values(mean.n.clust = 50, sd.n.clust = 10,
+                                     nclusts = 30,
+                                     PN.matrix = PN, buffer = 0.1)
 
 # now make our covariates dependent on cluster and take space into account for whether or not you get outcome
-data.list <- split(data, factor(data$cluster))
-data.list <- lapply(data.list, function(dat){
+sprob.data.list <- split(sprob.data, factor(sprob.data$cluster))
+sprob.data.list <- lapply(sprob.data.list, function(dat){
   n = nrow(dat)
   ZX <- mvtnorm::rmvnorm(n, 
                          mean = c(0.5, 1),
@@ -125,33 +125,105 @@ data.list <- lapply(data.list, function(dat){
     z_1 = ZX[,1],
     z_2 = ZX[,2]
   ) %>% 
-    dplyr::bind_cols(dat) %>% 
+    dplyr::bind_cols(., dat) %>% 
     dplyr::mutate(
       treatment = as.numeric(- 0.5 + 0.25 * z_1 + 0.33 * z_2  + rnorm(n, 0, 1) > 0),
-      outcome = 2 * treatment + 1.5 *sprob + rnorm(n, 0, 1)
+      outcome = 2 * treatment + 1.5 *sprob + rnorm(n, 0, 1),
+      outcome = my.scale(outcome),
+      outcome = as.numeric( outcome > 0) # TODO this need to qlogis
     )
+  
+  
+  
   return(dat)
 
 }) 
 
 
-SimData <- data.list %>% dplyr::bind_rows(.)
+SimData <- sprob.data.list %>% dplyr::bind_rows(.)
 
 
-plot(raster(PN)) # going to treat the output of this as a probability mas
+plot(raster(PN)) # this was treated as a probability mass
 points(SimData$lat, SimData$long)
 
 
 
+#.........................................................
+# This Section is merely for plotting
+# 
 
+SimData.ClusterSummary <- SimData %>% 
+  dplyr::group_by(cluster) %>% 
+  dplyr::summarise(
+    lat = mean(lat), # all same
+    long = mean(long), #all same
+    prev = mean(outcome)
+  )
 
-
-ret.smrstr.m  <-  raster::rasterToPoints(ret.smrstr)
-ret.smrstr.m.df <-  data.frame(lon = ret.smrstr.m[,1], 
+ret.smrstr.m  <-  raster::rasterToPoints(raster(PN))
+ret.smrstr.m.df <-  data.frame(long = ret.smrstr.m[,1], 
                                lat = ret.smrstr.m[,2], 
-                               prev = ret.smrstr.m[,3])
-ret.smrstr.m.plot <- ggplot() + 
-  geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = alpha) +
+                               sprob = ret.smrstr.m[,3])
+
+ggplot() + 
+  geom_raster(data = ret.smrstr.m.df, aes(long, lat, fill = sprob), alpha = 0.8) +
+  geom_point(data = SimData.ClusterSummary, aes(long, lat, fill = prev, size = prev)) +
   scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") 
+
+#.........................................................
+
+
+
+
+
+#.........................................................
+# This Section is for CARBayes
+# 
+
+#### set up distance and "neighbourhood" matrix
+#### by greater circle distance
+gc <- SimData %>% 
+  dplyr::select(c("long", "lat")) %>% 
+  geosphere::distm(x =., fun = geosphere::distGeo)
+
+gc.inv <- 1/gc
+diag(gc.inv) <- 0
+
+#### Toy example for checking
+n.trials <- SimData %>% 
+  dplyr::group_by(cluster) %>% 
+  dplyr::summarise(n = n()) %>% 
+  .$n %>%  
+  unlist(.) %>% unname(.)
+
+# This is the part that I find strange
+# but this is where the ecological model comes in
+
+SimData.ClusterSummary <- SimData %>% 
+  dplyr::group_by(cluster) %>% 
+  dplyr::summarise(
+    lat = mean(lat), # all same
+    long = mean(long), #all same
+    success = sum(outcome),
+    meanz1 = mean(z_1),
+    meanz2 = mean(z_2),
+    meantx = mean(treatment)
+  )
+
+
+model.spatial <- S.CARleroux(formula = "success ~ meantx + meanz1 + meanz2", 
+                             data = SimData.ClusterSummary,
+                             family = "binomial", 
+                             trials = n.trials, 
+                             W = gc.inv, 
+                             burnin = 10, 
+                             n.sample = 50)
+
+
+
+
+
+
+
 
 
