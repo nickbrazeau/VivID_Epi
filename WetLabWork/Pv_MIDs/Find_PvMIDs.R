@@ -23,15 +23,15 @@ library(SeekDeepRANN)
 #-----------------------------
 # import Pv mtdna
 #-----------------------------
-pvp01 <- Biostrings::readDNAStringSet("~/Documents/MountPoints/mountIDEEL/resources/genomes/Pvivax/genomes/PvP01.fasta", "fasta")
-pvmtdna <-  pvp01[ grepl("PvP01_MIT_v1", pvp01@ranges@NAMES) ]
+# pvp01 <- Biostrings::readDNAStringSet("~/Documents/MountPoints/mountIDEEL/resources/genomes/Pvivax/genomes/PvP01.fasta", "fasta")
+# pvmtdna <-  pvp01[ grepl("PvP01_MIT_v1", pvp01@ranges@NAMES) ]
 
 # forward landing
-Biostrings::vmatchPattern("TTATATCCACCATTAAGTACATCACTT", pvmtdna) 
+# Biostrings::vmatchPattern("TTATATCCACCATTAAGTACATCACTT", pvmtdna) 
 # reverse landing
-Biostrings::vmatchPattern(Biostrings::reverseComplement(Biostrings::DNAString("AGTGTTAAACCTTTAGATCTTAGATG")), pvmtdna)
+# Biostrings::vmatchPattern(Biostrings::reverseComplement(Biostrings::DNAString("AGTGTTAAACCTTTAGATCTTAGATG")), pvmtdna)
 # target gene
-seqinr::c2s( seqinr::s2c(Biostrings::toString(pvmtdna))[3726:3880] )
+# seqinr::c2s( seqinr::s2c(Biostrings::toString(pvmtdna))[3726:3880] )
 
 
 # now read in design fasta for the purpose of finding MIDs
