@@ -188,9 +188,9 @@ prmrs.all.newer %>%
 Where do they land?
 ```{r}
 # inner primers published by JESS
-vmatchPattern("GAGCTCTACAAGACGCACTT", chr07)
-vmatchPattern(reverseComplement(DNAString("CTCCARCTCGGCCTTTTT")), chr07, max.mismatch = 1)
-
+vmatchPattern("CAAGCCTACCAAGAATTGATCCCCAA", chr07, max.mismatch = 1) 
+vmatchPattern(reverseComplement(DNAString("ATTACTTTGTCGTAGTCCTCGGCGTAGTCC")), chr07)
+seqinr::s2c(Biostrings::toString(chr07))[1219131:1219156]
 
 ```
 
@@ -258,6 +258,81 @@ toString(subseq(psim, 3727, 3881))
 toString(subseq(pinfui, 2985, 3880))
 
 
+
+mtdna <- pvp01[pvp01@ranges@NAMES == "PvP01_MIT_v1"]
+
+vmatchPattern("TTATATCCACCATTAAGTACATCACTT", mtdna)
+vmatchPattern(reverseComplement(DNAString("AGTGTTAAACCTTTAGATCTTAGATG")), mtdna)
+
+
+# pull in metadata
+mt <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvAmplicon/PvampliconInvestigate/curated_samples_20181211.xlsx") 
+
+
+dv <- vcfR::read.vcfR(file = "~/Documents/MountPoints/mountedMeshnick/Sandbox/PvMtDNA_VCF/pv_combined_mtdna.raw.vcf")
+
+mt <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/WetLabWork/PvAmplicon/PvampliconInvestigate/curated_samples_20181211.xlsx") 
+
+bd <- data.frame( 
+  chr = "PvP01_MIT_v1",
+  start = 3691,
+  end = 4214,
+  strand = "+",
+  name = "coxI",
+  geneid = "PVX"
+)
+
+
+
+
+bd <- bd %>%
+  dplyr::rename(seqname = chr)
+bdlist <- split(bd, factor(1:nrow(bd)))
+
+bd$vcfRobj <- purrr::map(bdlist, vcfRmanip::vcfR2SubsetChromPos, vcfRobject = dv)
+bd$nvar <- unlist(purrr::map(bd$vcfRobj, function(x){ return(nrow(x@gt)) }))
+
+#.................................
+# data manip for plotting
+#.................................
+
+bd$plotdf <- purrr::map(bd$vcfRobj, function(x, metadata = mt){
+                              ret <- cbind.data.frame(CHROM = vcfR::getCHROM(x),
+                                     POS = vcfR::getPOS(x),
+                                     vcfR::extract.gt(x, element = "GT")) %>% 
+                                     gather(., key = "iid", value = "gt", 3:ncol(.)) %>%
+                                     dplyr::mutate(gt_fct = factor( gt, levels = c("0/0", "0/1", "1/1"), 
+                                                                    labels = c("REF", "HET", "ALT")),
+                                                                    POS = as.numeric(POS)) %>% 
+                                     inner_join(metadata, ., by = "iid") %>% 
+                                     dplyr::mutate(cont = rplasmodium::encode_continent(country)) %>% 
+                                     dplyr::mutate(country_fct = factor(country)) 
+                              
+                              return(ret)
+              
+})
+
+
+#.................................
+# Make Plots
+#.................................
+bd$vcfplots <- purrr::map2(bd$plotdf, bd$geneid, function(x, y){
+                          ret <-  x %>% 
+                                  dplyr::arrange(POS) %>% 
+                                  ggplot() +
+                                  geom_tile(aes(x=factor(iid), y= factor(POS), fill = gt_fct)) + 
+                                  facet_wrap(cont + country_fct ~ ., scales = "free_x", nrow = 1) +
+                                  ggtitle(paste("Nucleotide variation for Gene", y)) +
+                                  theme_classic() +
+                                  theme(axis.text.x = element_blank(),
+                                        plot.title = element_text(size = 12, face = "bold", hjust = 0.5))
+                          return(ret)
+  
+})
+
+
+
+bd$vcfplots
 
 
 ```
