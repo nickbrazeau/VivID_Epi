@@ -1,6 +1,6 @@
 source("R/00-simple_Ensemble_Wrapper.R")
 source("R/00-functions_epi.R")
-source("R/00-make_null_IPTW_distribs.R")
+source("R/00-make_null_IPTW_distribs_brownian.R.R")
 source("R/00-my_IPTW_performance_measure.R")
 set.seed(48, "L'Ecuyer")
 library(tidyverse)
@@ -89,10 +89,12 @@ hyperparams_to_tune <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
+txs$hyperparam <- hyperparams_to_tune
 
 # Make a Grid to Search On
 ctrl <- makeTuneControlGrid(resolution = 10)
-txs$searchgrid <- lapply(1:nrow(txs), function(x) return(ctrl))
+txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
+
 
 
 ###################################################
@@ -100,54 +102,38 @@ txs$searchgrid <- lapply(1:nrow(txs), function(x) return(ctrl))
 ######   Set Performance Metrics/Null Dist   ######     
 ###################################################
 ###################################################
+nulliters <- 2
+txs$nulldist <- purrr::pmap(txs[,c("target", "task", "adj_set")], 
+                            function(target, task, adj_set){
+                              
+                              data <- mlr::getTaskData(task)
+                              
+                              # R for loop
+                              ret <- parallel::mclapply(1:nulliters, function(x){ 
+                               return( make.null.distribution.energy(data = data, covars = adj_set, target = target) )
+                                
+                              }) %>% unlist(.)
+                 
+  })
 
-txs$nulldist <- 
-  purrr::pmap(txs[,c("target", "task", "adj_set", "type")], 
-            function(target, task, adj_set, type){
-              
-              data <- mlr::getTaskData(task)
-              
-              
-              if(type == "continuous"){
-                ret <- make.null.distribution.continuousTx(data = data, covars = adj_set, target = target)
-                
-              }
-              
-              if(type == "binary"){
-                ret <- make.null.distribution.binaryTx(data = data, covars = adj_set, target = target)
-                
-              }
-              
-              else{
-                stop("You have provided an incompatible type")
-              }
-              
-            }
-        ) # end pmap loop
 
 txs <- txs %>% 
-  dplyr::mutate(performmeasure = ifelse(type == "continuous", my.covarbal.continuous, 
-                                 ifelse(type == "binary", my.covarbal.binary, NA)))
+  dplyr::mutate(performmeasure = my.covarbal)
+
+txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
+  # set the null distribution for each respective DAG
+  ret <- mlr::setMeasurePars(x, 
+                             par.vals = list(nulldist = y))
+  })
 
 
-
-
-my.covarbal.binary <- mlr::setMeasurePars(my.covarbal.binary, 
-                                          par.vals = list(nulldist = null.binaryTx))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+###################################################
+###################################################
+######        RESAMPLING APPROACH            ######     
+###################################################
+###################################################
+# resampling approach with spatial CV considered
+rdesc <-makeResampleDesc("SpRepCV", fold = 5, reps = 5)
 
 
 
@@ -158,24 +144,25 @@ my.covarbal.binary <- mlr::setMeasurePars(my.covarbal.binary,
 # SLURM 
 #........................................................................
 
-slurm_trainpredict <- function(learner = learner, task=task){
-  fullmodel <- mlr::train(learner = learner,
-                          task = task)
-  predictions <- predict(fullmodel, task = task)
+slurm_tunemodel <- function(learner, task, rdesc, hyperparam, ctrl, performmeasure){
   
-  ret <- list(
-    fullmodel = fullmodel,
-    predictions = predictions
-  )
+  ret <- mlr::tuneParams(learner = learner, 
+                    task = task, 
+                    resampling = rdesc, 
+                    par.set = hyperparam,
+                    control = ctrl,
+                    measures = performmeasure, 
+                    show.info = T)
+  
   return(ret)
   
 }
 
-paramsdf <- txs[,c("learner", "task")]
+paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparam", "ctrl", "performmeasure")]
 
 
 ntry <- 18
-sjob <- rlurm::slurm_apply(f = slurm_trainpredict, 
+sjob <- rlurm::slurm_apply(f = slurm_tunemodel, 
                     params = paramsdf, 
                     jobname = 'vivid_preds',
                     nodes = 18, 
