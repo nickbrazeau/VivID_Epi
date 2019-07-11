@@ -43,7 +43,7 @@ txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set,
 
 
 #-------------------------------------------------
-# Run the Models
+# Setup Models
 #-------------------------------------------------
 
 # first make the tasks
@@ -61,14 +61,39 @@ txs$task <- purrr::pmap(txs[,c("task", "type")],
 txs$learner <- purrr::map(txs$type, make_simple_Stack, 
                           learners = baselearners.list)
 
-# make full model
-# txs$fullmodel <- purrr::map2(.x = txs$learner, .y = txs$task,
-#                             train)
 
 
-# get predictions
-# txs$preds <- purrr::map2(.x = txs$fullmodel, .y = txs$task,
-#                             predict)
+###################################################
+###################################################
+######     Set HyperParameters for Tuning    ######     
+###################################################
+###################################################
+
+# L1/L2 Regularization (glmnet), alpha: The elasticnet mixing parameter, with 0≤α≤ 1. The penalty is defined as (1-α)/2||β||_2^2+α||β||_1 alpha=1 is the lasso penalty, and alpha=0 the ridge penalty.
+# K-Nearest Neighbors, k: Number of neighbors considered.
+# Single Vector Machine, C: cost of constraints violation (default: 1) this is the `C'-constant of the regularization term in the Lagrange formulation.
+# Single Vector Machine, kernel: The kernel function used in training and predicting. This parameter can be set to any function, of class kernel, which computes the inner product in feature space between two vector arguments (see kernels). kernlab provides the most popular kernel functions which can be used by setting the kernel parameter to the following strings: 
+# GAMBoost -- not going to tune 
+# TODO consider gamboost boosting for tuning
+# Random Forest, Mtry: Number of variables randomly sampled as candidates at each split. Note that the default values are different for classification (sqrt(p) where p is number of variables in x) and regression (p/3) 
+
+# make a parameter set to explore
+hyperparams_to_tune <- ParamHelpers::makeParamSet(
+  makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
+  makeNumericParam("regr.kknn.k", lower = 1, upper = 15 ),
+  makeNumericParam("regr.ksvm.C", lower = 1, upper = 10),
+  makeDiscreteParam("regr.ksvm.kernel", values = c("rbfdot", "polydot", "vanilladot", "tanhdot", "laplacedot", "besseldot", "anovadot", "splinedot", "stringdot")),
+  makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
+)
+
+
+
+
+
+
+
+
+
 
 #.....................................
 # SLURM 
@@ -107,6 +132,13 @@ sjob <- rlurm::slurm_apply(f = slurm_trainpredict,
                                          time = "5-00:00:00"))
 
 # saveRDS(object = txs, file = "results/ensemble_predictive_probs.RDS")
+
+
+
+my.covarbal.binary <- mlr::setMeasurePars(my.covarbal.binary, 
+                                          par.vals = list(nulldist = null.binaryTx))
+
+
 
 
 

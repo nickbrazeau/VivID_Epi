@@ -1,11 +1,13 @@
 baselearners.list <- list(
   classif =  c("classif.logreg",
                "classif.glmnet", 
+               "classif.gamboost",
                "classif.kknn",
                "classif.ksvm",
                "classif.randomForest"),
   regress = c("regr.lm",
               "regr.glmnet", 
+              "regr.gamboost",
               "regr.kknn",
               "regr.ksvm",
               "regr.randomForest")
@@ -92,32 +94,10 @@ make_simple_Stack <- function(
     stop("You must have type binary or continuous for access to learners")
   }
   
-  
   return(m)
 }
 
 
-
-make_IPTW_weights <- function(data, predictions){
-  
-  
-  bldmtrl <- bldmtrl %>% 
-    dplyr::mutate(hv21345_b = ifelse(hv21345_fctb == "traditional", 0, 1), # conver to binary
-                  pexp = mean(hv21345_b)
-    ) %>% 
-    dplyr::bind_cols(., stckd.full$data) %>%
-    dplyr::mutate(iptw_u = ifelse(hv21345_fctb == "modern",
-                                  1/prob.modern,
-                                  1/(1-prob.modern)),
-                  iptw_s = pexp * iptw_u,
-                  iptwipsw = iptw_s * hv005_wi
-    )
-  
-}  
-  
-
-  
-  
   
   
   
