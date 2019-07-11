@@ -90,7 +90,7 @@ slurm_trainpredict <- function(learner = learner, task=task){
 paramsdf <- txs[,c("learner", "task")]
 
 
-
+ntry <- 18
 sjob <- rlurm::slurm_apply(f = slurm_trainpredict, 
                     params = paramsdf, 
                     jobname = 'vivid_preds',
