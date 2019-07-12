@@ -5,7 +5,7 @@
 # Y. Zhu et al. "A Boosting Algorithm ..." 2015
 #----------------------------------------------------------------------------------------------------
 source("R/00-functions_epi.R")
-
+library(mlr)
 #..............................................................
 # Binary Treatment Case
 #..............................................................
@@ -60,7 +60,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
 
 
 # Generate the Measure object for binary tx
-my.covarbal = makeMeasure(
+my.covarbal = mlr::makeMeasure(
   id = "my.covarbal", 
   name = "Baseline covariate balance estimator",
   properties = c("classif", "regr"),

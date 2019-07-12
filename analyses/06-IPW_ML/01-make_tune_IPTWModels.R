@@ -1,7 +1,7 @@
 source("R/00-simple_Ensemble_Wrapper.R")
 source("R/00-functions_epi.R")
 source("R/00-make_null_IPTW_distribs_brownian.R")
-source("R/00-my_IPTW_performance_measure_energy.R.R")
+source("R/00-my_IPTW_performance_measure_energy.R")
 set.seed(48, "L'Ecuyer")
 library(tidyverse)
 library(mlr)
