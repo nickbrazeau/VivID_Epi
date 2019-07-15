@@ -1,3 +1,10 @@
+#----------------------------------------------------------------------------------
+# Purpose of this script is to access the DAG that we believe
+# is truth for our causal pathways. Using this DAG
+# we will then find the paths that we need to condition upon to
+# calcuate the marginal risk estimate
+#----------------------------------------------------------------------------------
+
 library(tidyverse)
 library(dagitty)
 source("R/00-DAGs.R")

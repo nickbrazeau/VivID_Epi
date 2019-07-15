@@ -110,7 +110,9 @@ txs$nulldist <- purrr::pmap(txs[,c("target", "task", "adj_set")],
                               
                               # R for loop
                               ret <- parallel::mclapply(1:nulliters, function(x){ 
-                               return( make.null.distribution.energy(data = data, covars = adj_set, target = target) )
+                               return( make.null.distribution.energy(data = data, 
+                                                                     covars = adj_set, 
+                                                                     target = target) )
                                 
                               }) %>% unlist(.)
                  
@@ -159,7 +161,8 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparam, ctrl, performmeasu
 
 paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparam", "ctrl", "performmeasure")]
 
-
+# for slurm on LL
+setwd("analyses/06-IPW_ML/")
 ntry <- 18
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                     params = paramsdf, 
