@@ -60,12 +60,12 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type")],
                         .f = make_class_task)
 
 # now look and correct class imbalance
-txs$task <- purrr::pmap(txs[,c("task", "type")], 
-                        .f = find_Class_Imbalance,
-                        classimb_tol = 0.6,
-                        smotenn = 5)
+# txs$task <- purrr::pmap(txs[,c("task", "type")], 
+#                        .f = find_Class_Imbalance,
+#                        classimb_tol = 0.6,
+#                        smotenn = 5)
 txs <- txs %>% 
-  dplyr::select(c("target", "task", "adj_set"))
+  dplyr::select(c("target", "data", "adj_set"))
 
 
 #................................
@@ -75,21 +75,15 @@ txs <- txs %>%
 nulliters <- 1e3
 paramsdf <- lapply(1:nulliters, function(x) return(txs)) %>% 
   dplyr::bind_rows() %>% 
-  dplyr::arrange(target)
+  dplyr::arrange(target) %>% 
+  dplyr::rename(covars = adj_set)
 
 
-slurm_get_nulldist <-  function(target, task, adj_set){
-  
-  data <- mlr::getTaskData(task)
-  ret <- make.null.distribution.energy(data = data, covars = adj_set, target = target)
-  return(ret)
-  }
-  
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/00-null_distributions/")
 ntry <- 128
-sjob <- rslurm::slurm_apply(f = slurm_get_nulldist, 
+sjob <- rslurm::slurm_apply(f = make.null.distribution.energy, 
                             params = paramsdf, 
                             jobname = 'nulldist_vivid_covar',
                             nodes = ntry, 

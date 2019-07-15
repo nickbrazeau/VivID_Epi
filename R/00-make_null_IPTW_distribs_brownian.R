@@ -6,7 +6,7 @@
 #--------------------------------------------------------------------------
 
 
-make.null.distribution.energy <- function(target, covars, data){
+make.null.distribution.energy <- function(target, data, covars){
   n <- nrow(data)
   # TODO reflected normal
   wi <- abs( rnorm(n, mean = 1, sd = 0.25) )

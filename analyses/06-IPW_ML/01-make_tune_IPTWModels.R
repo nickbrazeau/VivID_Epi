@@ -53,11 +53,11 @@ txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set,
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type")], 
                          .f = make_class_task)
 
-# now look and correct class imbalance
-txs$task <- purrr::pmap(txs[,c("task", "type")], 
-                         .f = find_Class_Imbalance,
-                        classimb_tol = 0.6,
-                        smotenn = 5)
+# # now look and correct class imbalance
+# txs$task <- purrr::pmap(txs[,c("task", "type")], 
+#                          .f = find_Class_Imbalance,
+#                         classimb_tol = 0.6,
+#                         smotenn = 5)
 
 
 # now make the ensemble learner
