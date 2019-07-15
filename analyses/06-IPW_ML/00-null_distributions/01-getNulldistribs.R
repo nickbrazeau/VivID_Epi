@@ -87,7 +87,7 @@ slurm_get_nulldist <-  function(target, task, adj_set){
   
 
 # for slurm on LL
-setwd("analyses/06-IPW_ML/null_distributions")
+setwd("analyses/06-IPW_ML/00-null_distributions/")
 ntry <- 128
 sjob <- rslurm::slurm_apply(f = slurm_get_nulldist, 
                             params = paramsdf, 
