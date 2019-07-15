@@ -56,7 +56,7 @@ txs$task <- purrr::pmap(txs[,c("task", "type")],
                         .f = find_Class_Imbalance,
                         classimb_tol = 0.6,
                         smotenn = 5)
-txs %>% 
+txs <- txs %>% 
   dplyr::select(c("target", "task", "adj_set", "data"))
 
 nulliters <- 1e3
