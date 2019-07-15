@@ -57,7 +57,7 @@ txs$task <- purrr::pmap(txs[,c("task", "type")],
                         classimb_tol = 0.6,
                         smotenn = 5)
 txs <- txs %>% 
-  dplyr::select(c("target", "task", "adj_set", "data"))
+  dplyr::select(c("target", "task", "adj_set"))
 
 nulliters <- 1e3
 txs$nulldist <- purrr::pmap(txs, 
