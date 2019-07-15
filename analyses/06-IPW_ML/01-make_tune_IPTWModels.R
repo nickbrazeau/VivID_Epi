@@ -117,8 +117,7 @@ txs$nulldist <- purrr::pmap(txs[,c("target", "task", "adj_set")],
   })
 
 
-txs <- txs %>% 
-  dplyr::mutate(performmeasure = my.covarbal)
+txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
 
 txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
   # set the null distribution for each respective DAG
