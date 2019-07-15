@@ -39,10 +39,10 @@ library(SeekDeepRANN)
 
 mids <- SeekDeepRANN::MIDPrimerFinder(
   design_fasta = "WetLabWork/Pv_MIDs/mid_design_fasta.fa",
-  MID2MIDmatchesAllowed = 4,
+  MID2MIDmatchesAllowed = 6,
   MIDlength = 8,
   MIDhomopolymerallowance = 2,
-  MID2targetmismatchesAllowed = 3,
+  MID2targetmismatchesAllowed = 6,
   MIDnum = 20
 )
 
