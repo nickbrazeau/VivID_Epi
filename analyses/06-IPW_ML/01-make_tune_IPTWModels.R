@@ -161,7 +161,7 @@ paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparam", "ctrl", "performmea
 
 
 ntry <- 18
-sjob <- rlurm::slurm_apply(f = slurm_tunemodel, 
+sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                     params = paramsdf, 
                     jobname = 'vivid_preds',
                     nodes = 18, 
