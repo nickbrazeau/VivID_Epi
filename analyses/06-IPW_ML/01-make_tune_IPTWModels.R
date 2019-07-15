@@ -89,7 +89,7 @@ hyperparams_to_tune <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
-txs$hyperparam <- hyperparams_to_tune
+txs$hyperparam <- lapply(1:nrow(txs), function(x) return(hyperparams_to_tune))
 
 # Make a Grid to Search On
 ctrl <- makeTuneControlGrid(resolution = 10)
@@ -134,7 +134,7 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 ###################################################
 # resampling approach with spatial CV considered
 rdesc <-makeResampleDesc("SpRepCV", fold = 5, reps = 5)
-
+txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
 
@@ -168,7 +168,7 @@ sjob <- rlurm::slurm_apply(f = slurm_tunemodel,
                     nodes = 18, 
                     cpus_per_node = 1, 
                     submit = F,
-                    slurm_options = list(mem = 500000,
+                    slurm_options = list(mem = 100000,
                                          array = sprintf("0-%d%%%d", 
                                                          ntry - 1, 
                                                          16),
