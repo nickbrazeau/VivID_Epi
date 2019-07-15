@@ -5,7 +5,7 @@ library(tidyverse)
 library(mlr)
 
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
-sf::st_geometry(dt) <- NULL
+#sf::st_geometry(dt) <- NULL
 #........................
 # manipulate tx map
 #........................
