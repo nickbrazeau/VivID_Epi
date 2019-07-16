@@ -15,7 +15,12 @@ make.null.distribution.energy <- function(target, data, covars){
   data.list <- lapply(1:length(covars), 
                       function(x){return(as.data.frame(data[, c(target, covars[x]) ]))})
   
-  data.dist <- lapply(data.list, function(x){
+  data.list.rand <- lapply(data.list, function(x){
+    x <- x[sample(1:nrow(x), size = n, prob = wi, replace = T), ]
+    return(x)
+  })
+  
+  data.dist <- lapply(data.list.rand, function(x){
     
     if(is.factor(x[,1])){
       x[,1] <- as.numeric(x[,1])
