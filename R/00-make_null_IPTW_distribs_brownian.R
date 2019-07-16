@@ -3,6 +3,9 @@
 # https://www.rdocumentation.org/packages/energy/versions/1.7-6/topics/distance%20correlation
 # https://cran.r-project.org/web/packages/energy/energy.pdf
 # https://projecteuclid.org/euclid.aoas/1267453933
+# http://yunus.hacettepe.edu.tr/~iozkan/eco742/Brownian.html
+# https://projecteuclid.org/download/pdfview_1/euclid.aos/1201012979
+# https://blogs.sas.com/content/iml/2018/04/04/distance-correlation.html
 #--------------------------------------------------------------------------
 
 
@@ -30,7 +33,12 @@ make.null.distribution.energy <- function(target, data, covars){
       x[,2] <- as.numeric(x[,2])
     }
     
-    ret <- energy::dcor(x = x[,1], y = x[,2])
+    nrand <- floor(nrow(x) * 0.1) # take a 10% sample for speed
+    m1 <- sample(x = x[,1], size = nrand, replace = F)
+    m2 <- sample(x = x[,2], size = nrand, replace = F)
+    
+    
+    ret <- energy::dcor(x = m1, y = m2)
     return(ret)
   })
  
