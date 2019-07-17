@@ -44,11 +44,8 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
     }
     
     nrand <- floor(nrow(x) * 0.1) # take a 10% sample for speed
-    m1 <- sample(x = x[,1], size = nrand, replace = F)
-    m2 <- sample(x = x[,2], size = nrand, replace = F)
-    
-    
-    ret <- energy::dcor(x = m1, y = m2)
+    nrand.rows <- sample(x = 1:nrow(x), size = nrand, replace = F) # pull random rows
+    ret <- energy::dcor(x = x[nrand.rows, 1], y = x[nrand.rows, 2])
     
     return(ret)
   })
