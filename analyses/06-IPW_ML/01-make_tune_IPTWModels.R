@@ -88,7 +88,7 @@ txs$learner <- purrr::map(txs$type, make_simple_Stack,
 # Random Forest, Mtry: Number of variables randomly sampled as candidates at each split. Note that the default values are different for classification (sqrt(p) where p is number of variables in x) and regression (p/3) 
 
 # make a parameter set to explore
-hyperparams_to_tune <- ParamHelpers::makeParamSet(
+hyperparams_to_tune.regr <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
   makeNumericParam("regr.kknn.k", lower = 1, upper = 10 ),
   makeNumericParam("regr.ksvm.C", lower = 1, upper = 5),
@@ -96,10 +96,28 @@ hyperparams_to_tune <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
-txs$hyperparam <- lapply(1:nrow(txs), function(x) return(hyperparams_to_tune))
+hyperparams_to_tune.classif <- ParamHelpers::makeParamSet(
+  makeNumericParam("classif.glmnet.alpha", lower = 0, upper = 1),
+  makeNumericParam("classif.kknn.k", lower = 1, upper = 10 ),
+  makeNumericParam("classif.ksvm.C", lower = 1, upper = 5),
+  makeDiscreteParam("classif.ksvm.kernel", values = c("vanilladot", "rbfdot", "polydot", "besseldot", "laplacedot")),
+  makeNumericParam("classif.randomForest.mtry", lower = 1, upper = 10 )
+)
+
+txs$hyperparam <- purrr::map(txs$type, function(x){
+  
+  if(x == "continuous"){
+    return(hyperparams_to_tune.regr)
+  } else if(x == "binary"){
+    return(hyperparams_to_tune.classif)
+  } else {
+    stop("Type not specified")
+  }
+  
+})
 
 # Make a Grid to Search On
-ctrl <- makeTuneControlGrid(resolution = 5L)
+ctrl <- makeTuneControlGrid(resolution = 10L)
 txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
 
 
@@ -174,5 +192,8 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                                          time = "11-00:00:00"))
 
 
-cat("Submitted tuning models")
+cat("*************************** \n 
+      Submitted tuning models
+    *************************** \n
+    ")
 
