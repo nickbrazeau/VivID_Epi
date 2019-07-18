@@ -80,7 +80,6 @@ dt <- dt %>%
 # 
 # PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
 # 1. Cluster altitude (HV040)
-# 2. Seasonality (ecological import)
 # 3. Temparature (ecological import)
 # 4. Precipation (ecological import)
 # 6. Type of Residence i.e. Rural or Urban (recode)
@@ -560,13 +559,6 @@ dtsrvy <- makecd2013survey(survey = dt)
 #..........................................................................................
 #                                ECOLOGICAL VARIABLES
 #..........................................................................................
-source("R/00-functions_ecology.R")
-#.............
-# Seasonality
-#.............
-
-
-
 
 #.............
 # Precipitation (CHRIPS) & Temperature (Emch/Manny)

@@ -47,7 +47,7 @@ Y_holdout = outcome_bin[-train_obs]
 #-----------------------------------------------------------------------
 # SUPERLEARNER PACKAGE
 #-----------------------------------------------------------------------
-remotes::install_github("ecpolley/SuperLearner")
+#remotes::install_github("ecpolley/SuperLearner")
 library(SuperLearner)
 
 sl.trainmodel <- SuperLearner(Y = Y_train, X = X_train, family = binomial(),
@@ -67,7 +67,7 @@ summary(sl.pred$pred)
 #-----------------------------------------------------------------------
 # MLR PACKAGE
 #-----------------------------------------------------------------------
-remotes::install_github("mlr-org/mlr")
+#remotes::install_github("mlr-org/mlr")
 library(mlr)
 
 # setup mlr task

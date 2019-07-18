@@ -8,7 +8,7 @@ library(mlr)
 library(rslurm)
 
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
-# sf::st_geometry(dt) <- NULL
+sf::st_geometry(dt) <- NULL
 #........................
 # manipulate tx map
 #........................
@@ -39,18 +39,25 @@ dt.ml <- dt.ml %>%
 txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set, 
                         .f = function(x, y){
                           ret <- dt.ml %>% 
-                            dplyr::select(c(x,y))
+                            dplyr::select(c(x, y, "longnum", "latnum"))
                           return(ret)
                         })
 
-
+#........................
+# Pull Out Coords
+#........................
+txs$coordinates <- purrr::map(txs$data, function(x){
+  ret <- x %>% 
+    dplyr::select(c("longnum", "latnum"))
+  return(ret)
+})
 
 #-------------------------------------------------
 # Setup Models
 #-------------------------------------------------
 
 # first make the tasks
-txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type")], 
+txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
                          .f = make_class_task)
 
 # # now look and correct class imbalance
@@ -85,7 +92,7 @@ hyperparams_to_tune <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
   makeNumericParam("regr.kknn.k", lower = 1, upper = 15 ),
   makeNumericParam("regr.ksvm.C", lower = 1, upper = 10),
-  makeDiscreteParam("regr.ksvm.kernel", values = c("rbfdot", "polydot", "vanilladot", "tanhdot", "laplacedot", "besseldot", "anovadot", "splinedot", "stringdot")),
+  makeDiscreteParam("regr.ksvm.kernel", values = c("rbfdot", "polydot", "vanilladot", "besseldot", "splinedot", "stringdot")),
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
@@ -102,22 +109,9 @@ txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
 ######   Set Performance Metrics/Null Dist   ######     
 ###################################################
 ###################################################
-nulliters <- 2
-txs$nulldist <- purrr::pmap(txs[,c("target", "task", "adj_set")], 
-                            function(target, task, adj_set){
-                              
-                              data <- mlr::getTaskData(task)
-                              
-                              # R for loop
-                              ret <- parallel::mclapply(1:nulliters, function(x){ 
-                               return( make.null.distribution.energy(data = data, 
-                                                                     covars = adj_set, 
-                                                                     target = target) )
-                                
-                              }) %>% unlist(.)
-                 
-  })
+nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
 
+txs <- dplyr::left_join(txs, nulldist, by = "target")
 
 txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
 

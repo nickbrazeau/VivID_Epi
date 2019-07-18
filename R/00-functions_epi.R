@@ -5,21 +5,20 @@
 get_iptw_prob <- function(task, preds, type){
 
   if(type == "binary"){
-    
-   poscol <- which(grepl(task$task.desc$positive, colnames(preds)))
+  
+   # pull details from mlr for numerator
+   pos.class <- mlr::getTaskDesc(task)$positive
+   target <- mlr::getTaskTargetNames(task) 
+   data <- mlr::getTaskData(task)
    
-   probs = preds[, c(2, poscol)] # 2 is always truth
-   pexp <- sum(data[, task$task.desc$target] == task$task.desc$positive)/nrow(data) # prob of exposure
    
    ps <- mlr::getPredictionProbabilities(preds)
    exposure <- mlr::getPredictionTruth(preds)
+   pexp <- mean(exposure == pos.class)
    
-   iptw_u <- ifelse(exposure == task$task.desc$positive,
+   iptw_u <- ifelse(exposure == pos.class,
                     1/ps,
                     1/(1-ps))
-   # in case we consider class imbalance, go back to root
-   data <- mlr::getTaskData(task)
-   pexp = mean(data[, task$task.desc$target] == task$task.desc$positive)
    
    iptw_s <- pexp*iptw_u
    

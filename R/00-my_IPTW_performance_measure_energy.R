@@ -17,8 +17,25 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   target <- mlr::getTaskTargetNames(task)
   covars <- mlr::getTaskFeatureNames(task)
   
+  
+  type <- mlr::getTaskType(task)
+  if(type == "classif"){
+    if( length(mlr::getTaskDesc(task)$class.levels) > 2){
+      stop("This function does not support categorical treatment types")
+    }
+  }
+
+  
+  # find the type for the iptws from the task
+ # warning("Type for IPTW Weight Calculations are being decided on class of target within data. Need to ensure proper coding")
+  type <- ifelse(type == "classif", "binary",
+                 ifelse(type == "regr", "continuous", NA))
+  
+  
+  # pred <- mlr::getPredictionProbabilities(pred)
+  
   # get inverse probability weights
-  wi <- get_iptw_prob(task = task, preds = pred, type = "binary")
+  wi <- get_iptw_prob(task = task, preds = pred, type = type)
   
   # coerce back to vector
   nulldist <- unname( unlist(nulldist) )
@@ -31,7 +48,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   
   # pull apart data to find Djs
   data.list <- lapply(1:length(covars), 
-                      function(x){return(as.data.frame(data[, c(target, covars[x]) ]))})
+                      function(x){return(as.data.frame(dat[, c(target, covars[x]) ]))})
   
   data.dist <- lapply(data.list, function(x){
     

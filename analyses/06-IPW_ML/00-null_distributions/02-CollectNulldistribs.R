@@ -2,6 +2,12 @@
 # Purpose of this script is to collect the null distribution
 # in order to use it for our performance measure
 #--------------------------------------------------------------------------
+# dependencies
+library(tidyverse)
+
+#...................................
+# Import Data
+#...................................
 null.ret.files <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/00-null_distributions/_rslurm_nulldist_vivid_covar/",
                              pattern = ".RDS", full.names = T)
 
@@ -18,9 +24,11 @@ null.ret <- lapply( null.ret.files, function(x){
 
 
 
-null.ret %>% 
+null.ret <- null.ret %>% 
   group_by(covar) %>% 
-  dplyr::summarise(
-    n = n(),
-    mean = mean(corr)
-  )
+  tidyr::nest() %>% 
+  dplyr::rename(target = covar,
+                nulldist = data)
+
+
+saveRDS(object = null.ret, file = "analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
