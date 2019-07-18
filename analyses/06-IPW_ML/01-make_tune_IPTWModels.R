@@ -171,11 +171,8 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                                          'cpus-per-task' = 8,
                                          error =  "%A_%a.err",
                                          output = "%A_%a.out",
-                                         time = "5-00:00:00"))
-
-# saveRDS(object = txs, file = "results/ensemble_predictive_probs.RDS")
+                                         time = "11-00:00:00"))
 
 
-
-
+cat("Submitted tuning models")
 
