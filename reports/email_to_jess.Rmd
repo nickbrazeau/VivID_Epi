@@ -1,0 +1,249 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning=F, message=F, results='hide')
+```
+
+Hi Jess,   
+I hope this message finds you well.    
+**Thank you in advance for your time and help**!  
+
+For the first aim of my thesis, I have been working on the inverse-probability weight calculations using an Ensemble supervised machine learning approach. I was hoping that we could discuss these points in the next couple of weeks if you are available (my schedule is very flexible)? Please excuse the format below (as I wrote this in Rmarkdown for some of the simulations), but I have tired to lay out my "questions"" as topics with arguments/thoughts for discussion... Please note, I have attached the underlying `.html` for this email which may be easier to view. 
+
+Jon, Steve -- I just wanted to note that the draft I will share with you all soon will be caveated by these points. 
+    
+  
+P.S. All of R code is on Github but in a private repository. I have some tidying up to do before making it public but would be happy to make you a collaborator if that would help in our discussions?
+
+
+## Epi Assumptions/Causal Models
+### DAGs, Canonical Set
+Although this may not be good justification, I went ahead and calculated an IPTW/RR for nearly all "Risk Factors" in my study because it made no difference with `purrr`/my modeling code setup to do 5 - 17. As a result, I have considered my [DAG](http://dagitty.net/development/dags.html?id=jKNQhB) as truth for modeling all the conditional independence of every covariate in the model (bold assumption, I know, but the best I have). Under this assumption, I am then able to derive which ["canonical set"](https://cran.r-project.org/web/packages/dagitty/dagitty.pdf) -- "or all possible ancestors of the exposure/outcome minus descendants" of each "risk factor" (hereafter $A$) is needed to calculate a marginal estimate (causal in expecation). I choose to use the "canonical set" instead of the "minimally sufficient set" in order to better account for any unforseen backdoor paths in my DAG (granted, this is still a likely possibility). Given that I have a large number of confounders (hereafter, $Z$), I have minimized/excluded any issues of what Hernan calls "structural violations" of positivity (or a lack of positivity by design) although there are certainly issues of "randomized violations" of positivity in the higher-dimension of the joint $Z$ state space. As a result, I am able to calculate an effect measure for all of my Risk Factors (or treatments) listed in [Supp Table 3](https://drive.google.com/file/d/12vkUUn3EvpqvGxZY5LS2vKbWzyDjH3HF/view?usp=sharing). _I admit, this is still an active area of work, as I am trying to get my weights centered on 1/under control_. 
+
+```{r, fig.align='center'}
+library(tidyverse)
+library(ggdag)
+library(dagitty)
+dag <- dagitty::downloadGraph("dagitty.net/mPS0j68")  
+ggdag::ggdag(dag) + 
+  theme_dag_blank() 
+
+
+
+```
+
+For example, the above DAG with E, exposure, and O, oucome produces the canonical set: 
+```{r, results='asis'} 
+dagitty::adjustmentSets(dag, exposure = "E", outcome = "O", type = "canonical")
+```
+
+### Generalized Propensity Scores
+Given that I have both continuous and binary treatments, $x$, I needed to be able to calculate the "generalized propensity score (PS)" for continous treatments alongside the binary PS in order to make my marginal structural models. 
+  
+Of note, I have lifted most of these derivations from [Zhu et al. 2015](https://www.ncbi.nlm.nih.gov/pubmed/26877909), [Hirano & Imbens 2004](http://www.math.mcgill.ca/dstephens/SISCR2017/Articles/HIrano-Imbens-2004.pdf), and [Robbins et al. 2000](https://www.ncbi.nlm.nih.gov/pubmed/10955408) / [Hernan et al. 2000](https://www.ncbi.nlm.nih.gov/pubmed/10955409).
+  
+Given a whole list of assumptions (and dropping causal derivations that need to come before this...), we are trying to estimate: 
+$$ P(Y_a) = \sum P(Y | Z, A=a)P(Z=z) $$  
+
+For the binary case, $A \in \{a_0, a_1\}$ and we can calculate the probability of exposure given the covariate pattern, as: 
+
+$$w_i = \frac{a_i}{PS_i} + \frac{1 - a_i}{P1- S_i}, for \space i = 1, ..., n $$
+$$sPS_i  = \frac{P(A=a)}{P(A = a| Z_i)}$$
+which is straightforward to calculate in the setting of a binary treatment as A can only take two values (and is therefore "saturated"). However, if we have a continuous treatment, our values of A are not "saturated" and instead we must model the probability of exposure given the confounding pattern as a probability density function that corresponds to the dose-response curve of our treatment-confounder pair (defining some unspecified function form, $g(.)$). 
+  
+Although this is another (dangerous? but somewhat mitigated by my covariate coding/feature engineering/standardization) assumption, I have assumed that our PDFs follow normal distributions (and can be standardized with $\sigma$), such that: 
+$$ P(A = a) = \epsilon, \space \epsilon \sim N(0, \sigma^2) $$
+$$P(A=a | Z) = g(Z) + \epsilon, \space \epsilon \sim N(0, \sigma^2)$$
+where $g(.)$ is the predicted value (or expecation of $f(A|Z)$ ) from the stacked ensemble approach. This essentially follows the proofs of [Zhu et al. 2015](https://www.ncbi.nlm.nih.gov/pubmed/26877909) but replaces their tree-based-gradient-boosting strategy 
+with an ensemble approach.   
+  
+  
+## Machine Learning (what is it?)
+I am going to make the assertion that the calculation of IPTW deviates from the "typical" supervised ML approach (or at least the one I have been taught in my CS classes) in that we don't know "truth" and therefore cannot truly train our models. Instead, we are trying to estimate the individual-level-predictive-probability of exposure given an individual's (baseline) confounding pattern. Given this, we do not truly care about our models ability to predict "out-of-sample" but instead care about its ability to correctly capture the underlying predictive-probabillity. Although this is probably an inconsequential point, it has taken me a while to come to it/appreciate it.   
+  
+With that assertion in mind, I tune and train my models on the entire dataset and then apply the predictions to my entire dataset in turn (i.e. I have no "hold-outs" to evaluate the end performance of my predictive probabilities since we don't know an individual's true predictive probability). 
+
+
+#### Class Imbalance
+Given the above argument, I think I can ignore class-imbalance, as it actually changes the underlying data (i.e. we can either oversample rare observations or undersample common observations) and therefore actually changes the underlying $P(A|Z)$. I admit though, I have been struggling with this quite a bit as the predictions for a rare outcome (e.g. HIV-status in our dataset) aren't great...
+
+
+
+#### "SuperLearner" vs. Ensemble
+For consistency on my end, I propose the following terms: base-learners: individual algorithms that predict the relationship between the dependent covariates and the independent outcome; meta-learner: the predictive algorithm used by a super-learning approach to weight the individual base-learners in an ensemble approach; super-learner: the end model product of stacked individual base learners that have been weighted by a meta-learner.
+
+As defined in [van der Laan et al. 2007]() and [Polley & van der Laan 2010](https://biostats.bepress.com/cgi/viewcontent.cgi?article=1269&context=ucbbiostat), the `SuperLearner` R-package approach minimizes the cross-validation risk, which is to say it minimizes the ["Lawson-Hanson algorithm for non-negative least squares"]( https://cran.r-project.org/web/packages/nnls/nnls.pdf), which is more or less a L2 loss function (i.e. min(sum of squared predictors)). As a result the `nnls` is the default meta-learner in the `SuperLearner` R-package approach, which from my cursory view of the code is actually coded to train individual base learners and then combine them into an ensemble/stacked learner instead of tuning the ensemble as a single-stacked entity.  
+   
+  
+Despite the subtle differences from `SuperLearner` and my understanding of Ensembles, a valid reviewer question may be, why did you choose to use `mlr` instead of `SuperLearner`. My reason was twofold: 
+  (1) Flexibility in establishing a performance measure/loss function for hyperparamter tuning (allowing us to use the $\hat{di}$ approach)   
+  (2) Spatial Cross-Validation   
+
+Moreover, although I admit I still need to dig into what the _Hill-Climbing Algorithm_ is truly doing under the hood in `mlr`, it apepars that the Hill-Climbing Algorithm approximates the nnls meta-learner function in the SuperLearner R package...which makes sense as both are just doing some kind of MSE/averaging/gradient descent approach.....which I think provides some comfort.  
+  
+  
+With all that said, I think the _Hill-Climbing Algorithm_ is the best mechanism to combine the `mlr` base-learners into a meaningful ensemble without having to pick a specific meta-learner (interestingly, `mlr` does not consider the hill-climbing/gradient ascent/descent a meta-learner, whereas van der Laan & Co. may disagree).
+```{r, results='hide'}
+library(tidyverse)
+
+#................................................
+# Data Setup (following Superlearner vignette)
+#................................................
+library(MASS)
+data(Boston)
+?Boston
+glimpse(Boston)
+
+# Extract our outcome variable from the dataframe.
+outcome = Boston$medv
+
+# Create a dataframe to contain our explanatory variables.
+data = subset(Boston, select = -medv)
+
+#................................................
+# Train/Subset Setup for Superlearners
+#................................................
+# Set a seed for reproducibility in this random sampling.
+set.seed(1)
+
+# Reduce to a dataset of 150 observations to speed up model fitting.
+train_obs = sample(nrow(data), 150)
+
+# X is our training sample.
+X_train = data[train_obs, ]
+
+# Create a holdout set for evaluating model performance.
+# Note: cross-validation is even better than a single holdout sample.
+X_holdout = data[-train_obs, ]
+
+# Create a binary outcome variable: towns in which median home value is > 22,000.
+outcome_bin = as.numeric(outcome > 22)
+
+Y_train = outcome_bin[train_obs]
+Y_holdout = outcome_bin[-train_obs]
+
+
+
+#-----------------------------------------------------------------------
+# SUPERLEARNER PACKAGE
+#-----------------------------------------------------------------------
+library(SuperLearner)
+
+sl.trainmodel <- SuperLearner(Y = Y_train, X = X_train, family = binomial(),
+                              SL.library = c("SL.glmnet", "SL.randomForest"))
+sl.trainmodel
+
+sl.pred = predict(sl.trainmodel, X_holdout, onlySL = T)
+
+# Check the structure of this prediction object.
+str(sl.pred)
+# Review the columns of $library.predict.
+summary(sl.pred$library.predict)
+# Look at actual predictions
+summary(sl.pred$pred)
+
+
+#-----------------------------------------------------------------------
+# MLR PACKAGE
+#-----------------------------------------------------------------------
+library(mlr)
+
+# setup mlr task
+mlr.data <- cbind.data.frame(Y = outcome_bin, data) %>% 
+  dplyr::mutate(Y = factor(Y))
+test_obs <- seq(1:nrow(data))[ !seq(1:nrow(data)) %in% train_obs ]
+
+# setup stacked learner, e.g. specificy libraries
+mlr.task <- makeClassifTask(id = "mlrtest", data = mlr.data, target = "Y", positive = "1")
+baselearners <- c("classif.glmnet", "classif.randomForest")
+baselearners <- lapply(baselearners, makeLearner, predict.type = "prob")
+mlr.stck.lrnr <- makeStackedLearner(base.learners = baselearners,
+                                    predict.type = "prob", 
+                                    method = "hill.climb")
+                                  
+                                  #  super.learner = "classif.lda",
+                                  #  method = "stack.cv",
+                                  #  resampling = makeResampleDesc("RepCV", fold = 5, reps = 5))
+
+mlr.trainmodel <- mlr::train(learner = mlr.stck.lrnr, task = mlr.task, subset = train_obs)
+mlr.pred = predict(mlr.trainmodel, task = mlr.task, subset = test_obs)
+mlr.pred
+
+
+
+#................................................
+# Compare Performance
+#................................................
+# Review AUC - Area Under Curve
+sl.pred_rocr = ROCR::prediction(sl.pred$pred, Y_holdout)
+sl.auc = ROCR::performance(sl.pred_rocr, measure = "auc", x.measure = "cutoff")@y.values[[1]]
+sl.auc
+
+mlr::performance(mlr.pred, measures = list(mlr::auc))
+
+
+summary(unlist( sl.pred_rocr@predictions ))
+summary(mlr.pred$data$prob.1)
+```
+```{r, results='asis', fig.align='center'}
+plot(unlist( sl.pred_rocr@predictions ) ~ mlr.pred$data$prob.1, main = "SL Predictive Prob vs. MLR Predictive Prob")
+
+```
+
+### What I am doing with my Ensemble
+#### Base Learners I have Selected
+I have selected the following base-learners for my ensemble with justifications summarized in [Supp Table 5](https://docs.google.com/document/d/1VTjAJEdrmmZDMOcItr7RU-3bgc0FNz6NNqyaZA9zoew/edit?usp=sharing). Although we could always add more learners, through discussion with various CS folks and various resources, I have come to the conclusion that features matter far more than additional learners. Happy to change this though... 
+
+#### HyperParameter Tuning  
+Given that I want to maximize the fit of my model to my data, it will be beneficial to tune our hyperparameters instead of using defaults. In order to measure the performance of the hyperparameter tuning, I have adapted the approach of 
+[Zhu et al. 2015](https://www.ncbi.nlm.nih.gov/pubmed/26877909) to create an "average correlation measure" to measure covariate balance (i.e. in expectation, if we have truly balanced our baseline covariates among the treatment groups, our correlation between treatment and a given confounder should be 0). Correlation between any two random variables is measured using the [distance correlation](http://dx.doi.org/10.1214/009053607000000505) based on first- and second-moment calculations. The performance measure is calculated as follows: 
+  
+  (0) Sample individuals by their weights (with replacement)
+  (1) Split the data into $X_i$, $Z_j$ vector pairs    
+  (2) Randomly sample 10% of the weighted data *
+  (3) Calculate the $d_{ij}$ for each vector pair
+  (4) Take the mean $d_{ij}$ as the $\hat{d_i}$
+    
+\* This is done purely for computational efficiency as the matrix algebra and time it takes to compute the moments- expands exponentially as n grows (from 0.3 seconds to 1.2 minutes).   
+  
+The Brownian or "distance correlation" metric is attractive, as it can be used for all functional forms to determine independence/correlation.   
+
+  
+In order to evaluate our IPTW models under various hyperparameter realizations, I have created a null distribution for each $X_i$ following the steps above with the exception of the weights, which are drawn from a $N(1, 0.1)$ distribution instead of our calculated IPTW pdf. This null distribution $X_{nd, i}$ can then be used to standardize and "score" the IPTW predictive weights under each iteration of the hyperparameter tuning proposals with the following: 
+
+$$ Z_{performance} = \frac{ \hat{d_i} - \mu(X_{nd, i}) }{\sigma_{nd,i}} $$
+
+As a result, in expectation, the best possible $Z_{performance}$ score would be $- \frac{\mu(X_{nd, i})}{\sigma_{nd,i}}$ as $\hat{d_i}$ approaches 0.
+   
+
+In addition, given that there are spatial dependences among the covariates (e.g. wealth is clustered in urban centers), it will be beneficial to tune our hyperparameters with respect to location under the assumption that it will improve the global fit. [Spatial Cross Validation](https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html) is essentially blocked validation where folds are determined by spatial blocks. By taking space into account, we do not create situations of data-leakage as well as overfit our model to the detriment of rarer outcomes. 
+
+Base-learner tuning and tuning-performances are estimated jointly -- e.g. the ensemble hyperparameters are considered as jointly (combinatorially) and are not tuned indivdiually. 
+  
+** Hyperparameter values are considered in an exhaustive grid-search approach**. Not efficient but defensible.
+
+#### Bringing Base Learners Together
+As stated above, I use an _Hill-Climbing Algorithm_ which is a just a gradient as/descent tool to maximize the combination/weights of the base-learners. I admit, I still need to look into this further, but I feel like this is a good approach given that it approximates the `SuperLearner R` package model and does not rely on a single model to address the weights of the individual base learners. 
+
+
+
+
+--------
+##### Additional References for NFB
+
+**Ensemble Langauge**  
+<https://www.stat.berkeley.edu/~ledell/docs/dlab_ensembles.pdf>   
+<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.228.2236&rep=rep1&type=pdf>    
+<https://towardsdatascience.com/ensemble-methods-in-machine-learning-what-are-they-and-why-use-them-68ec3f9fef5f>   
+<https://blog.statsbot.co/ensemble-learning-d1dcd548e936>    
+<http://docs.h2o.ai/h2o-tutorials/latest-stable/tutorials/ensembles-stacking/index.html>    
+    
+   
+**`SuperLearner` tutorials**  
+<https://cran.r-project.org/web/packages/SuperLearner/vignettes/Guide-to-SuperLearner.html>  
+<https://www.datacamp.com/community/tutorials/ensemble-r-machine-learning>   
+
+
+

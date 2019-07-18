@@ -24,6 +24,8 @@ get_iptw_prob <- function(task, preds, type){
    
   } else if(type == "continuous"){
     
+    preds <- preds$data
+    
     # following assumptions in Robbins 2000/Zhu 2015 PMC4749263
     model.num <- lm(preds$truth~1) # this is the intercept in the classic way
     #TODO check if sigma truly necessary 
@@ -32,7 +34,7 @@ get_iptw_prob <- function(task, preds, type){
       (preds$truth - model.num$fitted)/summary(model.num)$sigma,
       mean = 0, sd = 1, log = F)
     
-    ps.den = dnorm(
+    ps.denom <- dnorm(
       (preds$truth - preds$response)/( sd( (preds$truth - preds$response)) ),
       mean = 0, sd = 1, log = F)
     

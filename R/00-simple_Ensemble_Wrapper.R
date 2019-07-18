@@ -1,13 +1,13 @@
 baselearners.list <- list(
   classif =  c("classif.logreg",
                "classif.glmnet", 
-#               "classif.gamboost",
+               "classif.gamboost",
                "classif.kknn",
                "classif.ksvm",
                "classif.randomForest"),
   regress = c("regr.lm",
               "regr.glmnet", 
-#              "regr.gamboost",
+              "regr.gamboost",
               "regr.kknn",
               "regr.ksvm",
               "regr.randomForest")
@@ -80,7 +80,9 @@ make_simple_Stack <- function(
     baselearners <- lapply(learners.list, makeLearner, predict.type = "prob")
     m = makeStackedLearner(base.learners = baselearners,
                            predict.type = "prob", 
-                           method = "hill.climb")
+                           method = "average")
+  #                         method = "hill.climb")
+  
     
   } else if(type == "continuous"){
     learners.list <- baselearners.list$regress
@@ -88,7 +90,8 @@ make_simple_Stack <- function(
     baselearners <- lapply(learners.list, makeLearner, predict.type = "response")
     m <- makeStackedLearner(base.learners = baselearners,
                            predict.type = "response", 
-                           method = "hill.climb")
+                           method = "average")
+    #                         method = "hill.climb")
     
   } else {
     stop("You must have type binary or continuous for access to learners")

@@ -90,16 +90,16 @@ txs$learner <- purrr::map(txs$type, make_simple_Stack,
 # make a parameter set to explore
 hyperparams_to_tune <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("regr.kknn.k", lower = 1, upper = 15 ),
-  makeNumericParam("regr.ksvm.C", lower = 1, upper = 10),
-  makeDiscreteParam("regr.ksvm.kernel", values = c("rbfdot", "polydot", "vanilladot", "besseldot", "splinedot", "stringdot")),
+  makeNumericParam("regr.kknn.k", lower = 1, upper = 10 ),
+  makeNumericParam("regr.ksvm.C", lower = 1, upper = 5),
+  makeDiscreteParam("regr.ksvm.kernel", values = c("vanilladot", "rbfdot", "polydot", "besseldot", "laplacedot")),
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
 txs$hyperparam <- lapply(1:nrow(txs), function(x) return(hyperparams_to_tune))
 
 # Make a Grid to Search On
-ctrl <- makeTuneControlGrid(resolution = 10)
+ctrl <- makeTuneControlGrid(resolution = 5L)
 txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
 
 
@@ -128,7 +128,7 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 ###################################################
 ###################################################
 # resampling approach with spatial CV considered
-rdesc <-makeResampleDesc("SpRepCV", fold = 5, reps = 5)
+rdesc <- makeResampleDesc("SpRepCV", fold = 2, reps = 2)
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
