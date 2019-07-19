@@ -4,12 +4,14 @@ baselearners.list <- list(
                "classif.gamboost",
                "classif.kknn",
                "classif.ksvm",
+               "classif.gausspr",
                "classif.randomForest"),
   regress = c("regr.lm",
               "regr.glmnet", 
               "regr.gamboost",
               "regr.kknn",
               "regr.ksvm",
+              "regr.gausspr",
               "regr.randomForest")
 )
 
