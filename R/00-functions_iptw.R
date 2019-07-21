@@ -2,9 +2,9 @@
 # iptw prob
 #----------------------------------------------------------------------------------------------------
 
-get_iptw_prob <- function(task, preds, type){
+get_iptw_prob <- function(task, preds){
   
-  if(type == "binary"){
+  if(mlr::getTaskType(task) == "classif"){
     
     # pull details from mlr for numerator
     pos.class <- mlr::getTaskDesc(task)$positive
@@ -22,7 +22,7 @@ get_iptw_prob <- function(task, preds, type){
     
     iptw_s <- pexp*iptw_u
     
-  } else if(type == "continuous"){
+  } else if(mlr::getTaskType(task) == "regr"){
     
     preds <- preds$data
     

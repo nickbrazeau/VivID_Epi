@@ -26,19 +26,16 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   }
 
   
-  # find the type for the iptws from the task
- # warning("Type for IPTW Weight Calculations are being decided on class of target within data. Need to ensure proper coding")
-  type <- ifelse(type == "classif", "binary",
-                 ifelse(type == "regr", "continuous", NA))
-  
   
   # pred <- mlr::getPredictionProbabilities(pred)
   
-  # get inverse probability weights
-  # wi <- get_iptw_prob(task = task, preds = pred, type = type) function having trouble on server bc of sub-nodes
-  get_iptw_prob <- function(task, preds, type){
+  # get inverse probability weights 
+  # wi <- get_iptw_prob(task = task, preds = pred, type = type) 
+  # function having trouble on server bc of sub-nodes,
+  # so had to copy and paste it here 
+  get_iptw_prob <- function(task, preds){
     
-    if(type == "binary"){
+    if(mlr::getTaskType(task) == "classif"){
       
       # pull details from mlr for numerator
       pos.class <- mlr::getTaskDesc(task)$positive
@@ -56,7 +53,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
       
       iptw_s <- pexp*iptw_u
       
-    } else if(type == "continuous"){
+    } else if(mlr::getTaskType(task) == "regr"){
       
       preds <- preds$data
       
@@ -81,7 +78,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
     return(iptw_s)
     
   } # copying and pasting function from R/00-functions_epi.R here
-  wi <- get_iptw_prob(task = task, preds = pred, type = type)
+  wi <- get_iptw_prob(task = task, preds = pred)
   
   
   

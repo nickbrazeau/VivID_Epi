@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to apply IPTW weights
+# Purpose of this script is to apply Tuning Parameters and Make Final Models 
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(mlr)

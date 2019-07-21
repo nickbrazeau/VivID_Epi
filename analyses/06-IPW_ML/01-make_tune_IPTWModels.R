@@ -78,7 +78,9 @@ txs$learner <- purrr::map(txs$task, make_simple_Stack,
 ######     Set HyperParameters for Tuning    ######     
 ###################################################
 ###################################################
-
+# mlr::listLearners()
+# ParamHelpers::getParamSet
+#
 # L1/L2 Regularization (glmnet), alpha: The elasticnet mixing parameter, with 0≤α≤ 1. The penalty is defined as (1-α)/2||β||_2^2+α||β||_1 alpha=1 is the lasso penalty, and alpha=0 the ridge penalty.
 # K-Nearest Neighbors, k: Number of neighbors considered.
 # Single Vector Machine, C: cost of constraints violation (default: 1) this is the `C'-constant of the regularization term in the Lagrange formulation.
@@ -90,17 +92,15 @@ txs$learner <- purrr::map(txs$task, make_simple_Stack,
 # make a parameter set to explore
 hyperparams_to_tune.regr <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("regr.kknn.k", lower = 1, upper = 5 ),
-  makeNumericParam("regr.ksvm.C", lower = 1, upper = 5),
-  makeDiscreteParam("regr.ksvm.kernel", values = c("vanilladot")), # make this only the linear dot-product, so it differs from gaussian process enough (save us time), not this is not the default
+  makeNumericParam("regr.kknn.k", lower = 1, upper = 10 ),
+  makeNumericParam("regr.svm.cost", lower = 1, upper = 10),
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
 hyperparams_to_tune.classif <- ParamHelpers::makeParamSet(
   makeNumericParam("classif.glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("classif.kknn.k", lower = 1, upper = 5 ),
-  makeNumericParam("classif.ksvm.C", lower = 1, upper = 5),
-  makeDiscreteParam("classif.ksvm.kernel", values = c("vanilladot")), # make this only the linear dot-product, so it differs from gaussian process enough (save us time)
+  makeNumericParam("classif.kknn.k", lower = 1, upper = 10 ),
+  makeNumericParam("classif.svm.cost", lower = 1, upper = 10),
   makeNumericParam("classif.randomForest.mtry", lower = 1, upper = 10 )
 )
 
@@ -117,7 +117,7 @@ txs$hyperparam <- purrr::map(txs$type, function(x){
 })
 
 # Make a Grid to Search On
-ctrl <- makeTuneControlGrid(resolution = 1L)
+ctrl <- makeTuneControlGrid(resolution = 10L)
 txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
 
 
@@ -133,8 +133,8 @@ txs <- dplyr::left_join(txs, nulldist, by = "target")
 
 txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
 
+# set the null distribution for each respective DAG
 txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
-  # set the null distribution for each respective DAG
   ret <- mlr::setMeasurePars(x, 
                              par.vals = list(nulldist = y))
   })
@@ -146,7 +146,7 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 ###################################################
 ###################################################
 # resampling approach with spatial CV considered
-rdesc <- makeResampleDesc("SpRepCV", fold = 2, reps = 2)
+rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 3)
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
