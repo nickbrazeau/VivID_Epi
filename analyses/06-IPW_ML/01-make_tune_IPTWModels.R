@@ -1,5 +1,5 @@
-source("R/00-simple_Ensemble_Wrapper.R")
-source("R/00-functions_epi.R")
+source("R/00-functions_Ensemble_Wrapper.R")
+source("R/00-functions_iptw.R")
 source("R/00-make_null_IPTW_distribs_brownian.R")
 source("R/00-my_IPTW_performance_measure_energy.R")
 set.seed(48, "L'Ecuyer")
@@ -68,7 +68,7 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinate
 
 
 # now make the ensemble learner
-txs$learner <- purrr::map(txs$type, make_simple_Stack, 
+txs$learner <- purrr::map(txs$task, make_simple_Stack, 
                           learners = baselearners.list)
 
 
@@ -92,7 +92,7 @@ hyperparams_to_tune.regr <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
   makeNumericParam("regr.kknn.k", lower = 1, upper = 5 ),
   makeNumericParam("regr.ksvm.C", lower = 1, upper = 5),
-  makeDiscreteParam("regr.ksvm.kernel", values = c("vanilladot")), # make this only the linear dot-product, so it differs from gaussian process enough (save us time)
+  makeDiscreteParam("regr.ksvm.kernel", values = c("vanilladot")), # make this only the linear dot-product, so it differs from gaussian process enough (save us time), not this is not the default
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
 
@@ -174,7 +174,7 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparam, ctrl, performmeasu
 paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparam", "ctrl", "performmeasure")]
 
 # for slurm on LL
-setwd("analyses/06-IPW_ML/")
+setwd("analyses/06-IPW_ML/tune_modelparams")
 ntry <- 18
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                     params = paramsdf, 

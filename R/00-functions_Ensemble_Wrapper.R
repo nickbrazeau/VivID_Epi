@@ -71,13 +71,13 @@ find_Class_Imbalance <- function(task, type, classimb_tol = 0.6,
 
 # make the ensemble learner
 #' @description 
-#' simple approach
+#' simple approach with average as method of combining
 
 make_simple_Stack <- function(
-  type = type, 
+  task = task, 
   learners = learners.list){
   
-  if(type == "binary"){
+  if(mlr::getTaskType(task) == "classif"){
     learners.list <- baselearners.list$classif
     baselearners <- lapply(learners.list, makeLearner, predict.type = "prob")
     m = makeStackedLearner(base.learners = baselearners,
@@ -86,7 +86,7 @@ make_simple_Stack <- function(
   #                         method = "hill.climb")
   
     
-  } else if(type == "continuous"){
+  } else if(mlr::getTaskType(task) == "regr"){
     learners.list <- baselearners.list$regress
     
     baselearners <- lapply(learners.list, makeLearner, predict.type = "response")
@@ -103,15 +103,38 @@ make_simple_Stack <- function(
 }
 
 
+# make the ensemble learner
+#' @description 
+#' simple approach with average as method of combining
+
+make_hillclimb_Stack <- function(
+  task = task, 
+  learners = learners.list){
   
+  if(mlr::getTaskType(task) == "classif"){
+    learners.list <- baselearners.list$classif
+    baselearners <- lapply(learners.list, makeLearner, predict.type = "prob")
+    m = makeStackedLearner(base.learners = baselearners,
+                           predict.type = "prob",
+                           method = "hill.climb")
+    
+    
+  } else if(mlr::getTaskType(task) == "regr"){
+    learners.list <- baselearners.list$regress
+    
+    baselearners <- lapply(learners.list, makeLearner, predict.type = "response")
+    m <- makeStackedLearner(base.learners = baselearners,
+                            predict.type = "response",
+                            method = "hill.climb")
+    
+  } else {
+    stop("You must have type binary or continuous for access to learners")
+  }
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  return(m)
+}
+
+
+
+
   
