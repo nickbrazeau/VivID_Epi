@@ -9,7 +9,8 @@
 # Data files I'm generating
 *.rda
 *.rds
-
+*.err
+*.out
 report_obj/
 datasets/
 db/
