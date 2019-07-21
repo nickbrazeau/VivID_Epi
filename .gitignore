@@ -11,6 +11,7 @@
 *.rds
 *.err
 *.out
+submit.sh # from rslurm
 report_obj/
 datasets/
 db/
