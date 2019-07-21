@@ -12,6 +12,7 @@
 *.err
 *.out
 submit.sh # from rslurm
+slurm_run.R # from rslurm
 report_obj/
 datasets/
 db/
