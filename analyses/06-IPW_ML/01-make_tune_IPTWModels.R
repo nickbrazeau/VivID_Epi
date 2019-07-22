@@ -80,22 +80,29 @@ txs$learner <- purrr::map(txs$task, make_simple_Stack,
 ###################################################
 # mlr::listLearners()
 # ParamHelpers::getParamSet
+# Note, issue with ksvm -- https://stackoverflow.com/questions/15895897/line-search-fails-in-training-ksvm-prob-model
 #
 # L1/L2 Regularization (glmnet), alpha: The elasticnet mixing parameter, with 0≤α≤ 1. The penalty is defined as (1-α)/2||β||_2^2+α||β||_1 alpha=1 is the lasso penalty, and alpha=0 the ridge penalty.
 # K-Nearest Neighbors, k: Number of neighbors considered.
-# Single Vector Machine, C: cost of constraints violation (default: 1) this is the `C'-constant of the regularization term in the Lagrange formulation.
-# Single Vector Machine, kernel: The kernel function used in training and predicting. This parameter can be set to any function, of class kernel, which computes the inner product in feature space between two vector arguments (see kernels). kernlab provides the most popular kernel functions which can be used by setting the kernel parameter to the following strings: 
+# Single Vector Machine, cost: cost of constraints violation (default: 1)—it is the ‘C’-constant of the regularization term in the Lagrange formulation.
 # GAMBoost -- not going to tune 
-# TODO consider gamboost boosting for tuning
 # Random Forest, Mtry: Number of variables randomly sampled as candidates at each split. Note that the default values are different for classification (sqrt(p) where p is number of variables in x) and regression (p/3) 
 
 # make a parameter set to explore
 hyperparams_to_tune.regr <- ParamHelpers::makeParamSet(
   makeNumericParam("regr.glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("regr.kknn.k", lower = 1, upper = 10 ),
-  makeNumericParam("regr.svm.cost", lower = 1, upper = 10),
+  makeNumericParam("regr.kknn.k", lower = 1, upper = 26 ),
+  makeNumericParam("regr.svm.cost", lower = 1, upper = 5),
   makeNumericParam("regr.randomForest.mtry", lower = 1, upper = 10 )
 )
+
+hyperparams_to_tune.regr.grid <-c(
+  "regr.glmnet.alpha" = 11L,
+  "regr.kknn.k" = 6L,
+  "regr.svm.cost" = 5L,
+  "regr.randomForest.mtry" =  10L 
+ )
+
 
 hyperparams_to_tune.classif <- ParamHelpers::makeParamSet(
   makeNumericParam("classif.glmnet.alpha", lower = 0, upper = 1),
@@ -103,6 +110,17 @@ hyperparams_to_tune.classif <- ParamHelpers::makeParamSet(
   makeNumericParam("classif.svm.cost", lower = 1, upper = 10),
   makeNumericParam("classif.randomForest.mtry", lower = 1, upper = 10 )
 )
+
+
+
+hyperparams_to_tune.classif.grid <-c(
+  "classif.glmnet.alpha" = 11L,
+  "classif.kknn.k" = 6L,
+  "classif.svm.cost" = 5L,
+  "classif.randomForest.mtry" =  10L 
+)
+
+
 
 txs$hyperparam <- purrr::map(txs$type, function(x){
   
@@ -117,9 +135,19 @@ txs$hyperparam <- purrr::map(txs$type, function(x){
 })
 
 # Make a Grid to Search On
-ctrl <- makeTuneControlGrid(resolution = 5L)
-txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
-
+txs$ctrl <- purrr::map(txs$type, function(x){
+  
+  if(x == "continuous"){
+    return(makeTuneControlGrid(resolution = hyperparams_to_tune.regr.grid))
+    
+  } else if(x == "binary"){
+    return(makeTuneControlGrid(resolution = hyperparams_to_tune.classif.grid))
+    
+  } else {
+    stop("Type not specified")
+  }
+  
+})
 
 
 ###################################################
