@@ -215,7 +215,6 @@ paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparam", "ctrl", "performmea
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams")
-ntry <- 18
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                     params = paramsdf, 
                     jobname = 'vivid_preds',
@@ -223,9 +222,6 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                     cpus_per_node = 8, 
                     submit = T,
                     slurm_options = list(mem = 128000,
-                                         array = sprintf("0-%d%%%d", 
-                                                         ntry - 1, 
-                                                         16),
                                          'cpus-per-task' = 8,
                                          error =  "%A_%a.err",
                                          output = "%A_%a.out",
