@@ -117,7 +117,7 @@ txs$hyperparam <- purrr::map(txs$type, function(x){
 })
 
 # Make a Grid to Search On
-ctrl <- makeTuneControlGrid(resolution = 10L)
+ctrl <- makeTuneControlGrid(resolution = 5L)
 txs$ctrl <- lapply(1:nrow(txs), function(x) return(ctrl))
 
 
