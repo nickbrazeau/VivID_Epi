@@ -192,6 +192,7 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparam, ctrl, performmeasu
   # setup parallelization
   target <- mlr::getTaskTargets(task)
   storagedir <- paste0(getwd(), "/", target)
+  cat("this is my storagedir ", storagedir)
   base::dir.create(path = storagedir, recursive = F) # this should only create one level
   
   parallelMap::parallelStartBatchtools(storagedir = storagedir, 
