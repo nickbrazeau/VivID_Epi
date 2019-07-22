@@ -147,8 +147,8 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 ###################################################
 # resampling approach with spatial CV considered
 # https://mlr.mlr-org.com/articles/tutorial/handling_of_spatial_data.html
-# https://mlr.mlr-org.com/articles/tutorial/resample.html -- this is 5-fold CV (even though it is iters)
-rdesc <- makeResampleDesc("SpCV", iters = 5)
+# https://mlr.mlr-org.com/articles/tutorial/resample.html -- this is 3-fold CV (even though it is iters)
+rdesc <- makeResampleDesc("SpCV", iters = 3)
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
