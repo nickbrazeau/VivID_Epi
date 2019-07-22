@@ -106,8 +106,8 @@ hyperparams_to_tune.regr.grid <-c(
 
 hyperparams_to_tune.classif <- ParamHelpers::makeParamSet(
   makeNumericParam("classif.glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("classif.kknn.k", lower = 1, upper = 10 ),
-  makeNumericParam("classif.svm.cost", lower = 1, upper = 10),
+  makeNumericParam("classif.kknn.k", lower = 1, upper = 26 ),
+  makeNumericParam("classif.svm.cost", lower = 1, upper = 5),
   makeNumericParam("classif.randomForest.mtry", lower = 1, upper = 10 )
 )
 
@@ -189,6 +189,14 @@ txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 slurm_tunemodel <- function(learner, task, rdesc, hyperparam, ctrl, performmeasure){
   
+  # setup parallelization
+  target <- mlr::getTaskTargets(task)
+  storagedir <- paste0(getwd(), "/", target)
+  base::dir.create(path = storagedir, recursive = F) # this should only create one level
+  
+  parallelMap::parallelStartBatchtools(storagedir = storagedir, 
+                                       bt.resources = list(walltime = 432000, ncpus = 8))
+  
   ret <- mlr::tuneParams(learner = learner, 
                     task = task, 
                     resampling = rdesc, 
@@ -196,6 +204,8 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparam, ctrl, performmeasu
                     control = ctrl,
                     measures = performmeasure, 
                     show.info = T)
+  
+  parallelMap::parallelStop()
   
   return(ret)
   
@@ -210,7 +220,7 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                     params = paramsdf, 
                     jobname = 'vivid_preds',
                     nodes = 18, 
-                    cpus_per_node = 1, 
+                    cpus_per_node = 8, 
                     submit = T,
                     slurm_options = list(mem = 128000,
                                          array = sprintf("0-%d%%%d", 

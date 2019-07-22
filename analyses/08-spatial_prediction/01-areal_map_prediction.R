@@ -43,6 +43,32 @@ pvprov <- dplyr::left_join(pvprov, prov.covar, by = "adm1name")
 #-------------------------------------------------------------------------
 # Basic Multilevel Model
 #-------------------------------------------------------------------------
+# https://github.com/tmalsburg/MCMCglmm-intro
+library(MCMCglmm)
+
+
+
+prior <- list(
+  R=list(V=1, n=1, fix=1),
+  G=list(G1=list(V        = diag(8),
+                 n        = 8,
+                 alpha.mu = rep(0, 8),
+                 alpha.V  = diag(8)*25^2),
+         G2=list(V        = diag(4),
+                 n        = 4,
+                 alpha.mu = rep(0, 4),
+                 alpha.V  = diag(4)*25^2)))
+
+m3 <- MCMCglmm(pronoun ~ (a + b + c)^3,
+               ~ us(1 + (a + b + c)^3):subject +
+                 us(1 + (a + b    )^2):item,
+               data   = d,
+               family = "categorical",
+               prior  = prior.m3,
+               thin   = 1,
+               burnin = 3000,
+               nitt   = 4000)
+
 
 #-------------------------------------------------------------------------
 # Conditional Autoregressive Spatial Model 
@@ -51,7 +77,6 @@ pvprov <- dplyr::left_join(pvprov, prov.covar, by = "adm1name")
 # Make Adjacency Matrix for Pv 
 #......................
 # https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
-
 W.nb <- spdep::poly2nb(sf::as_Spatial(pvprov), row.names = rownames(sf::as_Spatial(pvprov)@data), style = "B") # binary weights taking values zero or one (only one is recorded)
 
 
