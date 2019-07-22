@@ -146,7 +146,7 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 ###################################################
 ###################################################
 # resampling approach with spatial CV considered
-rdesc <- makeResampleDesc("SpRepCV", fold = 3, reps = 1)
+rdesc <- makeResampleDesc("SpRepCV", fold = 3, reps = 3)
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
