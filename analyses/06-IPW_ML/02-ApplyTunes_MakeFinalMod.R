@@ -6,6 +6,15 @@ library(mlr)
 source("R/00-functions_Ensemble_Wrapper.R")
 source("R/00-functions_iptw.R")
 
+
+
+# after figuring out who won
+# this will get hyperpar mlr::getHyperPars(learner.hp)
+
+
+
+
+
 #......................................
 # Read in param table sent to slurm
 #......................................
