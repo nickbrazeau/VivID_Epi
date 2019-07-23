@@ -103,7 +103,7 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 #--------------------------------------
 # resampling approach with spatial CV considered
 # rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 5)
-rdesc <- makeResampleDesc("SpCV", iters = 3)
+rdesc <- makeResampleDesc("SpCV", iters = 2) # 3
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 #--------------------------------------
@@ -214,10 +214,9 @@ slurm_tunemodel <- function(target, learner, task, rdesc, performmeasure){
   
 }
 
-
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams")
-ntry <- 50
+ntry <- nrow(txs.hyperparams)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = txs.hyperparams, 
                             jobname = 'vivid_preds',
@@ -226,7 +225,7 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                             submit = T,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry - 1, 
+                                                                 ntry, 
                                                                  50),
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
