@@ -139,14 +139,15 @@ hyperparams_to_tune <- ParamHelpers::makeParamSet(
 
 hyperparams_to_tune.ctrl <-c(
   "glmnet.alpha" = 2L, #11L
-  "kknn.k" = 1L,
-  "svm.cost" = 1L,
-  "randomForest.mtry" =  1L 
+  "kknn.k" = 1L, #7L
+  "svm.cost" = 1L, #5L
+  "randomForest.mtry" =  1L #10L
 )
 
 hyperparams_to_tune.grid <- ParamHelpers::generateGridDesign(hyperparams_to_tune, 
                                                              hyperparams_to_tune.ctrl) %>% 
-  dplyr::mutate(tune = T)
+  dplyr::mutate(tune = T) %>% 
+  dplyr::mutate(kknn.k = floor(kknn.k))
 
 
 
@@ -218,7 +219,7 @@ slurm_tunemodel <- function(target, learner, task, rdesc, performmeasure){
 setwd("analyses/06-IPW_ML/tune_modelparams")
 ntry <- 50
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
-                            params = paramsdf, 
+                            params = txs.hyperparams, 
                             jobname = 'vivid_preds',
                             nodes = 1, 
                             cpus_per_node = 1, 
