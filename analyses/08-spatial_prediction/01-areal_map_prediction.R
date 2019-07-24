@@ -120,21 +120,21 @@ spat.int <- CARBayes::S.CARleroux(formula = plsmdn~1 ,
 # Fit CARleroux with rho being estimated
 #......................
 CARleroux <- CARBayes::S.CARleroux(formula = plsmdn~1 , 
-                                  family = "binomial", 
-                                  trials = pvprov.weighted.nosf$n, 
-                                  W = W,
-                                  rho = NULL,
-                                  data = pvprov.weighted.nosf,
-                                  burnin = 10, 
-                                  n.sample = 50)
+                                   family = "binomial", 
+                                   trials = pvprov.weighted.nosf$n, 
+                                   W = W,
+                                   rho = NULL,
+                                   data = pvprov.weighted.nosf,
+                                   burnin = 10, 
+                                   n.sample = 50)
 
-model.spatial$fitted.values
-length(model.spatial$fitted.values)
+CARleroux$fitted.values
+length(CARleroux$fitted.values)
 length(Y)
 
-plot(Y ~ model.spatial$fitted.values)
+plot(pvprov.weighted.nosf$plsmdn ~ CARleroux$fitted.values)
 
-
+ 
 
 
 

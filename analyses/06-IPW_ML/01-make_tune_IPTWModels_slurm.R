@@ -224,7 +224,7 @@ slurm_tunemodel <- function(target, learner, task, rdesc, performmeasure){
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams")
 ntry <- 18
-sjob <- rlurm::slurm_apply(f = txs.hyperparams, 
+sjob <- rslurm::slurm_apply(f = txs.hyperparams, 
                            params = paramsdf, 
                            jobname = 'vivid_preds',
                            nodes = 18, 
