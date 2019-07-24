@@ -138,7 +138,7 @@ hyperparams_to_tune <- ParamHelpers::makeParamSet(
 )
 
 hyperparams_to_tune.ctrl <-c(
-  "glmnet.alpha" = 2L, #11L
+  "glmnet.alpha" = 1L, #11L
   "kknn.k" = 1L, #7L
   "svm.cost" = 1L, #5L
   "randomForest.mtry" =  1L #10L
@@ -203,6 +203,11 @@ txs.hyperparams <- txs.hyperparams[, c("target", "learner", "task", "rdesc", "pe
 
 slurm_tunemodel <- function(target, learner, task, rdesc, performmeasure){
   
+  # benchmark
+  start_time <- Sys.time()
+
+
+  
   # Calculate the performance measures
   ret <- mlr::resample(learner = learner, 
                        task = task, 
@@ -210,28 +215,29 @@ slurm_tunemodel <- function(target, learner, task, rdesc, performmeasure){
                        measures = performmeasure, 
                        show.info = T)
   
+  end_time <- Sys.time()
+  cat(c("Duration: ", round(end_time - start_time, 2 ), "seconds"))
   return(ret)
   
 }
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams")
-ntry <- nrow(txs.hyperparams)
-sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
-                            params = txs.hyperparams, 
-                            jobname = 'vivid_preds',
-                            nodes = 1, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 32000,
-#                                                 array = sprintf("0-%d%%%d", 
-#                                                                 ntry, 
-#                                                                 50),
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "11-00:00:00"))
-
+ntry <- 18
+sjob <- rlurm::slurm_apply(f = txs.hyperparams, 
+                           params = paramsdf, 
+                           jobname = 'vivid_preds',
+                           nodes = 18, 
+                           cpus_per_node = 1, 
+                           submit = F,
+                           slurm_options = list(mem = 32000,
+                                                array = sprintf("0-%d%%%d", 
+                                                                ntry - 1, 
+                                                                16),
+                                                'cpus-per-task' = 8,
+                                                error =  "%A_%a.err",
+                                                output = "%A_%a.out",
+                                                time = "5-00:00:00"))
 
 cat("*************************** \n Submitted tuning models \n *************************** ")
 
