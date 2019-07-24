@@ -132,7 +132,7 @@ txs$tune <- T
 # make a parameter set to explore
 hyperparams_to_tune <- ParamHelpers::makeParamSet(
   makeNumericParam("glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("kknn.k", lower = 1, upper = 30 ),
+  makeNumericParam("kknn.k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("svm.cost", lower = 1, upper = 5),
   makeNumericParam("randomForest.mtry", lower = 1, upper = 10 )
 )
