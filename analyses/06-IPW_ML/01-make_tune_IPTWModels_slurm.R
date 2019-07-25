@@ -205,7 +205,7 @@ txs$ctrl <- purrr::map(txs$type, function(x){
 
 slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeasure){
   
-  cat(mlr::getTaskDesc(task))
+  cat(mlr::getTaskTargetNames(task))
   ret <- mlr::tuneParams(learner = learner, 
                          task = task, 
                          resampling = rdesc, 
@@ -219,8 +219,8 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeas
 }
 
 paramsdf <- txs %>% 
-  dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")) %>% 
-  as.data.frame()
+  dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")) 
+
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams/")
@@ -228,7 +228,7 @@ ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
                             jobname = 'vivid_preds',
-                            nodes = 1, 
+                            nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,

@@ -13,7 +13,7 @@ library(CARBayes)
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 
