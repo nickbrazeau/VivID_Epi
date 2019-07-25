@@ -183,10 +183,10 @@ make_mcmc_chain_plots <- function(chaindat, tempdir){
   graphics.off()
 
 }
-# mytempdir <- "~/Desktop/nfbtemp/"
-# purrr::map(chains$data, function(x){
-#  apply(x, 2, make_mcmc_chain_plots, tempdir = mytempdir)
-# })
+ mytempdir <- "~/Desktop/nfbtemp/"
+ purrr::map(chains$data, function(x){
+  apply(x, 2, make_mcmc_chain_plots, tempdir = mytempdir)
+ })
 
 
 #-------------------------------------------------------------------------
