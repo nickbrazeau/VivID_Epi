@@ -165,10 +165,10 @@ hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
 )
 
 hyperparams_to_tune.classif.ctrl <-c(
-  "classif.glmnet.alpha" = 2L, #11L
-  "classif.kknn.k" = 2L, #7L
-  "classif.svm.cost" = 2L, #5L
-  "classif.randomForest.mtry" =  2L #10L
+  "classif.glmnet.alpha" = 11L, #11L
+  "classif.kknn.k" = 29L, #29L
+  "classif.svm.cost" = 5L, #5L
+  "classif.randomForest.mtry" =  10L #10L
 )
 
 
@@ -219,8 +219,6 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeas
 
 paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")]
 
-
-temp <- purrr::pmap(paramsdf, slurm_tunemodel)
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams/")
