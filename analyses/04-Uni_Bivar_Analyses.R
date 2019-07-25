@@ -24,8 +24,12 @@ dtsrvy <- makecd2013survey(survey = dt)
 # Basic Descriptive Statistics
 #----------------------------------------------------------------------------------------------------
 # national prevalence
-m1 <- survey::svyglm(pv18s ~ 1, design = dtsrvy)
-broom::tidy(m1, conf.int = T)
+drcpv <- survey::svyglm(pv18s ~ 1, design = dtsrvy)
+broom::tidy(drcpv, conf.int = T)
+
+# national prevalence
+drcpf <- survey::svyglm(pfldh ~ 1, design = dtsrvy)
+broom::tidy(drcpf, conf.int = T)
 
 # cluster-level prevalence, because everyone is weighted the same in the cluster, don't use weights here
 # note, the numerators will be slightly different (e.g. N) but the denomminators adjust for this
@@ -34,19 +38,34 @@ clst <- dt %>%
   dplyr::mutate(count = 1) %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(n = n(), 
-                   pv18sn = sum(pfldh), 
+                   pv18sn = sum(pv18s), 
                    pv18sprev = mean(pv18sn),
                    pv18sse = sqrt(pv18sn * pv18sprev * (1 - pv18sprev)) / sqrt(pv18sn),
                    pv18sprevU95 = pv18sprev + 1.96 * pv18sse,
-                   pv18sprevL95 = pv18sprev - 1.96 * pv18sse
+                   pv18sprevL95 = pv18sprev - 1.96 * pv18sse,
+                   
+                   pfldhn = sum(pfldh), 
+                   pfldhprev = mean(pfldhn),
+                   pfldhse = sqrt(pfldhn * pfldhprev * (1 - pfldhprev)) / sqrt(pfldhn),
+                   pfldhprevU95 = pfldhprev + 1.96 * pfldhse,
+                   pfldhprevL95 = pfldhprev - 1.96 * pfldhse
+                  
                    )
                    
 
 summary(clst$pv18sn)
 summary(clst$pv18sprev)
+summary(clst$pfldhn)
+summary(clst$pfldhprev)
 
 
 # pfldh coinfection
+dtsrvy %>% 
+  dplyr::mutate(pvpf = ifelse(pv18s == 1 & pfldh == 1, 1, 0)) %>% 
+  srvyr::summarise(
+    pfpvcoinfx = srvyr::survey_total(pvpf, vartype = "ci")
+  )
+
 xtabs(~pv18s + pfldh, data = dt)
 
 

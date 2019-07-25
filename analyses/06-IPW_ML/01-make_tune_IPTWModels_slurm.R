@@ -217,7 +217,8 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeas
   
 }
 
-paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")]
+paramsdf <- txs %>% 
+  dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure"))
 
 
 # for slurm on LL

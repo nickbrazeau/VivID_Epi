@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to make ICAR models
-# Will aggregate up to the province level
+# Purpose of this script is to make ICAR models aggregated at the Province Level
+# We will run four chains for each to see if the are all converging in the same place
+# and appear to be mixing well
 #----------------------------------------------------------------------------------------------------
 source("R/00-functions_basic.R") 
 source("R/00-functions_epi.R") 
@@ -29,7 +30,6 @@ pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
 # need to keep integers, so will round
 pvprov.weighted <- pvprov.weighted %>% 
   dplyr::mutate_if(is.numeric, round, 0)
-
 
 
 
@@ -85,59 +85,109 @@ sf::st_geometry(pvprov.weighted.nosf) <- NULL
 # Make Adjacency Matrix for Pv 
 #......................
 # https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
-W.nb <- spdep::poly2nb(sf::as_Spatial(pvprov.weighted), row.names = pvprov$adm1name)
+W.nb <- spdep::poly2nb(sf::as_Spatial(pvprov.weighted), row.names = pvprov.weighted$adm1name)
 W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
 
+#......................
+# Make Model Framework
+#......................
+prov.covar.names <- c("meanprov_precip_lag_cont_scale_clst", "meanprov_alt_dem_cont_scale_clst")
+mod.framework <- tibble(name = c("riid", "ICAR", "CAR", "riid_covar", "ICAR_covar", "CAR_covar"),
+                        formula = c("plsmdn ~ 1", "plsmdn ~ 1", "plsmdn ~ 1",
+                                    rep(paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + ")), 3)),
+                        rho = c(0, 1, NA, 0, 1, NA),
+                        burnin = 1e3,
+                        n.sample = 1e5,
+                        family = "binomial"
+                        )
+
+
+mod.framework$trials <- lapply(1:nrow(mod.framework), function(x) return(pvprov.weighted.nosf$n))
+mod.framework$data <- lapply(1:nrow(mod.framework), function(x) return(pvprov.weighted.nosf))
+mod.framework$W <- lapply(1:nrow(mod.framework), function(x) return(W))
+
+
+# replicate this four times for our four chains
+mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>% 
+  dplyr::bind_rows() %>% 
+  dplyr::arrange(name)
 
 #......................
-# Fit Random Intercept (set rho to 0) 
+# Make a wrapper for CARBAYES
 #......................
-rand.int <- CARBayes::S.CARleroux(formula = plsmdn~1 , 
-                                  family = "binomial", 
-                                  trials = pvprov.weighted.nosf$n, 
-                                  W = W,
-                                  rho = 0,
-                                  data = pvprov.weighted.nosf,
-                                  burnin = 10, 
-                                  n.sample = 50)
+wrap_S.CARleroux <- function(formula, family, trials, W, rho, data, burnin, n.sample){
+  if(!is.na(rho)){
+    ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
+                                 family = family, 
+                                 trials = trials, 
+                                 W = W,
+                                 rho = rho,
+                                 data = data,
+                                 burnin = burnin, 
+                                 n.sample = n.sample)
+  } else if(is.na(rho)){ # rho needs to be NULL which has a hard time in a vector
+    ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
+                                 family = family, 
+                                 trials = trials, 
+                                 W = W,
+                                 data = data,
+                                 burnin = burnin, 
+                                 n.sample = n.sample)
+  }
+  
+  return(ret)
+}
 
 
-#......................
-# Fit Complete Spatial Dependence (set rho to 1) 
-#......................
-spat.int <- CARBayes::S.CARleroux(formula = plsmdn~1 , 
-                                  family = "binomial", 
-                                  trials = pvprov.weighted.nosf$n, 
-                                  W = W,
-                                  rho = 1,
-                                  data = pvprov.weighted.nosf,
-                                  burnin = 10, 
-                                  n.sample = 50)
-
-
-
-#......................
-# Fit CARleroux with rho being estimated
-#......................
-CARleroux <- CARBayes::S.CARleroux(formula = plsmdn~1 , 
-                                   family = "binomial", 
-                                   trials = pvprov.weighted.nosf$n, 
-                                   W = W,
-                                   rho = NULL,
-                                   data = pvprov.weighted.nosf,
-                                   burnin = 10, 
-                                   n.sample = 50)
-
-CARleroux$fitted.values
-length(CARleroux$fitted.values)
-length(Y)
-
-plot(pvprov.weighted.nosf$plsmdn ~ CARleroux$fitted.values)
-
- 
+mod.framework$MCMC <- purrr::pmap(mod.framework[, -1], wrap_S.CARleroux)
 
 
 
+#-------------------------------------------------------------------------
+# MCMC Diagnostics
+#-------------------------------------------------------------------------
+mod.framework$mcmc.modsum <- purrr::map(mod.framework$MCMC, print) # note, print is overloaded here
+mod.framework$summresults <- purrr::map(mod.framework$mcmc.modsum, "summary.results")
+mod.framework$summresults[1:4]
+mod.framework$summresults[5:8]
+mod.framework$summresults[9:12]
+mod.framework$summresults[13:16]
+mod.framework$summresults[17:20]
+mod.framework$summresults[21:24]
+
+
+#............................
+# Let's Look at the Chains
+#............................
+mod.framework$samples <- purrr::map(mod.framework$MCMC, "samples")
+mod.framework$beta <- purrr::map(mod.framework$samples, "beta")
+mod.framework$phi <- purrr::map(mod.framework$samples, "phi")
+mod.framework$tau2 <- purrr::map(mod.framework$samples, "tau2")
+mod.framework$rho <- purrr::map(mod.framework$samples, "rho")
+mod.framework$fitted <- purrr::map(mod.framework$samples, "fitted")
+
+
+chains <- mod.framework %>% 
+  dplyr::select(c("name", "beta", "phi", "tau2", "rho", "fitted")) %>% 
+  dplyr::group_by(name) %>% 
+  tidyr::nest()
+
+
+make_mcmc_chain_plots <- function(chaindat, tempdir){
+  jpeg(paste0(tempdir, "_", names(chaindat), ".jpeg"), height = 8, width = 11, units = "in", res=200)
+  par(mfrow=c(2,2))
+  plot(chaindat[[1]])
+  plot(chaindat[[2]])
+  plot(chaindat[[3]])
+  plot(chaindat[[4]])
+  graphics.off()
+
+}
+mytempdir <- "~/Desktop/nfbtemp/"
+purrr::map(chains$data, function(x){
+  apply(x, 2, make_mcmc_chain_plots, tempdir = mytempdir)
+  
+})
 
 
 
