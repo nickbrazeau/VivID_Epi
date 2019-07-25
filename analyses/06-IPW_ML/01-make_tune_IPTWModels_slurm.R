@@ -205,6 +205,7 @@ txs$ctrl <- purrr::map(txs$type, function(x){
 
 slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeasure){
   
+  cat(mlr::getTaskDescription(task))
   ret <- mlr::tuneParams(learner = learner, 
                          task = task, 
                          resampling = rdesc, 
