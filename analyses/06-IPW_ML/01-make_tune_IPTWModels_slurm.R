@@ -1,9 +1,7 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to calculate find the best set of hyperparameters for our data
-# Notes: Because I have done a grid.search approach, this optimization problem has 
-# become "ridiculously" parallel. As a result, I have "overwritten" the default
-# TuneControl objects to better parallelize the search on slurm 
-# (notes to future self -- you tried to use `mlr`'s parallelization approach with parallelmap but could not get it to cooperate on slurm) 
+# Notes: Here I am using mlr built-in multiplex option and individual tuning my learners 
+# will take the intersection of the best hyperparameter set and apply it to our stacked ensemble
 #----------------------------------------------------------------------------------------------------
 
 
@@ -76,14 +74,25 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinate
 #                         smotenn = 5)
 
 
-# now make the ensemble learner
-txs$learner <- purrr::map(txs$task, make_simple_Stack, 
-                          learners = baselearners.list)
+# now make the individual multiplexed base learners
+base.learners.regr <- lapply(baselearners.list$regress, function(x) return(mlr::makeLearner(x, predict.type = "response")))
+base.learners.regr <- mlr::makeModelMultiplexer(base.learners.regr)
+
+base.learners.classif <- lapply(baselearners.list$classif, function(x) return(mlr::makeLearner(x, predict.type = "prob")))
+base.learners.classif <- mlr::makeModelMultiplexer(base.learners.classif)
+
+txs$learner <- purrr::map(txs$type, function(x){
+    if(x == "continuous"){
+      return(base.learners.regr)
+    } else if (x == "binary"){
+      return(base.learners.classif)
+    }
+  })
 
 
 
 #--------------------------------------
-# Setup tasks & stacked learner
+# Setup null distributions
 #--------------------------------------
 nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
 
@@ -102,14 +111,9 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 # Setup resampling
 #--------------------------------------
 # resampling approach with spatial CV considered
-# rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 5)
-rdesc <- makeResampleDesc("SpCV", iters = 2) # 3
+rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 5)
+#rdesc <- makeResampleDesc("SpCV", iters = 2) #
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
-
-#--------------------------------------
-# Setup dummy col
-#--------------------------------------
-txs$tune <- T
 
 
 
@@ -130,115 +134,111 @@ txs$tune <- T
 # Random Forest, Mtry: Number of variables randomly sampled as candidates at each split. Note that the default values are different for classification (sqrt(p) where p is number of variables in x) and regression (p/3) 
 
 # make a parameter set to explore
-hyperparams_to_tune <- ParamHelpers::makeParamSet(
-  makeNumericParam("glmnet.alpha", lower = 0, upper = 1),
-  makeNumericParam("kknn.k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
-  makeNumericParam("svm.cost", lower = 1, upper = 5),
-  makeNumericParam("randomForest.mtry", lower = 1, upper = 10 )
+# REGRESSSION
+hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
+  base.learners.regr, 
+  makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
+  makeNumericParam("cost", lower = 1, upper = 5),
+  makeNumericParam("mtry", lower = 1, upper = 10 )
 )
 
-hyperparams_to_tune.ctrl <-c(
-  "glmnet.alpha" = 1L, #11L
-  "kknn.k" = 1L, #7L
-  "svm.cost" = 1L, #5L
-  "randomForest.mtry" =  1L #10L
+hyperparams_to_tune.regr.ctrl <-c(
+  "regr.glmnet.alpha" = 11L, #11L
+  "regr.kknn.k" = 29L, #7L
+  "regr.svm.cost" = 5L, #5L
+  "regr.randomForest.mtry" =  10L #10L
 )
 
-hyperparams_to_tune.grid <- ParamHelpers::generateGridDesign(hyperparams_to_tune, 
-                                                             hyperparams_to_tune.ctrl) %>% 
-  dplyr::mutate(tune = T) %>% 
-  dplyr::mutate(kknn.k = floor(kknn.k))
+hyperparams_to_tune.regr.ctrl <- mlr::makeTuneControlDesign(design = 
+  ParamHelpers::generateGridDesign(par.set = hyperparams_to_tune.regr,
+                                   resolution = hyperparams_to_tune.regr.ctrl)
+  )
+
+# CLASSIFICATION
+hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
+  base.learners.classif, 
+  makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
+  makeNumericParam("cost", lower = 1, upper = 5),
+  makeNumericParam("mtry", lower = 1, upper = 10 )
+)
+
+hyperparams_to_tune.classif.ctrl <-c(
+  "classif.glmnet.alpha" = 2L, #11L
+  "classif.kknn.k" = 2L, #7L
+  "classif.svm.cost" = 2L, #5L
+  "classif.randomForest.mtry" =  2L #10L
+)
 
 
-
-#--------------------------------------
-# combine learners, tasks, resampling and hyperparams
-#--------------------------------------
-
-txs.hyperparams <- txs[, c("target", "learner", "task", "rdesc", "performmeasure", "tune")]
-
-txs.hyperparams <- dplyr::left_join(txs.hyperparams, 
-                                    hyperparams_to_tune.grid,
-                                    by = "tune") %>% 
-  dplyr::select(-c("tune"))
-
-
-
-#--------------------------------------
-# Rewrite Learners to Account for Hyperparams
-#--------------------------------------
-
-liftover_hyperparams <- function(learner, task,
-                                 # now hyperparams
-                                 glmnet.alpha,
-                                 kknn.k,
-                                 svm.cost,
-                                 randomForest.mtry){
-  
-  # get task type to set learner
-  type <- mlr::getTaskType(task)
-  parvals <- list(glmnet.alpha, kknn.k, svm.cost, randomForest.mtry)
-  names(parvals) <- paste0(type, c(".glmnet.alpha", ".kknn.k", ".svm.cost", ".randomForest.mtry"))
-  learner.hp <- mlr::setHyperPars(learner, par.vals = parvals)
-  return(learner.hp)
-}
-
-txs.hyperparams$learner <- purrr::pmap(txs.hyperparams[, c("learner", "task", 
-                                                         "glmnet.alpha",
-                                                         "kknn.k",
-                                                         "svm.cost",
-                                                         "randomForest.mtry")],
-                                       liftover_hyperparams)
+hyperparams_to_tune.classif.ctrl <- mlr::makeTuneControlDesign(design = 
+  ParamHelpers::generateGridDesign(par.set = hyperparams_to_tune.classif,
+                                   resolution = hyperparams_to_tune.classif.ctrl)
+  )
 
 #--------------------------------------
-# Now that we have modified learners,
-# can subset to a smaller paramdf
+#add in hyperparams and control   
 #--------------------------------------
-txs.hyperparams <- txs.hyperparams[, c("target", "learner", "task", "rdesc", "performmeasure")]
+txs$hyperparams <- purrr::map(txs$type, function(x){
+  if(x == "continuous"){
+    return(hyperparams_to_tune.regr)
+  } else if(x == "binary"){
+    return(hyperparams_to_tune.classif)
+  }
+})
+
+txs$ctrl <- purrr::map(txs$type, function(x){
+  if(x == "continuous"){
+    return(hyperparams_to_tune.regr.ctrl)
+  } else if(x == "binary"){
+    return(hyperparams_to_tune.classif.ctrl)
+  }
+})
+
+
 
 
 #........................................................................
 # SLURM 
 #........................................................................
 
-slurm_tunemodel <- function(target, learner, task, rdesc, performmeasure){
+slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeasure){
   
-  # benchmark
-  start_time <- Sys.time()
-
-
+  ret <- mlr::tuneParams(learner = learner, 
+                         task = task, 
+                         resampling = rdesc, 
+                         par.set = hyperparams,
+                         control = ctrl,
+                         measures = performmeasure, 
+                         show.info = T)
   
-  # Calculate the performance measures
-  ret <- mlr::resample(learner = learner, 
-                       task = task, 
-                       resampling = rdesc, 
-                       measures = performmeasure, 
-                       show.info = T)
-  
-  end_time <- Sys.time()
-  cat(c("Duration: ", round(end_time - start_time, 2 ), "seconds"))
   return(ret)
   
 }
 
-# for slurm on LL
-setwd("analyses/06-IPW_ML/tune_modelparams")
-ntry <- 18
-sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
-                           params = txs.hyperparams, 
-                           jobname = 'vivid_preds',
-                           nodes = 18, 
-                           cpus_per_node = 1, 
-                           submit = T,
-                           slurm_options = list(mem = 32000,
-                                                array = sprintf("0-%d%%%d", 
-                                                                ntry - 1, 
-                                                                16),
-                                                'cpus-per-task' = 8,
-                                                error =  "%A_%a.err",
-                                                output = "%A_%a.out",
-                                                time = "5-00:00:00"))
+paramsdf <- txs[,c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")]
 
+
+temp <- purrr::pmap(paramsdf, slurm_tunemodel)
+
+# for slurm on LL
+setwd("analyses/06-IPW_ML/tune_modelparams/")
+ntry <- nrow(paramsdf)
+sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
+                            params = paramsdf, 
+                            jobname = 'vivid_preds',
+                            nodes = 1, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 32000,
+                                                 array = sprintf("0-%d%%%d", 
+                                                                 ntry, 
+                                                                 17),
+                                                 'cpus-per-task' = 8,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "5-00:00:00"))
 cat("*************************** \n Submitted tuning models \n *************************** ")
 
 
