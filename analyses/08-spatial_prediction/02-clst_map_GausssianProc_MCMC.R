@@ -17,14 +17,60 @@ mp <- mp %>%
   dplyr::filter(maplvl == "hv001") 
 
 
+#......................
+# Subset to Pv
+#......................
+pvclust.weighted <- mp %>% 
+  dplyr::filter(plsmdmspec == "pv18s" & maplvl == "adm1name") %>% 
+  dplyr::select(data) %>% 
+  tidyr::unnest()
+# vectors have destroyed spatial class, need to remake
+pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
+# need to keep integers, so will round
+pvprov.weighted <- pvprov.weighted %>% 
+  dplyr::mutate_if(is.numeric, round, 0)
+
 #----------------------------------------------------------------------------------------------------
 # Smoothed Guassian Maps
 #----------------------------------------------------------------------------------------------------
 
-# bind those to a tibble
-pr <- dplyr::bind_rows(mp$data) %>% 
-  dplyr::group_by(plsmdmspec) %>% 
-  tidyr::nest()
+
+
+
+
+coords <- as.formula(paste0("~", long_var, "+", lat_var))
+ret.fit <- PrevMap::linear.model.MLE(formula=eq, coords=coords, 
+                                     data=data, start.cov.pars=start.cov.pars, 
+                                     kappa=kappa)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #.............................
