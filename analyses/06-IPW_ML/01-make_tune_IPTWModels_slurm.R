@@ -205,7 +205,7 @@ txs$ctrl <- purrr::map(txs$type, function(x){
 
 slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeasure){
   
-  cat(mlr::getTaskDescription(task))
+  cat(mlr::getTaskDesc(task))
   ret <- mlr::tuneParams(learner = learner, 
                          task = task, 
                          resampling = rdesc, 
@@ -219,8 +219,8 @@ slurm_tunemodel <- function(learner, task, rdesc, hyperparams, ctrl, performmeas
 }
 
 paramsdf <- txs %>% 
-  dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure"))
-
+  dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")) %>% 
+  as.data.frame()
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams/")

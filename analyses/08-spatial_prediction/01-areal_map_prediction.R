@@ -183,11 +183,39 @@ make_mcmc_chain_plots <- function(chaindat, tempdir){
   graphics.off()
 
 }
-mytempdir <- "~/Desktop/nfbtemp/"
-purrr::map(chains$data, function(x){
-  apply(x, 2, make_mcmc_chain_plots, tempdir = mytempdir)
-  
-})
+# mytempdir <- "~/Desktop/nfbtemp/"
+# purrr::map(chains$data, function(x){
+#  apply(x, 2, make_mcmc_chain_plots, tempdir = mytempdir)
+# })
+
+
+#-------------------------------------------------------------------------
+# Take Very Long Chains to LL 
+#-------------------------------------------------------------------------
+setwd("analyses/08-spatial_prediction/areal_results/")
+mod.framework.slurm <- mod.framework[,c("formula", "family", "trials", "W", "rho", "data", "burnin", "n.sample")] %>% 
+  dplyr::filter(!duplicated(.))
+
+mod.framework.slurm$burnin <- 1e5
+mod.framework.slurm$n.sample <- 1e8
+
+ntry <- nrow(mod.framework.slurm)
+sjob <- rslurm::slurm_apply(f = wrap_S.CARleroux, 
+                            params = mod.framework.slurm, 
+                            jobname = 'MCMCCAR_models',
+                            nodes = 1, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 128000,
+                                                 array = sprintf("0-", 
+                                                                 ntry),
+                                                 'cpus-per-task' = 8,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "5-00:00:00"))
+
+cat("*************************** \n Submitted CARBayes Models \n *************************** ")
+
 
 
 
