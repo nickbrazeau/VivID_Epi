@@ -13,37 +13,28 @@ source("R/00-functions_iptw.R")
 
 
 
-
-
-#......................................
-# Read in param table sent to slurm
-#......................................
-resultsdir <- "analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/"
-
-results.list <- list.files(resultsdir, pattern = "results", full.names = T)
-# need to do a proper sort
-results.df <- tibble::tibble(name = basename(results.list),
-                         path = results.list) %>% 
-  dplyr::mutate(name = stringr::str_extract(name, "[0-9]+"),
-                name = as.numeric(name)) %>% 
-  dplyr::arrange(name)
-
-
-results <- lapply(results.df$path, function(x){
-  ret <- readRDS(x)
-  return(ret[[1]])
-}) 
-
-params <- readRDS(file = paste0(resultsdir, "params.RDS"))
-params$tuneresult <- lapply(1:length(results), function(x){
-  return(results[[x]])
-  })
-
 #............................................
 # Apply the Tuning Results to the Learner
 #............................................
+params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/params.RDS")
+# TODO temp
+params <- params[c(1:8, 10:17), ]
 params$tunedlearner <- purrr::map(params$task, make_hillclimb_Stack, 
                           learners = baselearners.list)
+tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
+
+# sort properly to match rows in df
+tuneresultpaths <- tibble::tibble(tuneresultpaths = tuneresultpaths) %>% 
+  mutate(order = stringr::str_extract(basename(tuneresultpaths), "[0-9]+"),
+         order = as.numeric(order)) %>% 
+  dplyr::arrange(order) %>% 
+  dplyr::select(-c(order)) %>% 
+  unlist(.)
+
+
+params$tuneresult <- purrr::map(tuneresultpaths, findbesttuneresult)
+
 params$tunedlearner <- purrr::pmap(params[, c("learner", "task", "tuneresult")], tune_stacked_learner)
                                    
 
@@ -62,22 +53,21 @@ paramsdf <- params[, c("tunedlearner", "task")]
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/final_models")
-ntry <- 18
+ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_traindata, 
                             params = paramsdf, 
                             jobname = 'vivid_preds',
-                            nodes = 18, 
+                            nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
-                            slurm_options = list(mem = 128000,
+                            slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry - 1, 
-                                                                 16),
+                                                                 ntry, 
+                                                                 17),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
-
 
 cat("*************************** \n Submitted final models \n *************************** ")
 

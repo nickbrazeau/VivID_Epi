@@ -27,3 +27,10 @@ to.order <- data.frame(
   primer = c(fw, rv)
     )
 write_csv(x = to.order, path = "~/Desktop/Pvmtcox-Primers.csv")
+
+
+fw <- paste0("fw", 1:12)
+rv <- paste0("rv", 13:20)
+grid <- expand.grid(fw,rv)
+write_csv(x = grid, path = "~/Desktop/primermap.csv")
+

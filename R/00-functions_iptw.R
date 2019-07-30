@@ -53,24 +53,33 @@ get_iptw_prob <- function(task, preds){
 #----------------------------------------------------------------------------------------------------
 # tune our learner 
 #----------------------------------------------------------------------------------------------------
+findbesttuneresult <- function(path){
+  res <- readRDS(path)
+  dfres <- as.data.frame(res[[1]]$opt.path)
+  dfres <- dfres %>% 
+    dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
+    tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
+    dplyr::filter(!is.na(hyperparval)) %>% 
+    dplyr::group_by(hyperpar) %>% 
+    dplyr::filter(my.covarbal.test.mean == min(my.covarbal.test.mean))
+}
+
 
 tune_stacked_learner <- function(learner, task, tuneresult){
   if(mlr::getTaskType(task) == "classif"){
     stck.lrnr.tuned <- setHyperPars(learner, 
-                                    classif.glmnet.alpha = tuneresult$x$classif.glmnet.alpha,
-                                    classif.kknn.k = tuneresult$x$classif.kknn.k,
-                                    classif.ksvm.C = tuneresult$x$classif.ksvm.C,
-                                    classif.ksvm.kernel = tuneresult$x$classif.ksvm.kernel,
-                                    classif.randomForest.mtry = tuneresult$x$classif.randomForest.mtry
+                                    classif.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "classif.glmnet.alpha"],
+                                    classif.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "classif.kknn.k"],
+                                    classif.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "classif.svm.cost"],
+                                    classif.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "classif.randomForest.mtry"]
     )
   } else if(mlr::getTaskType(task) == "regr"){
     
     stck.lrnr.tuned <- setHyperPars(learner, 
-                                    regr.glmnet.alpha = tuneresult$x$regr.glmnet.alpha,
-                                    regr.kknn.k = tuneresult$x$regr.kknn.k,
-                                    regr.ksvm.C = tuneresult$x$regr.ksvm.C,
-                                    regr.ksvm.kernel = tuneresult$x$regr.ksvm.kernel,
-                                    regr.randomForest.mtry = tuneresult$x$regr.randomForest.mtry
+                                    regr.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "regr.glmnet.alpha"],
+                                    regr.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "regr.kknn.k"],
+                                    regr.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "regr.svm.cost"],
+                                    regr.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "regr.randomForest.mtry"]
     )
   }
   stck.lrnr.tuned <- setLearnerId(stck.lrnr.tuned, "stacked_learner_tuned")

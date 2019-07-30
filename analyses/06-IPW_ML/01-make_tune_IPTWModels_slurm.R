@@ -60,7 +60,7 @@ txs$coordinates <- purrr::map(txs$data, function(x){
 })
 
 #--------------------------------------
-# Setup tasks & stacked learner
+# Setup tasks & base learners
 #--------------------------------------
 
 # first make the tasks
@@ -227,7 +227,7 @@ setwd("analyses/06-IPW_ML/tune_modelparams/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds',
+                            jobname = 'vivid_tunes',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
@@ -238,7 +238,7 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "5-00:00:00"))
+                                                 time = "11-00:00:00"))
 cat("*************************** \n Submitted tuning models \n *************************** ")
 
 
