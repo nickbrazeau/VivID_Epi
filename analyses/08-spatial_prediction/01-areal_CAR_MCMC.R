@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to make ICAR models aggregated at the Province Level
+# Purpose of this script is to make CAR models aggregated at the Province Level
 # We will run four chains for each to see if the are all converging in the same place
 # and appear to be mixing well
 #----------------------------------------------------------------------------------------------------
@@ -9,6 +9,7 @@ source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
+set.seed(48)
 
 #......................
 # Import Data
@@ -39,8 +40,8 @@ pvprov.weighted <- pvprov.weighted %>%
 
 prov.covar <- dtsrvy %>% 
   dplyr::group_by(adm1name) %>% 
-  dplyr::summarise(meanprov_precip_lag_cont_scale_clst = srvyr::survey_mean(precip_lag_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95),
-                   meanprov_alt_dem_cont_scale_clst = srvyr::survey_mean(alt_dem_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
+  dplyr::summarise(meanprov_precip_lag_cont_scale_prov = srvyr::survey_mean(precip_lag_cont_scale_prov, na.rm = T, vartype = c("se", "ci"), level = 0.95),
+                   meanprov_alt_dem_cont_scale_prov = srvyr::survey_mean(alt_dem_cont_scale_prov, na.rm = T, vartype = c("se", "ci"), level = 0.95)
   )
 
 pvprov.weighted <- dplyr::left_join(pvprov.weighted, prov.covar, by = "adm1name")
@@ -91,8 +92,8 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("meanprov_precip_lag_cont_scale_clst", "meanprov_alt_dem_cont_scale_clst")
-mod.framework <- tibble(name = c("riid", "ICAR", "CAR", "riid_covar", "ICAR_covar", "CAR_covar"),
+prov.covar.names <- c("meanprov_precip_lag_cont_scale_prov", "meanprov_alt_dem_cont_scale_prov")
+mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept", "CAR_intercept", "riid_covar", "ICAR_covar", "CAR_covar"),
                         formula = c("plsmdn ~ 1", "plsmdn ~ 1", "plsmdn ~ 1",
                                     rep(paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + ")), 3)),
                         rho = c(0, 1, NA, 0, 1, NA),
@@ -173,19 +174,26 @@ chains <- mod.framework %>%
   tidyr::nest()
 
 
-make_mcmc_chain_plots <- function(chaindat, tempdir){
-  jpeg(paste0(tempdir, "_", names(chaindat), ".jpeg"), height = 8, width = 11, units = "in", res=200)
+make_mcmc_chain_plots <- function(chaindat, filename){
+  jpeg(filename, height = 8, width = 11, units = "in", res=200)
   par(mfrow=c(2,2))
-  plot(chaindat[[1]])
-  plot(chaindat[[2]])
-  plot(chaindat[[3]])
-  plot(chaindat[[4]])
+  plot(chaindat[[1]][[1]])
+  plot(chaindat[[1]][[2]])
+  plot(chaindat[[1]][[3]])
+  plot(chaindat[[1]][[4]])
   graphics.off()
 
 }
  mytempdir <- "~/Desktop/nfbtemp/"
- purrr::map(chains$data, function(x){
-  apply(x, 2, make_mcmc_chain_plots, tempdir = mytempdir)
+ purrr::pmap(chains, function(data, name){
+   
+  filename <- paste0(mytempdir, name, "_", colnames(data), ".jpg") 
+  
+  for(i in 1:ncol(data)){
+    make_mcmc_chain_plots(chaindat = data[,i], filename = filename[i])
+  }
+  
+  
  })
 
 

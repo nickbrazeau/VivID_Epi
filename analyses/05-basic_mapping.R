@@ -68,37 +68,6 @@ case_n_maps <- purrr::pmap(list(data = clst$data, plsmdmspec = clst$plsmdmspec),
 
 
 
-#----------------------------------------------------------------------------------------------------
-# SPATIAL AUTOCORRELATION
-#----------------------------------------------------------------------------------------------------
-
-#.................................................................
-# Moran's I -- greater circler
-#.................................................................
-
-gc <- mp %>% 
-  dplyr::filter(maplvl == "hv001" & plsmdmspec == "pfldh") %>% # pfldh just so we can have one data obj at correct map level
-  tidyr::unnest() %>% 
-  dplyr::select(c("longnum", "latnum")) %>% 
-  geosphere::distm(x =., fun = geosphere::distGeo) 
-
-gc.inv <- 1/gc
-diag(gc.inv) <- 0
-
-mp.moranI <- mp %>% 
-  dplyr::filter(maplvl == "hv001") %>% 
-  .$data %>% 
-  purrr::map(., "plsmdprev") 
-
-mp.moranI.ret <- lapply(mp.moranI, spdep::moran.test, 
-                    listw = spdep::mat2listw(gc.inv), 
-                    alternative = "greater")
-
-mp$moranI <- NA
-mp$moranI[4:6] <- mp.moranI.ret
-# Note, Cedar ran this in geoda for Pv and got a similar answer
-
-
 
 #----------------------------------------------------------------------------------------------------
 # Ape Map Distribution for Pv
