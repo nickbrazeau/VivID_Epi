@@ -4,39 +4,15 @@
 #----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)
-devtools::install_github("ropensci/osmdata")
-library(osmdata)
+library(heavyRain)
 library(sf)
-library(rgeos)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-
-#---------------------------------------------------------------------------------
-# set up DRC borders
-#---------------------------------------------------------------------------------
-# https://github.com/ropensci/osmdata
-
-bb <- osmdata::getbb("Democratic Republic of the Congo", 
-                     featuretype = "country",
-                     format_out = "sf_polygon")
-
-#---------------------------------------------------------------------------------
-# Seasonality from Imperial/Carins
-#---------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_seasonality.R")
-
-# From OJ (via slack on 1/10/2019)
-# https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0056487
-# https://www.nature.com/articles/ncomms1879#supplementary-information
-# https://betterexplained.com/articles/an-interactive-guide-to-the-fourier-transform/
-admin_units_seasonal <- readRDS("data/imperial_share/admin1_seasonality_for_nick_from_OJ.rds")
-drc_admin_units_seasonal <- admin_units_seasonal %>% 
-  filter(COUNTRY_ID == "COD")
 
 
 
 #---------------------------------------------------------------------------------
 # Precipation Data
 #---------------------------------------------------------------------------------
+dir.create("data/raw_data/weather_data/CHIRPS/", recursive = T)
 heavyRain::getCHIRPS(region = "africa",
                      format = "tifs",
                      tres = "monthly", 
@@ -54,10 +30,75 @@ system('gunzip data/raw_data/weather_data/CHIRPS/*')
 #---------------------------------------------------------------------------------
 # Pull Down Great Ape Territories from IUC (minus Pongo)
 #---------------------------------------------------------------------------------
-ape <- sf::read_sf("data/redlist_species_data_primate/data_0.shp")
+ape <- sf::read_sf("data/raw_data/redlist_species_data_primate/data_0.shp")
 ape <- ape[grepl("pan paniscus|pan troglodytes|gorilla", tolower(ape$BINOMIAL)), ] %>%  # pan trog, pan panisus, gorilla sp
   dplyr::rename(species = BINOMIAL)
+
+
+bb <- osmdata::getbb("Democratic Republic of the Congo", 
+                     featuretype = "country",
+                     format_out = "sf_polygon")
 drc_ape <- sf::st_crop(x = ape, y = bb)
 
 
 saveRDS(drc_ape, file = "data/redlist_species_data_primate/drc_ape.rds")
+
+
+
+
+
+
+##################################################################################
+##########                      HOTOSM DATA                       ################
+##################################################################################
+# read in GE as import
+ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>% 
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
+
+# Note manually downloading these from site
+# https://data.humdata.org/dataset/
+
+#----------------------------------------------------------------------------------------------------
+# Waterways
+#----------------------------------------------------------------------------------------------------
+wtrlns <- sf::read_sf("data/raw_data/hotosm_data/hotosm_cod_waterways_lines_shp/hotosm_cod_waterways_lines.shp") %>% 
+  dplyr::filter(waterway %in% c("stream", "river", "riverbank")) %>% 
+  dplyr::rename(water = waterway) %>% 
+  dplyr::select(c("osm_id", "water", "geometry"))
+
+wtrply <- sf::read_sf("data/raw_data/hotosm_data/hotosm_cod_waterways_polygons_shp/hotosm_cod_waterways_polygons.shp") %>% 
+  dplyr::filter(water == "lake") %>% 
+  dplyr::select(c("osm_id", "water", "geometry"))
+
+wtr <- sf::st_combine(rbind(wtrlns, wtrply))
+wtr <-  sf::st_union( wtr )
+
+wtrdist <- sf::st_distance(x = ge,
+                           y = wtr)
+wtrdist_out <- data.frame(
+  hv001 = ge$dhsclust,
+  wtrdist_cont_clst = apply(wtrdist, 1, min)
+)
+
+
+#----------------------------------------------------------------------------------------------------
+# Health Sites
+#----------------------------------------------------------------------------------------------------
+hlthsites <- sf::read_sf("data/raw_data/hotosm_data/hotosm_drc_healthsites_shapefiles/healthsites.shp") 
+htlhdist <- sf::st_distance(x = ge,
+                            y = hlthsites)
+
+hlthdist_out <- data.frame(
+  hv001 = ge$dhsclust,
+  hlthdist_cont_clst = apply(htlhdist, 1, min)
+)
+
+
+
+#----------------------------------------------------------------------------------------------------
+# write out
+#----------------------------------------------------------------------------------------------------
+saveRDS(object = wtrdist_out, file = "data/derived_data/hotosm_waterways_dist.rds")
+saveRDS(object = hlthdist_out, file = "data/derived_data/hotosm_healthsites_dist.rds")

@@ -28,7 +28,7 @@ datasets <- rdhs::dhs_datasets(surveyIds = survs$SurveyId,
                                fileFormat = "flat")
 
 # download all DHS datsets 
-downloads <- rdhs::get_datasets(datasets$FileName[!grepl("GC", datasets$FileName)]) # still not reading GC correctly
+downloads <- rdhs::get_datasets(datasets$FileName) 
 
 
 
@@ -94,13 +94,13 @@ mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/dataset
                 hv002 = mv002,
                 hvidx = mv003,
                 caseid = mcaseid) %>% 
-  dplyr::select(c("hv001", "hv002", "hvidx", "caseid", "mv481", "mv717"))
+  dplyr::select(c("hv001", "hv002", "hvidx", "caseid", "mv717"))
 
 wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") %>%
   dplyr::rename(hv001 = v001,
                 hv002 = v002,
                 hvidx = v003)  %>% 
-  dplyr::select(c("hv001", "hv002", "hvidx", "caseid", "v481", "v717"))
+  dplyr::select(c("hv001", "hv002", "hvidx", "caseid", "v717"))
 
 mrwr <- dplyr::full_join(mr, wr)
 mrwr <- mrwr %>%
@@ -133,7 +133,7 @@ gewrmrprar <- left_join(x=wrmrprar, y=ge, by = "hv001")
 #---------------------------------------------------------------------------------
 # DHS Geospatial Covariates
 #---------------------------------------------------------------------------------
-gc <- readr::read_csv("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/CDGC62FL/CDGC62FL.csv") %>% 
+gc <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGC62FL.rds") %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 

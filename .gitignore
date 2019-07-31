@@ -17,6 +17,7 @@ report_obj/
 datasets/
 db/
 data/
+olddata/
 rdhs.json
 figures/
 
