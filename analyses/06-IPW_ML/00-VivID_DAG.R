@@ -20,6 +20,16 @@ txs <- dcdr %>%
   dplyr::filter(iptw_model == "y") %>% 
   dplyr::select(-c("risk_factor_raw", "risk_factor_model"))
 
+#.....................................
+# Covariates that are unconfounded in expectation
+#.....................................
+# urbanicity and cluster altitude (historical reasons where a cluster is/where people live. Not a causal factor)
+# sex (biological chance)
+# age (biological process)
+
+txs <- txs %>% 
+  dplyr::filter(!var_label %in% c("Age", "Sex", "Altitude", "Urbanicity Score"))
+
 # find canonical sets
 dagliftover <- readxl::read_excel(path = "model_datamaps/dag_dhscovar_liftover.xlsx")
 txs$adj_set <- purrr::map(txs$column_name,

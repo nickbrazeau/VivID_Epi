@@ -21,23 +21,34 @@ sf::st_geometry(dt) <- NULL
 #........................
 # read in treatments
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
-  dplyr::rename(target = column_name,
-                positive = positivefactor) %>% 
-  dplyr::mutate(type = ifelse(grepl("cont", target), "continuous",
-                              ifelse(grepl("fctb", target), "binary", NA)))
+  dplyr::rename(positive = positivefactor) %>% 
+  dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
+                              ifelse(grepl("fctb", column_name), "binary", NA)))
+# note we want the targets to be in their original form and no the scaled form (to account for variance in the outcome, which is now our tx level)
+txs <- txs %>% 
+  dplyr::mutate(target = column_name,
+                target = gsub("_scale", "", column_name))
+
 
 #........................
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
 dt.ml <- dt %>% 
-  dplyr::select(c("pv18s" , "pfldh", "hv005_wi", txs$target, 
+  dplyr::select(c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name, "hvyrmnth_dtmnth_lag",
                   "longnum", "latnum"))
 
 # subset to complete cases
 dt.ml <- dt.ml %>% 
   dplyr::filter(complete.cases(.)) %>% 
   data.frame(.)
+
+
+#........................
+# Add month in for the adj sets of temp and precip 
+#........................
+txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
+txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
 
 
 #........................

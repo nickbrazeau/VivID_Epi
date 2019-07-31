@@ -17,8 +17,6 @@ source("R/00-functions_iptw.R")
 # Apply the Tuning Results to the Learner
 #............................................
 params <- readRDS("analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/params.RDS")
-# TODO temp
-params <- params[c(1:8, 10:17), ]
 params$tunedlearner <- purrr::map(params$task, make_hillclimb_Stack, 
                           learners = baselearners.list)
 tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
