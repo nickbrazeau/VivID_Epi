@@ -337,6 +337,7 @@ xtabs(~dt$hv21345_fctb, addNA = T)
 wlth <- readRDS(file = "data/derived_data/vividepi_wealth_recoded.rds")
 dt <- dplyr::left_join(dt, wlth, by = "hivrecode_barcode")
 xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks OK. Some poor/poorest got placed higher than expected
+xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270)) # looks OK. Some poor/poorest got placed higher than expected
 
 
 
@@ -559,7 +560,7 @@ dtsrvy <- makecd2013survey(survey = dt)
 #..........................................................................................
 #                                ECOLOGICAL VARIABLES
 #..........................................................................................
-
+source("R/00-functions_maps.R")
 #.............
 # Precipitation (CHRIPS) & Temperature (Emch/Manny)
 #.............

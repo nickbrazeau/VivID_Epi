@@ -240,12 +240,15 @@ dtsub <- dtsub %>%
                                                       "middle", "rich", "richest"),
                                           include.lowest = T)
   ) %>% 
-  dplyr::select(c("hivrecode_barcode", "combscor", "wlthrcde_fctm")) %>% 
+  dplyr::mutate(wlthrcde_fctb = ifelse(wlthrcde_fctm == "poorest", "poor", ifelse(wlthrcde_fctm == "poor", "poor", "not poor")),
+                wlthrcde_fctb = factor(wlthrcde_fctb, levels = c("not poor", "poor"))) %>% 
+  dplyr::select(c("hivrecode_barcode", "combscor", "wlthrcde_fctm", "wlthrcde_fctb")) %>% 
   dplyr::rename(wlthrcde_combscor_cont = combscor)
 
 summary(dtsub$wlthrcde_combscor_cont)
-summary(dtsub$wlthrcde_fctm)
 quants
+summary(dtsub$wlthrcde_fctm)
+xtabs(~dtsub$wlthrcde_fctm + dtsub$wlthrcde_fctb)
 
 saveRDS(file = "data/derived_data/vividepi_wealth_recoded.rds", object = dtsub)
 
