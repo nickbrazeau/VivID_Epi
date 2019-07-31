@@ -34,9 +34,11 @@ txs <- txs %>%
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name, "hvyrmnth_dtmnth_lag",
+                   "alt_dem_cont_scale_clst", "urbanscore_cont_clst", "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "longnum", "latnum")
 dt.ml <- dt %>% 
-  dplyr::select(c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name, "hvyrmnth_dtmnth_lag",
-                  "longnum", "latnum"))
+  dplyr::select(varstoinclude)
 
 # subset to complete cases
 dt.ml <- dt.ml %>% 

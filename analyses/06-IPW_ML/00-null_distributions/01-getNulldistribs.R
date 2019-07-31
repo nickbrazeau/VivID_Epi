@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------
 # Purpose of this script is to make the null distributions of the covariate maps
-#----------------------------------------------------------------------------------
+#-------------------------- --------------------------------------------------------
 
 source("R/00-functions_epi.R")
 source("R/00-make_null_IPTW_distribs_brownian.R")
@@ -10,7 +10,7 @@ library(tidyverse)
 library(mlr)
 
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
-#sf::st_geometry(dt) <- NULL
+sf::st_geometry(dt) <- NULL
 
 
 
@@ -20,18 +20,24 @@ dt <- readRDS("data/derived_data/vividepi_recode.rds")
 #............................................
 # read in treatments
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
-  dplyr::rename(target = column_name,
-                positive = positivefactor) %>% 
-  dplyr::mutate(type = ifelse(grepl("cont", target), "continuous",
-                              ifelse(grepl("fctb", target), "binary", NA)))
+  dplyr::rename(positive = positivefactor) %>% 
+  dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
+                              ifelse(grepl("fctb", column_name), "binary", NA)))
+# note we want the targets to be in their original form and no the scaled form (to account for variance in the outcome, which is now our tx level)
+txs <- txs %>% 
+  dplyr::mutate(target = column_name,
+                target = gsub("_scale", "", column_name))
+
 
 #........................
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name, "hvyrmnth_dtmnth_lag",
+                   "alt_dem_cont_scale_clst", "urbanscore_cont_clst", "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "longnum", "latnum")
 dt.ml <- dt %>% 
-  dplyr::select(c("pv18s" , "pfldh", "hv005_wi", txs$target, 
-                  "longnum", "latnum"))
+  dplyr::select(varstoinclude)
 
 # subset to complete cases
 dt.ml <- dt.ml %>% 
@@ -82,7 +88,7 @@ paramsdf <- lapply(1:nulliters, function(x) return(txs)) %>%
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/00-null_distributions/")
-ntry <- 128
+ntry <- 1028
 sjob <- rslurm::slurm_apply(f = make.null.distribution.energy, 
                             params = paramsdf, 
                             jobname = 'nulldist_vivid_covar',
@@ -92,7 +98,7 @@ sjob <- rslurm::slurm_apply(f = make.null.distribution.energy,
                             slurm_options = list(mem = 64000,
                                                  array = sprintf("0-%d%%%d", 
                                                                  ntry - 1, 
-                                                                 48),
+                                                                 128),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
