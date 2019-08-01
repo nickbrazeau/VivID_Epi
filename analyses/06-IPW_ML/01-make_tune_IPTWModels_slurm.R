@@ -245,7 +245,7 @@ paramsdf <- txs %>%
 
 
 # for slurm on LL
-setwd("analyses/06-IPW_ML/tune_modelparams/")
+setwd("analyses/06-IPW_ML/")
 ntry <- 18
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
