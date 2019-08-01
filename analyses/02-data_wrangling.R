@@ -95,46 +95,47 @@ dt <- dt %>%
   dplyr::mutate(hv005_wi = hv005/1e6
   )
 
-#.............
-# dates
-#.............
-dt <- dt %>% 
-  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
+# #.............
+# # dates
+# #.............
+# dt <- dt %>% 
+#   dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
+# 
+# # NOTE, some clusters have survey start and end dates that are in two months 
+# # (eg boundaries aren't clean/coinciding with a month. Naturally). Given
+# # grouping by month, need to assign a clusters "month" on the majority of days 
+# # that were spent surveying that clusters
+# 
+# # clusters without clean boundaries
+# clst_mnth_bounds <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
+#   dplyr::mutate(mnth = lubridate::month(hvdate_dtdmy)) %>% 
+#   dplyr::group_by(hv001) %>% 
+#   dplyr::summarise(moremnths = length(unique(mnth))) %>% 
+#   dplyr::filter(moremnths > 1)
+# 
+# clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
+#   dplyr::filter(hv001 %in% clst_mnth_bounds$hv001) %>% 
+#   dplyr::mutate(hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
+#   dplyr::group_by(hv001, hvyrmnth_dtmnth) %>% 
+#   dplyr::summarise(n = n()) %>% 
+#   dplyr::filter(n == max(n)) %>% 
+#   dplyr::select(-c("n"))
+# 
+# sf::st_geometry(clst_mnth_bounds.assign) <- NULL
+# 
+# dt <- dt %>% 
+#   dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
+#   dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
+#                                          paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"),
+#                                          hvyrmnth_dtmnth))
+# 
+# dates <- readr::read_csv("internal_datamap_files/pr_date_liftover.csv")
+# dt <- dt %>% 
+#   dplyr::left_join(x=., y=dates, by = "hvyrmnth_dtmnth") %>% 
+#   dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
+# 
+# xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
-# NOTE, some clusters have survey start and end dates that are in two months 
-# (eg boundaries aren't clean/coinciding with a month. Naturally). Given
-# grouping by month, need to assign a clusters "month" on the majority of days 
-# that were spent surveying that clusters
-
-# clusters without clean boundaries
-clst_mnth_bounds <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-  dplyr::mutate(mnth = lubridate::month(hvdate_dtdmy)) %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(moremnths = length(unique(mnth))) %>% 
-  dplyr::filter(moremnths > 1)
-
-clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-  dplyr::filter(hv001 %in% clst_mnth_bounds$hv001) %>% 
-  dplyr::mutate(hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
-  dplyr::group_by(hv001, hvyrmnth_dtmnth) %>% 
-  dplyr::summarise(n = n()) %>% 
-  dplyr::filter(n == max(n)) %>% 
-  dplyr::select(-c("n"))
-
-sf::st_geometry(clst_mnth_bounds.assign) <- NULL
-
-dt <- dt %>% 
-  dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
-  dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
-                                         paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"),
-                                         hvyrmnth_dtmnth))
-
-dates <- readr::read_csv("internal_datamap_files/pr_date_liftover.csv")
-dt <- dt %>% 
-  dplyr::left_join(x=., y=dates, by = "hvyrmnth_dtmnth") %>% 
-  dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-
-xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
 #.............
 # households
@@ -561,82 +562,90 @@ dtsrvy <- makecd2013survey(survey = dt)
 #                                ECOLOGICAL VARIABLES
 #..........................................................................................
 source("R/00-functions_maps.R")
-#.............
-# Precipitation (CHRIPS) & Temperature (Emch/Manny)
-#.............
-# precip data
-precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T)
-precipfrst <- lapply(precip, readRasterBB, bb = bb)
-precipdf <- tibble::tibble(names = basename(precip)) %>% 
-  dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
-                year = stringr::str_split_fixed(names, "\\.", n=2)[,1] ,
-                mnth =  stringr::str_split_fixed(names, "\\.", n=2)[,2] ,
-                hvdate_dtdmy = lubridate::dmy(paste(1, mnth, year, sep = "/")),
-                year = lubridate::year(hvdate_dtdmy),
-                mnth = lubridate::month(hvdate_dtdmy),
-                hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
-                precipraster = precipfrst) %>% 
-  dplyr::select(c("hvyrmnth_dtmnth_lag", "precipraster"))
+# #.............
+# # Precipitation (CHRIPS) & Temperature (Emch/Manny)
+# #.............
+# # precip data
+# precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T)
+# precipfrst <- lapply(precip, readRasterBB, bb = bb)
+# precipdf <- tibble::tibble(names = basename(precip)) %>% 
+#   dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
+#                 year = stringr::str_split_fixed(names, "\\.", n=2)[,1] ,
+#                 mnth =  stringr::str_split_fixed(names, "\\.", n=2)[,2] ,
+#                 hvdate_dtdmy = lubridate::dmy(paste(1, mnth, year, sep = "/")),
+#                 year = lubridate::year(hvdate_dtdmy),
+#                 mnth = lubridate::month(hvdate_dtdmy),
+#                 hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
+#                 precipraster = precipfrst) %>% 
+#   dplyr::select(c("hvyrmnth_dtmnth_lag", "precipraster"))
+# 
+# # temp data
+# temp <- raster::stack("data/raw_data/weather_data/emch_manny/cru_ts4.01.2011.2016.tmp.dat.nc") %>% 
+#         raster::crop(x = ., y = sf::as_Spatial(bb))
+# 
+# tempdf <- tibble::tibble(orignnames = names(temp),
+#                          names = gsub("X", "", names(temp)),
+#                          hvdate_dtdmy = lubridate::ymd(names),
+#                          year = lubridate::year(hvdate_dtdmy),
+#                          mnth = lubridate::month(hvdate_dtdmy),
+#                          hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
+#                          tempraster = lapply(orignnames, raster::subset, x = temp)) %>% 
+#   dplyr::select(c("hvyrmnth_dtmnth_lag", "tempraster"))
+# 
+# 
+# 
+# wthrnd <- dt[,c("hv001", "hvyrmnth_dtmnth_lag", "geometry", "urban_rura")] %>% 
+#   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
+# wthrnd <- wthrnd[!duplicated(wthrnd$hv001),]
+# 
+# wthrnd <- wthrnd %>% 
+#   dplyr::left_join(., tempdf) %>% 
+#   dplyr::left_join(., precipdf)
+# 
+# # Drop in a for loop
+# wthrnd$precip_lag_cont_clst <- NA
+# wthrnd$temp_lag_cont_clst <- NA
+# 
+# for(i in 1:nrow(wthrnd)){
+#   # precip
+#   wthrnd$precip_lag_cont_clst[i] <- 
+#     raster::extract(x = wthrnd$precipraster[[i]],
+#                     y = sf::as_Spatial(wthrnd$geometry[i]),
+#                     buffer = wthrnd$buffer[i],
+#                     fun = mean,
+#                     sp = F
+#                     )
+#   
+#   # temp
+#   wthrnd$temp_lag_cont_clst[i] <- 
+#     raster::extract(x = wthrnd$tempraster[[i]],
+#                     y = sf::as_Spatial(wthrnd$geometry[i]),
+#                     buffer = wthrnd$buffer[i],
+#                     fun = mean,
+#                     sp = F
+#     )
+#   
+# }
+# 
+# wthrnd <- wthrnd %>% 
+#   dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag", "precip_lag_cont_clst", "temp_lag_cont_clst")) %>% 
+#   dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
+# sf::st_geometry(wthrnd) <- NULL
+# dt <- dt %>% 
+#   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
+#   dplyr::mutate(
+#                 precip_lag_cont_scale_clst = my.scale(precip_lag_cont_clst, center = T, scale = T),
+#                 temp_lag_cont_scale_clst = my.scale(temp_lag_cont_clst, center = T, scale = T)
+#                 )
+# 
+# 
 
-# temp data
-temp <- raster::stack("data/raw_data/weather_data/emch_manny/cru_ts4.01.2011.2016.tmp.dat.nc") %>% 
-        raster::crop(x = ., y = sf::as_Spatial(bb))
-
-tempdf <- tibble::tibble(orignnames = names(temp),
-                         names = gsub("X", "", names(temp)),
-                         hvdate_dtdmy = lubridate::ymd(names),
-                         year = lubridate::year(hvdate_dtdmy),
-                         mnth = lubridate::month(hvdate_dtdmy),
-                         hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
-                         tempraster = lapply(orignnames, raster::subset, x = temp)) %>% 
-  dplyr::select(c("hvyrmnth_dtmnth_lag", "tempraster"))
-
-
-
-wthrnd <- dt[,c("hv001", "hvyrmnth_dtmnth_lag", "geometry", "urban_rura")] %>% 
-  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
-wthrnd <- wthrnd[!duplicated(wthrnd$hv001),]
-
-wthrnd <- wthrnd %>% 
-  dplyr::left_join(., tempdf) %>% 
-  dplyr::left_join(., precipdf)
-
-# Drop in a for loop
-wthrnd$precip_lag_cont_clst <- NA
-wthrnd$temp_lag_cont_clst <- NA
-
-for(i in 1:nrow(wthrnd)){
-  # precip
-  wthrnd$precip_lag_cont_clst[i] <- 
-    raster::extract(x = wthrnd$precipraster[[i]],
-                    y = sf::as_Spatial(wthrnd$geometry[i]),
-                    buffer = wthrnd$buffer[i],
-                    fun = mean,
-                    sp = F
-                    )
-  
-  # temp
-  wthrnd$temp_lag_cont_clst[i] <- 
-    raster::extract(x = wthrnd$tempraster[[i]],
-                    y = sf::as_Spatial(wthrnd$geometry[i]),
-                    buffer = wthrnd$buffer[i],
-                    fun = mean,
-                    sp = F
-    )
-  
-}
-
-wthrnd <- wthrnd %>% 
-  dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag", "precip_lag_cont_clst", "temp_lag_cont_clst")) %>% 
-  dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-sf::st_geometry(wthrnd) <- NULL
 dt <- dt %>% 
-  dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
-  dplyr::mutate(
-                precip_lag_cont_scale_clst = my.scale(precip_lag_cont_clst, center = T, scale = T),
-                temp_lag_cont_scale_clst = my.scale(temp_lag_cont_clst, center = T, scale = T)
-                )
-
+  dplyr::mutate(precip_ann_cont_clst = ifelse(annual_precipitation_2015 == 9999, NA, annual_precipitation_2015), # note no missing (likely dropped with missing gps)
+                precip_ann_cont_scale_clst = my.scale(precip_ann_cont_clst, center = T, scale = T),
+                temp_ann_cont_clst = ifelse(night_land_surface_temp_2015 == 9999, NA, night_land_surface_temp_2015), # note no missing (likely dropped with missing gps)
+                temp_ann_cont_scale_clst = my.scale(night_land_surface_temp_2015, center = T, scale = T)
+  )
 
 
 #.............

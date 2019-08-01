@@ -242,6 +242,33 @@ paramsdf <- txs %>%
   dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")) 
 
 
+# TODO TEMP
+
+temp = paramsdf[1,]
+tempret <- slurm_tunemodel(learner = temp$learner[[1]],
+                           task = temp$task[[1]],
+                           rdesc = temp$rdesc[[1]], 
+                           hyperparams = temp$hyperparams[[1]],
+                           ctrl = temp$ctrl[[1]],
+                           performmeasure = temp$performmeasure[[1]]
+                           )
+
+preciptemp <- getTaskData(temp$task[[1]])                            
+covars <- colnames(preciptemp)
+covars <- covars[!covars %in% c("precip_lag_cont_clst", "longnum", "latnum")]
+lm(as.formula(paste0("precip_lag_cont_clst ~ ", paste(covars, collapse = "+"))),
+   data = preciptemp)
+
+regrlrn <- mlr::makeLearner("regr.gamboost")
+mod <- train(regrlrn, temp$task[[1]])
+modpred <- predict(mod, temp$task[[1]])
+performance(mod)
+
+plot(modpred$data$truth ~ modpred$data$response)
+
+
+
+
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams/")
 ntry <- 18
