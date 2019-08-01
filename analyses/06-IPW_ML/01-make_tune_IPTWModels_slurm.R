@@ -49,8 +49,8 @@ dt.ml <- dt.ml %>%
 #........................
 # Add month in for the adj sets of temp and precip 
 #........................
-txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
-txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
+#txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
+#txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
 
 
 #........................
