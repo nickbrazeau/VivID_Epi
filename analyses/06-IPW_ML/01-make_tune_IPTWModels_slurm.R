@@ -253,19 +253,6 @@ tempret <- slurm_tunemodel(learner = temp$learner[[1]],
                            performmeasure = temp$performmeasure[[1]]
                            )
 
-preciptemp <- getTaskData(temp$task[[1]])                            
-covars <- colnames(preciptemp)
-covars <- covars[!covars %in% c("precip_lag_cont_clst", "longnum", "latnum")]
-lm(as.formula(paste0("precip_lag_cont_clst ~ ", paste(covars, collapse = "+"))),
-   data = preciptemp)
-
-regrlrn <- mlr::makeLearner("regr.gamboost")
-mod <- train(regrlrn, temp$task[[1]])
-modpred <- predict(mod, temp$task[[1]])
-performance(mod)
-
-plot(modpred$data$truth ~ modpred$data$response)
-
 
 
 
@@ -281,7 +268,7 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
                                                                  ntry - 1, 
-                                                                 24),
+                                                                 18),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
