@@ -3,7 +3,7 @@
 # need to recode the wealth variable to avoid controlling for part of our
 # effect when considering the covar housing materials (as they did above)
 # https://dhsprogram.com/programming/wealth%20index/Steps_to_constructing_the_new_DHS_Wealth_Index.pdf
-
+# note, I have a mix of de jure and de facto but my de facto get subsetted later
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to wrangle and recode wealth
 #----------------------------------------------------------------------------------------------------
@@ -88,9 +88,10 @@ for(i in 1:ncol(wlth_fct_multi_recode)){
   print(xtabs(~wlth_fct_multi[,i] + wlth_fct_multi_recode[,i], addNA = T))
 }
 
-# RECODE Water Sources
-# TODO 
-# Check that surface water is OK... should I be collapsing rain water? Is that an "etc"?
+# RECODE Water Sources --looks good, surface waters already combined
+table(wlth_fct_multi_recode$hv201)
+
+
 
 # RECODE Toilet Facilities
 # This is based on Rutstein point 3b.2.b
@@ -101,6 +102,12 @@ wlth_fct <- wlth_fct %>%
 xtabs(~wlth_fct$hv205 + wlth_fct$toiletfacil, addNA = T) # have to take into consideration two lost to toilet type missing
 wlth_fct <- wlth_fct %>% 
   dplyr::select(-c("hv205", "hv225"))
+
+
+# check for flat indicator vars, Rutstein point 4a 
+summary(wlth_fct)
+
+
 
 # impute missing values by "average" -- going to flip a weighted coin/die
 # This is based on Rutstein point 4b
@@ -129,7 +136,7 @@ wlth_fct_exp <- fastDummies::dummy_columns(wlth_fct)
 strtcol <- min( which(grepl("hv201_", colnames(wlth_fct_exp))) )
 wlth_fct_exp <- wlth_fct_exp[, strtcol:ncol(wlth_fct_exp)] # drop original codes
 
-# exclude assets where <55 or >95% of households own (per MS)
+# exclude assets where <5 or >95% of households own (per MS)
 dropassets <- wlth_fct_exp %>% 
   tidyr::gather(., key = "assets", value = "owns") %>% 
   dplyr::group_by(assets) %>% 

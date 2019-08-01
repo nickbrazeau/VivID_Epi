@@ -29,7 +29,7 @@ ge <- ge %>%
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum))
 
-DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+DRCprov <- sf::st_as_sf(readRDS("data/map_bases/gadm/gadm36_COD_1_sp.rds"))
 
 
 #..............................
@@ -169,18 +169,4 @@ ggplot() +
 #.............
 # write out
 #.............
-# don't need to apply weights in the same way as wealth because at cluster level
-
-quants <- quantile(urbanicity$urbanscore, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1))
-urbanicity <- urbanicity %>% 
-  dplyr::mutate(urbanscore_fctm_clst = base::cut(x = .$urbanscore, breaks = quants, 
-                                          labels = c("rural", "lessrural", "middle", 
-                                                     "lessurban", "urban"),
-                                          include.lowest = T)
-  ) %>% 
-  dplyr::rename(urbanscore_cont_clst = urbanscore) %>% 
-  dplyr::select(c("hv001", "urbanscore_fctm_clst", "urbanscore_cont_clst"))
-
-
-
 saveRDS(urbanicity, file = "data/derived_data/vividepi_urban_recoded.rds")
