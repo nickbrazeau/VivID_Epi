@@ -107,18 +107,25 @@ txs$learner <- purrr::map(txs$type, function(x){
 #--------------------------------------
 # Setup null distributions
 #--------------------------------------
-nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
+# nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
+# 
+# txs <- dplyr::left_join(txs, nulldist, by = "target")
+# 
+# txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
+# 
+# # set the null distribution for each respective DAG
+# txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
+#   ret <- mlr::setMeasurePars(x, 
+#                              par.vals = list(nulldist = y))
+# })
 
-txs <- dplyr::left_join(txs, nulldist, by = "target")
-
-txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
-
-# set the null distribution for each respective DAG
-txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
-  ret <- mlr::setMeasurePars(x, 
-                             par.vals = list(nulldist = y))
+txs$performmeasure <- purrr::map(txs$type, function(x){
+  if(x == "continuous"){
+    return(mse)
+  } else if (x == "binary"){
+    return(auc)
+  }
 })
-
 
 #--------------------------------------
 # Setup resampling
@@ -237,7 +244,7 @@ paramsdf <- txs %>%
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/tune_modelparams/")
-ntry <- nrow(paramsdf)
+ntry <- 18
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
                             jobname = 'vivid_tunes',
@@ -246,8 +253,8 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                             submit = T,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry, 
-                                                                 17),
+                                                                 ntry - 1, 
+                                                                 16),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
