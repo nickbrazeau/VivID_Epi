@@ -242,18 +242,6 @@ paramsdf <- txs %>%
   dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")) 
 
 
-# TODO TEMP
-
-temp = paramsdf[1,]
-tempret <- slurm_tunemodel(learner = temp$learner[[1]],
-                           task = temp$task[[1]],
-                           rdesc = temp$rdesc[[1]], 
-                           hyperparams = temp$hyperparams[[1]],
-                           ctrl = temp$ctrl[[1]],
-                           performmeasure = temp$performmeasure[[1]]
-                           )
-
-
 
 
 # for slurm on LL
