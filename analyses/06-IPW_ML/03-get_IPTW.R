@@ -10,8 +10,12 @@ source("R/00-functions_iptw.R")
 
 
 # read in param table and results of training
-params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
-trainpaths <-  list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
+#params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
+#trainpaths <-  list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
+
+params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/old_vividepi_anlaysis/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
+trainpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/old_vividepi_anlaysis/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
+
 trainpaths <- trainpaths[!c(grepl("params.RDS", trainpaths) | grepl("f.RDS", trainpaths))]
 
 # sort properly to match rows in df
@@ -37,6 +41,7 @@ params$iptw <- pmap(params[,c("task", "preds")], get_iptw_prob)
 #................................................
 lapply(params$iptw, summary)
 
+# make plot
 
 
 

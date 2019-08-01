@@ -451,7 +451,8 @@ dt <- dt %>%
 # the first PCA explains ~80% of the variation. Will use that as my new "urban score" 
 
 urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds") %>% 
-  dplyr::select(c("hv001", "urbanscore"))
+  dplyr::select(c("hv001", "urbanscore")) %>% 
+  dplyr::rename(urbanscore_cont_clst = urbanscore)
 dt <- dplyr::left_join(dt, urb, by = "hv001")
 boxplot(dt$urbanscore ~ haven::as_factor(dt$hv025)) # looks OK. Some urban places look pretty rural... which is more or less what I expected
 

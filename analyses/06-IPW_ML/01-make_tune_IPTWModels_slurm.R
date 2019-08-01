@@ -35,7 +35,7 @@ txs <- txs %>%
 #........................
 # subset to treatments, outcome, weights and coords
 varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
-                   "alt_dem_cont_scale_clst", "urbanscore_cont_clst", "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "alt_dem_cont_scale_clst", "urbanscore_cont_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
                    "longnum", "latnum")
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
@@ -107,25 +107,25 @@ txs$learner <- purrr::map(txs$type, function(x){
 #--------------------------------------
 # Setup null distributions
 #--------------------------------------
-# nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
-# 
-# txs <- dplyr::left_join(txs, nulldist, by = "target")
-# 
-# txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
-# 
-# # set the null distribution for each respective DAG
-# txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
-#   ret <- mlr::setMeasurePars(x, 
-#                              par.vals = list(nulldist = y))
-# })
+nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
 
-txs$performmeasure <- purrr::map(txs$type, function(x){
-  if(x == "continuous"){
-    return(mse)
-  } else if (x == "binary"){
-    return(auc)
-  }
+txs <- dplyr::left_join(txs, nulldist, by = "target")
+
+txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
+
+# set the null distribution for each respective DAG
+txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
+  ret <- mlr::setMeasurePars(x,
+                             par.vals = list(nulldist = y))
 })
+# 
+# txs$performmeasure <- purrr::map(txs$type, function(x){
+#   if(x == "continuous"){
+#     return(mse)
+#   } else if (x == "binary"){
+#     return(auc)
+#   }
+# })
 
 #--------------------------------------
 # Setup resampling

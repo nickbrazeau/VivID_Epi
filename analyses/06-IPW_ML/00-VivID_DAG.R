@@ -28,7 +28,7 @@ txs <- dcdr %>%
 # age (biological process)
 
 txs <- txs %>% 
-  dplyr::filter(!var_label %in% c("Age", "Sex", "Altitude", "Urbanicity Score"))
+  dplyr::filter(!var_label %in% c("Age", "Sex", "Altitude", "Urbanicity Score", "Distance to Water"))
 
 # find canonical sets
 dagliftover <- readxl::read_excel(path = "model_datamaps/dag_dhscovar_liftover.xlsx")
