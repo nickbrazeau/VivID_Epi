@@ -1,6 +1,5 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to wrangle and clean the various covariates in
-# the CD2013, weather, and other datasets
+# Purpose of this script is to wrangle and clean the various covariates for our analyses
 # 
 # Notes: All variables that I will use will either contain a "_fctb/m" or "_cont" to show
 #        that I have manipulated/investigated that variable.
@@ -14,7 +13,7 @@
 library(tidyverse)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
-set.seed(42)
+set.seed(48)
 
 # Notes on Lonely PSUs
 # http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
@@ -50,17 +49,14 @@ dt <- dt %>%
 #..........................
 # SURVEY CHARACTERISTICS/WEIGHTS
 # 1. hv005, cluster level weights
-# 2. hv006, Month of interview
-# 3. hv007, Year of interview
-# 4. hv016, day of interview
-#
-#
+# 2. hv002, households
+
+
 # COINFECTIONS/BIOMARKER VARIABLES
-# 1. pfldh coinfection ; (personal + community)
-# 2. po18s coinfection ; (personal + community)
-# 3. HIV Status (HIV03) ; (personal + community)
+# 1. pfldh coinfection ; (personal)
+# 3. HIV Status (HIV03) ; (personal)
 # 4. Anemia Level (HA57 & HB57)
-# 5. Duffy phenotype (wetlab work)
+# 5. Duffy phenotype (wetlab result -- nearly all Duffyneg, so won't be formally considered in model)
 
 # SOCIOECOLOGICAL VARIABLES
 # 1. Biological Sex (HV104)
@@ -83,9 +79,10 @@ dt <- dt %>%
 # 
 # PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
 # 1. Cluster altitude (HV040)
-# 3. Temparature (ecological import)
-# 4. Precipation (ecological import)
-# 6. Type of Residence i.e. Rural or Urban (recode)
+# 2. Temparature (gc recode)
+# 3. Precipation (gc recode)
+# 4. Urbanicity (my recode)
+
 
 
 #########################################################################################################
@@ -97,47 +94,6 @@ dt <- dt %>%
 dt <- dt %>% 
   dplyr::mutate(hv005_wi = hv005/1e6
   )
-
-# #.............
-# # dates
-# #.............
-# dt <- dt %>% 
-#   dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
-# 
-# # NOTE, some clusters have survey start and end dates that are in two months 
-# # (eg boundaries aren't clean/coinciding with a month. Naturally). Given
-# # grouping by month, need to assign a clusters "month" on the majority of days 
-# # that were spent surveying that clusters
-# 
-# # clusters without clean boundaries
-# clst_mnth_bounds <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-#   dplyr::mutate(mnth = lubridate::month(hvdate_dtdmy)) %>% 
-#   dplyr::group_by(hv001) %>% 
-#   dplyr::summarise(moremnths = length(unique(mnth))) %>% 
-#   dplyr::filter(moremnths > 1)
-# 
-# clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-#   dplyr::filter(hv001 %in% clst_mnth_bounds$hv001) %>% 
-#   dplyr::mutate(hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
-#   dplyr::group_by(hv001, hvyrmnth_dtmnth) %>% 
-#   dplyr::summarise(n = n()) %>% 
-#   dplyr::filter(n == max(n)) %>% 
-#   dplyr::select(-c("n"))
-# 
-# sf::st_geometry(clst_mnth_bounds.assign) <- NULL
-# 
-# dt <- dt %>% 
-#   dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
-#   dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
-#                                          paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"),
-#                                          hvyrmnth_dtmnth))
-# 
-# dates <- readr::read_csv("internal_datamap_files/pr_date_liftover.csv")
-# dt <- dt %>% 
-#   dplyr::left_join(x=., y=dates, by = "hvyrmnth_dtmnth") %>% 
-#   dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-# 
-# xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
 
 #.............
@@ -168,27 +124,18 @@ dt <- dt %>%
 #.............
 summary(dt$pfldh)
 summary(dt$pv18s)
-summary(dt$po18s)
 
 dt <- dt %>% 
   dplyr::mutate(
     pfldhct_cont = pfctmean,
     pfldhct_cont_log = log(pfctmean + tol),
-    po18sct_cont = poctcrrct,
-    po18sct_cont_log = log(poctcrrct + tol),
     pv18sct_cont = pvctcrrct,
     pv18sct_cont_log = log(pvctcrrct + tol),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
-    po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos")),
-    pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
-    pv18s_sens = ifelse(pv18sct_cont <= 42 & !is.na(pv18sct_cont), 1, 0), # empirical evidence to suggest 42 is an appropriate CT cutoff
-    pv18s_fctb_sens = factor(pv18s_sens, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
-    pv18s_fctb_monoinfxn = factor(ifelse(pv18s_fctb == "vivpos" &  po18s_fctb == "ovneg" & pfldh_fctb == "falneg", 1, 0), 
-                           levels=c("0", "1"), labels=c("vivmononeg", "vivmonopos"))
-    
+    pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos"))
   )
 
-dt[, colnames(dt)[grepl("pv18s|pfldh|po18s", colnames(dt))] ] %>% 
+dt[, colnames(dt)[grepl("pv18s|pfldh", colnames(dt))] ] %>% 
   sapply(., summary) # looks clean, all NAs are consistent except Pf but that has to do with double call strategy
                      # Remember, CT values >cutoff (species dependent) are coded as NA in raw data. Retained here
   
@@ -234,7 +181,7 @@ xtabs(~dt$hab57_fctb + haven::as_factor(dt$hb57) + haven::as_factor(dt$hv104), a
 #.............
 # Duffy Phenotype
 #.............
-# TODO 
+# wet lab. basically all individuals except for 3 -- no formal modeling needed (since no variation)
 
 
 #..........................................................................................
@@ -359,47 +306,6 @@ dt <- dt %>%
 
 xtabs(~dt$hv106 + dt$hv106_fctb, addNA = T)
 
-# #.............
-# # ethnicity
-# #.............
-# A note on ethnicity: resolution not great here. Really care about Duffy status. Captured with
-# genotyping. 
-# 
-# 
-# # question is whether you are congolese
-# levels(factor(haven::as_factor(dt$s113a))) 
-# levels(factor(haven::as_factor(dt$sm113a))) 
-# 
-# table(factor(haven::as_factor(dt$s113a))) 
-# table(factor(haven::as_factor(dt$sm113a))) 
-# 
-# 
-# dt <- dt %>% 
-#   dplyr::mutate(hv113a = ifelse(haven::as_factor(hv104) == "female", s113a, sm113a),
-#                 hv113a_fctb = factor(hv113a, levels = c(0,1), labels = c("no", "yes")))
-# 
-# 
-# # question of ethnicity, use liftover
-# levels(factor(haven::as_factor(dt$s114))) 
-# levels(factor(haven::as_factor(dt$sm114))) 
-# 
-# table(factor(haven::as_factor(dt$s114))) 
-# table(factor(haven::as_factor(dt$sm114))) 
-# 
-# 
-# dt <- dt %>% 
-#   dplyr::mutate(hv114a = ifelse(haven::as_factor(hv104) == "female", s114, sm114))
-# 
-# ethnic <-  readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_ethnic_liftover.csv")
-# 
-# dt <- dt %>%
-#   left_join(x=., y=ethnic, by="hv114a") %>% 
-#   dplyr::mutate(hv114a_fctm = factor(ethnicgroup),
-#                 hv114a_fctm = forcats::fct_rev(forcats::fct_reorder(.f = hv114a_fctm, .x = hv114a_fctm, .fun = length)))
-# 
-# xtabs(~dt$hv114a + dt$hv114a_fctm, addNA = T)
-# 
-
 
 #------------------------------------------
 # Owns livestock, herds, or farm animals
@@ -415,30 +321,6 @@ dt <- dt %>%
     hv246_fctb = forcats::fct_relevel(hv246_fctb, "no")
   ) 
 xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
-
-# #------------------------------------------
-# # Occupation
-# #------------------------------------------
-# # Going to dichotomize as suspected outdoor versus indoor
-# # Will code "others" as NA because cannot discern, only 2 obs
-# 
-# dt$hab717 <- ifelse(haven::as_factor(dt$hv104) == "female", dt$v717, dt$mv717)
-# table(dt$v717)
-# table(dt$mv717)
-# table(dt$hab717)
-# 
-# occupation <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_occupation_liftover.csv")
-# occupation$hab717 <- factor(occupation$hv717) # my mac being a pain
-# 
-# dt <- dt %>% 
-#   dplyr::mutate(hab717 = haven::as_factor(hab717), 
-#                 hab717 =  forcats::fct_drop(hab717))
-# dt <- dt %>%
-#   left_join(x=., y=occupation, by="hab717") %>% 
-#   dplyr::mutate(hab717_fctb = factor(jobconditions),
-#                 hab717_fctb = forcats::fct_relevel(hab717_fctb, "indoors"))
-# 
-# xtabs(~dt$hab717 + dt$hab717_fctb, addNA = T)
 
 #------------------------------------------
 # children under 5 number
@@ -460,14 +342,6 @@ dt <- dt %>%
 #..........................................................................................
 #                                 MALARIA-INTERVENTIONS
 #..........................................................................................
-# #.............
-# # Health Insurance
-# #.............
-# dt <- dt %>% 
-#   dplyr::mutate(hab481 =  ifelse(haven::as_factor(hv104) == "female", v481, mv481),
-#                 hab481 = ifelse(hab481 == 9, NA, hab481),
-#                 hab481_fctb = factor(hab481, levels = c(0,1), labels = c("no", "yes")))
-# xtabs(~dt$hab481_fctb, addNA = T)
 
 #.............
 # ITN for INDIVIDUAL 
@@ -487,7 +361,7 @@ dt <- dt %>%
   dplyr::mutate(
     ITN_fctb = ifelse(
       # (i) long-lasting insecticidal nets that were <= 3 y old at the time of survey
-      !(haven::as_factor(hml4) %in% c("36", "more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
+      !(haven::as_factor(hml4) %in% c("more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
       # (ii) conventional ITNs that were 1 y old 
       ifelse(haven::as_factor(hml4) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
              # or were retreated within the year before the survey
@@ -535,114 +409,6 @@ xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml20))
 # ALL CLUSTER LEVEL VARIABLES WILL BE APPENDED WTIH "_clst"  
 dtsrvy <- makecd2013survey(survey = dt)
 
-#..........................................................................................
-#                                  COINFECTIONS/BIOMARKER VARIABLES
-#..........................................................................................
-# Hbmiss <- dt[is.na(dt$hab56_cont),]
-# table(Hbmiss$hv001) # looks well dispersed among clusters
-# 
-# coinfxnbiomrk <- dtsrvy %>% 
-#   dplyr::group_by(hv001) %>% # cluster level 
-#   dplyr::summarise(
-#     pfldh_cont_clst = srvyr::survey_mean(x = pfldh),
-#     po18s_cont_clst = srvyr::survey_mean(x = po18s),
-#     hiv03_cont_clst = srvyr::survey_mean(x = hiv03),
-#     hab56_cont_clst = srvyr::survey_mean(hab56_cont, na.rm = T)) %>% 
-#   dplyr::mutate(
-#     pfldh_cont_scale_clst = my.scale(pfldh_cont_clst, center = T, scale = T),
-#     po18s_cont_scale_clst = my.scale(po18s_cont_clst, center = T, scale = T),
-#     hiv03_cont_scale_clst = my.scale(hiv03_cont_clst, center = T, scale = T),
-#     hab56_cont_scale_clst = my.scale(hab56_cont_clst, center = T, scale = T)
-#   ) %>% 
-#   dplyr::select(-c(dplyr::ends_with("_se")))
-# 
-# sapply(coinfxnbiomrk, summary) # looks clean, had to remove NAs in Hb because 49 missing (spread across 39 clusters)
-# 
-# dt <- dplyr::left_join(x = dt, y = coinfxnbiomrk)
-
-
-#..........................................................................................
-#                                ECOLOGICAL VARIABLES
-#..........................................................................................
-source("R/00-functions_maps.R")
-# #.............
-# # Precipitation (CHRIPS) & Temperature (Emch/Manny)
-# #.............
-# # precip data
-# precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T)
-# precipfrst <- lapply(precip, readRasterBB, bb = bb)
-# precipdf <- tibble::tibble(names = basename(precip)) %>% 
-#   dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
-#                 year = stringr::str_split_fixed(names, "\\.", n=2)[,1] ,
-#                 mnth =  stringr::str_split_fixed(names, "\\.", n=2)[,2] ,
-#                 hvdate_dtdmy = lubridate::dmy(paste(1, mnth, year, sep = "/")),
-#                 year = lubridate::year(hvdate_dtdmy),
-#                 mnth = lubridate::month(hvdate_dtdmy),
-#                 hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
-#                 precipraster = precipfrst) %>% 
-#   dplyr::select(c("hvyrmnth_dtmnth_lag", "precipraster"))
-# 
-# # temp data
-# temp <- raster::stack("data/raw_data/weather_data/emch_manny/cru_ts4.01.2011.2016.tmp.dat.nc") %>% 
-#         raster::crop(x = ., y = sf::as_Spatial(bb))
-# 
-# tempdf <- tibble::tibble(orignnames = names(temp),
-#                          names = gsub("X", "", names(temp)),
-#                          hvdate_dtdmy = lubridate::ymd(names),
-#                          year = lubridate::year(hvdate_dtdmy),
-#                          mnth = lubridate::month(hvdate_dtdmy),
-#                          hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
-#                          tempraster = lapply(orignnames, raster::subset, x = temp)) %>% 
-#   dplyr::select(c("hvyrmnth_dtmnth_lag", "tempraster"))
-# 
-# 
-# 
-# wthrnd <- dt[,c("hv001", "hvyrmnth_dtmnth_lag", "geometry", "urban_rura")] %>% 
-#   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
-# wthrnd <- wthrnd[!duplicated(wthrnd$hv001),]
-# 
-# wthrnd <- wthrnd %>% 
-#   dplyr::left_join(., tempdf) %>% 
-#   dplyr::left_join(., precipdf)
-# 
-# # Drop in a for loop
-# wthrnd$precip_lag_cont_clst <- NA
-# wthrnd$temp_lag_cont_clst <- NA
-# 
-# for(i in 1:nrow(wthrnd)){
-#   # precip
-#   wthrnd$precip_lag_cont_clst[i] <- 
-#     raster::extract(x = wthrnd$precipraster[[i]],
-#                     y = sf::as_Spatial(wthrnd$geometry[i]),
-#                     buffer = wthrnd$buffer[i],
-#                     fun = mean,
-#                     sp = F
-#                     )
-#   
-#   # temp
-#   wthrnd$temp_lag_cont_clst[i] <- 
-#     raster::extract(x = wthrnd$tempraster[[i]],
-#                     y = sf::as_Spatial(wthrnd$geometry[i]),
-#                     buffer = wthrnd$buffer[i],
-#                     fun = mean,
-#                     sp = F
-#     )
-#   
-# }
-# 
-# wthrnd <- wthrnd %>% 
-#   dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag", "precip_lag_cont_clst", "temp_lag_cont_clst")) %>% 
-#   dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-# sf::st_geometry(wthrnd) <- NULL
-# dt <- dt %>% 
-#   dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
-#   dplyr::mutate(
-#                 precip_lag_cont_scale_clst = my.scale(precip_lag_cont_clst, center = T, scale = T),
-#                 temp_lag_cont_scale_clst = my.scale(temp_lag_cont_clst, center = T, scale = T)
-#                 )
-# 
-# 
-
 dt <- dt %>% 
   dplyr::mutate(precip_ann_cont_clst = ifelse(annual_precipitation_2015 == 9999, NA, annual_precipitation_2015), # note no missing (likely dropped with missing gps)
                 precip_ann_cont_scale_clst = my.scale(precip_ann_cont_clst, center = T, scale = T),
@@ -659,23 +425,6 @@ dt <- dt %>%
                 alt_dem_cont_scale_clst = my.scale(alt_dem_cont_clst, center = T, scale = T)
   )
 
-# #.............
-# # Ape Habitat Overlap
-# #.............
-# drc_ape <- readRDS(file = "data/redlist_species_data_primate/drc_ape.rds")
-# drc_ape_simplified <- rgeos::gSimplify(
-#   sf::as_Spatial(sf::st_union(drc_ape)), 
-#   tol = 1e-3)
-# 
-# dt <- dt %>% 
-#   dplyr::mutate(ape_habitat_fctb_clst = factor(
-#     ifelse(rgeos::gContains(spgeom1 = drc_ape_simplified,
-#                             spgeom2 = sf::as_Spatial(sf::st_as_sf(.)),
-#                             byid = T),
-#            1, 0),
-#     levels = c(0,1), labels = c("NoOverlap", "Overlap"))
-#   )
-# xtabs(~dt$ape_habitat_fctb_clst)
 
 #.............
 # Distance to Water Source
@@ -701,9 +450,10 @@ dt <- dt %>%
 # and can be seen by comparing hv025/026 with population density, light density, build, and accessibility 
 # the first PCA explains ~80% of the variation. Will use that as my new "urban score" 
 
-urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds")
+urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds") %>% 
+  dplyr::select(c("hv001", "urbanscore"))
 dt <- dplyr::left_join(dt, urb, by = "hv001")
-xtabs(~dt$urbanscore_fctm_clst + haven::as_factor(dt$hv025), addNA = T) # looks OK. Some rural places are now urban, which is consistent with what I expected
+boxplot(dt$urbanscore ~ haven::as_factor(dt$hv025)) # looks OK. Some urban places look pretty rural... which is more or less what I expected
 
 #.............
 # Distance to Health Site
@@ -713,54 +463,6 @@ dt <- dt %>%
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(hlthdist_cont_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T)
                 )
-
-#.............
-# ITN Cluster Usage; mean wealth; prop educ
-#.............
-summary(dt$hml20) # no missing
-summary(dt$wlthrcde_fctm)
-summary(dt$hv106_fctb)
-
-democlust <- dtsrvy %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(
-    ITN_cont_clst = srvyr::survey_mean((ITN_fctb == "yes"), vartype = c("se")),
-    hab57_cont_clst = srvyr::survey_mean((hab57_fctb == "yes"), vartype = c("se")),
-    hv106_cont_clst = srvyr::survey_mean((hv106_fctb == "higher"), vartype = c("se"), na.rm = T)
-  ) %>% 
-  dplyr::mutate(
-    hml20_cont_scale_clst = my.scale(logit(ITN_cont_clst, tol = tol), center = T, scale = T),
-    hv106_cont_scale_clst = my.scale(logit(hv106_cont_clst, tol = tol), center = T, scale = T)
-          ) %>% 
-  dplyr::select(-c(dplyr::ends_with("_se")))
-
-# find median wealth and then recode it as a factor 
-clstwlth <- dtsrvy %>% 
-  dplyr::group_by(hv001) %>%
-  dplyr::summarise(
-    wlthrcde_fctm_clst = srvyr::survey_quantile(as.numeric(wlthrcde_fctm), quantiles = 0.5)
-  ) %>% 
-  dplyr::select(c("hv001", "wlthrcde_fctm_clst_q50")) %>% 
-  dplyr::mutate(
-    wlthrcde_fctm_clst_q50 = floor(wlthrcde_fctm_clst_q50) # in case of ties
-  )
-
-# decode this
-wlthliftover <- data.frame(
-  wlthrcde_fctm_clst_q50 = 1:5,
-  wlthrcde_fctm_clst = levels(dt$wlthrcde_fctm)
-)
-
-clstwlth <- dplyr::left_join(clstwlth, wlthliftover, by = "wlthrcde_fctm_clst_q50") %>% 
-  dplyr::select(-c("wlthrcde_fctm_clst_q50"))
-
-# now merge back into democlust
-democlust <- dplyr::left_join(democlust, clstwlth, by = "hv001")
-
-
-sapply(democlust, summary) # looks clean
-
-dt <- dplyr::left_join(x = dt, y = democlust)
 
 
 #.............
@@ -774,50 +476,6 @@ dt %>%
   dplyr::summarise(
     actuse = mean(anyatm_cont_clst),
     actuse.scale = mean(anyatm_cont_scale_clst)) # looks good
-
-
-
-#.............
-# Cluster Level Kid RDT/Micro
-#.............
-# https://dhsprogram.com/data/Guide-to-DHS-Statistics/ Percentage of Children Classified in Two Test
-pr <- readRDS("data/raw_data/dhsdata/datasets/CDPR61FL.rds")
-rdtmicro <- pr %>% 
-  dplyr::filter(hc1 < 60 & hc1 >= 6) %>% # age
-  dplyr::filter(hv042 == 1) %>% # household selected for Hb
-  dplyr::filter(hv103 == 1) %>% #de facto
-  dplyr::mutate(hv005_wi = hv005/1e6,
-                hml32_fctb = haven::as_factor(hml32),
-                hml32_fctb = if_else(hml32_fctb %in% c("positive", "negative"), 
-                                     hml32_fctb, factor(NA)),
-                hml32_fctb =  forcats::fct_drop(hml32_fctb),
-                hml32_numb = ifelse(hml32_fctb == "positive", 1, ifelse(hml32_fctb == "negative", 0, NA)),
-                
-                hml35_fctb = haven::as_factor(hml35),
-                hml35_fctb = if_else(hml35_fctb %in% c("positive", "negative"), 
-                                     hml35_fctb, factor(NA)),
-                hml35_fctb =  forcats::fct_drop(hml35_fctb),
-                hml35_numb = ifelse(hml35_fctb == "positive", 1, ifelse(hml35_fctb == "negative", 0, NA))
-  )
-
-
-rdtmicro_srvy <- rdtmicro %>% srvyr::as_survey_design(ids = hv001, 
-                                          strata = hv023, 
-                                          weights = hv005_wi)
-
-rdtmicro_sum <- rdtmicro_srvy %>% 
-  dplyr::mutate(count = 1) %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(
-    RDTprev_cont_clst = srvyr::survey_mean(hml35_numb, na.rm = T, vartype = c("se")),
-    microprev_cont_clst = srvyr::survey_mean(hml32_numb, na.rm = T, vartype = c("se"))
-  ) %>% 
-  dplyr::select(-c(dplyr::ends_with("_se"))) %>% 
-  dplyr::mutate(RDTprev_cont_scale_clst = my.scale(logit(RDTprev_cont_clst, tol = tol)),
-                microprev_cont_scale_clst = my.scale(logit(microprev_cont_clst, tol=tol)),
-                hv001 = as.numeric(hv001))
-
-dt <- dplyr::left_join(dt, rdtmicro_sum, by = "hv001")
 
 
 
