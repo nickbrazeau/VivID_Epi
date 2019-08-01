@@ -6,7 +6,7 @@ tol <- 1e-3
 
 # Notes on Lonely PSUs
 # http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
-options(survey.lonely.psu="certainty")
+options(survey.lonely.psu="adjust")
 
 #...........................................................
 # Antimalarial Cluster Usage
@@ -76,7 +76,7 @@ clst.all <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw
 
 kdsrv_fvr_clst.imp <- dplyr::left_join(clst.all, kdsrv_fvr_clst, by = "hv001") 
 
-
+sum(is.na(kdsrv_fvr_clst.imp$anyatm_cont_clst))
 
 #.................
 # Look to see if KNN is reasonable

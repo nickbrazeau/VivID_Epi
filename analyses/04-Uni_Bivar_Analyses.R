@@ -10,6 +10,10 @@ devtools::install_github("kaz-yos/tableone")
 library(tableone)
 options(scipen=999)
 
+# Notes on Lonely PSUs
+# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
+options(survey.lonely.psu="adjust")
+
 #......................
 # Import Data
 #......................

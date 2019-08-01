@@ -16,6 +16,9 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 set.seed(42)
 
+# Notes on Lonely PSUs
+# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
+options(survey.lonely.psu="adjust")
 
 bb <- osmdata::getbb("Democratic Republic of the Congo", 
                      featuretype = "country",

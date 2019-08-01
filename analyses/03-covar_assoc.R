@@ -9,6 +9,10 @@ library(srvyr)
 library(ggcorrplot)
 source("R/00-functions_basic.R")
 
+# Notes on Lonely PSUs
+# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
+options(survey.lonely.psu="adjust")
+
 
 # https://cran.r-project.org/web/packages/jtools/vignettes/svycor.html
 # ^ rewrite with weights! 

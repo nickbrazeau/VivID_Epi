@@ -1,5 +1,5 @@
-# As desrcibed in this manuscript (PMID: 28222094)
-# housing materials are  taken into consideration for wealth
+# As desrcibed in the Tusting 2017 manuscript (PMC5319641)
+# housing materials are taken into consideration for wealth
 # need to recode the wealth variable to avoid controlling for part of our
 # effect when considering the covar housing materials (as they did above)
 # https://dhsprogram.com/programming/wealth%20index/Steps_to_constructing_the_new_DHS_Wealth_Index.pdf
