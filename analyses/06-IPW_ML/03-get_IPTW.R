@@ -4,6 +4,7 @@
 
 # imports
 library(tidyverse)
+library(ggridges)
 source("R/00-functions_iptw.R")
 
 
@@ -40,13 +41,25 @@ params$iptw <- pmap(params[,c("task", "preds")], get_iptw_prob)
 # Analyze Weights
 #................................................
 lapply(params$iptw, summary)
+params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
 
 # make plot
+plotdf <- params %>% 
+  dplyr::select(c("target", "iptw")) %>% 
+  tidyr::unnest() %>% 
+  dplyr::filter(iptw < 15)
+
+ggplot(plotdf, aes(x = iptw, y = target)) +
+  geom_density_ridges(scale = 4) + theme_ridges() +
+  scale_y_discrete(expand = c(0.01, 0)) + 
+  scale_x_continuous(expand = c(0.01, 0)) 
 
 
-
-
-
+plotdf %>% 
+  dplyr::group_by(target) %>% 
+  dplyr::summarise(min = min(iptw),
+                   mean = mean(iptw),
+                   max = max(iptw))
 
 
 
