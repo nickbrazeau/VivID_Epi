@@ -12,7 +12,8 @@ options(survey.lonely.psu="adjust")
 # Antimalarial Cluster Usage
 #...........................................................
 #https://dhsprogram.com/data/Guide-to-DHS-Statistics/
-kr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDKR61FL.rds")
+kr <- readRDS(file = "data/raw_data/dhsdata/datasets/CDKR61FL.rds")
+
 # liftover drug function
 # per document, missing goes to NO
 missingliftover <- function(x){
@@ -20,12 +21,13 @@ missingliftover <- function(x){
   return(x)
 }
 
+
 denom <- kr %>% 
-  dplyr::filter(v012 < 60) %>% # less than 5 years
+  dplyr::filter(b8 < 5) %>% # less than 5 years -- dhs calls for b19<60, but no b19 variable in kr, ir, hr... this should be sufficient as it is less than 5 years
   dplyr::filter(haven::as_factor(b5) == "yes") %>% # currently alive
   dplyr::filter(haven::as_factor(h22) == "yes") %>% # had fever in last two weeks
   dplyr::select(c(paste0("ml13", letters[1:8]), "v001", "v005", "v023")) %>% 
-  dplyr::select(-c("ml13g")) %>% 
+  dplyr::select(-c("ml13g")) %>% # coded as NA in cd2013
   dplyr::mutate(v005 = v005/1e6)
 
 # clean up
@@ -104,6 +106,10 @@ find_mean_actuse_five_clusters <- function(missingcluster.sf, knownclusters.sf){
   # find 5 nearby clusters
   dist.sorted.5 <- sort(dist)[1:5]
   nrbyclstrs <- which(dist %in% dist.sorted.5)
+  # sanity check
+  if(length(nrbyclstrs) != 5){
+    stop("nearest clusters don't match up")
+  }
   nrbyclstrs <- knownclusters.sf$hv001[nrbyclstrs]
   
   ret <- knownclusters.sf %>% 
