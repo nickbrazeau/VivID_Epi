@@ -6,4 +6,4 @@
 #SBATCH --mail-type=all
 #SBATCH --mail-user=nbrazeau@med.unc.edu
 
-Rscript -e 'setwd("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi"); source("analyses/05-covar_assoc/get_covarcorr_on_LL.sh")'
+Rscript -e 'setwd("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi"); source("analyses/05-covar_assoc/01-covar_assoc_slurm.R")'
