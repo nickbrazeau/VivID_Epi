@@ -35,7 +35,11 @@ txs <- txs %>%
 #........................
 # subset to treatments, outcome, weights and coords
 varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
-                   "alt_dem_cont_scale_clst", "urbanscore_cont_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "built_population_2014_cont_scale_clst", # latent urbanicity var
+                   "nightlights_composite_cont_scale_clst", # latent urbanicity var
+                   "all_population_count_2015_cont_scale_clst", # latent urbanicity var
+                   "travel_times_2015_cont_scale_clst", # latent urbanicity var
                    "longnum", "latnum")
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
@@ -242,8 +246,6 @@ paramsdf <- txs %>%
   dplyr::select(c("learner", "task", "rdesc", "hyperparams", "ctrl", "performmeasure")) 
 
 
-
-
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
@@ -256,7 +258,7 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
                                                                  ntry, 
-                                                                 ntry+2),
+                                                                 ntry+1),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",

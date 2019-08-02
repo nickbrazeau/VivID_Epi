@@ -34,7 +34,11 @@ txs <- txs %>%
 #........................
 # subset to treatments, outcome, weights and coords
 varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
-                   "alt_dem_cont_scale_clst", "urbanscore_cont_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "built_population_2014_cont_scale_clst", # latent urbanicity var
+                   "nightlights_composite_cont_scale_clst", # latent urbanicity var
+                   "all_population_count_2015_cont_scale_clst", # latent urbanicity var
+                   "travel_times_2015_cont_scale_clst", # latent urbanicity var
                    "longnum", "latnum")
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
@@ -65,11 +69,6 @@ txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set,
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type")], 
                         .f = make_class_task)
 
-# now look and correct class imbalance
-# txs$task <- purrr::pmap(txs[,c("task", "type")], 
-#                        .f = find_Class_Imbalance,
-#                        classimb_tol = 0.6,
-#                        smotenn = 5)
 txs <- txs %>% 
   dplyr::select(c("target", "data", "adj_set"))
 
@@ -88,7 +87,7 @@ paramsdf <- lapply(1:nulliters, function(x) return(txs)) %>%
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/00-null_distributions/")
-ntry <- 1028
+ntry <- nulliters
 sjob <- rslurm::slurm_apply(f = make.null.distribution.energy, 
                             params = paramsdf, 
                             jobname = 'nulldist_vivid_covar',
@@ -97,7 +96,7 @@ sjob <- rslurm::slurm_apply(f = make.null.distribution.energy,
                             submit = T,
                             slurm_options = list(mem = 64000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry - 1, 
+                                                                 ntry, 
                                                                  128),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
