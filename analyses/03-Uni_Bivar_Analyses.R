@@ -103,7 +103,7 @@ xtabs(~pv18s + pfldh, data = dt)
 # identify risk factors
 #......................
 pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
-pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y" & dcdr$column_name != "pfldh_fctb" & dcdr$column_name != "pfldh_cont_clst" ]
+pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y" & dcdr$column_name != "pfldh_fctb" ]
 pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 
 
