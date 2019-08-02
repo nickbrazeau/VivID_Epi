@@ -117,8 +117,24 @@ summary(dt$travel_times_2015_scale); sd(dt$travel_times_2015_scale)
 #.............
 
 urbanmat <- dt[!duplicated(dt$hv001), 
-               c("hv001", "hv025", "built_population_2014_scale", "nightlights_composite_scale",
+               c("hv001", "hv025", 
+                 "built_population_2014", "nightlights_composite",
+                 "all_population_count_2015", "travel_times_2015",
+                 "built_population_2014_scale", "nightlights_composite_scale",
                  "all_population_count_2015_scale", "travel_times_2015_scale")] 
+
+urbanmat <- urbanmat %>% 
+  dplyr::rename(
+    built_population_2014_cont_clst = built_population_2014,
+    nightlights_composite_cont_clst =  nightlights_composite,
+    all_population_count_2015_cont_clst =  all_population_count_2015,
+    travel_times_2015_cont_clst =  travel_times_2015,
+    built_population_2014_cont_scale_clst =  built_population_2014_scale,
+    nightlights_composite_cont_scale_clst =  nightlights_composite_scale,
+    all_population_count_2015_cont_scale_clst =  all_population_count_2015_scale,
+    travel_times_2015_cont_scale_clst =  travel_times_2015_scale
+  )
+
 
 
 #.............
