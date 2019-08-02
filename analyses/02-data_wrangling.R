@@ -131,8 +131,11 @@ dt <- dt %>%
     pfldhct_cont_log = log(pfctmean + tol),
     pv18sct_cont = pvctcrrct,
     pv18sct_cont_log = log(pvctcrrct + tol),
+    po18sct_cont = poctcrrct,
+    po18sct_cont_log = log(poctcrrct + tol),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
-    pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos"))
+    pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
+    po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos"))
   )
 
 dt[, colnames(dt)[grepl("pv18s|pfldh", colnames(dt))] ] %>% 

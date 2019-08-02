@@ -66,6 +66,27 @@ cowplot::ggdraw() +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 graphics.off()
 
+
+
+#----------------------------------------------
+# Figure 3
+#----------------------------------------------
+load()
+#svglite::svglite(file = "~/Desktop/interference.svg", width = 11, height = 16)
+cowplot::plot_grid(ret.ind$plot$plot, 
+                   ret.interference$plot$plot, 
+                   ncol = 1)
+
+#graphics.off()
+
+
+
+
+
+
+
+
+
 #----------------------------------------------------------------------------------------------------
 # SUPPLEMENTAL FIGURES
 #----------------------------------------------------------------------------------------------------
