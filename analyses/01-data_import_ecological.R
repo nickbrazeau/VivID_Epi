@@ -4,26 +4,7 @@
 #----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)
-library(heavyRain)
 library(sf)
-
-
-
-#---------------------------------------------------------------------------------
-# Precipation Data
-#---------------------------------------------------------------------------------
-dir.create("data/raw_data/weather_data/CHIRPS/", recursive = T)
-heavyRain::getCHIRPS(region = "africa",
-                     format = "tifs",
-                     tres = "monthly", 
-                     sres = 0.05, # near same resolution as Manny pulled down
-                     begin = as.Date("2013-01-01"),
-                     end = as.Date("2014-12-31"),
-                     dsn = "data/raw_data/weather_data/CHIRPS/",
-                     overwrite = T)
-
-system('gunzip data/raw_data/weather_data/CHIRPS/*')
-
 
 
 
@@ -41,7 +22,7 @@ bb <- osmdata::getbb("Democratic Republic of the Congo",
 drc_ape <- sf::st_crop(x = ape, y = bb)
 
 
-saveRDS(drc_ape, file = "data/redlist_species_data_primate/drc_ape.rds")
+saveRDS(drc_ape, file = "data/derived_data/drc_ape.rds")
 
 
 
