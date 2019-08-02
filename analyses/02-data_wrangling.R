@@ -448,13 +448,19 @@ dt <- dt %>%
 # Potential (significant) misclassification bias in the DHS DRC-II coding of 
 # urban vs. rural as has been noted here https://journals.sagepub.com/doi/10.1177/0021909617698842
 # and can be seen by comparing hv025/026 with population density, light density, build, and accessibility 
-# the first PCA explains ~80% of the variation. Will use that as my new "urban score" 
+# going to use those four variables as latent variables of urbanicity
 
-urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds") %>% 
-  dplyr::select(c("hv001", "urbanscore")) %>% 
-  dplyr::rename(urbanscore_cont_clst = urbanscore)
-dt <- dplyr::left_join(dt, urb, by = "hv001")
-boxplot(dt$urbanscore ~ haven::as_factor(dt$hv025)) # looks OK. Some urban places look pretty rural... which is more or less what I expected
+
+# urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds") %>% 
+#   dplyr::select(c("hv001", "urbanscore")) %>% 
+#   dplyr::rename(urbanscore_cont_clst = urbanscore)
+# dt <- dplyr::left_join(dt, urb, by = "hv001")
+# boxplot(dt$urbanscore ~ haven::as_factor(dt$hv025)) # looks OK. Some urban places look pretty rural... which is more or less what I expected
+
+urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds")
+dt <- dt %>% 
+  dplyr::left_join(x=., y = urb, by = c("hv001", "hv025")) 
+
 
 #.............
 # Distance to Health Site
