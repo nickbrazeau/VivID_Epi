@@ -246,7 +246,7 @@ paramsdf <- txs %>%
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
-ntry <- 18
+ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
                             jobname = 'vivid_tunes',
@@ -255,12 +255,12 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                             submit = T,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry - 1, 
-                                                                 18),
+                                                                 ntry, 
+                                                                 ntry+2),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
-cat("*************************** \n Submitted tuning models \n *************************** ")
+cat(" *************************** \n Submitted tuning models \n *************************** ")
 
 
