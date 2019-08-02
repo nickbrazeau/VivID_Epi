@@ -70,8 +70,22 @@ broom::tidy(drcpf, conf.int = T)
 # summary(clst$pfldhprev)
 
 
+# ignore 95% CI but want the weighted numerator and denominator for the paper 
+clstprev <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
+                   pvn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
+                   pfn = srvyr::survey_total(pfldh, vartype = c("se", "ci")),
+                   
+                   pvprev = srvyr::survey_mean(pv18s, vartype = c("se", "ci")),
+                   pfprev = srvyr::survey_mean(pfldh, vartype = c("se", "ci"))
+                   )
+
+
+
 # pfldh coinfection
-dtsrvy %>% 
+coinfx <- dtsrvy %>% 
   dplyr::mutate(pvpf = ifelse(pv18s == 1 & pfldh == 1, 1, 0)) %>% 
   srvyr::summarise(
     pfpvcoinfx = srvyr::survey_total(pvpf, vartype = "ci")
