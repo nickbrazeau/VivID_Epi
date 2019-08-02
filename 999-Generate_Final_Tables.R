@@ -9,8 +9,12 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
 #----------------------------------------------------------------------------------------------------
 # MAIN TABLES
 #----------------------------------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------------------------------
+# SUPPLEMENTAL TABLES
+#----------------------------------------------------------------------------------------------------
 #----------------------------------------------
-# Table 1: Bivariate Results
+# Table 1: Case/NonCase Dist
 #----------------------------------------------
 load("results/bivariate_model_results.rda")
 
@@ -26,13 +30,11 @@ readr::write_csv(x = casestbl1df,
                  path = "results/tables/Tbl1_col3_casesbl1.csv",
                  na = "")
 
-#----------------------------------------------------------------------------------------------------
-# SUPPLEMENTAL TABLES
-#----------------------------------------------------------------------------------------------------
+
+
 #----------------------------------------------
-# Supp Table 1 & 2: Bivariate, Confounded OR
+# Supp Table 2: Bivariate, Confounded OR
 #----------------------------------------------
-load("results/bivariate_model_results.rda")
 
 readr::write_csv(x = pvivriskfactortable, 
                  path = "results/tables/Supp1_pvivriskfactortable.csv",
@@ -41,6 +43,12 @@ readr::write_csv(x = pvivriskfactortable,
 readr::write_csv(x = pfalriskfactortable, 
                  path = "results/tables/Supp2_pfalriskfactortable.csv",
                 na = "")
+
+
+
+
+
+
 
 
 

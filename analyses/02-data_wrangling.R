@@ -413,7 +413,7 @@ xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml20))
 dtsrvy <- makecd2013survey(survey = dt)
 
 dt <- dt %>% 
-  dplyr::mutate(precip_ann_cont_clst = ifelse(annual_precipitation_2015 == 9999, NA, annual_precipitation_2015), # note no missing (likely dropped with missing gps)
+  dplyr::mutate(precip_ann_cont_clst = ifelse(annual_precipitation_2015 == -9999, NA, annual_precipitation_2015), # note no missing (likely dropped with missing gps)
                 precip_ann_cont_scale_clst = my.scale(precip_ann_cont_clst, center = T, scale = T),
                 temp_ann_cont_clst = ifelse(night_land_surface_temp_2015 == 9999, NA, night_land_surface_temp_2015), # note no missing (likely dropped with missing gps)
                 temp_ann_cont_scale_clst = my.scale(night_land_surface_temp_2015, center = T, scale = T)
