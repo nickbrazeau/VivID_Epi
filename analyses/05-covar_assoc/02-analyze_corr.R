@@ -1,6 +1,15 @@
+#----------------------------------------------------------------------------------------------------
+# Purpose of this script is to examine the associations
+# between covariates and get a baseline understanding of their joint distributions
+#----------------------------------------------------------------------------------------------------
+library(GGally)
 
 
 
+
+GGally::ggpairs(dat)
+
+GGally::ggcorr(dat)
 
 #......................
 # Parametric Approach -- will account for weights here since outcome dependent

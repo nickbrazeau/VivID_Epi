@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to examine the associations
-# between covariates and get a baseline understanding of their joint distributions
+# Purpose of this script is to get the associations
+# between covariates using slurm
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(energy)
@@ -47,6 +47,29 @@ slurm_calc_corr <- function(covar1, covar2, data){
   return(ret)
 }
 
+
+#................................
+# send it out with rSLURM
+#................................
+
+
+# for slurm on LL
+setwd("analyses/05-covar_assoc/")
+ntry <- nrow(paramsdf)
+sjob <- rslurm::slurm_apply(f = slurm_calc_corr, 
+                            params = paramsdf, 
+                            jobname = 'covar_corr',
+                            nodes = ntry, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 32000,
+                                                 array = sprintf("0-%d%%%d", 
+                                                                 ntry, 
+                                                                 128),
+                                                 'cpus-per-task' = 8,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "1-00:00:00"))
 
 
 
