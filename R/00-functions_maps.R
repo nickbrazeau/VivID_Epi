@@ -3,6 +3,21 @@ library(sf)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
 
+# Set some colors
+# took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/
+# Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
+# color for prev
+prevscale <- rev(heat.colors(101))
+
+# diff colors
+cool <- rainbow(50, start=rgb2hsv(col2rgb('cyan'))[1], end=rgb2hsv(col2rgb('blue'))[1])
+warm <- rainbow(50, start=rgb2hsv(col2rgb('red'))[1], end=rgb2hsv(col2rgb('yellow'))[1])
+cols <- c(rev(cool), rev(warm))
+mypalettediff <- colorRampPalette(cols)(101)
+
+
+
+
 #----------------------------------------------------------------------------------------------------
 # Read Raster Temp and Precip
 #----------------------------------------------------------------------------------------------------

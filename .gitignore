@@ -21,6 +21,8 @@ olddata/
 rdhs.json
 figures/
 results/
+*jpg
+*svg
 
 # RStudio files
 .Rproj.user/

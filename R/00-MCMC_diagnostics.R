@@ -34,3 +34,50 @@ checkConvergence <- function(burnin, samples) {
   }
   
 }
+
+
+
+
+#----------------------------------------------
+# Internal use function, not good for corner cases
+#----------------------------------------------
+
+make_mcmc_chain_plots <- function(chaindat, filename){
+  # check if chaindat wasn't fit, i.e. rho in ICAR model
+  if(is.na(chaindat[[1]][[1]])){
+    plot(1)
+  } else {
+    
+    jpeg(filename, height = 8, width = 11, units = "in", res=200)
+    par(mfrow=c(2,2))
+    plot(chaindat[[1]][[1]])
+    plot(chaindat[[1]][[2]])
+    plot(chaindat[[1]][[3]])
+    plot(chaindat[[1]][[4]])
+    graphics.off()
+  }
+}
+
+wrap_chain_plotter <- function(tempdir, chains){
+  # this function does not return anything
+  # it is internally making plots
+  
+  purrr::pmap(chains, function(data, name){
+    
+    filename <- paste0(mytempdir, name, "_", colnames(data), ".jpg") 
+    
+    for(i in 1:ncol(data)){
+      make_mcmc_chain_plots(chaindat = data[,i], filename = filename[i])
+    }
+  })
+  
+}
+
+
+
+
+
+
+
+
+

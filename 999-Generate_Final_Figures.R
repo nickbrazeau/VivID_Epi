@@ -10,7 +10,6 @@ source("R/00-functions_basic.R")
 #......................
 load("data/map_bases/vivid_maps_bases.rda")
 load("results/basic_maps_results.rda")
-prevmaprasterplots <- readRDS(file = "results/prevmap_raster_plots.rds")
 
 
 
@@ -59,7 +58,7 @@ africaplot <- ggplot() +
         panel.background = element_rect(fill = "white", color = "black", size = 1))
 
 
-# svglite::svglite(file = "results/figures/Figure1B.svg")
+#svglite::svglite(file = "results/figures/Figure1B.svg")
 jpeg("results/figures/Figure1B.jpg", width = 11, height = 8, units = "in", res = 500)
 cowplot::ggdraw() +
   cowplot::draw_plot(pvcasen, x = 0, y = 0, width = 1, height = 1, scale = 1) +
@@ -97,7 +96,7 @@ load("results/bivariate_model_results.rda")
 covarmap <- readxl::read_excel("model_datamaps/sub_DECODER_covariate_map.xlsx")
 
 
-pvriskest <- pvivrskfctr_models$glmlog_tidy %>% 
+pvriskest <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(column_name = term) %>% 
@@ -123,8 +122,7 @@ pv_bivar_rf_plot <- pvriskest %>%
   scale_color_manual("Level", values = c("#0868ac", "#4eb3d3")) +
   coord_flip() + 
   ggtitle(expression(paste(bold("Bivariate Risk Factor Estimates for "), bolditalic("P. vivax")))) +
-  
-  ylab("Risk Ratio") + 
+  ylab("Prevalence Odds Ratio") + 
   theme(
     plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
     axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
@@ -139,7 +137,7 @@ pv_bivar_rf_plot <- pvriskest %>%
     panel.border = element_blank())
     
 # PF
-pfriskest <- pfalrskfctr_models$glmlog_tidy %>% 
+pfriskest <- pfalrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(column_name = term) %>% 
@@ -165,8 +163,7 @@ pf_bivar_rf_plot <- pfriskest %>%
   scale_color_manual("Level", values = c("#006d2c", "#41ae76")) +
   coord_flip() + 
   ggtitle(expression(paste(bold("Bivariate Risk Factor Estimates for "), bolditalic("P. falciparum")))) +
-  
-  ylab("Risk Ratio") + 
+  ylab("Prevalence Odds Ratio") + 
   theme(
     plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
     axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),

@@ -40,8 +40,8 @@ pvprov.weighted <- pvprov.weighted %>%
 
 prov.covar <- dtsrvy %>% 
   dplyr::group_by(adm1name) %>% 
-  dplyr::summarise(meanprov_precip_lag_cont_scale_prov = srvyr::survey_mean(precip_lag_cont_scale_prov, na.rm = T, vartype = c("se", "ci"), level = 0.95),
-                   meanprov_alt_dem_cont_scale_prov = srvyr::survey_mean(alt_dem_cont_scale_prov, na.rm = T, vartype = c("se", "ci"), level = 0.95)
+  dplyr::summarise(meanprov_precip_lag_cont_scale_prov = srvyr::survey_mean(precip_ann_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95),
+                   meanprov_alt_dem_cont_scale_prov = srvyr::survey_mean(alt_dem_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
   )
 
 pvprov.weighted <- dplyr::left_join(pvprov.weighted, prov.covar, by = "adm1name")
@@ -49,35 +49,6 @@ pvprov.weighted.nosf <- pvprov.weighted
 sf::st_geometry(pvprov.weighted.nosf) <- NULL
 
 
-#-------------------------------------------------------------------------
-# Basic Multilevel Model
-#-------------------------------------------------------------------------
-# # https://github.com/tmalsburg/MCMCglmm-intro
-# # https://cran.r-project.org/web/packages/MCMCglmm/vignettes/Overview.pdf
-# # https://ms.mcmaster.ca/~bolker/R/misc/foxchapter/bolker_chap.html
-# library(MCMCglmm)
-# 
-# # Random Intercept model, no covariates
-# prior.randint <- list(R = list(V = diag(1), nu = 1e-3),
-#                       G = list(G1 = list(V = diag(1), nu = 1, 
-#                                          alpha.mu = 0, alpha.V = diag(1)*1e2)))
-# post.randint <- MCMCglmm(cbind(plsmdn, n) ~ 1, 
-#                          random = ~adm1name,
-#                          prior = prior.randint, 
-#                          data = pvprov.weighted.nosf, 
-#                          family = "multinomial2",
-#                          nitt = 1e5,
-#                          burnin = 1e3)
-# 
-# # check model fit
-# coda::autocorr(post.randint$Sol)
-# coda::effectiveSize(post.randint$Sol)
-# plot(post.randint$Sol)
-# 
-# # pretty miserable looking, likely because too little data?
-# # Within an MCMCglmm fit the chains are stored in two separate matrices (mcmc objects, actually, but these can be treated a lot like matrices) called  Sol (fixed effects) and VCV (variances and covariances). (Random effects are not saved unless you set pr=TRUE.)
-# allChains <- as.mcmc(cbind(post.randint$Sol,post.randint$VCV))
-# plot(allChains)
 
 #-------------------------------------------------------------------------
 # Conditional Autoregressive Spatial Model 
@@ -116,7 +87,8 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 #......................
 # Make a wrapper for CARBAYES
 #......................
-wrap_S.CARleroux <- function(formula, family, trials, W, rho, data, burnin, n.sample){
+wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin, n.sample){
+  # don't need name but want it here for posterity
   if(!is.na(rho)){
     ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
                                  family = family, 
@@ -140,7 +112,7 @@ wrap_S.CARleroux <- function(formula, family, trials, W, rho, data, burnin, n.sa
 }
 
 
-mod.framework$MCMC <- purrr::pmap(mod.framework[, -1], wrap_S.CARleroux)
+mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
 
 
 
@@ -174,34 +146,16 @@ chains <- mod.framework %>%
   tidyr::nest()
 
 
-make_mcmc_chain_plots <- function(chaindat, filename){
-  jpeg(filename, height = 8, width = 11, units = "in", res=200)
-  par(mfrow=c(2,2))
-  plot(chaindat[[1]][[1]])
-  plot(chaindat[[1]][[2]])
-  plot(chaindat[[1]][[3]])
-  plot(chaindat[[1]][[4]])
-  graphics.off()
-
-}
- mytempdir <- "~/Desktop/nfbtemp/"
- purrr::pmap(chains, function(data, name){
-   
-  filename <- paste0(mytempdir, name, "_", colnames(data), ".jpg") 
-  
-  for(i in 1:ncol(data)){
-    make_mcmc_chain_plots(chaindat = data[,i], filename = filename[i])
-  }
-  
-  
- })
+mytempdir <- "analyses/08-spatial_prediction/prov_map_diagnostic_chains/"
+dir.create(mytempdir, recursive = T)
+wrap_chain_plotter(tempdir = mytempdir, chains = chains)
 
 
 #-------------------------------------------------------------------------
 # Take Very Long Chains to LL 
 #-------------------------------------------------------------------------
 setwd("analyses/08-spatial_prediction/areal_results/")
-mod.framework.slurm <- mod.framework[,c("formula", "family", "trials", "W", "rho", "data", "burnin", "n.sample")] %>% 
+mod.framework.slurm <- mod.framework[,c("name", "formula", "family", "trials", "W", "rho", "data", "burnin", "n.sample")] %>% 
   dplyr::filter(!duplicated(.))
 
 mod.framework.slurm$burnin <- 1e5
@@ -220,7 +174,7 @@ sjob <- rslurm::slurm_apply(f = wrap_S.CARleroux,
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "5-00:00:00"))
+                                                 time = "11-00:00:00"))
 
 cat("*************************** \n Submitted CARBayes Models \n *************************** ")
 

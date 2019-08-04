@@ -72,7 +72,7 @@ case_n_maps <- purrr::pmap(list(data = clst$data, plsmdmspec = clst$plsmdmspec),
 #----------------------------------------------------------------------------------------------------
 # Ape Map Distribution for Pv
 #----------------------------------------------------------------------------------------------------
-ape <- readRDS("data/redlist_species_data_primate/drc_ape.rds")
+ape <- readRDS("data/derived_data/drc_ape.rds")
 aperange_nhapv <- 
   caseprevmaps[[2]] +
   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
