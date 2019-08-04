@@ -20,7 +20,7 @@ data/
 olddata/
 rdhs.json
 figures/
-
+results/
 
 # RStudio files
 .Rproj.user/
