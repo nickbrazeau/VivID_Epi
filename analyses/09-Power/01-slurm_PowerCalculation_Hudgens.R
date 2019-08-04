@@ -62,10 +62,11 @@ paramsdf.large <- lapply(1:iters, function(x) return(paramsdf)) %>%
 # for slurm on LL
 setwd("analyses/09-Power/")
 ntry <- nrow(paramsdf)
+
 sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
                             params = paramsdf, 
                             jobname = 'powercalcs',
-                            nodes = ntry, 
+                            nodes = 128, 
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 16000,
