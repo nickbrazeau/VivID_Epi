@@ -10,9 +10,6 @@ devtools::install_github("kaz-yos/tableone")
 library(tableone)
 options(scipen=999)
 
-# Notes on Lonely PSUs
-# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
-options(survey.lonely.psu="adjust")
 
 #......................
 # Import Data
@@ -140,12 +137,12 @@ pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
 pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
                                covar = pvivrskfctr, stringsAsFactors=FALSE)
 
-pvivrskfctr_models$glmlog <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlog)
-pvivrskfctr_models$glmlog_tidy <- purrr::map(pvivrskfctr_models$glmlog,
+pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
+pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlog,
                                              .f=function(x){
                                              broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
                                              )
-pvivrskfctr_est <- pvivrskfctr_models$glmlog_tidy %>% 
+pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
@@ -158,15 +155,15 @@ pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
                                covar = pfalrskfctr, stringsAsFactors=FALSE)
 
-pfalrskfctr_models$glmlog <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlog)
+pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlogit)
 
 
-pfalrskfctr_models$glmlog_tidy <- purrr::map(pfalrskfctr_models$glmlog,
+pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
                                              .f=function(x){
                                              broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
 
 
-pfalrskfctr_est <- pfalrskfctr_models$glmlog_tidy %>% 
+pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
@@ -252,16 +249,16 @@ save(pvivtbl1df, pfaltbl1df, # table one output
 #----------------------------------------------------------------------------------------------------
 # playground
 #----------------------------------------------------------------------------------------------------
-m1 <- glm(pv18s ~ precip_ann_cont_scale_clst,
-          family = quasibinomial(link="log"),
-          data = dt)
-
-m1 <- svyglm(pv18s ~ precip_ann_cont_scale_clst,
-          family = binomial(link="logit"),
-          design = dtsrvy)
-broom::tidy(m1, conf.int = T, exponentiate =T)
-broom::tidy(m1)
-confint_tidy(m1, exponentiate=T)
+# m1 <- glm(pv18s ~ precip_ann_cont_scale_clst,
+#           family = quasibinomial(link="log"),
+#           data = dt)
+# 
+# m1 <- svyglm(pv18s ~ precip_ann_cont_scale_clst,
+#           family = binomial(link="logit"),
+#           design = dtsrvy)
+# broom::tidy(m1, conf.int = T, exponentiate =T)
+# broom::tidy(m1)
+# confint_tidy(m1, exponentiate=T)
 
 
 

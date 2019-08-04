@@ -15,9 +15,6 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 set.seed(48)
 
-# Notes on Lonely PSUs
-# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
-options(survey.lonely.psu="adjust")
 
 bb <- osmdata::getbb("Democratic Republic of the Congo", 
                      featuretype = "country",
@@ -417,7 +414,7 @@ dtsrvy <- makecd2013survey(survey = dt)
 #.............
 dt <- dt %>% 
   dplyr::mutate(temp_ann_cont_clst = ifelse(night_land_surface_temp_2015 == 9999, NA, night_land_surface_temp_2015), # note no missing (likely dropped with missing gps)
-                temp_ann_cont_scale_clst = my.scale(night_land_surface_temp_2015, center = T, scale = T))
+                temp_ann_cont_scale_clst = my.scale(temp_ann_cont_clst, center = T, scale = T))
 #.............
 # Precipitation 
 #.............

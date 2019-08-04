@@ -10,9 +10,6 @@ library(spdep)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(RColorBrewer)
 
-# Notes on Lonely PSUs
-# http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
-options(survey.lonely.psu="adjust")
 
 #......................
 # Import Data
