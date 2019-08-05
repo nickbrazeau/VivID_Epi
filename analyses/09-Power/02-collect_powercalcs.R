@@ -5,51 +5,31 @@
 #........................... 
 # Read in power results
 #........................... 
-poweriters.files <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalcs",
-                              pattern = ".RDS", full.names = T) 
-# reorder file paths correctly
-poweriters.files <- tibble::tibble(files = poweriters.files) %>% 
-  dplyr::mutate(filename = basename(as.character( files )),
-                order = stringr::str_extract(filename, "[0-9]+"),
-                order = as.numeric(order)) %>%
-  dplyr::filter(!is.na(order)) %>% 
-  dplyr::arrange(order) %>% 
-  dplyr::select(files) %>% unlist(.)
-
-poweriters.ret <- purrr::map(poweriters.files, function(x){
-                                                            ret <- readRDS(x)
-                                                            ret.df <- dplyr::bind_rows(ret)
-                                                            return(ret.df)
-                                                            }) %>% 
+load("results/powercalcs.rda")
+poweriters.ret <- poweriters.ret %>% 
   dplyr::bind_rows()
-
-#........................... 
-# Read in power params
-#........................... 
-poweriters.params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalcs/params.RDS")
-poweriters.params.ret <- dplyr::bind_cols(poweriters.params, poweriters.ret)
-
-
+poweriters.params.ret <- dplyr::bind_cols(poweriters.paramsdf, poweriters.ret)
 #........................... 
 # Get Summary
 #........................... 
 
 poweriters.powercalc <- poweriters.params.ret %>% 
-  dplyr::group_by(n, p, exp_prob, p0, RR) %>% 
+  dplyr::group_by(n, p, exp_prob, p0, OR) %>% 
   dplyr::summarise(
-    power = sum(p1 < 0.05)
+    power = mean(p1 < 0.05)
   )
 
-
-
-jpeg(filename = "results/figures/RR_glm_posthoc_powercalc.jpg", width = 8, height = 6, res = 500, units = "in")
-
-poweriters.powercalc %>%
+library(plotly)
+df <- poweriters.powercalc %>%
   dplyr::mutate(beta = 1-power,
-                expprob_f = factor(exp_prob)) %>%
-  ggplot() +
-  geom_line(aes(x=beta, y=RR, color = expprob_f), method = "lm", formula = y ~ poly(x, 3), se = FALSE) +
-  geom_point(aes(x=beta, y=RR, color = expprob_f), stat="identity") +
+                expprob_f = factor(exp_prob))
+
+jpeg(filename = "results/figures/OR_glm_posthoc_powercalc.jpg", width = 11, height = 8, res = 250, units = "in")
+
+
+ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
+#  stat_smooth(method = 'nls', formula = y ~ a * exp(x) + b, se = FALSE, start = list(a=-1, b=-1)) +
+  geom_point() +
   geom_vline(aes(xintercept=0.2), colour="#de2d26", linetype="dashed") +
   ggtitle(label="Simulated Risk Ratio versus \n Type II Error (Complement of Power)") +
   xlab("Type II Error") + ylab("Odds Ratio") +
