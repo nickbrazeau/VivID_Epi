@@ -17,7 +17,7 @@ powercalculator.glmOR <- function(n=15879, exp_prob=0.5, p=0.03, p0=0.02){
   p1 <- p-p0 # prev among exposed
   OR <- exp(logit(p1) - logit(p0))
 
-
+  
     df$dz[df$exp == 1] <- rbinom(sum(df$exp == 1),1,p1)
     df$dz[df$exp == 0] <- rbinom(sum(df$exp == 0),1,p0)
 
@@ -63,7 +63,7 @@ paramsdf <- lapply(1:iters, function(x) return(paramsdf)) %>%
 setwd("analyses/09-Power/")
 ntry <- nrow(paramsdf)
 
-sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
+sjob <- rslurm::slurm_apply(f = powercalculator.glmOR, 
                             params = paramsdf, 
                             jobname = 'powercalcs',
                             nodes = 128, 
