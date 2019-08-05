@@ -56,27 +56,9 @@ paramsdf <- lapply(1:iters, function(x) return(paramsdf)) %>%
 
 
 #...............................................................
-# Run the Power Calc on slurm
+# Run in parallel
 #...............................................................
-
-# for slurm on LL
-setwd("analyses/09-Power/")
-ntry <- nrow(paramsdf)
-
-sjob <- rslurm::slurm_apply(f = powercalculator.glmOR, 
-                            params = paramsdf, 
-                            jobname = 'powercalcs',
-                            nodes = 128, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 16000,
-                                                 array = sprintf("0-%d%%%d", 
-                                                                 ntry, 
-                                                                 128),
-                                                 'cpus-per-task' = 8,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "1-00:00:00"))
-
+ret <- furrr::future_pmap(paramsdf, powercalculator.glmOR)
+saveRDS(ret, "results/powercalcs.rds")
 
 
