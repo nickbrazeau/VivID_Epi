@@ -29,7 +29,7 @@ jpeg(filename = "results/figures/OR_glm_posthoc_powercalc.jpg", width = 11, heig
 
 ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
 #  stat_smooth(method = 'nls', formula = y ~ a * exp(x) + b, se = FALSE, start = list(a=-1, b=-1)) +
-  geom_point() +
+  geom_jitter(alpha=0.8) +
   geom_vline(aes(xintercept=0.2), colour="#de2d26", linetype="dashed") +
   ggtitle(label="Simulated Risk Ratio versus \n Type II Error (Complement of Power)") +
   xlab("Type II Error") + ylab("Odds Ratio") +
@@ -37,8 +37,6 @@ ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
   theme(plot.title = element_text(hjust = 0.5, face="bold", size=16)) +
   theme(axis.title = element_text(hjust = 0.5, size=14)) +
   theme(axis.text = element_text(hjust = 0.5, size=13))
-
-
 
 graphics.off()
 
