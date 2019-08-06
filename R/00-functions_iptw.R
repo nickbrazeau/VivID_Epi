@@ -62,7 +62,42 @@ findbesttuneresult <- function(path){
     dplyr::filter(!is.na(hyperparval)) %>% 
     dplyr::group_by(hyperpar) %>% 
     dplyr::filter(my.covarbal.test.mean == min(my.covarbal.test.mean))
+  
+  return(dfres)
 }
+
+
+
+findbesttuneresult.simple <- function(path){
+  res <- readRDS(path)
+  dfres <- as.data.frame(res[[1]]$opt.path)
+  
+  simpletestmean <- colnames(dfres)[grepl("test.mean", colnames(dfres))]
+  
+  if(simpletestmean == "auc.test.mean"){
+    dfres <- dfres %>% 
+      dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
+      tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
+      dplyr::filter(!is.na(hyperparval)) %>% 
+      dplyr::group_by(hyperpar) %>% 
+      dplyr::filter(auc.test.mean == min(auc.test.mean))
+  } else if(simpletestmean == "mse.test.mean"){
+    dfres <- dfres %>% 
+      dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
+      tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
+      dplyr::filter(!is.na(hyperparval)) %>% 
+      dplyr::group_by(hyperpar) %>% 
+      dplyr::filter(mse.test.mean == min(mse.test.mean))
+  }
+  
+  # error catch
+  # fit lowest model which is the first
+  dfres <- dfres[!duplicated(dfres$hyperpar), ]
+  
+  return(dfres)
+}
+
+
 
 
 tune_stacked_learner <- function(learner, task, tuneresult){

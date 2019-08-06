@@ -65,10 +65,10 @@ DIC.car.mod.framework <- car.mod.framework %>%
 #........................
 # Moran's I
 #........................
-mp.moranI.ret <- spdep::moran.mc(mp$data[[2]]$plsmdprev,
-                                 listw = spdep::mat2listw(mod.framework$W[[1]]),
-                                 alternative = "greater",
-                                 nsim = 1e5)
+moranI.car.mod.framework <- spdep::moran.mc(mp$data[[2]]$plsmdprev,
+                                            listw = spdep::mat2listw(car.mod.framework$W[[1]]),
+                                            alternative = "greater",
+                                            nsim = 1e5)
 
 # ^ note data and W are same for all models, so can use first 
 
@@ -77,6 +77,41 @@ mp.moranI.ret <- spdep::moran.mc(mp$data[[2]]$plsmdprev,
 #........................
 # Subset to Best Model for Plotting
 #........................
+bestmodel.car.mod.framework <- DIC.car.mod.framework$name[DIC.car.mod.framework$DIC == min(DIC.car.mod.framework$DIC)]
+bestmodel.car.mod.framework <- car.mod.framework %>% 
+  dplyr::filter(name == bestmodel.car.mod.framework)
+
+fitted_cases_count <- as.data.frame(bestmodel.car.mod.framework$fitted)
+colnames(fitted_cases_count) <- dimnames(bestmodel.car.mod.framework$W[[1]])[[1]] 
+
+# go to long format
+fitted_cases_count.ret <- fitted_cases_count %>% 
+  tidyr::gather(., key = "adm1name", value = "fittedval") %>% 
+  dplyr::group_by(adm1name) %>% 
+  dplyr::summarise(
+    pv18sprevfitted_low = quantile(fittedval, 0.025),
+    pv18sprevfitted_median = quantile(fittedval, 0.5),
+    pv18sprevfitted_mean = mean(fittedval),
+    pv18sprevfitted_upp = quantile(fittedval, 0.975)
+    
+  )
+
+#........................
+# Bring it home
+#........................
+pv18s.adm1 <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"] 
+pv18s.adm1 <- pv18s.adm1[[1]]
+pv18s.adm1 <- dplyr::left_join(pv18s.adm1, fitted_cases_count.ret, by = "adm1name")
+
+#........................
+# Save out for prov
+#........................
+save(pv18s.adm1, car.mod.framework, 
+     paramest.car.mod.framework, DIC.car.mod.framework, 
+     bestmodel.car.mod.framework, 
+     moranI.car.mod.framework, 
+     file = "results/ProvAreal_BHM_CARBayes_models_out.rda")
+
 
 ##########################################################################################################################################
 ##########################################################################################################################################
@@ -92,13 +127,10 @@ mp.moranI.ret <- spdep::moran.mc(mp$data[[2]]$plsmdprev,
 # Moran's I
 #........................
 gc <- mp %>% 
-  dplyr::filter(maplvl == "hv001" & plsmdmspec == "pfldh") %>% # pfldh just so we can have one data obj at correct map level
+  dplyr::filter(maplvl == "hv001" & plsmdmspec == "pv18s") %>% 
   tidyr::unnest() %>% 
   dplyr::select(c("longnum", "latnum")) %>% 
   geosphere::distm(x =., fun = geosphere::distGeo) 
-
-
-
 
 
 pvclust <- mp$data[[5]]
@@ -107,7 +139,6 @@ pvclust.dist <- pvclust %>%
   dplyr::select(c("longnum", "latnum")) %>% 
   geosphere::distm(x =., fun = geosphere::distGeo) 
 
-pvclust.dist <- log(pvclust.dist)
 pvclust.dist.inv <- 1/pvclust.dist
 diag(pvclust.dist.inv) <- 0
 

@@ -17,6 +17,7 @@ set.seed(48)
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
 
 
 #......................
@@ -28,6 +29,7 @@ pvprov.weighted <- mp %>%
   tidyr::unnest()
 # vectors have destroyed spatial class, need to remake
 pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
+sf::st_crs(pvprov.weighted) <-  sf::st_crs(ge)
 # need to keep integers, so will round
 pvprov.weighted <- pvprov.weighted %>% 
   dplyr::mutate_if(is.numeric, round, 0)
@@ -88,6 +90,13 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 # Make a wrapper for CARBAYES
 #......................
 wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin, n.sample){
+  
+  formvec <- paste(formula, collapse = "")
+  betacount <- stringr::str_count(formvec, "\\+") + 2 # need intercept and betas
+  betacount <- ifelse(grepl("1", formvec), 1, betacount) # corner case of just intercept
+  prior.var.betavec <- rep(5e4, betacount)
+  
+  
   # don't need name but want it here for posterity
   if(!is.na(rho)){
     ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
@@ -97,6 +106,7 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin
                                  rho = rho,
                                  data = data,
                                  burnin = burnin, 
+                                 prior.var.beta = prior.var.betavec,
                                  n.sample = n.sample)
   } else if(is.na(rho)){ # rho needs to be NULL which has a hard time in a vector
     ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
@@ -105,6 +115,7 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin
                                  W = W,
                                  data = data,
                                  burnin = burnin, 
+                                 prior.var.beta = prior.var.betavec,
                                  n.sample = n.sample)
   }
   
