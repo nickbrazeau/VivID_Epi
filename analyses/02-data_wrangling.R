@@ -150,7 +150,8 @@ dt <- dt %>%
     hiv03_fctb = forcats::fct_drop(haven::as_factor(hiv03)),
     hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub(" ", "", .x, fixed = TRUE)), 
     hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("positive", "pos", .x)), 
-    hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("negative", "neg", .x))
+    hiv03_fctb = forcats::fct_relabel(hiv03_fctb, ~ gsub("negative", "neg", .x)),
+    hiv03_fctb = relevel(hiv03_fctb, "hivneg")
   ) 
 
 xtabs(~hiv03_fctb + hiv03, data = dt, addNA = T)
@@ -171,7 +172,8 @@ dt <- dt %>%
                 hab57_fctb = ifelse(hab57_fctb == 9, NA, hab57_fctb),
                 hab57_fctb = ifelse(hab57_fctb == 4, "no", ifelse(
                   hab57_fctb %in% c(1:3), "yes", NA)),
-                hab57_fctb = factor(hab57_fctb, levels = c("no", "yes"))
+                hab57_fctb = factor(hab57_fctb, levels = c("no", "yes")),
+                hab57_fctb = relevel(hab57_fctb, "yes") # anemia is protective
                 )
             
 # check recode
@@ -272,7 +274,8 @@ dt <- dt %>%
   dplyr::mutate(
     housecount = apply(wallfloorroofrecode, 1, function(x){return(sum(x == "non-rudimentary"))}),
     hv21345_fctb = ifelse(housecount == 3, "modern", "traditional"), # per PMID: 28222094
-    hv21345_fctb = factor(hv21345_fctb))
+    hv21345_fctb = factor(hv21345_fctb),
+    hv21345_fctb = relevel(hv21345_fctb, "modern"))
                 
 # check -- seems reasonable
 xtabs(~dt$hv21345_fctb, addNA = T)
@@ -290,7 +293,9 @@ dt <- dplyr::left_join(dt, wlth, by = "hivrecode_barcode")
 xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks OK. Some poor/poorest got placed higher than expected
 xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270)) # looks OK. Some poor/poorest got placed higher than expected
 
-
+dt <- dt %>% 
+  dplyr::mutate(wlthrcde_fctb = relevel(wlthrcde_fctb, "not poor"))
+  
 
 #.............
 # years of education (categorical)
@@ -302,7 +307,8 @@ dt <- dt %>%
                 hv106 =  forcats::fct_drop(hv106))
 dt <- dt %>%
   left_join(x=., y=edu, by="hv106") %>% 
-  dplyr::mutate( hv106_fctb = factor(hv106_fctb, levels = c("lower", "higher")) )
+  dplyr::mutate( hv106_fctb = factor(hv106_fctb, levels = c("lower", "higher")),
+                 hv106_fctb = relevel(hv106_fctb, "higher"))
 
 xtabs(~dt$hv106 + dt$hv106_fctb, addNA = T)
 
@@ -318,7 +324,7 @@ dt <- dt %>%
     hv246_fctb = haven::as_factor(dt$hv246),
     hv246_fctb = forcats::fct_recode(hv246_fctb, NULL = "missing"),
     hv246_fctb =  forcats::fct_drop(hv246_fctb), 
-    hv246_fctb = forcats::fct_relevel(hv246_fctb, "no")
+    hv246_fctb = relevel(hv246_fctb, "no")
   ) 
 xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
 
@@ -368,7 +374,8 @@ dt <- dt %>%
              ifelse(haven::as_factor(hml9) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
                     0))), # we know no missing net from above. they either reported yes or no at some level
     ITN_fctb = factor(ITN_fctb, levels = c(0,1), labels = c("no", "yes")),
-    ITN_fctb = forcats::fct_drop(ITN_fctb)
+    ITN_fctb = forcats::fct_drop(ITN_fctb),
+    ITN_fctb = relevel(ITN_fctb, "yes")
   )
 
 
