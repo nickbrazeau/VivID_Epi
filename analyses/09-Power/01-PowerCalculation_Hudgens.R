@@ -1,4 +1,5 @@
 library(tidyverse)
+library(furrr)
 library(pwr)
 source("R/00-functions_basic.R")
 #...............................................................
@@ -39,16 +40,18 @@ powercalculator.glmOR <- function(n=15879, exp_prob=0.5, p=0.03, p0=0.02){
 ### run lots of these at different levels of p0
 p0sim <- seq(0.01, 0.032, by=0.0001)
 expprob <- c(0.1, 0.25, 0.5)
-paramsdf <- tibble::tibble(
+exppo <- expand.grid(expprob, p0sim)
+poweriters.paramsdf <- tibble::tibble(
   n = 15879, # total pop
   p = 0.03, # prev in population
-  exp_prob = rep(expprob, length(p0sim)),
-  p0 = rep(p0sim, length(expprob))
+  exp_prob = exppo[,1],
+  p0 = exppo[,2]
 ) 
 
 # iters to run
-iters <- 1e3
-paramsdf <- lapply(1:iters, function(x) return(paramsdf)) %>% 
+# iters <- 1e3
+iters <- 1e2
+poweriters.paramsdf <- lapply(1:iters, function(x) return(poweriters.paramsdf)) %>% 
   dplyr::bind_rows() %>% 
   dplyr::arrange(exp_prob, p0)
 
@@ -58,7 +61,7 @@ paramsdf <- lapply(1:iters, function(x) return(paramsdf)) %>%
 #...............................................................
 # Run in parallel
 #...............................................................
-ret <- furrr::future_pmap(paramsdf, powercalculator.glmOR)
-saveRDS(ret, "results/powercalcs.rds")
+poweriters.ret <- furrr::future_pmap(poweriters.paramsdf, powercalculator.glmOR)
+save(poweriters.ret, poweriters.paramsdf, file = "results/powercalcs.rda")
 
 
