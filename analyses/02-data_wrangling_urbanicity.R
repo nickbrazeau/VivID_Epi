@@ -1,6 +1,7 @@
 # IMPORTS and dependencies
 library(tidyverse)
 library(sf)
+library(plotly)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 
@@ -39,14 +40,14 @@ DRCprov <- sf::st_as_sf(readRDS("data/map_bases/gadm/gadm36_COD_1_sp.rds"))
 # urban vs. rural as has been noted here https://journals.sagepub.com/doi/10.1177/0021909617698842
 # and can be seen by comparing hv025/026 with population density, light density, build, etc.
 
-#.............
-# Urban from DHS
-#.............
-levels(factor(haven::as_factor(dt$hv025))) # no missing
-dt$hv025_fctb <- haven::as_factor(dt$hv025)
-dt$hv025_fctb = forcats::fct_relevel(dt$hv025_fctb, "rural")
+# #.............
+# # Urban from DHS
+# #.............
+# levels(factor(haven::as_factor(dt$hv025))) # no missing
+# dt$hv025_fctb <- haven::as_factor(dt$hv025)
+# dt$hv025_fctb = forcats::fct_relevel(dt$hv025_fctb, "rural")
 # # check
-xtabs(~hv025 + hv025_fctb, data = dt, addNA = T)
+# xtabs(~hv025 + hv025_fctb, data = dt, addNA = T)
 
 
 #.............
@@ -113,31 +114,60 @@ summary(dt$travel_times_2015_scale); sd(dt$travel_times_2015_scale)
 
 
 #.............
-# return scaled vars with linker
+# PCA
 #.............
-
+# compute PCA, drop to single observations (since clusters all have some obs)
+# Otherwise inflate our degree of certainty in our PCA
 urbanmat <- dt[!duplicated(dt$hv001), 
-               c("hv001", "hv025", 
-                 "built_population_2014", "nightlights_composite",
-                 "all_population_count_2015", "travel_times_2015",
-                 "built_population_2014_scale", "nightlights_composite_scale",
+               c("hv001", "hv025", "built_population_2014_scale", "nightlights_composite_scale",
                  "all_population_count_2015_scale", "travel_times_2015_scale")] 
 
-urbanmat <- urbanmat %>% 
-  dplyr::rename(
-    built_population_2014_cont_clst = built_population_2014,
-    nightlights_composite_cont_clst =  nightlights_composite,
-    all_population_count_2015_cont_clst =  all_population_count_2015,
-    travel_times_2015_cont_clst =  travel_times_2015,
-    built_population_2014_cont_scale_clst =  built_population_2014_scale,
-    nightlights_composite_cont_scale_clst =  nightlights_composite_scale,
-    all_population_count_2015_cont_scale_clst =  all_population_count_2015_scale,
-    travel_times_2015_cont_scale_clst =  travel_times_2015_scale
-  )
+urbanmatpca <- prcomp(urbanmat[, c("built_population_2014_scale", "nightlights_composite_scale",
+                                   "all_population_count_2015_scale", "travel_times_2015_scale")])
 
+# compute variance explained and Zi values 
+urbanmatpca$var <- (urbanmatpca$sdev ^ 2) / sum(urbanmatpca$sdev ^ 2) * 100
+urbanmatpca$loadings <- abs(urbanmatpca$rotation)
+urbanmatpca$loadings <- sweep(urbanmatpca$loadings, 2, colSums(urbanmatpca$loadings), "/")
+
+
+#.............
+# Analyze PCA Seperation
+#.............
+# make a plot
+pcaeigplot <- tibble(rururb = haven::as_factor(urbanmat$hv025), 
+                     pc1 = urbanmatpca$x[,1], pc2 =urbanmatpca$x[,2], pc3 = urbanmatpca$x[,3])
+
+plotly::plot_ly(pcaeigplot, x = ~pc1, y = ~pc3, z = ~pc2, color = ~rururb)%>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'PC1'),
+                      yaxis = list(title = 'PC3'),
+                      zaxis = list(title = 'PC2')))
+#.............
+# View on Biplot
+#.............
+library(ggfortify)
+ggplot2::autoplot(urbanmatpca,
+                  loadings = TRUE, 
+                  loadings.label = TRUE, 
+                  loadings.label.size  = 3)
+
+
+
+#.............
+# Degree of Urbanicity
+#.............
+urbanicity <- cbind(urbanmat[,c("hv001", "hv025")], urbanscore_cont_scale_clst = urbanmatpca$x[,1])
+urbanicity.plot <- urbanicity %>% 
+  left_join(x = ., y = ge, by = "hv001")
+
+ggplot() +
+  geom_sf(data = DRCprov) +
+  geom_point(data = urbanicity.plot, aes(x = longnum, y = latnum, color = urbanscore_cont_scale_clst)) +
+  viridis::scale_color_viridis("viridis")
 
 
 #.............
 # write out
 #.............
-saveRDS(urbanmat, file = "data/derived_data/vividepi_urban_recoded.rds")
+saveRDS(urbanicity, file = "data/derived_data/vividepi_urban_recoded.rds")
