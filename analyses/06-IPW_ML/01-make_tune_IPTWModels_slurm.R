@@ -4,7 +4,6 @@
 # will take the intersection of the best hyperparameter set and apply it to our stacked ensemble
 #----------------------------------------------------------------------------------------------------
 
-
 source("R/00-functions_Ensemble_Wrapper.R")
 source("R/00-functions_iptw.R")
 source("R/00-make_null_IPTW_distribs_brownian.R")
@@ -36,25 +35,22 @@ txs <- txs %>%
 # subset to treatments, outcome, weights and coords
 varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
                    "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
-                   "built_population_2014_cont_scale_clst", # latent urbanicity var
-                   "nightlights_composite_cont_scale_clst", # latent urbanicity var
-                   "all_population_count_2015_cont_scale_clst", # latent urbanicity var
-                   "travel_times_2015_cont_scale_clst", # latent urbanicity var
+                   "urbanscore_cont_scale_clst", #urbanicity
                    "longnum", "latnum")
+
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
 
 # subset to complete cases
-dt.ml <- dt.ml %>% 
+dt.ml.cc <- dt.ml %>% 
   dplyr::filter(complete.cases(.)) %>% 
+  dplyr::select(-c("longnum", "latnum")) %>% 
   data.frame(.)
 
-
-#........................
-# Add month in for the adj sets of temp and precip 
-#........................
-#txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "precip_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
-#txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"] <- list( unlist(c(txs$adj_set[txs$column_name == "temp_lag_cont_scale_clst"], "hvyrmnth_dtmnth_lag")) )
+dt.ml.coords <- dt.ml %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  dplyr::select(c("longnum", "latnum")) %>% 
+  data.frame(.)
 
 
 #........................
@@ -62,24 +58,20 @@ dt.ml <- dt.ml %>%
 #........................
 txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set, 
                         .f = function(x, y){
-                          ret <- dt.ml %>% 
-                            dplyr::select(c(x, y, "longnum", "latnum"))
+                          ret <- dt.ml.cc %>% 
+                            dplyr::select(c(x, y))
                           return(ret)
                         })
 
 #........................
 # Pull Out Coords
 #........................
-txs$coordinates <- purrr::map(txs$data, function(x){
-  ret <- x %>% 
-    dplyr::select(c("longnum", "latnum"))
-  return(ret)
-})
+txs$coordinates <- lapply(1:nrow(txs), function(x) return(dt.ml.coords))
+
 
 #--------------------------------------
 # Setup tasks & base learners
 #--------------------------------------
-
 # first make the tasks
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
                         .f = make_class_task)
@@ -164,14 +156,14 @@ hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
   makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
-  makeNumericParam("mtry", lower = 1, upper = 10 )
+  makeNumericParam("mtry", lower = 1, upper = 5 )
 )
 
 hyperparams_to_tune.regr.ctrl <-c(
   "regr.glmnet.alpha" = 11L, #11L
   "regr.kknn.k" = 29L, #7L
   "regr.svm.cost" = 5L, #5L
-  "regr.randomForest.mtry" =  10L #10L
+  "regr.randomForest.mtry" =  5L #10L
 )
 
 hyperparams_to_tune.regr.ctrl <- mlr::makeTuneControlDesign(design = 
@@ -185,14 +177,14 @@ hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
   makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
-  makeNumericParam("mtry", lower = 1, upper = 10 )
+  makeNumericParam("mtry", lower = 1, upper = 5 )
 )
 
 hyperparams_to_tune.classif.ctrl <-c(
   "classif.glmnet.alpha" = 11L, #11L
   "classif.kknn.k" = 29L, #29L
   "classif.svm.cost" = 5L, #5L
-  "classif.randomForest.mtry" =  10L #10L
+  "classif.randomForest.mtry" =  5L #10L
 )
 
 
@@ -257,8 +249,8 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                             submit = T,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry, 
-                                                                 ntry+1),
+                                                                 ntry-1, 
+                                                                 ntry),
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",

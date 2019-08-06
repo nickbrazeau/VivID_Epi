@@ -28,7 +28,7 @@ get_iptw_prob <- function(task, preds){
     
     # following assumptions in Robbins 2000/Zhu 2015 PMC4749263
     model.num <- lm(preds$truth~1) # this is the intercept in the classic way
-    #TODO check if sigma truly necessary 
+    # same as mean(preds$truth)
     # divide residuals by model variance to put on standard normal
     ps.num <- dnorm(
       (preds$truth - model.num$fitted)/summary(model.num)$sigma,

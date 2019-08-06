@@ -3,6 +3,7 @@
 #----------------------------------------------------------------------------------------------------
 
 # imports
+library(mlr)
 library(tidyverse)
 library(ggridges)
 source("R/00-functions_iptw.R")
@@ -14,8 +15,9 @@ source("R/00-functions_iptw.R")
 #params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
 #trainpaths <-  list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
 
-params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/old_vividepi_anlaysis/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
-trainpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/old_vividepi_anlaysis/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
+params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_preds_finalmodels/params.RDS")
+trainpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_preds_finalmodels/", 
+                         pattern = ".RDS", full.names = T)
 
 trainpaths <- trainpaths[!c(grepl("params.RDS", trainpaths) | grepl("f.RDS", trainpaths))]
 
@@ -34,7 +36,6 @@ params$preds <- purrr::pmap(params[,c("task", "trained")], function(task, traine
 
 # make inverse probability weights
 params$iptw <- pmap(params[,c("task", "preds")], get_iptw_prob)
-
 
 
 #................................................
