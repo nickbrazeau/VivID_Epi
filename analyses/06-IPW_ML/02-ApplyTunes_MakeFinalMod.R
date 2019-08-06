@@ -16,10 +16,12 @@ source("R/00-functions_iptw.R")
 #............................................
 # Apply the Tuning Results to the Learner
 #............................................
-params <- readRDS("analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/params.RDS")
-params$tunedlearner <- purrr::map(params$task, make_hillclimb_Stack, 
-                          learners = baselearners.list)
-tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/tune_modelparams/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
+params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
+# now overwrite Learner ModelMultiplexer to a 
+# STACKED learner that is actually of an ensemble 
+params$learner <- purrr::map(params$task, make_hillclimb_Stack, 
+                             learners = baselearners.list)
+tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 
 # sort properly to match rows in df
@@ -31,9 +33,9 @@ tuneresultpaths <- tibble::tibble(tuneresultpaths = tuneresultpaths) %>%
   unlist(.)
 
 
-params$tuneresult <- purrr::map(tuneresultpaths, findbesttuneresult)
-
-params$tunedlearner <- purrr::pmap(params[, c("learner", "task", "tuneresult")], tune_stacked_learner)
+params$tuneresult <- purrr::map(tuneresultpaths, findbesttuneresult.simple)
+params$tunedlearner <- purrr::pmap(params[, c("learner", "task", "tuneresult")], 
+                                   tune_stacked_learner)
                                    
 
 #........................................................................
@@ -50,11 +52,11 @@ slurm_traindata <- function(tunedlearner, task){
 paramsdf <- params[, c("tunedlearner", "task")]
 
 # for slurm on LL
-setwd("analyses/06-IPW_ML/final_models")
+setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_traindata, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds',
+                            jobname = 'vivid_preds_finalmodels',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

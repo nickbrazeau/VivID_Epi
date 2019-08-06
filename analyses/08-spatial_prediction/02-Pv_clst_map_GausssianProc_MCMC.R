@@ -1,20 +1,22 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to create a spatial prediction model
+# from PrevMap that is based on a Gaussain Process Model
 #----------------------------------------------------------------------------------------------------
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
 library(tidyverse)
 library(sf)
-library(srvyr) #wrap the survey package in dplyr syntax
+library(srvyr) 
 library(PrevMap)
 set.seed(48)
-
+tol <- 1e-3
 #......................
 # Import Data
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
 
 
 #......................
@@ -26,6 +28,8 @@ pvclust.weighted <- mp %>%
   tidyr::unnest()
 # vectors have destroyed spatial class, need to remake
 pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
+sf::st_crs(pvclust.weighted) <-  sf::st_crs(ge)
+
 # need to keep integers, so will round
 pvclust.weighted <- pvclust.weighted %>% 
   dplyr::mutate_if(is.numeric, round, 0)
@@ -36,41 +40,72 @@ pvclust.weighted <- pvclust.weighted %>%
 
 pvclst.covar <- dtsrvy %>% 
   dplyr::group_by(hv001) %>% 
-  dplyr::summarise(meanprov_precip_lag_cont_scale_clst = srvyr::survey_mean(precip_lag_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95),
+  dplyr::summarise(meanprov_precip_lag_cont_scale_clst = srvyr::survey_mean(precip_ann_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95),
                    meanprov_alt_dem_cont_scale_clst = srvyr::survey_mean(alt_dem_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
   )
 
-pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "adm1name")
+pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
 
 #----------------------------------------------------------------------------------------------------
-# Gaussian Process 
+# PrevMap & The Gaussian Process Model 
 #----------------------------------------------------------------------------------------------------
+# Following Giorgi & Diggle 2017 -- https://www.jstatsoft.org/article/view/v078i08
+#......................
+# EDA - Variogram
+#......................
+eda <- pvclust.weighted.nosf %>% 
+  dplyr::select(c("hv001", "plsmdn", "n", "plsmdprev", "longnum", "latnum"))
+
+# transform count of "successes" to logit space
+eda$plsmdnlogit <- log( (eda$plsmdn + 0.5)/(eda$n - eda$plsmdn + 0.5) ) # 0.5 as tolerance for 0s
+
+# look at kappa smooth parameter for matern covariance
+profile.kappa <- PrevMap::shape.matern(plsmdnlogit ~ 1,
+                                       coords = ~ longnum + latnum,
+                                       data = eda,
+                                       set.kappa = seq(0.1, 10, length = 16),
+                                       start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
+                                       coverage = NULL # CI coverage
+                                      )
+
+
+# fit a voariogram 
+coords <- eda[,c("longnum", "latnum")]
+# note, this defaults to euclidean distance (from coordinates of long,lat)
+vari <- geoR::variog(coords = coords, data = eda$plsmdnlogit, max.dist = 5)
+vari.fit <- geoR::variofit(vari, 
+                           ini.cov.pars = c(3, 1),
+                           cov.model = "matern",
+                           fix.kappa = F)
+
+
+plot(vari, main = substitute(paste("Semivariogram for ", italic("P. vivax"))))
+# really not an impressive amount of spatial autocorrelation
+
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("meanprov_precip_lag_cont_scale_prov", "meanprov_alt_dem_cont_scale_prov")
-mod.framework <- tibble(name = c("intercept", "covars"),
-                        formula = c("plsmdn ~ 1", 
-                                    "plsmdn ~ ", paste(prov.covar.names, collapse = " + ")),
-                        family = "binomial"
-)
+clst.covar.names <- c("precip_ann_cont_scale_clst", "meanprov_alt_dem_cont_scale_prov")
+mod.framework <- tibble::tibble(name = c("intercept", "covars"),
+                                formula = c("plsmdn ~ 1", 
+                                            paste0("plsmdn ~ ", paste(clst.covar.names, collapse = " + "))),
+                                family = "binomial"
+                                )
 
-
-
-coords <- as.formula(paste0("~", pvclust.weighted$longnum, "+", pvclust.weighted$latnum))
+coords <- as.formula(paste0("~ longnum + latnum"))
 trials <- pvclust.weighted$n
+
 #......................
 # PRIORS
 #......................
 mypriors <- PrevMap::control.prior()
-
-#......................
-# PRIORS
-#......................
-mcmcdirections <- PrevMap::control.mcmc()
+mcmcdirections <- PrevMap::control.mcmc.Bayes(burnin = 1e1, 
+                                              n.sim = 1e2,
+                                              thin = 0
+                                              )
 
 #......................
 # Make a wrapper for PrevMap

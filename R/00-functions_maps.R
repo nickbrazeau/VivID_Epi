@@ -63,9 +63,7 @@ prev_point_est_summarizer <- function(design, maplvl, plsmdmspec, adm1shp){
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
                      plsmdprev = srvyr::survey_mean(!!plsmdmspec, na.rm = T, vartype = c("se", "ci"), level = 0.95)
-                     ) %>% 
-    dplyr::mutate(logitplsmdprev = logit(plsmdprev, tol = 1e-3))
-  
+                     )
   
   if( quo_name(maplvl) == "adm1name" ){
     ret <- inner_join(ret, adm1shp, by = "adm1name")
@@ -166,7 +164,7 @@ casemap_n_plotter <- function(data, plsmdmspec){
     geom_sf(data = DRCprov) +
     geom_jitter(data = neg, aes(x=longnum, y=latnum, size = n), shape = 4, show.legend = F, colour = "#377eb8") +
     geom_point(data = pos, aes(x=longnum, y=latnum, colour = plsmdn, size = n), alpha = 0.4) +
-    scale_color_gradient2("Absolute \n Count", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+    scale_color_gradient2("Weighted \n Count", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
     scale_size(guide = 'none') +
     ggtitle(paste(plsmdmspec)) +
     coord_sf(datum=NA) + # to get rid of gridlines

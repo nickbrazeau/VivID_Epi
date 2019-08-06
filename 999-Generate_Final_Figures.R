@@ -58,8 +58,8 @@ africaplot <- ggplot() +
         panel.background = element_rect(fill = "white", color = "black", size = 1))
 
 
-#svglite::svglite(file = "results/figures/Figure1B.svg")
-jpeg("results/figures/Figure1B.jpg", width = 11, height = 8, units = "in", res = 500)
+svglite::svglite(file = "results/figures/Figure1B.svg")
+#jpeg("results/figures/Figure1B.jpg", width = 11, height = 8, units = "in", res = 500)
 cowplot::ggdraw() +
   cowplot::draw_plot(pvcasen, x = 0, y = 0, width = 1, height = 1, scale = 1) +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
@@ -204,10 +204,10 @@ prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettyb
 ##############################
 jpeg("results/figures/pv-pf-po_crude_maps3x3.jpg", width = 11, height = 8, units = "in", res = 500)
 gridExtra::grid.arrange(
-  pntestmaps_lrg[[1]], caseprevmaps_lrg[[1]], prevmaprasterplots[[1]],
-  pntestmaps_lrg[[2]], caseprevmaps_lrg[[2]], prevmaprasterplots[[2]],
-  pntestmaps_lrg[[3]], caseprevmaps_lrg[[3]], prevmaprasterplots[[3]],
-  ncol=3, top=grid::textGrob("Malaria Species Prevalence in CD2013 DHS", 
+  pntestmaps_lrg[[1]], caseprevmaps_lrg[[1]], #prevmaprasterplots[[1]],
+  pntestmaps_lrg[[2]], caseprevmaps_lrg[[2]], #prevmaprasterplots[[2]],
+  pntestmaps_lrg[[3]], caseprevmaps_lrg[[3]], #prevmaprasterplots[[3]],
+  ncol=3, top=grid::textGrob("Malaria Species #Prevalence in CD2013 DHS", 
                              gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 
 graphics.off()
