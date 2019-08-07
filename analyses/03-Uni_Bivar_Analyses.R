@@ -138,7 +138,7 @@ pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)),
                                covar = pvivrskfctr, stringsAsFactors=FALSE)
 
 pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
-pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlog,
+pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlogit,
                                              .f=function(x){
                                              broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
                                              )

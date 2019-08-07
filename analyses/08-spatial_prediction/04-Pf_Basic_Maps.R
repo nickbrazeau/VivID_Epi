@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to create basic maps and results for Pf as comparison
+# Purpose of this script is to create basic maps as sanity checks
 # Will refer to Molly's paper for further Pf-mapping (her thesis/territory)
 #----------------------------------------------------------------------------------------------------
 

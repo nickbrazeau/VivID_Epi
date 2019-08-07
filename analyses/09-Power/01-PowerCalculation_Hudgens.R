@@ -1,5 +1,4 @@
 library(tidyverse)
-library(furrr)
 library(pwr)
 source("R/00-functions_basic.R")
 #...............................................................
