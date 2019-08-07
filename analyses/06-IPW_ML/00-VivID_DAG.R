@@ -34,22 +34,10 @@ txs <- txs %>%
 # find canonical sets
 dagliftover <- readxl::read_excel(path = "model_datamaps/dag_dhscovar_liftover.xlsx")
 txs$adj_set <- purrr::map(txs$column_name,
-                          get_canonical_set,
+                          get_minimal_set,
                           dag = vividdag,
                           outcome = "Pv18s",
                           liftoverdf = dagliftover)
-# if it is a cluster level variable, only consider cluster levels
-drop_clust_to_clust <- function(column_name, adj_set){
-  if(stringr::str_detect(column_name, "_clst")){
-    adj_set <- adj_set[stringr::str_detect(adj_set, "_clst")]
-    return(adj_set)
-  } else{
-    return(adj_set)
-  }
-}
-
-txs$adj_set <- purrr::pmap(txs[,c("column_name", "adj_set")], drop_clust_to_clust)
-
 
 saveRDS(txs, file = "model_datamaps/IPTW_treatments.RDS")
 

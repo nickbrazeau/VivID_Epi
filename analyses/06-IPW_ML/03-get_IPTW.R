@@ -41,8 +41,14 @@ params$iptw <- pmap(params[,c("task", "preds")], get_iptw_prob)
 #................................................
 # Analyze Weights
 #................................................
-lapply(params$iptw, summary)
+widist <- lapply(params$iptw, summary) %>% 
+  do.call("rbind.data.frame", .) %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  magrittr::set_colnames(c("min", "1stquart", "median", "mean", "3rdqart", "max"))
+
 params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
+
+widist <- cbind.data.frame(params$target, widist)
 
 # make plot
 plotdf <- params %>% 

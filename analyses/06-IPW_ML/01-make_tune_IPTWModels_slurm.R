@@ -153,14 +153,14 @@ txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 # REGRESSSION
 hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
   base.learners.regr, 
-  makeNumericParam("alpha", lower = 0, upper = 1),
+#  makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
   makeNumericParam("mtry", lower = 1, upper = 5 )
 )
 
 hyperparams_to_tune.regr.ctrl <-c(
-  "regr.glmnet.alpha" = 11L, #11L
+#  "regr.glmnet.alpha" = 11L, #11L
   "regr.kknn.k" = 29L, #7L
   "regr.svm.cost" = 5L, #5L
   "regr.randomForest.mtry" =  5L #10L
@@ -174,14 +174,14 @@ hyperparams_to_tune.regr.ctrl <- mlr::makeTuneControlDesign(design =
 # CLASSIFICATION
 hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
   base.learners.classif, 
-  makeNumericParam("alpha", lower = 0, upper = 1),
+#  makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
   makeNumericParam("mtry", lower = 1, upper = 5 )
 )
 
 hyperparams_to_tune.classif.ctrl <-c(
-  "classif.glmnet.alpha" = 11L, #11L
+#  "classif.glmnet.alpha" = 11L, #11L
   "classif.kknn.k" = 29L, #29L
   "classif.svm.cost" = 5L, #5L
   "classif.randomForest.mtry" =  5L #10L

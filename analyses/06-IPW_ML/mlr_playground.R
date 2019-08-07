@@ -1,6 +1,6 @@
 source("R/00-functions_iptw.R")
 
-covars <- getTaskFeatureNames(params$task[[3]])
+covars <- getTaskFeatureNames(params$task[[2]])
 
 covars <- c("wtrdist_cont_scale_clst",
             "temp_ann_cont_scale_clst",
@@ -13,9 +13,16 @@ covars <- c("urbanscore_cont_scale_clst")
 covars <- covars[!covars %in% c("built_population_2014_cont_scale_clst", "nightlights_composite_cont_scale_clst", "all_population_count_2015_cont_scale_clst", "travel_times_2015_cont_scale_clst" )]
 covars <- covars[grepl("_clst", covars)]
 covars <- c(covars, "urbanscore_cont_scale_clst")
+
+
+
+
+# what if i take out altitude
 sf::st_geometry(dt) <- NULL
+covars <- covars[!covars %in% "alt_dem_cont_scale_clst"]
+
 tempdata <- dt %>% 
-  dplyr::select(covars, "hlthdist_cont_clst", "longnum", "latnum") %>% 
+  dplyr::select(covars, "temp_ann_cont_clst", "longnum", "latnum") %>% 
   dplyr::filter(complete.cases(.)) %>% 
   dplyr::select(-c("longnum", "latnum"))
 
@@ -26,9 +33,9 @@ tempcoords <- dt %>%
   dplyr::select(c("longnum", "latnum"))
 
 
-task <- mlr::makeRegrTask(data = tempdata, target = "hlthdist_cont_clst", coordinates = tempcoords)
+task <- mlr::makeRegrTask(data = tempdata, target = "temp_ann_cont_clst", coordinates = tempcoords)
 lrn <-  makeStackedLearner(base.learners = c("regr.lm",
-                                             "regr.glmnet", 
+   #                                          "regr.glmnet", 
                                              "regr.kknn",
                                              "regr.svm",
                                              "regr.randomForest"),

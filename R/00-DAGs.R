@@ -75,16 +75,16 @@ get_minimal_set <- function(dag, exposure, outcome,
                         effect = effect)
   
 
-  adj.min.count <- min( sapply(adj, length) )
-  adj.min <- adj[ sapply(adj, length) == adj.min.count ]
+  adj.max.count <- max( sapply(adj, length) )
+  adj.max <- adj[ sapply(adj, length) == adj.max.count ]
   
   # error catch if more than one minimal set of same lenght
-  if(length(adj.min) > 1){
+  if(length(adj.max) > 1){
     # randomly pick one
-    adj.min <-  adj.min[ sample(1:length(adj.min), size=1) ]
+    adj.max <-  adj.max[ sample(1:length(adj.max), size=1) ]
   }
   
-  set <- tibble::tibble(dagcovar = as.character(adj.min))
+  set <- tibble::tibble(dagcovar =  as.character( unlist(adj.max) ) )
   
   
   # do liftover
