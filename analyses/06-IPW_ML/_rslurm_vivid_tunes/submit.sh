@@ -6,7 +6,7 @@
 
 #SBATCH --mem=32000
 
-#SBATCH --array=0-12%13
+#SBATCH --array=0-11%12
 
 #SBATCH --cpus-per-task=8
 

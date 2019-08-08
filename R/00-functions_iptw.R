@@ -103,7 +103,7 @@ findbesttuneresult.simple <- function(path){
 tune_stacked_learner <- function(learner, task, tuneresult){
   if(mlr::getTaskType(task) == "classif"){
     stck.lrnr.tuned <- setHyperPars(learner, 
-                                    classif.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "classif.glmnet.alpha"],
+                   #                 classif.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "classif.glmnet.alpha"],
                                     classif.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "classif.kknn.k"],
                                     classif.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "classif.svm.cost"],
                                     classif.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "classif.randomForest.mtry"]
@@ -111,7 +111,7 @@ tune_stacked_learner <- function(learner, task, tuneresult){
   } else if(mlr::getTaskType(task) == "regr"){
     
     stck.lrnr.tuned <- setHyperPars(learner, 
-                                    regr.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "regr.glmnet.alpha"],
+                     #               regr.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "regr.glmnet.alpha"],
                                     regr.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "regr.kknn.k"],
                                     regr.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "regr.svm.cost"],
                                     regr.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "regr.randomForest.mtry"]
