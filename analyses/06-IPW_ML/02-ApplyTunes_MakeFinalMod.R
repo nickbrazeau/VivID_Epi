@@ -9,14 +9,89 @@ source("R/00-functions_iptw.R")
 # after figuring out who won
 # this will get hyperpar mlr::getHyperPars(learner.hp)
 
+
+
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+sf::st_geometry(dt) <- NULL
+#........................
+# manipulate tx map
+#........................
+# read in treatments
+txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
+  dplyr::rename(positive = positivefactor) %>% 
+  dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
+                              ifelse(grepl("fctb", column_name), "binary", NA)))
+# note we want the targets to be in their original form and no the scaled form (to account for variance in the outcome, which is now our tx level)
+txs <- txs %>% 
+  dplyr::mutate(target = column_name,
+                target = gsub("_scale", "", column_name))
+
+
+#........................
+# manipulate data
+#........................
+# subset to treatments, outcome, weights and coords
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
+                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "urbanscore_cont_scale_clst", #urbanicity
+                   "longnum", "latnum")
+
+dt.ml <- dt %>% 
+  dplyr::select(varstoinclude)
+
+# subset to complete cases
+dt.ml.cc <- dt.ml %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  dplyr::select(-c("longnum", "latnum")) %>% 
+  data.frame(.)
+
+dt.ml.coords <- dt.ml %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  dplyr::select(c("longnum", "latnum")) %>% 
+  data.frame(.)
+
+#........................
+# Subset Data for Tuning
+#........................
+nrows.df <- nrow(dt.ml.cc)
+pull <- sort( sample(1:nrows.df, size = 0.5*nrows.df) )
+
+dt.ml.cc <- dt.ml.cc[pull, ]
+dt.ml.coords <- dt.ml.coords[pull, ]
+
+#........................
+# Subset and Store Dataframes for Tasks
+#........................
+txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set, 
+                        .f = function(x, y){
+                          ret <- dt.ml.cc %>% 
+                            dplyr::select(c(x, y))
+                          return(ret)
+                        })
+
+#........................
+# Pull Out Coords
+#........................
+txs$coordinates <- lapply(1:nrow(txs), function(x) return(dt.ml.coords))
+
+
+#--------------------------------------
+# Setup tasks & base learners
+#--------------------------------------
+# first make the tasks
+txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
+                        .f = make_class_task)
+
+
 #............................................
 # Apply the Tuning Results to the Learner
 #............................................
 params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
 # now overwrite Learner ModelMultiplexer to a 
 # STACKED learner that is actually of an ensemble 
-# 
-# 
+
+params$task <- txs$task
+
 # 
 #  CHANGED THIS TO AVG STACK
 params$learner <- purrr::map(params$task, make_avg_Stack, 
