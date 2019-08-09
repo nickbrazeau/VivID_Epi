@@ -82,7 +82,7 @@ txs$coordinates <- lapply(1:nrow(txs), function(x) return(dt.ml.coords))
 #--------------------------------------
 # first make the tasks
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
-                        .f = make_class_task_subset)
+                        .f = make_class_task)
 
 # # now look and correct class imbalance
 # txs$task <- purrr::pmap(txs[,c("task", "type")], 
