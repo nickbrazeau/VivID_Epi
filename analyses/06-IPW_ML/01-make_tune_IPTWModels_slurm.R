@@ -52,6 +52,14 @@ dt.ml.coords <- dt.ml %>%
   dplyr::select(c("longnum", "latnum")) %>% 
   data.frame(.)
 
+#........................
+# Subset Data for Tuning
+#........................
+nrows.df <- nrow(dt.ml.cc)
+pull <- sort( sample(1:nrows.df, size = 0.5*nrows.df) )
+
+dt.ml.cc <- dt.ml.cc[pull, ]
+dt.ml.coords <- dt.ml.coords[pull, ]
 
 #........................
 # Subset and Store Dataframes for Tasks
@@ -74,7 +82,7 @@ txs$coordinates <- lapply(1:nrow(txs), function(x) return(dt.ml.coords))
 #--------------------------------------
 # first make the tasks
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
-                        .f = make_class_task)
+                        .f = make_class_task_subset)
 
 # # now look and correct class imbalance
 # txs$task <- purrr::pmap(txs[,c("task", "type")], 
@@ -243,7 +251,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
-                            jobname = 'vivid_tunes',
+                            jobname = 'vivid_tunes_fitty',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

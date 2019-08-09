@@ -15,6 +15,10 @@ source("R/00-functions_iptw.R")
 params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
 # now overwrite Learner ModelMultiplexer to a 
 # STACKED learner that is actually of an ensemble 
+# 
+# 
+# 
+#  CHANGED THIS TO AVG STACK
 params$learner <- purrr::map(params$task, make_avg_Stack, 
                              learners = baselearners.list)
 tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes/", pattern = ".RDS", full.names = T)
