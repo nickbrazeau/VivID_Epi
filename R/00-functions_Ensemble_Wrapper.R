@@ -103,4 +103,38 @@ make_hillclimb_Stack <- function(
 
 
 
+# make the ensemble learner
+#' @description 
+#' simple approach with avergae as method of combining
+
+make_avg_Stack <- function(
+  task = task, 
+  learners = learners.list){
+  
+  if(mlr::getTaskType(task) == "classif"){
+    learners.list <- baselearners.list$classif
+    baselearners <- lapply(learners.list, makeLearner, predict.type = "prob")
+    m = makeStackedLearner(base.learners = baselearners,
+                           predict.type = "prob",
+                           method = "average")
+    
+    
+  } else if(mlr::getTaskType(task) == "regr"){
+    learners.list <- baselearners.list$regress
+    
+    baselearners <- lapply(learners.list, makeLearner, predict.type = "response")
+    m <- makeStackedLearner(base.learners = baselearners,
+                            predict.type = "response",
+                            method = "average")
+    
+  } else {
+    stop("You must have type binary or continuous for access to learners")
+  }
+  
+  return(m)
+}
+
+
+
+
   

@@ -8,9 +8,6 @@ library(tidyverse)
 library(ggridges)
 source("R/00-functions_iptw.R")
 
-
-
-
 # read in param table and results of training
 #params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
 #trainpaths <-  list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)

@@ -6,12 +6,8 @@ library(mlr)
 source("R/00-functions_Ensemble_Wrapper.R")
 source("R/00-functions_iptw.R")
 
-
-
 # after figuring out who won
 # this will get hyperpar mlr::getHyperPars(learner.hp)
-
-
 
 #............................................
 # Apply the Tuning Results to the Learner
@@ -19,7 +15,7 @@ source("R/00-functions_iptw.R")
 params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
 # now overwrite Learner ModelMultiplexer to a 
 # STACKED learner that is actually of an ensemble 
-params$learner <- purrr::map(params$task, make_hillclimb_Stack, 
+params$learner <- purrr::map(params$task, make_avg_Stack, 
                              learners = baselearners.list)
 tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]

@@ -12,7 +12,7 @@ baselearners <- c("regr.lm",
                   "regr.randomForest")
 
 
-Bostonsource("R/00-make_null_IPTW_distribs.R")
+source("R/00-make_null_IPTW_distribs.R")
 library(tidyverse)
 set.seed(928)
 n <- 1000
@@ -245,7 +245,7 @@ bmr <- benchmark(learners = bench.lrnrs,
 getBMRAggrPerformances(bmr)
 plotBMRBoxplots(bmr)
 
-
+pred <- train(stck.lrnr, regr.task)
 
 
 
