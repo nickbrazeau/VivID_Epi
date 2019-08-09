@@ -50,17 +50,9 @@ dt.ml.coords <- dt.ml %>%
   dplyr::select(c("longnum", "latnum")) %>% 
   data.frame(.)
 
-#........................
-# Subset Data for Tuning
-#........................
-nrows.df <- nrow(dt.ml.cc)
-pull <- sort( sample(1:nrows.df, size = 0.5*nrows.df) )
-
-dt.ml.cc <- dt.ml.cc[pull, ]
-dt.ml.coords <- dt.ml.coords[pull, ]
 
 #........................
-# Subset and Store Dataframes for Tasks
+# Subset and Store Dataframes for Tasks for prediciton on full dataset
 #........................
 txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set, 
                         .f = function(x, y){
@@ -84,19 +76,19 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinate
 
 
 #............................................
-# Apply the Tuning Results to the Learner
+# Apply the Tuning Results to the Learner &
+# update the "training" data to be the full data task
 #............................................
-params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
-# now overwrite Learner ModelMultiplexer to a 
-# STACKED learner that is actually of an ensemble 
+params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/params.RDS")
 
+# overwrite params tasks to the new tasks that we want to train the data on
 params$task <- txs$task
 
 # 
 #  CHANGED THIS TO AVG STACK
 params$learner <- purrr::map(params$task, make_avg_Stack, 
                              learners = baselearners.list)
-tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 
 # sort properly to match rows in df
@@ -131,7 +123,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_traindata, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds_finalmodels',
+                            jobname = 'vivid_preds_finalmodels_fitty',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
