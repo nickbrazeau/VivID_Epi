@@ -1,5 +1,5 @@
 ---
-title: "Finding a Sample to Sequence"
+title: "Finding a Sample to Sequence from Adults Data"
 author: "Nicholas F. Brazeau"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
@@ -21,7 +21,7 @@ library(tidyverse)
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 
 
-pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v1.csv", 
+pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v2.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::select(-c(dplyr::starts_with("hiv0")))
