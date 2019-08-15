@@ -27,56 +27,25 @@ saveRDS(drc_ape, file = "data/derived_data/drc_ape.rds")
 
 
 
+#---------------------------------------------------------------------------------
+# Precipation Data
+#---------------------------------------------------------------------------------
+heavyRain::getCHIRPS(region = "africa",
+                     format = "tifs",
+                     tres = "monthly", 
+                     sres = 0.05, # near same resolution as Manny pulled down
+                     begin = as.Date("2013-01-01"),
+                     end = as.Date("2014-12-31"),
+                     dsn = "data/raw_data/weather_data/CHIRPS/",
+                     overwrite = T)
 
-##################################################################################
-##########                    Impute Precipitation                ################
-##################################################################################
-# find missing clusters
-clst.all <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds") %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::filter(hv103 == 1) %>% 
-  dplyr::select(c("hv001", "annual_precipitation_2015", "latnum", "longnum", "geometry")) %>% 
-  dplyr::filter(!duplicated(.))
-
-missclust <- clst.all[clst.all$annual_precipitation_2015 == -9999, ]
-notmissclust <- clst.all[clst.all$annual_precipitation_2015 != -9999, ]
-# can we do k-nearest neighbors average again
-ggplot() + 
-  geom_sf(data=notmissclust, color= "black") + 
-  geom_sf(data=missclust, color= "red", size = 2, alpha  = 0.5) 
-
-# first missing cluster
-dist.clust1 <- raster::pointDistance(p1 = sf::as_Spatial(missclust[1,]),
-                              p2 = sf::as_Spatial(notmissclust),
-                              lonlat = T)
-# find 5 nearby clusters
-dist.clust1.sorted.5 <- sort(dist.clust1)[1:5]
-nrbyclstrs.clust1 <- which(dist.clust1 %in% dist.clust1.sorted.5)
+system('gunzip data/raw_data/weather_data/CHIRPS/*')
 
 
-# SECOND missing cluster
-dist.clust2 <- raster::pointDistance(p1 = sf::as_Spatial(missclust[2,]),
-                                     p2 = sf::as_Spatial(notmissclust),
-                                     lonlat = T)
-# find 5 nearby clusters
-dist.clust2.sorted.5 <- sort(dist.clust2)[1:5]
-nrbyclstrs.clust2 <- which(dist.clust2 %in% dist.clust2.sorted.5)
+#---------------------------------------------------------------------------------
+# Temperature Data
+#---------------------------------------------------------------------------------
 
-# mean precip
-precip1 <- mean( notmissclust$annual_precipitation_2015[notmissclust$hv001 %in% nrbyclstrs.clust1] )
-precip2 <- mean( notmissclust$annual_precipitation_2015[notmissclust$hv001 %in% nrbyclstrs.clust2] )
-
-# overwrite
-clst.all$annual_precipitation_2015[clst.all$annual_precipitation_2015 == -9999] <- c(precip1, precip2)
-
-# rename
-clst.all <- clst.all %>% 
-  dplyr::rename(annual_precipitation_2015imp = annual_precipitation_2015) %>% 
-  dplyr::select(c("hv001", "annual_precipitation_2015imp"))
-sf::st_geometry(clst.all) <- NULL
-
-saveRDS(object = clst.all, file = "data/derived_data/annual_precipitation_2015_imputed.RDS")
 
 
 ##################################################################################
