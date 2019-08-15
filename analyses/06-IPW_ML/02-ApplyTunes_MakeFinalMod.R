@@ -88,7 +88,8 @@ params$task <- txs$task
 #  CHANGED THIS TO AVG STACK
 params$learner <- purrr::map(params$task, make_avg_Stack, 
                              learners = baselearners.list)
-tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 
 # sort properly to match rows in df
