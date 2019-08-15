@@ -153,17 +153,44 @@ ggplot2::autoplot(urbanmatpca,
                   loadings.label.size  = 3)
 
 
+#.............
+# K-means Clustering of Urbanicity
+#.............
+# Apply k-means with k=4
+k <- kmeans(urbanmatpca$x[,1:4], 2, nstart=25, iter.max=1000)
+k # the explanation of between SS versus total SS is ~65.9% 
+
+
+# plot new designations
+pcaeig_newrural <- tibble(rururb_new = factor(k$cluster),
+                          rururb_orig = haven::as_factor(urbanmat$hv025),
+                          pc1 = urbanmatpca$x[,1], pc2 =urbanmatpca$x[,2], pc3 = urbanmatpca$x[,3])
+
+# seems reasonable for what I want, a lot of the originally coded urban centers
+# are recoded to rural, which is more in line with what we would expect
+ggplot() +
+  geom_jitter(data = pcaeig_newrural, aes(x=pc1, y = pc2, shape = rururb_orig, color = rururb_new))
+
+
 
 #.............
 # Degree of Urbanicity
 #.............
-urbanicity <- cbind(urbanmat[,c("hv001", "hv025")], urbanscore_cont_scale_clst = urbanmatpca$x[,1])
+urbanicity <- cbind(urbanmat[,c("hv001", "hv025")], 
+                    urbanpcascore_cont_scale_clst = urbanmatpca$x[,1],
+                    urban_rural_pca_fctb_clst = factor(k$cluster, levels = c(1,2), labels = c("rural", "urban"))
+                    )
+
+
 urbanicity.plot <- urbanicity %>% 
   left_join(x = ., y = ge, by = "hv001")
 
 ggplot() +
   geom_sf(data = DRCprov) +
-  geom_point(data = urbanicity.plot, aes(x = longnum, y = latnum, color = urbanscore_cont_scale_clst)) +
+  geom_point(data = urbanicity.plot, 
+             aes(x = longnum, y = latnum, 
+                 color = urbanpcascore_cont_scale_clst,
+                 shape = urban_rural_pca_fctb_clst)) +
   viridis::scale_color_viridis("viridis")
 
 
