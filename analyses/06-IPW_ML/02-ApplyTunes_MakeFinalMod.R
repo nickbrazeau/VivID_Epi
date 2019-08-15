@@ -79,7 +79,14 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinate
 # Apply the Tuning Results to the Learner &
 # update the "training" data to be the full data task
 #............................................
+<<<<<<< Updated upstream
 params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/params.RDS")
+=======
+# params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
+params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/params.RDS")
+# now overwrite Learner ModelMultiplexer to a 
+# STACKED learner that is actually of an ensemble 
+>>>>>>> Stashed changes
 
 # overwrite params tasks to the new tasks that we want to train the data on
 params$task <- txs$task
