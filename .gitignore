@@ -18,9 +18,13 @@ datasets/
 db/
 data/
 olddata/
+
+model_datamaps/
+
 rdhs.json
 figures/
 results/
+
 *jpg
 *svg
 
