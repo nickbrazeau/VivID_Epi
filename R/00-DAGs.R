@@ -21,11 +21,11 @@ get_canonical_set <- function(dag, exposure, outcome,
   outcome <- inner_join(tibble::tibble(dhscovar = outcome), liftoverdf)$dagcovar
   
   
-  adj <- adjustmentSets(dag, 
-                        exposure = exposure,
-                        outcome = outcome,
-                        type = type,
-                        effect = effect)
+  adj <- dagitty::adjustmentSets(dag, 
+                                 exposure = exposure,
+                                 outcome = outcome,
+                                 type = type,
+                                 effect = effect)
   
   set <- tibble::tibble(dagcovar = as.character(adj[[1]]))
   
