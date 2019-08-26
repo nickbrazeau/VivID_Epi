@@ -22,14 +22,15 @@ sf::st_geometry(dt) <- NULL
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
   dplyr::rename(positive = positivefactor) %>% 
   dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
-                              ifelse(grepl("fctb", column_name), "binary", NA)))
+                              ifelse(grepl("fctb", column_name), "binary", NA))) %>% 
+  dplyr::rename(target = column_name)
 
 
 #........................
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
-varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$column_name,
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target,
                    "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
                    "hiv03_fctb", # no longer considered risk factor bc too few observations
                    "longnum", "latnum")
@@ -51,7 +52,6 @@ txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set,
                             dplyr::select(c(x,y))
                           return(ret)
                         })
-
 
 
 #........................
