@@ -6,7 +6,6 @@
 
 source("R/00-functions_Ensemble_Wrapper.R")
 source("R/00-functions_iptw.R")
-source("R/00-make_null_IPTW_distribs_brownian.R")
 source("R/00-my_IPTW_performance_measure_energy.R")
 set.seed(48, "L'Ecuyer")
 library(tidyverse)
@@ -22,22 +21,18 @@ sf::st_geometry(dt) <- NULL
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
   dplyr::rename(positive = positivefactor) %>% 
   dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
-                              ifelse(grepl("fctb", column_name), "binary", NA)))
-# note we want the targets to be in their original form and no the scaled form (to account for variance in the outcome, which is now our tx level)
-txs <- txs %>% 
-  dplyr::mutate(target = column_name,
-                target = gsub("_scale", "", column_name))
+                              ifelse(grepl("fctb", column_name), "binary", NA))) %>% 
+  dplyr::rename(target = column_name)
 
 
 #........................
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
-varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
-                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
-                   "urbanscore_cont_scale_clst", #urbanicity
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target,
+                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "hiv03_fctb", # no longer considered risk factor bc too few observations
                    "longnum", "latnum")
-
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
 
@@ -84,11 +79,6 @@ txs$coordinates <- lapply(1:nrow(txs), function(x) return(dt.ml.coords))
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
                         .f = make_class_task)
 
-# # now look and correct class imbalance
-# txs$task <- purrr::pmap(txs[,c("task", "type")], 
-#                          .f = find_Class_Imbalance,
-#                         classimb_tol = 0.6,
-#                         smotenn = 5)
 
 
 # now make the individual multiplexed base learners
@@ -111,31 +101,25 @@ txs$learner <- purrr::map(txs$type, function(x){
 #--------------------------------------
 # Setup null distributions
 #--------------------------------------
-# nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
-# 
-# txs <- dplyr::left_join(txs, nulldist, by = "target")
-# 
-# txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
-# 
-# # set the null distribution for each respective DAG
-# txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
-#   ret <- mlr::setMeasurePars(x,
-#                              par.vals = list(nulldist = y))
-# })
+nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
 
-txs$performmeasure <- purrr::map(txs$type, function(x){
-  if(x == "continuous"){
-    return(mse)
-  } else if (x == "binary"){
-    return(auc)
-  }
+txs <- dplyr::left_join(txs, nulldist, by = "target")
+
+txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
+
+# set the null distribution for each respective DAG
+txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
+  ret <- mlr::setMeasurePars(x,
+                             par.vals = list(nulldist = y))
 })
+
+
 
 #--------------------------------------
 # Setup resampling
 #--------------------------------------
 # resampling approach with spatial CV considered
-rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 5)
+rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 10)
 #rdesc <- makeResampleDesc("SpCV", iters = 2) #
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
@@ -154,21 +138,20 @@ txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 # Single Vector Machine, C: cost of constraints violation (default: 1) this is the `C'-constant of the regularization term in the Lagrange formulation.
 # Single Vector Machine, kernel: The kernel function used in training and predicting. This parameter can be set to any function, of class kernel, which computes the inner product in feature space between two vector arguments (see kernels). kernlab provides the most popular kernel functions which can be used by setting the kernel parameter to the following strings: 
 # GAMBoost -- not going to tune 
-# TODO consider gamboost boosting for tuning
 # Random Forest, Mtry: Number of variables randomly sampled as candidates at each split. Note that the default values are different for classification (sqrt(p) where p is number of variables in x) and regression (p/3) 
 
 # make a parameter set to explore
 # REGRESSSION
 hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
   base.learners.regr, 
-#  makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
   makeNumericParam("mtry", lower = 1, upper = 5 )
 )
 
 hyperparams_to_tune.regr.ctrl <-c(
-#  "regr.glmnet.alpha" = 11L, #11L
+  "regr.glmnet.alpha" = 11L, #11L
   "regr.kknn.k" = 29L, #7L
   "regr.svm.cost" = 5L, #5L
   "regr.randomForest.mtry" =  5L #10L
@@ -182,14 +165,14 @@ hyperparams_to_tune.regr.ctrl <- mlr::makeTuneControlDesign(design =
 # CLASSIFICATION
 hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
   base.learners.classif, 
-#  makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
   makeNumericParam("mtry", lower = 1, upper = 5 )
 )
 
 hyperparams_to_tune.classif.ctrl <-c(
-#  "classif.glmnet.alpha" = 11L, #11L
+  "classif.glmnet.alpha" = 11L, #11L
   "classif.kknn.k" = 29L, #29L
   "classif.svm.cost" = 5L, #5L
   "classif.randomForest.mtry" =  5L #10L
@@ -251,7 +234,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
-                            jobname = 'vivid_tunes_fitty',
+                            jobname = 'vivid_tunes_fifty',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

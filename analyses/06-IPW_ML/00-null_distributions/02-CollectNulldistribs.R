@@ -8,7 +8,7 @@ library(tidyverse)
 #...................................
 # Import Data
 #...................................
-null.ret.files <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/00-null_distributions/",
+null.ret.files <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/00-null_distributions/_rslurm_nulldist_vivid_covar/",
                              pattern = ".RDS", full.names = T)
 
 # I don't need the function or param file here

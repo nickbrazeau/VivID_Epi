@@ -25,7 +25,7 @@ make.null.distribution.energy <- function(target, data, covars){
   
   data.dist <- lapply(data.list.rand, function(x){
     
-    if(is.factor(x[,1])){
+    if(is.factor(x[,1])){ # note, only have binary factors so this ok
       x[,1] <- as.numeric(x[,1])
     }
     

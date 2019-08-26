@@ -4,7 +4,7 @@
 # This is inspired by/is a slight extension of the function/methods presented in 
 # Y. Zhu et al. "A Boosting Algorithm ..." 2015
 #----------------------------------------------------------------------------------------------------
-source("R/00-functions_epi.R")
+source("R/00-functions_basic.R")
 library(mlr)
 #..............................................................
 # Binary Treatment Case
@@ -81,9 +81,18 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   wi <- get_iptw_prob(task = task, preds = pred)
   
   
+  #........................
+  # Apply IPTWs
+  #........................
+  dat.weighted.rows <- sample(x = 1:nrow(dat), size = n, prob = wi, replace = T)
+  dat.weighted <- dat[dat.weighted.rows, ]
   
+
+  #........................
+  # Nulldist to useful by
+  # coercing back to vector
+  #........................
   
-  # coerce back to vector
   nulldist <- unname( unlist(nulldist) )
   
   if(!is.atomic(nulldist)){
@@ -94,11 +103,11 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   
   # pull apart data to find Djs
   data.list <- lapply(1:length(covars), 
-                      function(x){return(as.data.frame(dat[, c(target, covars[x]) ]))})
+                      function(x){return(as.data.frame(dat.weighted[, c(target, covars[x]) ]))})
   
   data.dist <- lapply(data.list, function(x){
     
-    if(is.factor(x[,1])){
+    if(is.factor(x[,1])){ # note, only have binary factors so this ok
       x[,1] <- as.numeric(x[,1])
     }
     
@@ -120,7 +129,32 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   # now calculate Z score
   Z <- ( dij - mean(nulldist) ) / sd(nulldist)
   
-  return(Z)
+  #........................
+  # CONSIDER DISTRIBUTION of IPTWs
+  #........................
+  
+  
+  # weights are on scale of 0, Inf, can log tranform these 
+  # IMO, ideal distribution of weights would be ~ N(1, 0.25)
+  # assumption of independence is violated here but we aren't using this for inference, just guidance
+  # iptw.sc <- my.scale(iptw)
+  # smsmpl <- sample(1:length(iptw.sc), 100)
+  # ll <- sum(dnorm(x = iptw.sc[smsmpl], mean = 0, sd = 1, log = T))
+  # too much data overwhelming likelihood... 
+  # bc we are assuming 15000 iid draws...that are not iid
+  
+  iptw.fit <- MASS::fitdistr(iptw, "normal")
+  pd <- iptw.fit$estimate["mean"]/iptw.fit$estimate["sd"]
+  
+  # pull it in right direction
+  if(Z > 1){
+    z.pd <- Z/pd
+  } else if(Z < 1) {
+    z.pd <- Z * pd
+  }
+  
+  
+  return(z.pd)
   }
 
 
