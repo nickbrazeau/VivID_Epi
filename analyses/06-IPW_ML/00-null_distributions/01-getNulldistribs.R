@@ -23,22 +23,15 @@ txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>%
   dplyr::rename(positive = positivefactor) %>% 
   dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
                               ifelse(grepl("fctb", column_name), "binary", NA)))
-# note we want the targets to be in their original form and no the scaled form (to account for variance in the outcome, which is now our tx level)
-txs <- txs %>% 
-  dplyr::mutate(target = column_name,
-                target = gsub("_scale", "", column_name))
 
 
 #........................
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
-varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
-                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
-                   "built_population_2014_cont_scale_clst", # latent urbanicity var
-                   "nightlights_composite_cont_scale_clst", # latent urbanicity var
-                   "all_population_count_2015_cont_scale_clst", # latent urbanicity var
-                   "travel_times_2015_cont_scale_clst", # latent urbanicity var
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$column_name,
+                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "hiv03_fctb", # no longer considered risk factor bc too few observations
                    "longnum", "latnum")
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)

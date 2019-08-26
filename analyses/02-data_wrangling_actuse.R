@@ -154,7 +154,8 @@ kdsrv_fvr_clst.imp <- kdsrv_fvr_clst.imp %>%
     # act_cont_scale_clst = my.scale(logit(act_cont_clst, tol = tol), center = T, scale = T),
     # otherartm_cont_scale_clst = my.scale(logit(otherartm_cont_clst, tol = tol), center = T, scale = T),
     # other_cont_scale_clst = my.scale(logit(other_cont_clst, tol = tol), center = T, scale = T),
-    anyatm_cont_scale_clst = my.scale(logit(anyatm_cont_clst, tol = tol), center = T, scale = T)
+    anyatm_cont_logit_clst = logit(anyatm_cont_clst, tol = tol),
+    anyatm_cont_logit_scale_clst = my.scale(anyatm_cont_logit_clst, center = T, scale = T)
   )  %>% 
   dplyr::select(-c("n"))
 

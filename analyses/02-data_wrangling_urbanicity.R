@@ -4,6 +4,7 @@ library(sf)
 library(plotly)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
+set.seed(48)
 
 # Notes on Lonely PSUs
 # http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
@@ -180,6 +181,7 @@ urbanicity <- cbind(urbanmat[,c("hv001", "hv025")],
                     urbanpcascore_cont_scale_clst = urbanmatpca$x[,1],
                     urban_rural_pca_fctb_clst = factor(k$cluster, levels = c(1,2), labels = c("rural", "urban"))
                     )
+urbanicity$urban_rural_pca_fctb_clst <- relevel(urbanicity$urban_rural_pca_fctb_clst, "urban")
 
 
 urbanicity.plot <- urbanicity %>% 

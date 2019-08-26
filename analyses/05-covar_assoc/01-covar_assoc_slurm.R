@@ -10,7 +10,7 @@ library(energy)
 # Import Data
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/~$sub_DECODER_covariate_map_v2.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
 # grab risk factors

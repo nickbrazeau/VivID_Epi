@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to create basic maps as sanity checks
-# Will refer to Molly's paper for further Pf-mapping (her thesis/territory)
+# Will refer to Molly's paper for further Pf-mapping 
 #----------------------------------------------------------------------------------------------------
 
 # depending on what SRM says don't do this in a separeate script -- this is what pmap is for

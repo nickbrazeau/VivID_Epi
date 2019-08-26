@@ -23,7 +23,7 @@ mypalettediff <- colorRampPalette(cols)(101)
 #----------------------------------------------------------------------------------------------------
 readRasterBB <- function(rstfile, bb = bb){
   ret <- raster::raster(rstfile)
-  ret <- raster::crop(x = ret, y = sf::as_Spatial(bb))
+  ret <- raster::crop(x = ret, y = bb)
   ret <- raster::projectRaster(from = ret, to = ret,
                                crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
   

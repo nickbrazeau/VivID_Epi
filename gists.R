@@ -8,8 +8,14 @@ bb <- osmdata::getbb("Democratic Republic of the Congo",
                      format_out = "sf_polygon")
 
 
-
-
+#------------------------------------------------------------------------------------------
+# Convert SP to ggplot
+#------------------------------------------------------------------------------------------
+# can be a raster or whatever 
+ggspatial::df_spatial(x) %>% 
+  ggplot() + 
+  geom_raster(aes(x=x, y=y,fill=band1)) +
+  geom_sf(data = DRCprov, color = "grey", fill=NA) 
 
 
 #------------------------------------------------------------------------------------------

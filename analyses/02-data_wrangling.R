@@ -17,9 +17,7 @@ tol <- 1e-3
 set.seed(48)
 
 
-bb <- osmdata::getbb("Democratic Republic of the Congo", 
-                     featuretype = "country",
-                     format_out = "sf_polygon")
+
 
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
@@ -196,8 +194,59 @@ dt <- dt %>%
 
 xtabs(~hiv03_fctb + hiv03, data = dt, addNA = T)
 
+
 #.............
-# Anemia/Hemoglobin
+# hemoglobin -- adjusted
+# as the adjusted has hemoglobins of >20... 
+# too high, unless clin path
+#.............
+levels(factor(haven::as_factor(dt$ha56))) # need to divide by 10; var is separate column for men and women
+levels(factor(haven::as_factor(dt$hb56)))
+# confirm no missing sex and then can use this variable to distinguish ha56 and hv56
+xtabs(~haven::as_factor(dt$hv104), addNA = T)
+
+
+
+dt <- dt %>% 
+  dplyr::mutate(hab56_cont = ifelse(haven::as_factor(hv104) == "female", ha56, hb56),
+                hab56_cont = ifelse(hab56_cont %in% c("997", "999"), NA, hab56_cont),
+                hab56_cont = as.numeric(hab56_cont)/10) 
+
+
+
+# check hemoglobin recode for WOMEN
+summary(dt$ha56)
+nrow(dt) - length(dt$ha56[dt$hv104 == 2]) # missing tracks to male observations
+summary(dt$ha56[dt$hv104 == 2 & dt$ha56 != 999 & dt$ha56 != 996 & dt$ha56 != 995])
+sum(dt$ha56 %in% c(997, 999)) # 24 missing women hbs (23 missing, 1 inconsistent)
+
+# check visually
+dt %>% 
+  dplyr::mutate(ha56 = ha56/10,
+                ha56 = ifelse(ha56 %in% c(997, 999), NA, ha56)) %>% 
+  ggplot() +
+  geom_point(aes(x=hab56_cont, y=ha56)) + ylim(c(0,25)) + xlim(c(0,25))
+# note, 7527 "rows" missing which corresponds to the 7503 males + 24 NAs coded in the dataset
+
+# check hemoglobin recode for MEN
+summary(dt$hb56)
+summary(dt$hb56[dt$hv104 == 1 & dt$hb56 != 999 & dt$hb56 != 997])
+sum(dt$hb56 %in% c(997, 999)) # 23 missing men hbs, 1 inconsistent
+
+# check visually
+dt %>% 
+  dplyr::mutate(hb56 = hb56/10,
+                hb56 = ifelse(hb56 %in% c(997, 999), NA, hb56)) %>% 
+  ggplot() +
+  geom_point(aes(x=hab56_cont, y=hb56)) + ylim(c(0,25)) + xlim(c(0,25))
+# note, 8400 "rows" missing which corresponds to the 8376 females + 24 NAs coded in the dataset
+hist(dt$hab56_cont_scale)
+xtabs(~dt$hab56_cont, addNA = T)
+
+
+
+#.............
+# Anemia
 #.............
 levels(factor(haven::as_factor(dt$ha57))) 
 levels(factor(haven::as_factor(dt$hb57)))
@@ -214,11 +263,24 @@ dt <- dt %>%
                   hab57_fctb %in% c(1:3), "yes", NA)),
                 hab57_fctb = factor(hab57_fctb, levels = c("no", "yes")),
                 hab57_fctb = relevel(hab57_fctb, "yes") # anemia is protective
-                )
-            
+  )
+
 # check recode
 xtabs(~dt$hab57_fctb + haven::as_factor(dt$ha57) + haven::as_factor(dt$hv104), addNA = T)  
 xtabs(~dt$hab57_fctb + haven::as_factor(dt$hb57) + haven::as_factor(dt$hv104), addNA = T)  
+
+
+# Recoding Anemia for with increased sensitivity/less strict cutoff
+dt <- dt %>% 
+  dplyr::mutate(lowhb_fctb = ifelse(haven::as_factor(hv104) == "female" & hab56_cont < 12.5, "yes", 
+                                     ifelse(haven::as_factor(hv104) == "male" & hab56_cont < 13.5, "yes", 
+                                            "no")),
+                lowhb_fctb = factor(lowhb_fctb, levels = c("no", "yes"))
+  )
+                                     
+
+xtabs(~dt$hab57_fctb + dt$lowhb_fctb, addNA = T)
+
 
 #.............
 # Duffy Phenotype
@@ -307,6 +369,9 @@ wallfloormiss <- dt %>%
 xtabs(~wallfloormiss$hv213 + wallfloormiss$hv214, addNA = T)
 # different observations missing for floor v. wall
 
+
+# Based on recent evidence, I think all metal roofs should be considered modern 
+# because of the indoor temperature causing mosquito death PMC6533302
 wallfloorroofrecode <- dt %>% 
   dplyr::select(c("hv213_liftover", "hv214_liftover", "hv215_liftover"))
 sf::st_geometry(wallfloorroofrecode) <- NULL
@@ -314,9 +379,11 @@ dt <- dt %>%
   dplyr::mutate(
     housecount = apply(wallfloorroofrecode, 1, function(x){return(sum(x == "non-rudimentary"))}),
     hv21345_fctb = ifelse(housecount == 3, "modern", "traditional"), # per PMID: 28222094
+    hv21345_fctb = ifelse(haven::as_factor(dt$hv215) == "metal", "modern", hv21345_fctb), # per PMC6533302
     hv21345_fctb = factor(hv21345_fctb),
     hv21345_fctb = relevel(hv21345_fctb, "modern"))
-                
+
+
 # check -- seems reasonable
 xtabs(~dt$hv21345_fctb, addNA = T)
 
@@ -459,9 +526,17 @@ dtsrvy <- makecd2013survey(survey = dt)
 #.............................................................
 # Precipitation (CHRIPS) 
 #.............................................................
+
+# create bounding box of Central Africa for Speed
+# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+
 # precip data
-precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T, pattern = ".tif")
-precipfrst <- lapply(precip, readRasterBB, bb = bb)
+precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T, 
+                     pattern = ".tif")
+precipfrst <- lapply(precip, readRasterBB, bb = caf)
+
 precipdf <- tibble::tibble(names = basename(precip)) %>% 
   dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
                 year = stringr::str_split_fixed(names, "\\.", n=2)[,1] ,
@@ -475,17 +550,38 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 
 
 #.............................................................
-# Temperature (LAADS) 
+# Temperature (MODIS/LAADS) 
 #.............................................................
 # FILENAME DECONVOLUTION: An example of an existing file is below. 
 # https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/6/MOD02QKM/2007/018/MOD02QKM.A2007018.0105.006.2014227230926.hdf
 # This path should return a MODIS Terra quarter kilometer (250 m) top of atmosphere reflectance product for year 2007, day-of-year 018 (i.e. January 18), from collection 6.
+# Note to change values back to celsius: https://gis.stackexchange.com/questions/72524/how-do-i-convert-the-lst-values-on-the-modis-lst-image-to-degree-celsius
 
+# for temperature, need to mask water sources which have too low temp readings
+load("data/derived_data/hotosm_waterways.RDA")
+oceans <- sf::st_read("~/Documents/GitHub/VivID_Epi/data/map_bases/ne_10m_ocean/ne_10m_ocean.shp") %>% 
+  sf::st_crop(caf)
 
-temp <- list.files(path = "data/raw_data/weather_data/NASA_LAAD_DAAS/", full.names = T, pattern = "LST_Night_CMG.tif")
-tempfrst <- lapply(temp, readRasterBB, bb = bb)
+tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS/", full.names = T,
+                        pattern = "_Night_CMG.tif")
+tempfrst <- lapply(tempfiles, readRasterBB, bb = caf)
 
-tempdf <- tibble::tibble(namestemp = basename(temp)) %>% 
+# rescale values to celsius
+tempfrst <- lapply(tempfrst, function(x){
+  # mask water
+  # x <- raster::mask(x, sf::as_Spatial(wtrlns))
+  # x <- raster::mask(x, sf::as_Spatial(wtrply))
+  # x <- raster::mask(x, sf::as_Spatial(oceans))
+  
+  
+  vals <- raster::values(x) 
+  vals <- ifelse(vals <= 7500, NA, vals) # improper values
+  vals <- (vals * 0.02) - 273.15
+  raster::values(x) <- vals
+  return(x)
+  })
+
+tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 
   dplyr::mutate(namestemp = stringr::str_extract(string = namestemp, pattern = "A[0-9][0-9][0-9][0-9][0-9][0-9][0-9]"),
                 namestemp = gsub("A", "", namestemp),
                 year = substr(namestemp, 1, 4),
@@ -563,7 +659,8 @@ dt <- dt %>%
 wtrdist_out <- readRDS("data/derived_data/hotosm_waterways_dist.rds")
 dt <- dt %>% 
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
-  dplyr::mutate(wtrdist_cont_scale_clst = my.scale(wtrdist_cont_clst, center = T, scale = T)
+  dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst + tol),
+                wtrdist_cont_log_scale_clst = my.scale(wtrdist_cont_log_clst, center = T, scale = T)
                 )
 
 
@@ -596,11 +693,18 @@ dt <- dt %>%
 #.............
 # Distance to Health Site
 #.............
-hlthdist_out <- readRDS("data/derived_data/hotosm_healthsites_dist.rds")
+hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") 
+
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
-  dplyr::mutate(hlthdist_cont_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T)
-                )
+  dplyr::mutate(
+    hlthdist_cont_log_clst = log(hlthst_nrst_duration + tol),
+    hlthdist_cont_log_scale_clst = my.scale(hlthdist_cont_log_clst, center = T, scale = T),
+    
+    hlthst_nrst_duration_fctb = ifelse(hlthst_nrst_duration > 30, "far", "near"),
+    hlthst_nrst_duration_fctb = factor(hlthst_nrst_duration_fctb, levels = c("near", "far"))
+    
+    )
 
 
 #.............
@@ -613,7 +717,7 @@ dt %>%
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(
     actuse = mean(anyatm_cont_clst),
-    actuse.scale = mean(anyatm_cont_scale_clst)) # looks good
+    actuse.scale = mean(anyatm_cont_logit_scale_clst)) # looks good
 
 
 
