@@ -12,8 +12,6 @@ library(mlr)
 my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   
   # pull in pieces to make data frame for Dij calculations
-  dat <- mlr::getTaskData(task)
-  n <- nrow(dat)
   target <- mlr::getTaskTargetNames(task)
   covars <- mlr::getTaskFeatureNames(task)
   
@@ -30,9 +28,8 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   # pred <- mlr::getPredictionProbabilities(pred)
   
   # get inverse probability weights 
-  # wi <- get_iptw_prob(task = task, preds = pred, type = type) 
-  # function having trouble on server bc of sub-nodes,
-  # so had to copy and paste it here 
+  # adjusted as predictions have fewer observations than task
+  # as this is part of the folds/iterations
   get_iptw_prob <- function(task, preds){
     
     if(mlr::getTaskType(task) == "classif"){
@@ -40,8 +37,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
       # pull details from mlr for numerator
       pos.class <- mlr::getTaskDesc(task)$positive
       target <- mlr::getTaskTargetNames(task) 
-      data <- mlr::getTaskData(task)
-      
+
       
       ps <- mlr::getPredictionProbabilities(preds)
       exposure <- mlr::getPredictionTruth(preds)
@@ -84,6 +80,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   #........................
   # Apply IPTWs
   #........................
+  dat <- mlr::getTaskData(task)[pred$data$id, ] # need to pull only those observations we predicted, so we can apply weights
   dat.weighted.rows <- sample(x = 1:nrow(dat), size = n, prob = wi, replace = T)
   dat.weighted <- dat[dat.weighted.rows, ]
   
@@ -143,7 +140,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   # too much data overwhelming likelihood... 
   # bc we are assuming 15000 iid draws...that are not iid
   
-  iptw.fit <- MASS::fitdistr(iptw, "normal")
+  iptw.fit <- MASS::fitdistr(wi, "normal")
   pd <- iptw.fit$estimate["mean"]/iptw.fit$estimate["sd"]
   
   # pull it in right direction
