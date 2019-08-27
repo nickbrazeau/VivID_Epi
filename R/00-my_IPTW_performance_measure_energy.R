@@ -76,6 +76,11 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   } # copying and pasting function from R/00-functions_epi.R here
   wi <- get_iptw_prob(task = task, preds = pred)
   
+  #........................
+  # error catch extreme weights
+  #........................
+  # situation where num/0 -- got it entirely wrong
+  wi[is.infinite(wi)] <- 1e6 # set to extreme value
   
   #........................
   # Apply IPTWs
