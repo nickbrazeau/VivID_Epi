@@ -81,7 +81,7 @@ my.covarbal.fun = function(task, model, pred, feats, nulldist) {
   # Apply IPTWs
   #........................
   dat <- mlr::getTaskData(task)[pred$data$id, ] # need to pull only those observations we predicted, so we can apply weights
-  dat.weighted.rows <- sample(x = 1:nrow(dat), size = n, prob = wi, replace = T)
+  dat.weighted.rows <- sample(x = 1:nrow(dat), size = nrow(dat), prob = wi, replace = T)
   dat.weighted <- dat[dat.weighted.rows, ]
   
 

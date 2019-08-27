@@ -49,9 +49,11 @@ dt.ml.coords <- dt.ml %>%
 
 #........................
 # Subset Data for Tuning
+# 80% of data to train on 
+# to avoid overfitting
 #........................
 nrows.df <- nrow(dt.ml.cc)
-pull <- sort( sample(1:nrows.df, size = 0.5*nrows.df) )
+pull <- sort( sample(1:nrows.df, size = 0.8*nrows.df) )
 
 dt.ml.cc <- dt.ml.cc[pull, ]
 dt.ml.coords <- dt.ml.coords[pull, ]
