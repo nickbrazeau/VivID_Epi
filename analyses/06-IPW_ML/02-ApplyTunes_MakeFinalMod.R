@@ -20,22 +20,19 @@ sf::st_geometry(dt) <- NULL
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
   dplyr::rename(positive = positivefactor) %>% 
   dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
-                              ifelse(grepl("fctb", column_name), "binary", NA)))
-# note we want the targets to be in their original form and no the scaled form (to account for variance in the outcome, which is now our tx level)
-txs <- txs %>% 
-  dplyr::mutate(target = column_name,
-                target = gsub("_scale", "", column_name))
+                              ifelse(grepl("fctb", column_name), "binary", NA))) %>% 
+  dplyr::rename(target = column_name)
+
 
 
 #........................
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
-varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target, txs$column_name,
-                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
-                   "urbanscore_cont_scale_clst", #urbanicity
+varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target,
+                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "hiv03_fctb", # no longer considered risk factor bc too few observations
                    "longnum", "latnum")
-
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
 
@@ -70,7 +67,6 @@ txs$coordinates <- lapply(1:nrow(txs), function(x) return(dt.ml.coords))
 #--------------------------------------
 # Setup tasks & base learners
 #--------------------------------------
-# first make the tasks
 txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinates")], 
                         .f = make_class_task)
 
@@ -79,24 +75,15 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinate
 # Apply the Tuning Results to the Learner &
 # update the "training" data to be the full data task
 #............................................
-<<<<<<< Updated upstream
-params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/params.RDS")
-=======
-# params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes/params.RDS")
-params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/params.RDS")
-# now overwrite Learner ModelMultiplexer to a 
-# STACKED learner that is actually of an ensemble 
->>>>>>> Stashed changes
-
-# overwrite params tasks to the new tasks that we want to train the data on
+params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes_train/params.RDS")
+# overwrite params tasks to the new tasks that we want to train
+# and predict the data on the full data set now
 params$task <- txs$task
 
-# 
-#  CHANGED THIS TO AVG STACK
-params$learner <- purrr::map(params$task, make_avg_Stack, 
+
+params$learner <- purrr::map(params$task, make_hillclimb_Stack, 
                              learners = baselearners.list)
-tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/", pattern = ".RDS", full.names = T)
-tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_fitty/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 
 # sort properly to match rows in df
@@ -108,7 +95,7 @@ tuneresultpaths <- tibble::tibble(tuneresultpaths = tuneresultpaths) %>%
   unlist(.)
 
 
-params$tuneresult <- purrr::map(tuneresultpaths, findbesttuneresult.simple)
+params$tuneresult <- purrr::map(tuneresultpaths, findbesttuneresult)
 params$tunedlearner <- purrr::pmap(params[, c("learner", "task", "tuneresult")], 
                                    tune_stacked_learner)
                                    
@@ -131,7 +118,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_traindata, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds_finalmodels_fitty',
+                            jobname = 'vivid_preds_finalmodels_hillclimb',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

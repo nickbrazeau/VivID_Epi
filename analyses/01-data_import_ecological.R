@@ -121,7 +121,7 @@ rownames(hlthsites.harvard.drc.osrm) <- hlthsites.harvard.drc.osrm$id
 # now access API
 hosptrvltmes <- osrm::osrmTable(src = ge.osrm,
                                 dst = hlthsites.harvard.drc.osrm,
-                                measure = "duration") # in meters
+                                measure = "duration") # in minutes
 
 
 hlthdist_out <- 

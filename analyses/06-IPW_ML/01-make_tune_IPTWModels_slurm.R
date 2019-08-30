@@ -236,7 +236,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_tunemodel, 
                             params = paramsdf, 
-                            jobname = 'vivid_tunes_fifty',
+                            jobname = 'vivid_tunes_train',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
