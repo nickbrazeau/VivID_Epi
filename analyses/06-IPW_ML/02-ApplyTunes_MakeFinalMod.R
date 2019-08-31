@@ -81,7 +81,7 @@ params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes_train/params.RDS")
 params$task <- txs$task
 
 
-params$learner <- purrr::map(params$task, make_hillclimb_Stack, 
+params$learner <- purrr::map(params$task, make_avg_Stack, 
                              learners = baselearners.list)
 tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
@@ -100,7 +100,7 @@ params$tunedlearner <- purrr::pmap(params[, c("learner", "task", "tuneresult")],
                                    tune_stacked_learner)
                                    
 
-#........................................................................
+ #........................................................................
 # Train on all the Data with Stacked Learner 
 #........................................................................
 
@@ -118,7 +118,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_traindata, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds_finalmodels_hillclimb',
+                            jobname = 'vivid_preds_finalmodels_average',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
@@ -134,6 +134,8 @@ sjob <- rslurm::slurm_apply(f = slurm_traindata,
 cat("*************************** \n Submitted final models \n *************************** ")
 
 
+
+sjobs <- pmap(paramsdf, slurm_traindata)
 
 
 
