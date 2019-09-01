@@ -11,19 +11,17 @@
 
 make.null.distribution.energy <- function(target, data, covars){
   n <- nrow(data)
-  # TODO reflected normal
   wi <- abs( rnorm(n, mean = 1, sd = 0.25) )
-  
+  # treating the weights here as your probability of being sampled from the gen pop
+  # this is true for the long-run average (eg over many iterations)
+  wirows <- sample(1:nrow(x), size = n, prob = wi, replace = T)
+  data.wirows <- data[wirows, ]
   
   data.list <- lapply(1:length(covars), 
-                      function(x){return(as.data.frame(data[, c(target, covars[x]) ]))})
+                      function(x){return(as.data.frame(data.wirows[, c(target, covars[x]) ]))})
   
-  data.list.rand <- lapply(data.list, function(x){
-    x <- x[sample(1:nrow(x), size = n, prob = wi, replace = T), ]
-    return(x)
-  })
-  
-  data.dist <- lapply(data.list.rand, function(x){
+
+  data.dist <- lapply(data.list, function(x){
     
     if(is.factor(x[,1])){ # note, only have binary factors so this ok
       x[,1] <- as.numeric(x[,1])
@@ -33,9 +31,8 @@ make.null.distribution.energy <- function(target, data, covars){
       x[,2] <- as.numeric(x[,2])
     }
     
-    nrand <- floor(nrow(x) * 0.1) # take a 10% sample for speed
-    nrand.rows <- sample(x = 1:nrow(x), size = nrand, replace = F) # pull random rows
-    ret <- energy::dcor(x = x[nrand.rows, 1], y = x[nrand.rows, 2])
+    ret <- energy::dcor(x = x[, 1], y = x[, 2])
+    
     return(ret)
   })
  
@@ -44,7 +41,6 @@ make.null.distribution.energy <- function(target, data, covars){
   dij <- mean(dij)
   return(dij)
   
-   
 }
   
   

@@ -40,67 +40,6 @@ make_class_task <- function(data = data,
   
 }
 
-#' @param numeric; The rate of oversampling is set internally based on prop imbalance
-#' via 1 + max(props) - min(props)
-#' @description  find class imbalance and adjust the task
-find_Class_Imbalance <- function(task, type, classimb_tol = 0.6,
-                                 smotenn = 5){
-  if(type == "binary"){
-    
-    props <- prop.table(table(mlr::getTaskTargets(task)))
-    
-    if(max(props) > classimb_tol){
-      message("There appears to be class-imbalance for ", task$task.desc$target)
-      smoterate = 1 + max(props) - min(props)
-      
-      task <- mlr::smote(task, rate = smoterate, nn = smotenn)
-      return(task)
-      
-    } else {
-      return(task)
-    } # end inner ifelse
-    
-  } else {
-    return(task)
-  } # end outer ifelse
-}
-
-
-
-
-
-# make the ensemble learner
-#' @description 
-#' simple approach with hill climb as method of combining
-
-make_hillclimb_Stack <- function(
-  task = task, 
-  learners = learners.list){
-  
-  if(mlr::getTaskType(task) == "classif"){
-    learners.list <- baselearners.list$classif
-    baselearners <- lapply(learners.list, makeLearner, predict.type = "prob")
-    m = makeStackedLearner(base.learners = baselearners,
-                           predict.type = "prob",
-                           method = "hill.climb")
-    
-    
-  } else if(mlr::getTaskType(task) == "regr"){
-    learners.list <- baselearners.list$regress
-    
-    baselearners <- lapply(learners.list, makeLearner, predict.type = "response")
-    m <- makeStackedLearner(base.learners = baselearners,
-                            predict.type = "response",
-                            method = "hill.climb")
-    
-  } else {
-    stop("You must have type binary or continuous for access to learners")
-  }
-  
-  return(m)
-}
-
-
 
 
 # make the ensemble learner
@@ -133,6 +72,55 @@ make_avg_Stack <- function(
   
   return(m)
 }
+
+
+#----------------------------------------------------------------------------------------------------
+# tune our learner 
+#----------------------------------------------------------------------------------------------------
+findbesttuneresult <- function(path){
+  res <- readRDS(path)
+  dfres <- as.data.frame(res[[1]]$opt.path)
+  dfres <- dfres %>% 
+    dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
+    tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
+    dplyr::filter(!is.na(hyperparval)) %>% 
+    dplyr::group_by(hyperpar) %>% 
+    dplyr::filter(my.covarbal.test.mean == min(my.covarbal.test.mean))
+  
+  return(dfres)
+}
+
+
+
+
+tune_stacked_learner <- function(learner, task, tuneresult){
+  if(mlr::getTaskType(task) == "classif"){
+    stck.lrnr.tuned <- setHyperPars(learner, 
+                                    classif.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "classif.glmnet.alpha"],
+                                    classif.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "classif.kknn.k"],
+                                    classif.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "classif.svm.cost"],
+                                    classif.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "classif.randomForest.mtry"]
+    )
+  } else if(mlr::getTaskType(task) == "regr"){
+    
+    stck.lrnr.tuned <- setHyperPars(learner, 
+                                    regr.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "regr.glmnet.alpha"],
+                                    regr.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "regr.kknn.k"],
+                                    regr.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "regr.svm.cost"],
+                                    regr.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "regr.randomForest.mtry"]
+    )
+  }
+  stck.lrnr.tuned <- setLearnerId(stck.lrnr.tuned, "stacked_learner_tuned")
+  return(stck.lrnr.tuned)
+}
+
+
+
+
+
+
+
+
 
 
 

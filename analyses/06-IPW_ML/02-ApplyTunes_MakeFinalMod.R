@@ -4,15 +4,13 @@
 library(tidyverse)
 library(mlr)
 source("R/00-functions_Ensemble_Wrapper.R")
-source("R/00-functions_iptw.R")
-
-# after figuring out who won
+source("R/00-functions_iptw.R") 
 # this will get hyperpar mlr::getHyperPars(learner.hp)
-
 
 
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
 sf::st_geometry(dt) <- NULL
+
 #........................
 # manipulate tx map
 #........................
@@ -79,10 +77,10 @@ params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_tunes_train/params.RDS")
 # overwrite params tasks to the new tasks that we want to train
 # and predict the data on the full data set now
 params$task <- txs$task
-
-
 params$learner <- purrr::map(params$task, make_avg_Stack, 
                              learners = baselearners.list)
+
+
 tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 

@@ -40,8 +40,7 @@ pvclust.weighted <- pvclust.weighted %>%
 
 pvclst.covar <- dtsrvy %>% 
   dplyr::group_by(hv001) %>% 
-  dplyr::summarise(meanprov_precip_lag_cont_scale_clst = srvyr::survey_mean(precip_ann_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95),
-                   meanprov_alt_dem_cont_scale_clst = srvyr::survey_mean(alt_dem_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
+  dplyr::summarise(meanprov_precip_lag_cont_scale_clst = srvyr::survey_mean(precip_lag_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
   )
 
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")

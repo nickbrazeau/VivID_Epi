@@ -122,7 +122,6 @@ txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
 #--------------------------------------
 # resampling approach with spatial CV considered
 rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 5)
-#rdesc <- makeResampleDesc("SpCV", iters = 2) #
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
@@ -248,6 +247,7 @@ sjob <- rslurm::slurm_apply(f = slurm_tunemodel,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
+
 cat(" *************************** \n Submitted tuning models \n *************************** ")
 
 
