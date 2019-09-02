@@ -14,7 +14,7 @@ library(mlr)
 # iptw prob
 #----------------------------------------------------------------------------------------------------
 
-get_iptw_prob <- function(task, preds){
+get_iptw_prob <- function(task, ELpreds){
   
   if(mlr::getTaskType(task) == "classif"){
     
@@ -22,7 +22,7 @@ get_iptw_prob <- function(task, preds){
     pos.class <- mlr::getTaskDesc(task)$positive
     target <- mlr::getTaskTargetNames(task) 
 
-    ps <- preds
+    ps <- ELpreds
     exposure <- mlr::getTaskData(task)[, target]
     pexp <- mean(exposure == pos.class)
     
@@ -37,7 +37,7 @@ get_iptw_prob <- function(task, preds){
     # Code chunk follows Appendix A of Zhu 2015 PMC4749263
     # and Hernan Causal inference, Chapt 12 -- Program 12.4 
     # note, Hernan doesn't put on standard normal though
-  
+    preds <- ELpreds
     exposure <- mlr::getTaskData(task)[, target]
     model.num <- lm(exposure~1) 
 

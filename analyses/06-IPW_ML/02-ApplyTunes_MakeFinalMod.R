@@ -6,6 +6,7 @@ library(tidyverse)
 library(mlr)
 source("R/00-functions_Ensemble_Wrapper.R")
 source("R/00-IPTW_functions.R")
+source("R/00-Ensemble_CrossValidRisk.R")
 # this will get hyperpar mlr::getHyperPars(learner.hp)
 
 
@@ -95,10 +96,14 @@ txs$learnerlib <- purrr::map2(txs$learnerlib, tuneresultpaths$tuneresult,  tune_
 # Obtain Prediction Matrix
 # Minimize Cross-validated Risk 
 #...............................................................................................
+txs$proptrainset <- 0.5
+txs$ensembl_cvRisk <- purrr::pmap(txs[,c("", "", "")], ensemble_crossval_risk_pred)
+txs$ELpreds <- purrr::map(txs$ensembl_cvRisk, "EL.predictions")
 
-
-
-
+#...............................................................................................
+# Get IPTW Estimates
+#...............................................................................................
+txs$iptw <- purrr::pmap(txs[,c("task", "ELpreds")], get_iptw_prob)
 
 
 
