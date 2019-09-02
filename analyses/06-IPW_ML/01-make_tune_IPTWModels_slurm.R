@@ -5,8 +5,7 @@
 #----------------------------------------------------------------------------------------------------
 
 source("R/00-functions_Ensemble_Wrapper.R")
-source("R/00-functions_iptw.R")
-source("R/00-my_IPTW_performance_measure_energy.R")
+source("R/00-IPTW_functions.R")
 set.seed(48, "L'Ecuyer")
 library(tidyverse)
 library(mlr)

@@ -6,14 +6,14 @@
 library(mlr)
 library(tidyverse)
 library(ggridges)
-source("R/00-functions_iptw.R")
+source("R/00-IPTW_functions.R")
 
 # read in param table and results of training
 #params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
 #trainpaths <-  list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
 
-params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_preds_finalmodels_hillclimb/params.RDS")
-trainpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_preds_finalmodels_hillclimb/", 
+params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_preds_finalmodels_average/params.RDS")
+trainpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_preds_finalmodels_average/", 
                          pattern = ".RDS", full.names = T)
 
 trainpaths <- trainpaths[!c(grepl("params.RDS", trainpaths) | grepl("f.RDS", trainpaths))]
