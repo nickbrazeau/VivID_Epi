@@ -1,11 +1,9 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to calculate find the best set of hyperparameters for our data
 # Notes: Here I am using mlr built-in multiplex option and individual tuning my learners 
-# will take the intersection of the best hyperparameter set and apply it to our stacked ensemble
+# will take the intersection of the best hyperparameter set and apply it to our Ensemble
 #----------------------------------------------------------------------------------------------------
-
 source("R/00-functions_Ensemble_Wrapper.R")
-source("R/00-IPTW_functions.R")
 set.seed(48, "L'Ecuyer")
 library(tidyverse)
 library(mlr)
@@ -100,18 +98,14 @@ txs$learner <- purrr::map(txs$type, function(x){
 
 
 #--------------------------------------
-# Setup null distributions
+# Setup performance measures
 #--------------------------------------
-nulldist <- readRDS("analyses/06-IPW_ML/00-null_distributions/null_dist_return.RDS")
-
-txs <- dplyr::left_join(txs, nulldist, by = "target")
-
-txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.covarbal))
-
-# set the null distribution for each respective DAG
-txs$performmeasure <- map2(txs$performmeasure, txs$nulldist, function(x, y){
-  ret <- mlr::setMeasurePars(x,
-                             par.vals = list(nulldist = y))
+txs$performmeasure <- purrr::map(txs$type, function(x){
+  if(x == "continuous"){
+    return(mse)
+  } else if (x == "binary"){
+    return(logloss)
+  }
 })
 
 
@@ -132,8 +126,8 @@ txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 ####################################################################################
 # mlr::listLearners()
 # ParamHelpers::getParamSet
-#
 # L1/L2 Regularization (glmnet), alpha: The elasticnet mixing parameter, with 0≤α≤ 1. The penalty is defined as (1-α)/2||β||_2^2+α||β||_1 alpha=1 is the lasso penalty, and alpha=0 the ridge penalty.
+# S lambda (glmnet) -- for prediction: https://github.com/mlr-org/mlr/issues/1030
 # K-Nearest Neighbors, k: Number of neighbors considered.
 # Single Vector Machine, C: cost of constraints violation (default: 1) this is the `C'-constant of the regularization term in the Lagrange formulation.
 # Single Vector Machine, kernel: The kernel function used in training and predicting. This parameter can be set to any function, of class kernel, which computes the inner product in feature space between two vector arguments (see kernels). kernlab provides the most popular kernel functions which can be used by setting the kernel parameter to the following strings: 
@@ -145,6 +139,7 @@ txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
   base.learners.regr, 
   makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("s", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
   makeNumericParam("mtry", lower = 1, upper = 5 )
@@ -152,6 +147,7 @@ hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
 
 hyperparams_to_tune.regr.ctrl <-c(
   "regr.glmnet.alpha" = 11L, #11L
+  "regr.glmnet.s" = 11L, #11L
   "regr.kknn.k" = 29L, #7L
   "regr.svm.cost" = 5L, #5L
   "regr.randomForest.mtry" =  5L #10L
@@ -166,6 +162,7 @@ hyperparams_to_tune.regr.ctrl <- mlr::makeTuneControlDesign(design =
 hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
   base.learners.classif, 
   makeNumericParam("alpha", lower = 0, upper = 1),
+  makeNumericParam("s", lower = 0, upper = 1),
   makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
   makeNumericParam("cost", lower = 1, upper = 5),
   makeNumericParam("mtry", lower = 1, upper = 5 )
@@ -173,6 +170,7 @@ hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
 
 hyperparams_to_tune.classif.ctrl <-c(
   "classif.glmnet.alpha" = 11L, #11L
+  "classif.glmnet.s" = 11L, #11L
   "classif.kknn.k" = 29L, #29L
   "classif.svm.cost" = 5L, #5L
   "classif.randomForest.mtry" =  5L #10L

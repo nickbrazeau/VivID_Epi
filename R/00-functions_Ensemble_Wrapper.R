@@ -42,77 +42,88 @@ make_class_task <- function(data = data,
 
 
 
-# make the ensemble learner
-#' @description 
-#' simple approach with avergae as method of combining
-
-make_avg_Stack <- function(
-  task = task, 
-  learners = learners.list){
-  
-  if(mlr::getTaskType(task) == "classif"){
-    learners.list <- baselearners.list$classif
-    baselearners <- lapply(learners.list, makeLearner, predict.type = "prob")
-    m = makeStackedLearner(base.learners = baselearners,
-                           predict.type = "prob",
-                           method = "average")
-    
-    
-  } else if(mlr::getTaskType(task) == "regr"){
-    learners.list <- baselearners.list$regress
-    
-    baselearners <- lapply(learners.list, makeLearner, predict.type = "response")
-    m <- makeStackedLearner(base.learners = baselearners,
-                            predict.type = "response",
-                            method = "average")
-    
-  } else {
-    stop("You must have type binary or continuous for access to learners")
-  }
-  
-  return(m)
-}
-
 
 #----------------------------------------------------------------------------------------------------
-# tune our learner 
+# Finding Tuning Result
 #----------------------------------------------------------------------------------------------------
 findbesttuneresult <- function(path){
   res <- readRDS(path)
   dfres <- as.data.frame(res[[1]]$opt.path)
-  dfres <- dfres %>% 
-    dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
-    tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
-    dplyr::filter(!is.na(hyperparval)) %>% 
-    dplyr::group_by(hyperpar) %>% 
-    dplyr::filter(my.covarbal.test.mean == min(my.covarbal.test.mean))
+  
+  simpletestmean <- colnames(dfres)[grepl("test.mean", colnames(dfres))]
+  
+  if(simpletestmean == "logloss.test.mean"){
+    dfres <- dfres %>% 
+      dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
+      tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
+      dplyr::filter(!is.na(hyperparval)) %>% 
+      dplyr::group_by(hyperpar) %>% 
+      dplyr::filter(logloss.test.mean == min(logloss.test.mean))
+  } else if(simpletestmean == "mse.test.mean"){
+    dfres <- dfres %>% 
+      dplyr::select(-c("dob", "eol", "error.message", "exec.time", "selected.learner")) %>% 
+      tidyr::gather(., key = "hyperpar", val = "hyperparval", 1:(ncol(.)-1)) %>% 
+      dplyr::filter(!is.na(hyperparval)) %>% 
+      dplyr::group_by(hyperpar) %>% 
+      dplyr::filter(mse.test.mean == min(mse.test.mean))
+  }
+  
+  # error catch
+  # fit lowest model which is the first
+  dfres <- dfres[!duplicated(dfres$hyperpar), ]
   
   return(dfres)
 }
 
 
+#----------------------------------------------------------------------------------------------------
+# Apply Tuning Result
+#----------------------------------------------------------------------------------------------------
 
 
-tune_stacked_learner <- function(learner, task, tuneresult){
-  if(mlr::getTaskType(task) == "classif"){
-    stck.lrnr.tuned <- setHyperPars(learner, 
-                                    classif.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "classif.glmnet.alpha"],
-                                    classif.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "classif.kknn.k"],
-                                    classif.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "classif.svm.cost"],
-                                    classif.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "classif.randomForest.mtry"]
-    )
-  } else if(mlr::getTaskType(task) == "regr"){
+tune_learner_library <- function(learnerlib, hyperparamstuned){
+  
+  lrnrnames <- learnerlib %>% 
+    purrr::map(., "id") %>% 
+    unlist(.)
+  
+  if(all(grepl("regr", lrnrnames))){
     
-    stck.lrnr.tuned <- setHyperPars(learner, 
-                                    regr.glmnet.alpha = tuneresult$hyperparval[tuneresult$hyperpar == "regr.glmnet.alpha"],
-                                    regr.kknn.k = tuneresult$hyperparval[tuneresult$hyperpar == "regr.kknn.k"],
-                                    regr.svm.cost = tuneresult$hyperparval[tuneresult$hyperpar == "regr.svm.cost"],
-                                    regr.randomForest.mtry = tuneresult$hyperparval[tuneresult$hyperpar == "regr.randomForest.mtry"]
-    )
+    learnerlib[[which(grepl("glmnet", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("glmnet", lrnrnames))]],
+                                                                    alpha = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.glmnet.alpha"],
+                                                                    s = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.glmnet.s"])
+    
+    learnerlib[[which(grepl("knn", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("knn", lrnrnames))]],
+                                                                 k = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.knn.k"])
+    
+    learnerlib[[which(grepl("svm", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("svm", lrnrnames))]],
+                                                                 cost = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.svm.cost"])
+    
+    learnerlib[[which(grepl("randomForest", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("randomForest", lrnrnames))]],
+                                                                          mtry = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.randomForest.mtry"])
+    
+  } else if(all(grepl("classif", lrnrnames))){
+    learnerlib[[which(grepl("glmnet", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("glmnet", lrnrnames))]],
+                                                                    alpha = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.glmnet.alpha"],
+                                                                    s = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.glmnet.s"])
+    
+    learnerlib[[which(grepl("knn", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("knn", lrnrnames))]],
+                                                                 k = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.knn.k"])
+    
+    learnerlib[[which(grepl("svm", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("svm", lrnrnames))]],
+                                                                 cost = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.svm.cost"])
+    
+    learnerlib[[which(grepl("randomForest", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("randomForest", lrnrnames))]],
+                                                                          mtry = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.randomForest.mtry"])
+  } else{
+    stop("Not a task by mlr?")
   }
-  stck.lrnr.tuned <- setLearnerId(stck.lrnr.tuned, "stacked_learner_tuned")
-  return(stck.lrnr.tuned)
+  
+  return(learnerlib)
 }
+
+
+
 
 
 
