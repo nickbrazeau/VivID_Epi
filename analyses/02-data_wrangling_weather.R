@@ -1,5 +1,19 @@
 library(tidyverse)
+library(raster)
+library(sp)
 library(sf)
+#----------------------------------------------------------------------------------------------------
+# Read Raster Temp and Precip
+#----------------------------------------------------------------------------------------------------
+readRasterBB <- function(rstfile, bb = bb){
+  ret <- raster::raster(rstfile)
+  ret <- raster::crop(x = ret, y = bb)
+  ret <- raster::projectRaster(from = ret, to = ret,
+                               crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+  
+  return(ret)
+  
+}
 
 #.............................................................
 # Precipitation (CHRIPS) 
