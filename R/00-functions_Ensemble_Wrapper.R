@@ -93,8 +93,8 @@ tune_learner_library <- function(learnerlib, hyperparamstuned){
                                                                     alpha = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.glmnet.alpha"],
                                                                     s = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.glmnet.s"])
     
-    learnerlib[[which(grepl("knn", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("knn", lrnrnames))]],
-                                                                 k = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.knn.k"])
+    learnerlib[[which(grepl("kknn", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("kknn", lrnrnames))]],
+                                                                 k = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.kknn.k"])
     
     learnerlib[[which(grepl("svm", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("svm", lrnrnames))]],
                                                                  cost = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "regr.svm.cost"])
@@ -107,8 +107,8 @@ tune_learner_library <- function(learnerlib, hyperparamstuned){
                                                                     alpha = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.glmnet.alpha"],
                                                                     s = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.glmnet.s"])
     
-    learnerlib[[which(grepl("knn", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("knn", lrnrnames))]],
-                                                                 k = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.knn.k"])
+    learnerlib[[which(grepl("kknn", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("kknn", lrnrnames))]],
+                                                                 k = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.kknn.k"])
     
     learnerlib[[which(grepl("svm", lrnrnames))]] <- setHyperPars(learnerlib[[which(grepl("svm", lrnrnames))]],
                                                                  cost = hyperparamstuned$hyperparval[hyperparamstuned$hyperpar == "classif.svm.cost"])

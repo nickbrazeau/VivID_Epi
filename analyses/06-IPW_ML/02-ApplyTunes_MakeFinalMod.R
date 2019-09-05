@@ -77,7 +77,7 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 #...............................................................................................
 # Pull and Apply Tuning Results
 #...............................................................................................
-tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 
 # sort properly to match rows in df
@@ -96,9 +96,14 @@ txs$learnerlib <- purrr::map2(txs$learnerlib, tuneresultpaths$tuneresult,  tune_
 # Obtain Prediction Matrix
 # Minimize Cross-validated Risk 
 #...............................................................................................
+
+
 txs$proptrainset <- 0.5
-txs$ensembl_cvRisk <- purrr::pmap(txs[,c("", "", "")], ensemble_crossval_risk_pred)
-txs$ELpreds <- purrr::map(txs$ensembl_cvRisk, "EL.predictions")
+txs$ensembl_cvRisk <- furrr::future_pmap(txs[,c("learnerlib", "task", "proptrainset")], ensemble_crossval_risk_pred)
+txs$ELpreds <- furrr::future_pmap(txs$ensembl_cvRisk, "EL.predictions")
+
+
+
 
 #...............................................................................................
 # Get IPTW Estimates

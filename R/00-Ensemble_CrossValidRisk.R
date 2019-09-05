@@ -2,16 +2,16 @@
 #' @details Function to extract predictions as a list
 #' from the various individual learners
 
-get_preds <- function(lrnr, task, subset){
+get_preds <- function(trained, task, subset){
   if(mlr::getTaskType(task) == "classif"){
     
     # pull details from mlr 
     pos.class <- mlr::getTaskDesc(task)$positive
-    preds.i <- predict(lrnr, task = task, subset = subset)
+    preds.i <- predict(trained, task = task, subset = subset)
     preds.i <- mlr::getPredictionProbabilities(pred = preds.i, cl = pos.class)
     
   } else if(mlr::getTaskType(task) == "regr"){
-    preds.i <- predict(lrnr, task = task, subset = subset)$data$response
+    preds.i <- predict(trained, task = task, subset = subset)$data$response
   }
   return(preds.i)
 }
@@ -25,7 +25,7 @@ nnls_cvrisk <- function (Z, Y, algnames, verbose = T){
   cvRisk <- apply(Z, 2, function(x){return( mean((x - Y)^2) )})
   
   names(cvRisk) <- algnames
-  fit.nnls <- nnls( Z, Y)
+  fit.nnls <- nnls::nnls( Z, Y)
   if (verbose) {
     message(paste("Non-Negative least squares convergence:", 
                   fit.nnls$mode == 1))
@@ -54,7 +54,7 @@ ensemble_crossval_risk_pred <- function(learnerlib, task, proptrainset){
   #..............................
   fulldat <- mlr::getTaskData(task)
   n <- mlr::getTaskSize(task)
-  trainset <- sample(n, size = proptrainset*n)
+  trainset <- sample(n, size = floor(proptrainset*n))
   
   # train base libraries
   learnerlib.trained <- purrr::map(learnerlib,
@@ -71,7 +71,7 @@ ensemble_crossval_risk_pred <- function(learnerlib, task, proptrainset){
   #..............................
   Z <- matrix(NA, nrow = length(valset), ncol = length(learnerlib.trained))
   for(j in 1:length(learnerlib.trained)){
-    Z[, j] <- get_preds(lrnr = learnerlib.trained[[j]],
+    Z[, j] <- get_preds(trained = learnerlib.trained[[j]],
                         task = task,
                         subset = valset)
   }
@@ -106,7 +106,7 @@ ensemble_crossval_risk_pred <- function(learnerlib, task, proptrainset){
   
   Zprime <- matrix(NA, nrow = nrow(fulldat), ncol = length(learnerlib.trained.final))
   for(j in 1:length(learnerlib.trained.final)){
-    Zprime[, j] <- get_preds(lrnr = learnerlib.trained.final[[j]],
+    Zprime[, j] <- get_preds(trained = learnerlib.trained.final[[j]],
                              task = task,
                              subset = NULL
     )
