@@ -96,43 +96,16 @@ txs$learnerlib <- purrr::map2(txs$learnerlib, tuneresultpaths$tuneresult,  tune_
 # Obtain Prediction Matrix
 # Minimize Cross-validated Risk 
 #...............................................................................................
-
-
 txs$proptrainset <- 0.5
-txs$ensembl_cvRisk <- furrr::future_pmap(txs[,c("learnerlib", "task", "proptrainset")], ensemble_crossval_risk_pred)
-txs$ELpreds <- furrr::future_pmap(txs$ensembl_cvRisk, "EL.predictions")
+paramsdf <- txs[,c("learnerlib", "task", "proptrainset")]
 
-
-
-
-#...............................................................................................
-# Get IPTW Estimates
-#...............................................................................................
-txs$iptw <- purrr::pmap(txs[,c("task", "ELpreds")], get_iptw_prob)
-
-
-
-
-
-
-
-
-
-slurm_traindata <- function(tunedlearner, task){
-  ret <- mlr::train(learner = tunedlearner, 
-                    task = task)
-  return(ret)
-  
-}
-
-paramsdf <- params[, c("tunedlearner", "task")]
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = slurm_traindata, 
+sjob <- rslurm::slurm_apply(f = ensemble_crossval_risk_pred, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds_finalmodels_average',
+                            jobname = 'vivid_preds_finalmodels_EL',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
@@ -145,7 +118,7 @@ sjob <- rslurm::slurm_apply(f = slurm_traindata,
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
 
-cat("*************************** \n Submitted final models \n *************************** ")
+cat("*************************** \n Submitted EL models \n *************************** ")
 
 
 
