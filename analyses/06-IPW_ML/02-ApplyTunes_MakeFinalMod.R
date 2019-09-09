@@ -4,6 +4,7 @@
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(mlr)
+library(rslurm)
 source("R/00-functions_Ensemble_Wrapper.R")
 source("R/00-IPTW_functions.R")
 source("R/00-Ensemble_CrossValidRisk.R")
@@ -35,7 +36,10 @@ txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>%
 varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target,
                    "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
                    "hiv03_fctb", # no longer considered risk factor bc too few observations
-                   "longnum", "latnum")
+                   "longnum", "latnum",
+                   "wlthrcde_combscor_cont",
+                    "urbanpcascore_cont_scale_clst")
+
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
 
@@ -74,38 +78,53 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 
 
 
-#...............................................................................................
-# Pull and Apply Tuning Results
-#...............................................................................................
-tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
-tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
-
-# sort properly to match rows in df
-tuneresultpaths <- tibble::tibble(tuneresultpaths = tuneresultpaths) %>% 
-  mutate(order = stringr::str_extract(basename(tuneresultpaths), "[0-9]+"),
-         order = as.numeric(order)) %>% 
-  dplyr::arrange(order) %>% 
-  dplyr::select(-c(order)) 
-
-tuneresultpaths$tuneresult <- purrr::map(tuneresultpaths$tuneresultpaths, findbesttuneresult)
-# apply
-txs$learnerlib <- purrr::map2(txs$learnerlib, tuneresultpaths$tuneresult,  tune_learner_library)
+# #...............................................................................................
+# # Pull and Apply Tuning Results
+# #...............................................................................................
+# tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_train/", pattern = ".RDS", full.names = T)
+# tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
+# 
+# # sort properly to match rows in df
+# tuneresultpaths <- tibble::tibble(tuneresultpaths = tuneresultpaths) %>% 
+#   mutate(order = stringr::str_extract(basename(tuneresultpaths), "[0-9]+"),
+#          order = as.numeric(order)) %>% 
+#   dplyr::arrange(order) %>% 
+#   dplyr::select(-c(order)) 
+# 
+# tuneresultpaths$tuneresult <- purrr::map(tuneresultpaths$tuneresultpaths, findbesttuneresult)
+# # apply
+# txs$learnerlib <- purrr::map2(txs$learnerlib, tuneresultpaths$tuneresult,  tune_learner_library)
 
 #...............................................................................................
 # Train Each Algorithm
 # Obtain Prediction Matrix
 # Minimize Cross-validated Risk 
 #...............................................................................................
-txs$proptrainset <- 0.5
-paramsdf <- txs[,c("learnerlib", "task", "proptrainset")]
 
+
+txs$learnerlib <- purrr::map(txs$type, function(x){
+  if(x == "continuous"){
+    return(base.learners.regr)
+  } else if (x == "binary"){
+    return(base.learners.classif)
+  }
+})
+
+start <- Sys.time()
+txs$proptrainset <- 0.8
+txs$ensembl_cvRisk <- furrr::future_pmap(txs[,c("learnerlib", "task", "proptrainset")], ensemble_crossval_risk_pred)
+txs$ELpreds <- purrr::map(txs$ensembl_cvRisk, "EL.predictions")
+end <- Sys.time()
+start - end
+
+# paramsdf <- txs[,c("learnerlib", "task", "proptrainset")]
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = ensemble_crossval_risk_pred, 
                             params = paramsdf, 
-                            jobname = 'vivid_preds_finalmodels_EL',
+                            jobname = 'vivid_EL',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

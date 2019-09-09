@@ -99,7 +99,7 @@ ensemble_crossval_risk_pred <- function(learnerlib, task, proptrainset){
   # not full learner list makes it to final set
   
   finalalgspass <- cvrisk$coef > 0
-  if(all(finalalgspass)){stop("The CV Risk could not be calculated for this model")}
+  if(all(cvrisk$coef == 0)){stop("The CV Risk could not be calculated for this model")}
   
   
   learnerlib.trained.final <- learnerlib.trained[which(finalalgspass)]
@@ -122,7 +122,9 @@ ensemble_crossval_risk_pred <- function(learnerlib, task, proptrainset){
   ret <- list(cvrisk.coef = cvrisk$coef,
               alg.cvrisk.validationset = cvrisk$cvrisk,
               EL.predictions = unlist(EL.cvrisk.preds),
-              task = task)
+              task = task,
+              Z = Z,
+              Zprime = Zprime)
   
   return(ret)
   

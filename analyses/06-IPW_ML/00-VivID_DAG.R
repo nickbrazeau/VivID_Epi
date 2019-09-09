@@ -23,12 +23,11 @@ txs <- dcdr %>%
 #.....................................
 # Covariates that are unconfounded in expectation
 #.....................................
-# urbanicity and cluster altitude (historical reasons where a cluster is/where people live. Not a causal factor)
 # sex (biological chance)
 # age (biological process)
 
 txs <- txs %>% 
-  dplyr::filter(!var_label %in% c("Age", "Sex", "Altitude", "Distance to Water")) 
+  dplyr::filter(!var_label %in% c("Age", "Sex")) 
 
 # find canonical sets
 dagliftover <- readxl::read_excel(path = "model_datamaps/dag_dhscovar_liftover.xlsx")

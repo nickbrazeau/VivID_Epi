@@ -4,6 +4,7 @@
 # will take the intersection of the best hyperparameter set and apply it to our Ensemble
 #----------------------------------------------------------------------------------------------------
 source("R/00-functions_Ensemble_Wrapper.R")
+source("R/00-nnls_measure.R")
 set.seed(48, "L'Ecuyer")
 library(tidyverse)
 library(mlr)
@@ -27,8 +28,9 @@ txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>%
 #........................
 # subset to treatments, outcome, weights and coords
 varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target,
-                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
                    "hiv03_fctb", # no longer considered risk factor bc too few observations
+                   "hab1_cont_scale",
+                   "hv104_fctb",
                    "longnum", "latnum")
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
@@ -44,16 +46,16 @@ dt.ml.coords <- dt.ml %>%
   dplyr::select(c("longnum", "latnum")) %>% 
   data.frame(.)
 
-#........................
-# Subset Data for Tuning
-# 80% of data to train on 
-# to avoid overfitting
-#........................
-nrows.df <- nrow(dt.ml.cc)
-pull <- sort( sample(1:nrows.df, size = 0.8*nrows.df) )
-
-dt.ml.cc <- dt.ml.cc[pull, ]
-dt.ml.coords <- dt.ml.coords[pull, ]
+# #........................
+# # Subset Data for Tuning
+# # 80% of data to train on 
+# # to avoid overfitting
+# #........................
+# nrows.df <- nrow(dt.ml.cc)
+# pull <- sort( sample(1:nrows.df, size = 0.8*nrows.df) )
+# 
+# dt.ml.cc <- dt.ml.cc[pull, ]
+# dt.ml.coords <- dt.ml.coords[pull, ]
 
 #........................
 # Subset and Store Dataframes for Tasks
@@ -100,21 +102,14 @@ txs$learner <- purrr::map(txs$type, function(x){
 #--------------------------------------
 # Setup performance measures
 #--------------------------------------
-txs$performmeasure <- purrr::map(txs$type, function(x){
-  if(x == "continuous"){
-    return(mse)
-  } else if (x == "binary"){
-    return(logloss)
-  }
-})
-
+txs$performmeasure <- lapply(1:nrow(txs), function(x) return(my.nnls))
 
 
 #--------------------------------------
 # Setup resampling
 #--------------------------------------
 # resampling approach with spatial CV considered
-rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 5)
+rdesc <- makeResampleDesc("SpRepCV", fold = 5, reps = 10)
 txs$rdesc <- lapply(1:nrow(txs), function(x) return(rdesc))
 
 
@@ -140,17 +135,13 @@ hyperparams_to_tune.regr <- mlr::makeModelMultiplexerParamSet(
   base.learners.regr, 
   makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("s", lower = 0, upper = 1),
-  makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
-  makeNumericParam("cost", lower = 1, upper = 5),
-  makeNumericParam("mtry", lower = 1, upper = 5 )
+  makeNumericParam("cost", lower = 1, upper = 5)
 )
 
 hyperparams_to_tune.regr.ctrl <-c(
   "regr.glmnet.alpha" = 11L, #11L
   "regr.glmnet.s" = 11L, #11L
-  "regr.kknn.k" = 29L, #7L
-  "regr.svm.cost" = 5L, #5L
-  "regr.randomForest.mtry" =  5L #10L
+  "regr.svm.cost" = 5L #5L
 )
 
 hyperparams_to_tune.regr.ctrl <- mlr::makeTuneControlDesign(design = 
@@ -163,17 +154,13 @@ hyperparams_to_tune.classif <- mlr::makeModelMultiplexerParamSet(
   base.learners.classif, 
   makeNumericParam("alpha", lower = 0, upper = 1),
   makeNumericParam("s", lower = 0, upper = 1),
-  makeNumericParam("k", lower = 2, upper = 30 ), # knn of 1 just memorizes data basically
-  makeNumericParam("cost", lower = 1, upper = 5),
-  makeNumericParam("mtry", lower = 1, upper = 5 )
+  makeNumericParam("cost", lower = 1, upper = 5)
 )
 
 hyperparams_to_tune.classif.ctrl <-c(
   "classif.glmnet.alpha" = 11L, #11L
   "classif.glmnet.s" = 11L, #11L
-  "classif.kknn.k" = 29L, #29L
-  "classif.svm.cost" = 5L, #5L
-  "classif.randomForest.mtry" =  5L #10L
+  "classif.svm.cost" = 5L #5L
 )
 
 

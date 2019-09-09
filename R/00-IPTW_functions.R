@@ -38,6 +38,7 @@ get_iptw_prob <- function(task, ELpreds){
     # and Hernan Causal inference, Chapt 12 -- Program 12.4 
     # note, Hernan doesn't put on standard normal though
     preds <- ELpreds
+    target <- mlr::getTaskTargetNames(task) 
     exposure <- mlr::getTaskData(task)[, target]
     model.num <- lm(exposure~1) 
 
@@ -50,7 +51,7 @@ get_iptw_prob <- function(task, ELpreds){
     # but first am standardizing each value on to the 
     # standard normal for stabilization purposes
     ps.denom <- dnorm(
-      (exposure - preds$response)/( sd( (exposure - preds$response)) ),
+      (exposure - preds)/( sd( (exposure - preds)) ),
       mean = 0, sd = 1, log = F)
     
     iptw_s <- ps.num/ps.denom
@@ -59,7 +60,7 @@ get_iptw_prob <- function(task, ELpreds){
     stop("Type must be either binary or continous")
   }
   
-  return(iptw_s)
+  return(as.vector(iptw_s))
   
 }
 

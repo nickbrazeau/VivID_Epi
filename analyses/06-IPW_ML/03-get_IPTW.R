@@ -25,25 +25,19 @@ ELpaths <- tibble::tibble(ELpaths = ELpaths) %>%
   dplyr::arrange(order) %>% 
   dplyr::select(-c(order)) %>% 
   unlist(.)
-params$ELpaths <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
+params$ensembl_cvRisk <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
 
 #...............................................................................................
 # Get IPTW Estimates
 #...............................................................................................
-txs$ELpreds <- furrr::future_pmap(txs$ensembl_cvRisk, "EL.predictions")
-
-txs$iptw <- purrr::pmap(txs[,c("task", "ELpreds")], get_iptw_prob)
-
-
-
-# make inverse probability weights
-params$iptw <- pmap(params[,c("task", "preds")], get_iptw_prob)
+params$ELpreds <-purrr::pmap(params$ensembl_cvRisk, "EL.predictions")
+params$iptw <- purrr::pmap(params[,c("task", "ELpreds")], get_iptw_prob)
 
 
 #................................................
 # Analyze Weights
 #................................................
-widist <- lapply(params$iptw, summary) %>% 
+widist <- purrr::map(params$iptw, summary) %>% 
   do.call("rbind.data.frame", .) %>% 
   dplyr::mutate_if(is.numeric, round, 2) %>% 
   magrittr::set_colnames(c("min", "1stquart", "median", "mean", "3rdqart", "max"))
