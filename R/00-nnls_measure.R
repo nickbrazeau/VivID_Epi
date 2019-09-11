@@ -26,8 +26,8 @@ my.nnls.fun <- function(task, model, pred, feats, extra.args){
 
 # Generate the Measure object for binary tx
 my.nnls = mlr::makeMeasure(
-  id = "my.covarbal", 
-  name = "Baseline covariate balance estimator",
+  id = "my.nnls", 
+  name = "NNLS loss function",
   properties = c("classif", "regr"),
   minimize = TRUE, 
   best = 0, worst = Inf,

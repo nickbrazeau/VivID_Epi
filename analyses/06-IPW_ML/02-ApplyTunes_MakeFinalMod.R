@@ -79,7 +79,7 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 #...............................................................................................
 # Pull and Apply Tuning Results
 #...............................................................................................
-tuneresultpaths <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_tunes_train_OLD_includesRF/", pattern = ".RDS", full.names = T)
+tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_train", pattern = ".RDS", full.names = T)
 tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
 
 # sort properly to match rows in df
