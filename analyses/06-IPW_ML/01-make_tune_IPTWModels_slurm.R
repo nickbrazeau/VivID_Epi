@@ -83,10 +83,16 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type", "coordinate
 
 
 # now make the individual multiplexed base learners
-base.learners.regr <- lapply(baselearners.list$regress, function(x) return(mlr::makeLearner(x, predict.type = "response")))
+trainedlearners.regr <- baselearners.list$regress[baselearners.list$regress %in% 
+                                                    c("regr.glmnet", "regr.svm")]
+
+base.learners.regr <- lapply(trainedlearners.regr, function(x) return(mlr::makeLearner(x, predict.type = "response")))
 base.learners.regr <- mlr::makeModelMultiplexer(base.learners.regr)
 
-base.learners.classif <- lapply(baselearners.list$classif, function(x) return(mlr::makeLearner(x, predict.type = "prob")))
+trainedlearners.classif <- baselearners.list$classif[baselearners.list$classif %in%
+                                                       c("classif.glmnet", "classif.svm")]
+
+base.learners.classif <- lapply(trainedlearners.classif, function(x) return(mlr::makeLearner(x, predict.type = "prob")))
 base.learners.classif <- mlr::makeModelMultiplexer(base.learners.classif)
 
 txs$learner <- purrr::map(txs$type, function(x){

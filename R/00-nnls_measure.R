@@ -2,6 +2,14 @@ my.nnls.fun <- function(task, model, pred, feats, extra.args){
   
   truth <- mlr::getPredictionTruth(pred)
   
+  if(mlr::getTaskDesc(task)$type == "classif"){
+    pos.class <- mlr::getTaskDesc(task)$positive
+    truth <- ifelse(truth == pos.class, 1, 0)
+    
+  }
+  
+
+  
   if(mlr::getTaskDesc(task)$type == "regr") {
     Y <- mlr::getPredictionResponse(pred)
   } else if(mlr::getTaskDesc(task)$type == "classif") {
