@@ -112,15 +112,11 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 txs$proptrainset <- 0.5
 paramsdf <- txs[,c("learnerlib", "task", "proptrainset")]
 
-slurm_function <- function(learnerlib, task, proptrainset){
-  source("R/00-Ensemble_CrossValidRisk.R") # need to add get_preds function to environment
-  return( ensemble_crossval_risk_pred(learnerlib, task, proptrainset) )
-}
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = slurm_function, 
+sjob <- rslurm::slurm_apply(f = ensemble_crossval_risk_pred, 
                             params = paramsdf, 
                             jobname = 'vivid_EL',
                             nodes = ntry, 
