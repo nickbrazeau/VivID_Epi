@@ -1,47 +1,3 @@
-#'
-#' @details Function to extract predictions as a list
-#' from the various individual learners
-
-get_preds <- function(trained, task, subset){
-  if(mlr::getTaskType(task) == "classif"){
-    
-    # pull details from mlr 
-    pos.class <- mlr::getTaskDesc(task)$positive
-    preds.i <- predict(trained, task = task, subset = subset)
-    preds.i <- mlr::getPredictionProbabilities(pred = preds.i, cl = pos.class)
-    
-  } else if(mlr::getTaskType(task) == "regr"){
-    preds.i <- predict(trained, task = task, subset = subset)$data$response
-  }
-  return(preds.i)
-}
-
-
-#'
-#' @details This is the Cross validated risk -- function is essentially 
-#' lifted directly from SuperLearner::method.NNLS. I dropped observation weights
-#' and cahnge the return a bit
-nnls_cvrisk <- function (Z, Y, algnames, verbose = T){
-  cvRisk <- apply(Z, 2, function(x){return( mean((x - Y)^2) )})
-  
-  names(cvRisk) <- algnames
-  fit.nnls <- nnls::nnls( Z, Y)
-  if (verbose) {
-    message(paste("Non-Negative least squares convergence:", 
-                  fit.nnls$mode == 1))
-  }
-  initCoef <- coef(fit.nnls)
-  initCoef[is.na(initCoef)] <- 0
-  if (sum(initCoef) > 0) {
-    coef <- initCoef/sum(initCoef)
-  }
-  else {
-    warning("All algorithms have zero weight", call. = FALSE)
-    coef <- initCoef
-  }
-  out <- list(cvrisk = cvRisk, coef = coef)
-  return(out)
-}
 
 
 
@@ -49,6 +5,54 @@ nnls_cvrisk <- function (Z, Y, algnames, verbose = T){
 #' 
 
 ensemble_crossval_risk_pred <- function(learnerlib, task, proptrainset){
+  
+  #'
+  #' @details Function to extract predictions as a list
+  #' from the various individual learners
+  
+  get_preds <- function(trained, task, subset){
+    if(mlr::getTaskType(task) == "classif"){
+      
+      # pull details from mlr 
+      pos.class <- mlr::getTaskDesc(task)$positive
+      preds.i <- predict(trained, task = task, subset = subset)
+      preds.i <- mlr::getPredictionProbabilities(pred = preds.i, cl = pos.class)
+      
+    } else if(mlr::getTaskType(task) == "regr"){
+      preds.i <- predict(trained, task = task, subset = subset)$data$response
+    }
+    return(preds.i)
+  }
+  
+  
+  #'
+  #' @details This is the Cross validated risk -- function is essentially 
+  #' lifted directly from SuperLearner::method.NNLS. I dropped observation weights
+  #' and cahnge the return a bit
+  nnls_cvrisk <- function (Z, Y, algnames, verbose = T){
+    cvRisk <- apply(Z, 2, function(x){return( mean((x - Y)^2) )})
+    
+    names(cvRisk) <- algnames
+    fit.nnls <- nnls::nnls( Z, Y)
+    if (verbose) {
+      message(paste("Non-Negative least squares convergence:", 
+                    fit.nnls$mode == 1))
+    }
+    initCoef <- coef(fit.nnls)
+    initCoef[is.na(initCoef)] <- 0
+    if (sum(initCoef) > 0) {
+      coef <- initCoef/sum(initCoef)
+    }
+    else {
+      warning("All algorithms have zero weight", call. = FALSE)
+      coef <- initCoef
+    }
+    out <- list(cvrisk = cvRisk, coef = coef)
+    return(out)
+  }
+  
+  
+  
   #..............................
   # Setup pieces
   #..............................
