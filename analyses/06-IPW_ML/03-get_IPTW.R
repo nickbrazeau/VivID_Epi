@@ -16,7 +16,7 @@ params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/an
 ELpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_EL/", 
                       pattern = ".RDS", full.names = T)
 
-ELpaths <- trainpaths[!c(grepl("params.RDS", ELpaths) | grepl("f.RDS", ELpaths))]
+ELpaths <- ELpaths[!c(grepl("params.RDS", ELpaths) | grepl("f.RDS", ELpaths))]
 
 # sort properly to match rows in df
 ELpaths <- tibble::tibble(ELpaths = ELpaths) %>% 
@@ -30,7 +30,7 @@ params$ensembl_cvRisk <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); r
 #...............................................................................................
 # Get IPTW Estimates
 #...............................................................................................
-params$ELpreds <-purrr::pmap(params$ensembl_cvRisk, "EL.predictions")
+params$ELpreds <-purrr::map(params$ensembl_cvRisk, "EL.predictions")
 params$iptw <- purrr::pmap(params[,c("task", "ELpreds")], get_iptw_prob)
 
 
@@ -53,7 +53,7 @@ plotdf <- params %>%
   dplyr::filter(iptw < 15)
 
 ggplot(plotdf, aes(x = iptw, y = target)) +
-  geom_density_ridges(scale = 4) + theme_ridges() +
+  geom_density_ridges() + theme_ridges() +
   scale_y_discrete(expand = c(0.01, 0)) + 
   scale_x_continuous(expand = c(0.01, 0)) 
 

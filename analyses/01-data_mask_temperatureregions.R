@@ -55,6 +55,4 @@ tempfrst <- lapply(tempfrst, function(x){
 })
 
 saveRDS(tempfrst, file = "data/raw_data/weather_data/LAADS_NASA/MODIS_temp_masked.RDS")
-saveRDS(tempfrst, file = "MODIS_temp_masked.RDS")
-cat("Finished successfully")
 

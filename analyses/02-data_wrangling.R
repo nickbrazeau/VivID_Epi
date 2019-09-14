@@ -13,10 +13,6 @@
 library(tidyverse)
 source("R/00-functions_basic.R")
 tol <- 1e-3
-set.seed(48)
-
-
-
 
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
@@ -90,6 +86,22 @@ dt <- dt %>%
   dplyr::mutate(hv005_wi = hv005/1e6
   )
 
+
+#.............
+# households
+#............
+summary(dt$hv002) # looks clean if we assume that households are numbered 1 - 34 in each cluster
+hs <- dt %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = length(hv002), 
+                   housemax = max(hv002))
+
+summary(hs$housemax) # looks reasonable by cluster
+
+dt <- dt %>% 
+  dplyr::mutate(houseid = factor(paste0(hv001, "_", hv002)))
+
+
 #.............
 # dates
 #.............
@@ -131,20 +143,6 @@ dt <- dt %>%
 
 xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
-
-#.............
-# households
-#............
-summary(dt$hv002) # looks clean if we assume that households are numbered 1 - 34 in each cluster
-hs <- dt %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(n = length(hv002), 
-                   housemax = max(hv002))
-
-summary(hs$housemax) # looks reasonable by cluster
-
-dt <- dt %>% 
-  dplyr::mutate(houseid = factor(paste0(hv001, "_", hv002)))
 
 
 #########################################################################################################
@@ -284,7 +282,7 @@ xtabs(~dt$hab57_fctb + dt$lowhb_fctb, addNA = T)
 #.............
 # Duffy Phenotype
 #.............
-# wet lab. basically all individuals except for 3 -- no formal modeling needed (since no variation)
+# wet lab. basically all individuals except for 3 -- no formal modeling needed (since so little variation)
 
 
 #..........................................................................................
@@ -306,7 +304,6 @@ dt <- dt %>%
 #.............
 # age
 #.............
-
 dt <- dt %>% 
   dplyr::mutate(hab1_cont = ifelse(haven::as_factor(hv104) == "female", ha1, hb1),
                 hab1_cont = ifelse(hab1_cont %in% c("97", "98", "99"), NA, hab1_cont),
@@ -490,29 +487,37 @@ xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml10))
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml12)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml20)) 
 
-# #.............
-# # LLIN-type of Inseciticide for INDIVIDUAL
-# # Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
-# #.............
-# # read insecticide liftover table
-# insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_insecticide_liftover.csv")
-# 
-# dt <- dt %>%
-#   dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
-#   left_join(x=., y=insctcd, by="hml7") %>%
-#   dplyr::mutate(insctcd_fctm = factor(ifelse(haven::as_factor(hml20) == "no", "none", insctcd)),
-#                 insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
-#   )
-# 
-# 
-# # sanity checks
-# xtabs(~dt$insctcd_fctm + haven::as_factor(dt$hml20), addNA=T)
-# xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
-# xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
-# 
-# 
-# # is this confounded by age?
-# xtabs(~dt$hml4 + dt$insctcd_fctm, addNA=T) # nope
+
+#.............
+# LLIN-Net
+#.............
+dt <- dt %>% 
+  dplyr::mutate(hml20_fctb = haven::as_factor(hml20))
+
+
+#.............
+# LLIN-type of Inseciticide for INDIVIDUAL
+# Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
+#.............
+# read insecticide liftover table
+insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_insecticide_liftover.csv")
+
+dt <- dt %>%
+  dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
+  left_join(x=., y=insctcd, by="hml7") %>%
+  dplyr::mutate(insctcd_fctm = factor(ifelse(haven::as_factor(hml20) == "no", "none", insctcd)),
+                insctcd_fctm = forcats::fct_relevel(insctcd_fctm, "none")
+  )
+
+
+# sanity checks
+xtabs(~dt$insctcd_fctm + haven::as_factor(dt$hml20), addNA=T)
+xtabs(~dt$insctcd_fctm + dt$hml7, addNA=T)
+xtabs(~dt$hml20_fctb + dt$hml7, addNA=T)
+
+
+# is this confounded by age of net?
+xtabs(~dt$hml4 + dt$insctcd_fctm, addNA=T) # nope
 
 
 
@@ -525,13 +530,20 @@ dtsrvy <- makecd2013survey(survey = dt)
 #.............
 # Weather
 #.............
-wthrnd <- readRDS(file = "data/derived_data/vividep_weather_recoded.rds")
+wthrnd.mth <- readRDS(file = "data/derived_data/vividep_weather_recoded_monthly.rds")
 dt <- dt %>% 
-  dplyr::left_join(., wthrnd, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
+  dplyr::left_join(., wthrnd.mth, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
   dplyr::mutate(
-    temp_lag_cont_clst = temp_lag_cont_clst - 273.15, # Kelvin to Celsius
     precip_lag_cont_scale_clst = my.scale(precip_lag_cont_clst, center = T, scale = T),
     temp_lag_cont_scale_clst = my.scale(temp_lag_cont_clst, center = T, scale = T)
+  )
+
+wthrnd.mean <- readRDS(file = "data/derived_data/vividep_weather_recoded_mean.rds")
+dt <- dt %>% 
+  dplyr::left_join(., wthrnd.mean, by = c("hv001")) %>% 
+  dplyr::mutate(
+    precip_mean_cont_scale_clst = my.scale(precip_mean_cont_clst, center = T, scale = T),
+    temp_mean_cont_scale_clst = my.scale(temp_mean_cont_clst, center = T, scale = T)
   )
 
 #.............
@@ -560,28 +572,11 @@ dt <- dt %>%
 #.............
 # Urbanicity
 #.............
-#..............................
-#### A note on urbanicity ####
-#..............................
-# Potential (significant) misclassification bias in the DHS DRC-II coding of 
-# urban vs. rural as has been noted here https://journals.sagepub.com/doi/10.1177/0021909617698842
-# and can be seen by comparing hv025/026 with population density, light density, build, and accessibility 
-# going to use those four variables as latent variables of urbanicity
-
-
-# urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds") %>% 
-#   dplyr::select(c("hv001", "urbanscore")) %>% 
-#   dplyr::rename(urbanscore_cont_clst = urbanscore)
-# dt <- dplyr::left_join(dt, urb, by = "hv001")
-# boxplot(dt$urbanscore ~ haven::as_factor(dt$hv025)) # looks OK. Some urban places look pretty rural... which is more or less what I expected
-
-urb <- readRDS(file = "data/derived_data/vividepi_urban_recoded.rds")
 dt <- dt %>% 
-  dplyr::left_join(x=., y = urb, by = c("hv001", "hv025")) 
-
+  dplyr::mutate(urban_rura_fctb = haven::as_factor(urban_rura))
 
 #.............
-# Distance to Health Site
+# Health Care Access (Distance to Health Site)
 #.............
 hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") 
 
@@ -591,10 +586,12 @@ dt <- dt %>%
     hlthdist_cont_log_clst = log(hlthst_nrst_duration + tol),
     hlthdist_cont_log_scale_clst = my.scale(hlthdist_cont_log_clst, center = T, scale = T),
     
-    hlthst_nrst_duration_fctb = ifelse(hlthst_nrst_duration > 30, "far", "near"),
-    hlthst_nrst_duration_fctb = factor(hlthst_nrst_duration_fctb, levels = c("near", "far"))
+    hlthst_nrst_duration_fctb_clst = ifelse(hlthst_nrst_duration > 30, "far", "near"),
+    hlthst_nrst_duration_fctb_clst = factor(hlthst_nrst_duration_fctb_clst, levels = c("near", "far"))
     
-    )
+  )
+
+
 
 
 #.............
@@ -615,14 +612,6 @@ dt %>%
 #..........................................................................................
 #                               Final Write Out
 #..........................................................................................
-# keep <- colnames(dt)[ grepl("_cont|_fctm|_fctb|_scale", colnames(dt)) ]
-# keep <- c("pv18s", keep, "hv001", "hv023", "hv005", "hv005_wi",
-#           "houseid", "hvdate_dtdmy", "hvyrmnth_dtmnth", "hvyrmnth_dtmnth_lag",
-#           "urban_rura", "latnum", "longnum", "geometry", "adm1name")
-# 
-# 
-# dtkp <- dt[, keep]
-
 saveRDS(dt, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 
 

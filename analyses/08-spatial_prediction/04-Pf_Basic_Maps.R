@@ -116,13 +116,13 @@ gc <- mp %>%
   dplyr::filter(maplvl == "hv001" & plsmdmspec == "pfldh") %>% 
   tidyr::unnest() %>% 
   dplyr::select(c("longnum", "latnum")) %>% 
-  geosphere::distm(x =., fun = geosphere::distGeo) 
+  geosphere::distm(x =., fun = geosphere::distHaversine) 
 
 pfclust <- mp$data[[4]]
 sf::st_geometry(pfclust) <- NULL
 pfclust.dist <- pfclust %>% 
   dplyr::select(c("longnum", "latnum")) %>% 
-  geosphere::distm(x =., fun = geosphere::distGeo) 
+  geosphere::distm(x =., fun = geosphere::distHaversine) 
 
 pfclust.dist.inv <- 1/pfclust.dist
 diag(pfclust.dist.inv) <- 0

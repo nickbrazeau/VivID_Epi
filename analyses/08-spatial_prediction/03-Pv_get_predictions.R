@@ -130,7 +130,7 @@ gc <- mp %>%
   dplyr::filter(maplvl == "hv001" & plsmdmspec == "pv18s") %>% 
   tidyr::unnest() %>% 
   dplyr::select(c("longnum", "latnum")) %>% 
-  geosphere::distm(x =., fun = geosphere::distGeo) 
+  geosphere::distm(x =., fun = geosphere::distHaversine) 
 
 
 pvclust <- mp$data[[5]]

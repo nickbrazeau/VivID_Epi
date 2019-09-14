@@ -11,7 +11,7 @@ source("R/00-DAGs.R")
 
 vividdag <- dagitty::downloadGraph(x = "dagitty.net/mjKNQhB")
 
-dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v2.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
 
