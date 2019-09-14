@@ -3,13 +3,11 @@ baselearners.list <- list(
                "classif.glmnet", 
                "classif.gamboost",
                "classif.svm",
-               "classif.gausspr",
                "classif.rpart"),
   regress = c("regr.lm",
               "regr.glmnet", 
-              "regr.gamboost",
               "regr.svm",
-              "regr.gausspr",
+              "regr.gamboost",
               "regr.rpart")
 )
 
