@@ -34,6 +34,32 @@ my.scale <- function(x, ...){
 }
 
 #----------------------------------------------------------------------------------------------------
+# Make MLR Task
+#----------------------------------------------------------------------------------------------------
+
+make_class_task <- function(data = data, 
+                            type = type,
+                            target = target,
+                            positive = positive,
+                            coordinates = NULL){
+  
+  if(type == "binary"){
+    task <- mlr::makeClassifTask(data = data, 
+                                 target = target,
+                                 positive = positive,
+                                 coordinates = coordinates)
+  } else if(type == "continuous"){
+    task <- mlr::makeRegrTask(data = data, 
+                              target = target,
+                              coordinates = coordinates)
+  }
+  
+  return(task)
+  
+}
+
+
+#----------------------------------------------------------------------------------------------------
 # ViVID Epi Theme
 #----------------------------------------------------------------------------------------------------
 

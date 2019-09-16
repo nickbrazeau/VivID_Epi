@@ -1,25 +1,19 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to Obtrain the 
+# Purpose of this script is to Ob-train the 
 # Cross Validated Risk 
 #----------------------------------------------------------------------------------------------------
+remotes::install_github("nickbrazeau/mlrwrapSL"); library(mlrwrapSL)
 library(tidyverse)
 library(mlr)
 library(rslurm)
-source("R/00-functions_Ensemble_Wrapper.R")
+source("R/00-functions_basic.R")
 source("R/00-IPTW_functions.R")
-source("R/00-Ensemble_CrossValidRisk.R")
-# this will get hyperpar mlr::getHyperPars(learner.hp)
-
+source("analyses/06-IPW_ML/00-import_learners.R")
+set.seed(48, "L'Ecuyer")
 
 #...............................................................................................
-# Set up data matrix to predict on
+# Manipulate tx map
 #...............................................................................................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
-sf::st_geometry(dt) <- NULL
-
-#........................
-# manipulate tx map
-#........................
 # read in treatments
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
   dplyr::rename(positive = positivefactor) %>% 
@@ -33,10 +27,17 @@ txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>%
 # manipulate data
 #........................
 # subset to treatments, outcome, weights and coords
-varstoinclude <- c("pv18s" , "pfldh", "hv005_wi", txs$target,
-                   "alt_dem_cont_scale_clst", "hab1_cont_scale", "hv104_fctb", "wtrdist_cont_log_scale_clst", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+varstoinclude <- c("pv18s" , "pfldh", "hv001", "hv005_wi", txs$target,
+                   "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
                    "hiv03_fctb", # no longer considered risk factor bc too few observations
                    "longnum", "latnum")
+
+#...............................................................................................
+# Import Data
+#...............................................................................................
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+sf::st_geometry(dt) <- NULL
+
 
 dt.ml <- dt %>% 
   dplyr::select(varstoinclude)
@@ -46,6 +47,16 @@ dt.ml.cc <- dt.ml %>%
   dplyr::filter(complete.cases(.)) %>% 
   dplyr::select(-c("longnum", "latnum")) %>% 
   data.frame(.)
+
+
+
+#...............................................................................................
+# Read In Spatial Partition & make spatial cross-validation set
+#...............................................................................................
+drcpart <- readRDS("data/derived_data/kmean_drcpartitioned.rds")
+dt.ml.cc <- dplyr::left_join(dt.ml.cc, drcpart, by = "hv001")
+spcrossvalset <- split(1:nrow(dt.ml.cc), factor(dt.ml.cc$kmeansk))
+
 
 
 #........................
@@ -64,8 +75,6 @@ txs$task <- purrr::pmap(txs[,c("data", "target", "positive", "type")],
 #........................
 # Make tasks and learner libraries
 #........................
-base.learners.classif <- lapply(baselearners.list$classif, function(x) return(mlr::makeLearner(x, predict.type = "prob")))
-base.learners.regr <- lapply(baselearners.list$regress, function(x) return(mlr::makeLearner(x, predict.type = "response")))
 txs$learnerlib <- purrr::map(txs$type, function(x){
   if(x == "continuous"){
     return(base.learners.regr)
@@ -75,50 +84,21 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 })
 
 
-
 #...............................................................................................
-# Pull and Apply Tuning Results
-#...............................................................................................
-tuneresultpaths <- list.files(path = "analyses/06-IPW_ML/_rslurm_vivid_tunes_train", pattern = ".RDS", full.names = T)
-tuneresultpaths <- tuneresultpaths[!c(grepl("params.RDS", tuneresultpaths) | grepl("f.RDS", tuneresultpaths))]
-
-# sort properly to match rows in df
-tuneresultpaths <- tibble::tibble(tuneresultpaths = tuneresultpaths) %>%
-  mutate(order = stringr::str_extract(basename(tuneresultpaths), "[0-9]+"),
-         order = as.numeric(order)) %>%
-  dplyr::arrange(order) %>%
-  dplyr::select(-c(order))
-
-tuneresultpaths$tuneresult <- purrr::map(tuneresultpaths$tuneresultpaths, findbesttuneresult)
-# apply
-txs$learnerlib <- purrr::map2(txs$learnerlib, tuneresultpaths$tuneresult,  tune_learner_library)
-
-#...............................................................................................
-# Train Each Algorithm
+# SUPERLEARNER
 # Obtain Prediction Matrix
 # Minimize Cross-validated Risk 
 #...............................................................................................
 
-
-txs$learnerlib <- purrr::map(txs$type, function(x){
-  if(x == "continuous"){
-    return(base.learners.regr)
-  } else if (x == "binary"){
-    return(base.learners.classif)
-  }
-})
-
-
-txs$proptrainset <- 0.5
-paramsdf <- txs[,c("learnerlib", "task", "proptrainset")]
-
+paramsdf <- txs[,c("learnerlib", "task")]
+paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = ensemble_crossval_risk_pred, 
+sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
                             params = paramsdf, 
-                            jobname = 'vivid_EL',
+                            jobname = 'vivid_spSL',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
@@ -131,7 +111,7 @@ sjob <- rslurm::slurm_apply(f = ensemble_crossval_risk_pred,
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
 
-cat("*************************** \n Submitted EL models \n *************************** ")
+cat("*************************** \n Submitted SL models \n *************************** ")
 
 
 
