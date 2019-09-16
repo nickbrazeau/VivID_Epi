@@ -237,7 +237,7 @@ dt %>%
   ggplot() +
   geom_point(aes(x=hab56_cont, y=hb56)) + ylim(c(0,25)) + xlim(c(0,25))
 # note, 8400 "rows" missing which corresponds to the 8376 females + 24 NAs coded in the dataset
-hist(dt$hab56_cont_scale)
+hist(dt$hab56_cont)
 xtabs(~dt$hab56_cont, addNA = T)
 
 

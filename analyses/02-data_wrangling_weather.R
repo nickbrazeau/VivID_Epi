@@ -60,6 +60,7 @@ dt <- dt %>%
 dt <- dt %>% 
   dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
 
+
 # NOTE, some clusters have survey start and end dates that are in two months 
 # (eg boundaries aren't clean/coinciding with a month. Naturally). Given
 # grouping by month, need to assign a clusters "month" on the majority of days 
@@ -96,6 +97,18 @@ dt <- dt %>%
 xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
 
+clst_mnths.lag <- dt %>% 
+  dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag"))
+sf::st_geometry(clst_mnths.lag) <- NULL  
+clst_mnths.lag <- clst_mnths.lag %>% 
+  dplyr::filter(!duplicated(.))
+
+clst_dates <- dt %>% 
+  dplyr::select(c("hv001", "hvyrmnth_dtmnth"))
+sf::st_geometry(clst_dates) <- NULL  
+clst_dates <- clst_dates %>% 
+  dplyr::filter(!duplicated(.))
+
 #......................................................................................................
 # Precipitation (CHRIPS) and Temperature (MODIS/LAADS) Read In Data
 #......................................................................................................
@@ -117,10 +130,10 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 
 
 
-# TODO masked temperature files
+# NOTE, reading in masked temperature files
 tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS_NASA/", full.names = T, 
-                     pattern = ".tif")
-tempfrst <- lapply(tempfiles, readRasterBB.temp, bb = caf)
+                       pattern = "_Night_CMG.tif")
+tempfrst <-precipfrst <- lapply(tempfiles, readRasterBB.temp, bb = caf)
 
 tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 
   dplyr::mutate(namestemp = stringr::str_extract(string = namestemp, pattern = "A[0-9][0-9][0-9][0-9][0-9][0-9][0-9]"),
@@ -185,6 +198,8 @@ wthrnd.mnth <- wthrnd.mnth %>%
   dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
 sf::st_geometry(wthrnd.mnth) <- NULL
 
+
+wthrnd.mnth <- dplyr::inner_join(clst_mnths.lag, wthrnd.mnth, by = c("hv001", "hvyrmnth_dtmnth_lag")) # dominant month needs to win
 
 #......................................................................................................
 # Precipitation and Temperature Considered as Means
