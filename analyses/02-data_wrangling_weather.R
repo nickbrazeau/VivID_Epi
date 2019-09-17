@@ -97,17 +97,15 @@ dt <- dt %>%
 xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
 
 
+# final dataframe for lagged months
 clst_mnths.lag <- dt %>% 
   dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag"))
 sf::st_geometry(clst_mnths.lag) <- NULL  
 clst_mnths.lag <- clst_mnths.lag %>% 
   dplyr::filter(!duplicated(.))
 
-clst_dates <- dt %>% 
-  dplyr::select(c("hv001", "hvyrmnth_dtmnth"))
-sf::st_geometry(clst_dates) <- NULL  
-clst_dates <- clst_dates %>% 
-  dplyr::filter(!duplicated(.))
+# months of study period
+studyperiod <- levels(factor(dt$hvyrmnth_dtmnth))
 
 #......................................................................................................
 # Precipitation (CHRIPS) and Temperature (MODIS/LAADS) Read In Data
@@ -133,7 +131,7 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 # NOTE, reading in masked temperature files
 tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS_NASA/", full.names = T, 
                        pattern = "_Night_CMG.tif")
-tempfrst <-precipfrst <- lapply(tempfiles, readRasterBB.temp, bb = caf)
+tempfrst <- lapply(tempfiles, readRasterBB.temp, bb = caf)
 
 tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 
   dplyr::mutate(namestemp = stringr::str_extract(string = namestemp, pattern = "A[0-9][0-9][0-9][0-9][0-9][0-9][0-9]"),
@@ -204,8 +202,14 @@ wthrnd.mnth <- dplyr::inner_join(clst_mnths.lag, wthrnd.mnth, by = c("hv001", "h
 #......................................................................................................
 # Precipitation and Temperature Considered as Means
 #......................................................................................................
+precipdf <- precipdf %>% 
+  dplyr::filter(hvyrmnth_dtmnth_lag %in% studyperiod)
+
 precipstack <- raster::stack(precipdf$precipraster)
 precipstack.mean <- raster::calc(precipstack, mean, na.rm = T)
+
+tempdf <- tempdf %>% 
+  dplyr::filter(hvyrmnth_dtmnth_lag %in% studyperiod)
 
 tempstack <- raster::stack(tempdf$tempraster)
 tempstack.mean <- raster::calc(tempstack, mean, na.rm = T)

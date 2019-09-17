@@ -42,8 +42,8 @@ keda.df %>%
   ylab("Total Within-Cluster Sum of Squares") +
   xlab("K")
 
-# K means of 30 appears to be all the information we can gather
-k <- kmeans(coords[,2:3], 30)
+# K means of 8 appears to be the inflection point
+k <- kmeans(coords[,2:3], 8)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
 drcpart.plotObj <- drcpart %>% 
