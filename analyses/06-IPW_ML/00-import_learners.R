@@ -5,6 +5,7 @@ baselearners.list <- list(
                "classif.cvglmnet", 
                "classif.gamboost",
                "classif.svm",
+               "classif.gausspr",
                "classif.nnet"),
   regress = c("regr.lm",
               "regr.cvglmnet", 
@@ -12,6 +13,7 @@ baselearners.list <- list(
               "regr.cvglmnet", 
               "regr.svm",
               "regr.gamboost",
+              "regr.gausspr",
               "regr.nnet")
 )
 
@@ -35,7 +37,7 @@ base.learners.classif[ classifglmnets.num ] <- classifglmnets
 # manipulate glmnets classif
 #.................
 regrglmnets.num <- which(grepl("glmnet", baselearners.list$regress))
-regrglmnets <-  base.learners.classif[ regrglmnets.num ]
+regrglmnets <-  base.learners.regr[ regrglmnets.num ]
 regrglmnets[[1]] <- mlr::setHyperPars(regrglmnets[[1]], alpha = 1)
 regrglmnets[[2]] <- mlr::setHyperPars(regrglmnets[[2]], alpha = 0.5)
 regrglmnets[[3]] <- mlr::setHyperPars(regrglmnets[[3]], alpha = 0)
