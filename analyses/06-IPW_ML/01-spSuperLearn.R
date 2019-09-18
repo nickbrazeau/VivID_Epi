@@ -29,6 +29,7 @@ txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>%
 # subset to treatments, outcome, weights and coords
 varstoinclude <- c("pv18s" , "pfldh", "hv001", "hv005_wi", txs$target,
                    "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "urban_rura_fctb", "alt_dem_cont_scale_clst",
                    "hiv03_fctb", # no longer considered risk factor bc too few observations
                    "longnum", "latnum")
 
@@ -89,14 +90,19 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 # Obtain Prediction Matrix
 # Minimize Cross-validated Risk 
 #...............................................................................................
-
 paramsdf <- txs[,c("learnerlib", "task")]
 paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
+
+
+# start <- Sys.time()
+# ret <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred)
+# end <- Sys.time()
+# end - start
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
+sjob <- rslurm::slurm_apply(f = , 
                             params = paramsdf, 
                             jobname = 'vivid_spSL',
                             nodes = ntry, 
@@ -115,7 +121,7 @@ cat("*************************** \n Submitted SL models \n *********************
 
 
 
-
+pmap(paramsdf[3,], mlrwrapSL::SL_crossval_risk_pred)
 
 
 
