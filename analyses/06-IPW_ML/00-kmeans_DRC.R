@@ -43,7 +43,7 @@ keda.df %>%
   xlab("K")
 
 # K means of 8 appears to be the inflection point
-k <- kmeans(coords[,2:3], 8)
+k <- kmeans(coords[,2:3], 30)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
 drcpart.plotObj <- drcpart %>% 

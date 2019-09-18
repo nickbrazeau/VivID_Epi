@@ -28,8 +28,8 @@ txs <- dcdr %>%
 # cluster altitude (geographic process)
 # urbanicity (historic process of where cities are towns originated)
 
-txs <- txs %>%
-  dplyr::filter(!var_label %in% c("Age", "Sex", "Urbanicity", "Altitude")) # marginal already
+# txs <- txs %>%
+#  dplyr::filter(!var_label %in% c("Age", "Sex", "Urbanicity", "Altitude")) # marginal already
 
 # find canonical sets
 dagliftover <- readxl::read_excel(path = "model_datamaps/dag_dhscovar_liftover.xlsx")
