@@ -8,7 +8,7 @@ library(mlr)
 library(rslurm)
 source("R/00-functions_basic.R")
 source("R/00-IPTW_functions.R")
-source("analyses/06-IPW_ML/00-import_learners.R")
+source("analyses/06-IPW_ML/00-import_learners_updated.R")
 set.seed(48, "L'Ecuyer")
 
 #...............................................................................................
@@ -78,6 +78,10 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
   }
 })
 
+#........................
+# From EDA, know some of these need to be dropped
+#........................
+# TODO let's see what happens
 
 #...............................................................................................
 # SUPERLEARNER

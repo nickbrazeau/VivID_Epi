@@ -7,6 +7,7 @@
 # 
 # https://www.rdocumentation.org/packages/energy/versions/1.7-6/topics/distance%20correlation
 # https://cran.r-project.org/web/packages/energy/energy.pdf
+# https://stats.stackexchange.com/questions/183572/understanding-distance-correlation-computations
 # https://projecteuclid.org/euclid.aoas/1267453933
 # http://yunus.hacettepe.edu.tr/~iozkan/eco742/Brownian.html
 # https://projecteuclid.org/download/pdfview_1/euclid.aos/1201012979
