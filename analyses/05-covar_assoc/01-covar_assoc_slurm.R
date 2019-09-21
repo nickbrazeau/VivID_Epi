@@ -51,10 +51,6 @@ slurm_calc_corr <- function(covar1, covar2, data){
     x2 <- as.numeric(x2)
   }
   
-  if(is.factor(x[,2])){
-    x[,2] <- as.numeric(x[,2])
-  }
-  
   ret <- energy::dcor(x = x1, y = x2)
   
   return(ret)
