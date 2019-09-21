@@ -23,7 +23,7 @@ sf::st_geometry(coords) <- NULL
 #.............
 # K-means Clustering of DRC
 #.............
-keda <- data.frame(k = seq(2, 50, by = 1))
+keda <- data.frame(k = seq(2, 200, by = 1))
 keda$kmeans <- map(keda$k, function(k){return(kmeans(x = coords[,2:3], centers = k))})
 keda$wss <- map(keda$kmeans, "withinss")
 keda$totalwss <- map(keda$wss, function(x){return(sum(x))})
@@ -33,23 +33,27 @@ keda.df <- keda %>%
   dplyr::select(c("k", "totalwss")) %>% 
   tidyr::unnest()
 
-keda.df %>% 
+kesteda.plotObj <- keda.df %>% 
   tibble::as.tibble(.) %>% 
   ggplot() +
   geom_line(aes(x=k, y=totalwss)) + 
   geom_point(aes(x=k, y=totalwss)) +
+  geom_vline(xintercept = 8, color = "red", linetype = 2, alpha = 0.8) +
   theme_minimal() + 
   ylab("Total Within-Cluster Sum of Squares") +
   xlab("K")
+plot(kesteda.plotObj)
+
 
 # K means of 8 appears to be the inflection point
-k <- kmeans(coords[,2:3], 30)
+k <- kmeans(coords[,2:3], 8)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
 drcpart.plotObj <- drcpart %>% 
   ggplot() + 
   geom_sf(data = DRCprov) + 
-  geom_point(aes(x=longnum, y=latnum, color = factor(k)))
+  geom_point(aes(x=longnum, y=latnum, color = factor(k))) +
+  theme(legend.position = "none")
 plot(drcpart.plotObj)
 
 

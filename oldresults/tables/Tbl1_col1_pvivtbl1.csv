@@ -1,0 +1,36 @@
+var_label,Covariates,Pvivax-Negative,Pvivax-Positive,matchcol
+,n,15667.69,479.33,n
+precip,precip_ann_cont_clst (mean (SD)),124.02 (15.77),125.75 (15.70),precip_ann_cont_clst
+temp,temp_ann_cont_clst (mean (SD)),19.64 (2.63),19.31 (3.08),temp_ann_cont_clst
+Altitude,alt_dem_cont_clst (mean (SD)),709.96 (435.30),768.90 (488.85),alt_dem_cont_clst
+Distance to Water,wtrdist_cont_clst (mean (SD)),5712.06 (7500.98),5365.87 (7502.85),wtrdist_cont_clst
+"Urbanicity latent variable, night lights",built_population_2014_cont_clst (mean (SD)),0.22 (0.34),0.20 (0.33),built_population_2014_cont_clst
+"Urbanicity latent variable, build",nightlights_composite_cont_clst (mean (SD)),2.90 (7.35),1.89 (6.61),nightlights_composite_cont_clst
+"Urbanicity latent variable, worldpop",all_population_count_2015_cont_clst (mean (SD)),74823.04 (130635.44),72476.65 (135551.44),all_population_count_2015_cont_clst
+"Urbanicity latent variable, travel times",travel_times_2015_cont_clst (mean (SD)),152.25 (204.28),131.84 (166.20),travel_times_2015_cont_clst
+Distance to Healthcare Center,hlthdist_cont_clst (mean (SD)),61181.56 (62056.82),65012.37 (62331.66),hlthdist_cont_clst
+Any antimalarial Use (percent),anyatm_cont_clst (mean (SD)),0.31 (0.24),0.29 (0.22),anyatm_cont_clst
+Falciparum infxn,"pfldh_fctb, falpos (%)",4741.1 (30.3),151.7 (31.7),pfldh_fctb
+HIV status,"hiv03_fctb, hivpos (%)",149.4 (1.0),8.3 (1.7),hiv03_fctb
+Anemia,hab57_fctb (%),"","",hab57_fctb
+,   no,11595.3 (74.0),362.5 (75.6),""
+,   yes,4026.5 (25.7),116.9 (24.4),""
+,   NA,46.0 (0.3),0.0 (0.0),""
+Sex,"hv104_fctb, male (%)",7315.8 (46.7),243.9 (50.9),hv104_fctb
+Age,hab1_cont (mean (SD)),29.68 (10.93),29.41 (11.48),hab1_cont
+Housing Materials,hv21345_fctb (%),"","",hv21345_fctb
+,   modern,3033.3 (19.4),68.6 (14.3),""
+,   traditional,12627.4 (80.6),410.7 (85.7),""
+,   NA,7.0 (0.0),0.0 (0.0),""
+Wealth,"wlthrcde_fctb, poor (%)",6294.7 (40.2),168.5 (35.2),wlthrcde_fctb
+Education,hv106_fctb (%),"","",hv106_fctb
+,   lower,6363.3 (40.6),193.0 (40.3),""
+,   higher,9289.2 (59.3),286.3 (59.7),""
+,   NA,15.2 (0.1),0.0 (0.0),""
+Owns Livestock,hv246_fctb (%),"","",hv246_fctb
+,   no,8206.8 (52.4),236.6 (49.4),""
+,   yes,7459.8 (47.6),242.7 (50.6),""
+,   NA,1.1 (0.0),0.0 (0.0),""
+Number of Children Under 5,hv014_cont (mean (SD)),1.46 (1.19),1.45 (1.16),hv014_cont
+Number of Household Members,hv009_cont (mean (SD)),6.76 (3.22),6.56 (3.06),hv009_cont
+ITN Use,"ITN_fctb, yes (%)",7456.9 (47.6),254.7 (53.1),ITN_fctb

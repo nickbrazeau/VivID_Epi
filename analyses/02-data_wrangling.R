@@ -193,21 +193,21 @@ xtabs(~hiv03_fctb + hiv03, data = dt, addNA = T)
 
 
 #.............
-# hemoglobin -- adjusted
-# as the adjusted has hemoglobins of >20... 
-# too high, unless clin path
+# hemoglobin -- in ha56 (ha for females) and hb56 (hb for males)
+# has been adjusted for altitude and smoking. 
+# Note, even with the adjustments there are some extreme 
+# readings (e.g. hemoglobins >20 and <5) that are clinically concerning...
 #.............
 levels(factor(haven::as_factor(dt$ha56))) # need to divide by 10; var is separate column for men and women
 levels(factor(haven::as_factor(dt$hb56)))
 # confirm no missing sex and then can use this variable to distinguish ha56 and hv56
 xtabs(~haven::as_factor(dt$hv104), addNA = T)
 
-
-
 dt <- dt %>% 
   dplyr::mutate(hab56_cont = ifelse(haven::as_factor(hv104) == "female", ha56, hb56),
                 hab56_cont = ifelse(hab56_cont %in% c("997", "999"), NA, hab56_cont),
-                hab56_cont = as.numeric(hab56_cont)/10) 
+                hab56_cont = as.numeric(hab56_cont)/10,
+                hab56_cont_scale = my.scale(hab56_cont))
 
 
 
@@ -388,7 +388,7 @@ xtabs(~dt$hv21345_fctb, addNA = T)
 # wealth index 
 #.............
 # As desrcibed in this manuscript (PMID: 28222094)
-# housing materials are  taken into consideration for wealth
+# housing materials are taken into consideration for wealth
 # need to recode the wealth variable to avoid controlling for part of our
 # effect when considering the covar housing materials (as they did above)
 wlth <- readRDS(file = "data/derived_data/vividepi_wealth_recoded.rds")
@@ -399,7 +399,13 @@ xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270)) # looks OK. Some poor/poor
 dt <- dt %>% 
   dplyr::mutate(wlthrcde_fctb = relevel(wlthrcde_fctb, "not poor"))
   
-
+#.............
+# years of education (continuous)
+#.............
+haven::as_factor(dt$hv108)
+dt <- dt %>% 
+  dplyr::mutate(hv108_cont = ifelse(hv108 %in% c(97,98,99), NA, hv108),
+                hv108_cont_scale = my.scale(hv108_cont))
 #.............
 # years of education (categorical)
 #.............
@@ -415,6 +421,19 @@ dt <- dt %>%
 
 xtabs(~dt$hv106 + dt$hv106_fctb, addNA = T)
 
+#------------------------------------------
+# Occupation as farmer or not
+#------------------------------------------
+table(factor(haven::as_factor(dt$hv104)), useNA = "always") # no missing m/f but still missing factor from haven
+dt <- dt %>% 
+  dplyr::mutate(occupation = ifelse(haven::as_factor(hv104) == "female",
+                                    haven::as_factor(v717), 
+                                    haven::as_factor(mv717)))
+
+dt <- dt %>% 
+  dplyr::mutate(farmer_fctb = ifelse(occupation %in% c(4,5), "farmer", "not farmer"),
+                farmer_fctb = factor(farmer_fctb, levels = c("not farmer", "farmer"))) # not being a farmer protective
+# note, we have coded missing as not a farmer
 
 #------------------------------------------
 # Owns livestock, herds, or farm animals
@@ -576,18 +595,18 @@ dt <- dt %>%
   dplyr::mutate(urban_rura_fctb = haven::as_factor(urban_rura))
 
 #.............
-# Health Care Access (Distance to Health Site)
+# Health Care Access (Mean Distance to Health Site)
 #.............
-hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") 
+hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") %>% 
+  magrittr::set_colnames(c("hv001", "hlthdist_mean_duration", "hlthdist_sd_duration"))
 
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
-    hlthdist_cont_log_clst = log(hlthst_nrst_duration + tol),
+    hlthdist_cont_log_clst = log(hlthdist_mean_duration),
     hlthdist_cont_log_scale_clst = my.scale(hlthdist_cont_log_clst, center = T, scale = T),
-    
-    hlthst_nrst_duration_fctb_clst = ifelse(hlthst_nrst_duration > 30, "far", "near"),
-    hlthst_nrst_duration_fctb_clst = factor(hlthst_nrst_duration_fctb_clst, levels = c("near", "far"))
+    hlthst_duration_fctb_clst = ifelse(hlthdist_mean_duration > 60, "far", "near"),
+    hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far"))
     
   )
 

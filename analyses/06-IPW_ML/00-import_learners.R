@@ -5,7 +5,9 @@ baselearners.list <- list(
                "classif.cvglmnet", 
                "classif.gamboost",
                "classif.svm",
-               "classif.gausspr",
+#               "classif.kknn",
+#               "classif.gausspr",
+               "classif.nnet",
                "classif.ranger"),
   regress = c("regr.lm",
               "regr.cvglmnet", 
@@ -13,7 +15,9 @@ baselearners.list <- list(
               "regr.cvglmnet", 
               "regr.svm",
               "regr.gamboost",
-              "regr.gausspr",
+#              "regr.kknn",
+#              "regr.gausspr",
+              "regr.nnet",
               "regr.ranger")
 )
 

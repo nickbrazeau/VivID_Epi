@@ -1,0 +1,36 @@
+Covariates,Case-Negative,Case-Positive,matchcol
+n,10926.63,5220.40,n
+precip_ann_cont_clst (mean (SD)),124.17 (16.21),123.87 (14.79),precip_ann_cont_clst
+temp_ann_cont_clst (mean (SD)),19.42 (2.89),20.07 (1.95),temp_ann_cont_clst
+alt_dem_cont_clst (mean (SD)),751.10 (475.20),629.28 (328.99),alt_dem_cont_clst
+wtrdist_cont_clst (mean (SD)),5211.53 (7119.76),6727.90 (8147.91),wtrdist_cont_clst
+built_population_2014_cont_clst (mean (SD)),0.25 (0.36),0.16 (0.29),built_population_2014_cont_clst
+nightlights_composite_cont_clst (mean (SD)),3.59 (8.18),1.35 (4.76),nightlights_composite_cont_clst
+all_population_count_2015_cont_clst (mean (SD)),87857.94 (143313.54),47324.73 (93828.62),all_population_count_2015_cont_clst
+travel_times_2015_cont_clst (mean (SD)),143.50 (195.14),168.71 (218.39),travel_times_2015_cont_clst
+hlthdist_cont_clst (mean (SD)),56754.16 (60774.49),70800.11 (63652.51),hlthdist_cont_clst
+anyatm_cont_clst (mean (SD)),0.31 (0.24),0.32 (0.24),anyatm_cont_clst
+"pfldh_fctb, falpos (%)",0.0 (0.0),4892.8 (93.7),pfldh_fctb
+"hiv03_fctb, hivpos (%)",118.2 (1.1),39.6 (0.8),hiv03_fctb
+hab57_fctb (%),"","",hab57_fctb
+   no,8297.7 (75.9),3660.0 (70.1),""
+   yes,2606.1 (23.9),1537.3 (29.4),""
+   NA,22.8 (0.2),23.1 (0.4),""
+"hv104_fctb, male (%)",4873.4 (44.6),2686.3 (51.5),hv104_fctb
+hab1_cont (mean (SD)),30.34 (10.94),28.27 (10.84),hab1_cont
+hv21345_fctb (%),"","",hv21345_fctb
+   modern,2452.1 (22.4),649.8 (12.4),""
+   traditional,8469.5 (77.5),4568.6 (87.5),""
+   NA,5.0 (0.0),2.0 (0.0),""
+"wlthrcde_fctb, poor (%)",4144.4 (37.9),2318.8 (44.4),wlthrcde_fctb
+hv106_fctb (%),"","",hv106_fctb
+   lower,4323.1 (39.6),2233.2 (42.8),""
+   higher,6593.2 (60.3),2982.3 (57.1),""
+   NA,10.3 (0.1),4.9 (0.1),""
+hv246_fctb (%),"","",hv246_fctb
+   no,5944.1 (54.4),2499.3 (47.9),""
+   yes,4982.6 (45.6),2720.0 (52.1),""
+   NA,0.0 (0.0),1.1 (0.0),""
+hv014_cont (mean (SD)),1.46 (1.20),1.45 (1.19),hv014_cont
+hv009_cont (mean (SD)),6.79 (3.28),6.68 (3.07),hv009_cont
+"ITN_fctb, yes (%)",5385.4 (49.3),2326.3 (44.6),ITN_fctb

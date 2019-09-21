@@ -1,0 +1,411 @@
+---
+title: "Basic Maps of Malaria among Asymptomatic Adults in the DRC"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center', fig.width = 8, fig.height = 8)
+```
+```{r}
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+library(tidyverse)
+library(sf)
+library(geosphere)
+library(spdep)
+library(srvyr) #wrap the survey package in dplyr syntax
+library(RColorBrewer)
+
+
+#......................
+# Import Data
+#......................
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dtsrvy <- makecd2013survey(survey = dt)
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+ge <- dt %>% 
+  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
+  dplyr::filter(!duplicated(.)) %>% 
+  sf::st_as_sf(.)
+
+```
+
+
+## Aggregated Prevalence Maps
+```{r}
+#---------------------------------------------------------------------- 
+# Plasmodium Point Prevalence Maps (Province & Cluster)
+#---------------------------------------------------------------------- 
+
+pfldhprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pfldh, adm1shp = DRCprov) %>% 
+  dplyr::mutate(plsmdmspec = "pfldh", maplvl = "adm1name")
+pv18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = pv18s, adm1shp = DRCprov)  %>% 
+  dplyr::mutate(plsmdmspec = "pv18s", maplvl = "adm1name")
+po18sprov <- prev_point_est_summarizer(design = dtsrvy, maplvl = adm1name, plsmdmspec = po18s, adm1shp = DRCprov) %>% 
+  dplyr::mutate(plsmdmspec = "po18s", maplvl = "adm1name")
+
+pfldhclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pfldh, adm1shp = DRCprov) %>% 
+  dplyr::mutate(plsmdmspec = "pfldh", maplvl = "hv001")
+pv18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = pv18s, adm1shp = DRCprov) %>% 
+  dplyr::mutate(plsmdmspec = "pv18s", maplvl = "hv001")
+po18sclust <- prev_point_est_summarizer(design = dtsrvy, maplvl = hv001, plsmdmspec = po18s, adm1shp = DRCprov) %>% 
+  dplyr::mutate(plsmdmspec = "po18s", maplvl = "hv001")
+
+
+
+# bind those to a tibble
+mp <- dplyr::bind_rows(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, po18sclust) %>% 
+  dplyr::group_by(plsmdmspec, maplvl) %>% 
+  tidyr::nest()
+
+
+# this awful hack becuase of this issue https://github.com/tidyverse/dplyr/issues/3483
+# we are going down the rabbit hole just to try and make this stupid survey and purr package work. fine for now but return
+mp$data <- lapply(list(pfldhprov, pv18sprov, po18sprov, pfldhclust, pv18sclust, po18sclust), function(x) return(x))
+
+#.............................
+# Plot Summary/Point Est Maps
+#..............................
+mp$plots <- pmap(mp, mapplotter)
+
+```
+
+### Province Prevalence Maps
+```{r}
+
+cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
+                   align = "h",
+                   labels = c("A", "B", "C"))
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Province_Prevalence_3x1.jpg",
+     heigh = 8, width = 11, units = "in", res=500)
+cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
+                   align = "h",
+                   labels = c("A", "B", "C"))
+
+graphics.off()
+
+```
+
+### Cluster Prevalence Maps
+```{r}
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Cluster_Prevalence_3x1.jpg",
+     heigh = 8, width = 11, units = "in", res=500)
+cowplot::plot_grid(mp$plots[[3]],  mp$plots[[4]],  mp$plots[[6]],
+                   align = "h",
+                   labels = c("A", "B", "C"))
+
+graphics.off()
+
+```
+
+
+### Case Count Maps
+```{r}
+#......................
+# Plot Cases
+#......................
+case_n_maps <- purrr::pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemap_n_plotter)
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Case_N_ClusterPlots_3x1.jpg",
+     heigh = 8, width = 11, units = "in", res=500)
+cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
+                   align = "h",
+                   labels = c("A", "B", "C"))
+
+graphics.off()
+
+```
+
+### Point Prevalence (Prettier)
+
+```{r}
+
+caseprevmaps <- purrr::pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemap_prev_plotter)
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Prevalence_Case_ClusterPlots_3x1.jpg",
+     heigh = 8, width = 11, units = "in", res=500)
+cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
+                   align = "h",
+                   labels = c("A", "B", "C"))
+graphics.off()
+
+
+
+```
+
+## Spatial Autocorrelation 
+
+### Moran's I by Province
+```{r}
+
+#......................
+# Make Adjacency Matrix for Pvf
+#......................
+drcprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
+# https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
+W.nb <- spdep::poly2nb(sf::as_Spatial(drcprov), row.names = drcprov$adm1name)
+W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
+
+
+moran_mc_wrapper <- function(data, listw){
+  prev <- data$plsmdprev
+  ret <- spdep::moran.mc(x = prev,
+                         listw = spdep::mat2listw(W),
+                         alternative = "greater",
+                         nsim = 1e5)
+  return(ret)
+}
+
+#........................
+# Moran's I for Prov
+#........................
+mp.prov <- mp %>% 
+  dplyr::filter(maplvl == "adm1name") %>% 
+  dplyr::ungroup()
+
+mp.prov$moranIprov <- purrr::map(mp.prov$data, moran_mc_wrapper, listw = W)
+
+moranIprov <- mp.prov %>% 
+  dplyr::select(c("plsmdmspec", "moranIprov")) 
+
+moranIprov$Istatistic <- purrr::map(moranIprov$moranIprov, "statistic")
+moranIprov$pvalue <- purrr::map(moranIprov$moranIprov, "p.value")
+
+moranIprov <- moranIprov %>% 
+  dplyr::select(-c("moranIprov")) %>% 
+  tidyr::unnest(cols = c("Istatistic", "pvalue"))
+
+knitr::kable(moranIprov)
+
+```
+
+### Moran's I by Cluster
+```{r}
+
+#........................
+# Moran's I for Cluster Level
+#........................
+gcdist <- mp %>% 
+  dplyr::filter(maplvl == "hv001" & plsmdmspec == "pfldh") %>% # just getting long lat, so species doesn't matter 
+  tidyr::unnest() %>% 
+  dplyr::select(c("longnum", "latnum")) %>% 
+  geosphere::distm(x =., fun = geosphere::distHaversine) 
+
+
+
+gcdist.inv <- 1/gcdist
+diag(gcdist.inv) <- 0
+
+mp.clst <- mp %>% 
+  dplyr::filter(maplvl == "hv001") %>% 
+  dplyr::ungroup()
+
+
+mp.clst$moranIclust <- purrr::map(mp.clst$data, moran_mc_wrapper, listw = gcdist.inv)
+
+moranIclst <- mp.clst %>% 
+  dplyr::select(c("plsmdmspec", "moranIclust")) 
+
+
+moranIclst$Istatistic <- purrr::map(moranIclst$moranIclst, "statistic")
+moranIclst$pvalue <- purrr::map(moranIclst$moranIclst, "p.value")
+
+moranIclst <- moranIclst %>% 
+  dplyr::select(-c("moranIclst")) %>% 
+  tidyr::unnest(cols = c("Istatistic", "pvalue"))
+
+knitr::kable(moranIclst)
+
+
+```
+
+
+## Krigged Prevalence Maps
+N.B. Simple MLE approach just modeling the intercept
+```{r}
+
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
+
+pfldhprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pfldh) %>% 
+  dplyr::mutate(plsmdmspec = "pfldh")
+pv18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pv18s) %>% 
+  dplyr::mutate(plsmdmspec = "pv18s")
+po18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = po18s) %>% 
+  dplyr::mutate(plsmdmspec = "po18s")
+
+# bind those to a tibble
+pr <- dplyr::bind_rows(pfldhprev, pv18sprev, po18sprev) %>% 
+  dplyr::group_by(plsmdmspec) %>% 
+  tidyr::nest()
+
+
+#.............................
+# get prev rasters
+#..............................
+poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
+grid.pred <- splancs::gridpts(poly, xs=0.1, ys=0.1)
+colnames(grid.pred) <- c("long","lat")
+
+pr$prevrasters <- map(pr$data, 
+                      fit_pred_spMLE, outcome = "logitplsmdprev", covar = "1", 
+                      long_var = "longnum", lat_var = "latnum",
+                      grid.pred = grid.pred, kappa = 0.5, 
+                      pred.reps = 1)
+
+pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
+
+
+#.............................
+# plot prev rasters
+#..............................
+prevmaprasterplots <- lapply(pr$prevrasterspred,
+                             prevmaprasterplotter, smoothfct = rep(7,3))
+prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
+
+
+
+cowplot::plot_grid(prevmaprasterplots[[1]],
+                   prevmaprasterplots[[2]],
+                   prevmaprasterplots[[3]],
+                   align = "h", 
+                   labels = c("A", "B", "C"))
+
+ 
+```
+
+## _P. vivax_ vs. Ape Distribution 
+```{r}
+ape <- readRDS("data/derived_data/drc_ape.rds")
+aperange_nhapv <- 
+  caseprevmaps[[2]] +
+  geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
+  scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
+
+
+
+
+```
+
+### Permutation Test for _P. vivax_ vs. Ape Distribution 
+```{r}
+# how many clusters do apes overlap?
+ape.range <- sf::st_union(ape$geometry)
+ape.clusters <- sf::st_intersection(ge, ape.range)
+
+# how many clusters do chimp and gorillas overlap?
+chimpgor.range <- ape %>% 
+  dplyr::filter(species != "Pan paniscus") %>% 
+  dplyr::select(geometry) %>% 
+  sf::st_union(.)
+chimpgor.clusters <- sf::st_intersection(ge, chimpgor.range)
+
+```
+
+
+Data will be simulated by randomly assigning clusters as ape or not territories and then calculating the prevalence of Pv within ape and non-ape regions. 
+  
+```{r}
+
+run_ape_permutations <- function(dt18s, n.apeclsts){
+  clsts <- dt18s$hv001[!duplicated(dt18s$hv001)]
+  apeclsts <- sample(clsts, size = n.apeclsts, replace = F)
+
+  ape.ovrlp.pos <- dt18s %>% 
+    dplyr::filter(hv001 %in% apeclsts)
+  return( mean( ape.ovrlp.pos$pv18s ) )
+
+}
+
+sims <- 1e4
+pv18s.dt <- dt %>% 
+  dplyr::select(c("hv001", "pv18s"))
+
+
+```
+     
+There are `r length(ape.clusters)` clusters that overlap with apes and `r length(chimpgor.clusters)` clusters that overlap with chimpanzee and gorillas.
+
+#### All Apes 
+```{r}
+
+ape.range.iters <- data.frame(iter = 1:sims)
+
+ape.range.iters$ape_overlap_prev <- purrr::map(ape.range.iters$iter, function(x){
+  return( run_ape_permutations(dt18s = pv18s.dt, n.apeclsts = length(ape.clusters)) )
+  }) 
+  
+ape.range.iters$ape_overlap_prev <- unlist(ape.range.iters$ape_overlap_prev )
+
+
+real.ape.clstrprev <- dt %>% 
+  dplyr::filter(hv001 %in% ape.clusters$hv001)
+
+real.ape.clstrprev <- mean(real.ape.clstrprev$pv18s)
+
+ape.range.plotObj <- ggplot() + 
+  geom_bar(data = ape.range.iters, aes(x=ape_overlap_prev, y = ..count..)) + 
+  geom_vline(xintercept = ape.range.realdata, color = "red", size=2) + 
+  ggtitle("Simulated Cluster-Level Ape-Overlap Prevalences") + 
+  vivid_theme + 
+  theme(legend.position = "none")
+
+  
+
+```
+#### Chimpanzee & Gorillas
+Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains but mostly at a concentrated field site, Tshuapa–Lomami–Lualaba (TL2), near the Lomami River [Liu et al. 2018](https://www.nature.com/articles/s41467-017-01798-5)
+
+```{r}
+
+chimpgor.range.iters <- data.frame(iter = 1:sims)
+
+chimpgor.range.iters$chimpgor_overlap_prev <- purrr::map(chimpgor.range.iters$iter, function(x){
+  return( run_chimpgor_permutations(dt18s = pv18s.dt, n.chimpgorclsts = length(chimpgor.clusters)) )
+}) 
+
+chimpgor.range.iters$chimpgor_overlap_prev <- unlist(chimpgor.range.iters$chimpgor_overlap_prev )
+
+
+real.chimpgor.clstrprev <- dt %>% 
+  dplyr::filter(hv001 %in% chimpgor.clusters$hv001)
+
+real.chimpgor.clstrprev <- mean(real.chimpgor.clstrprev$pv18s)
+
+chimpgor.range.plotObj <- ggplot() + 
+  geom_bar(data = chimpgor.range.iters, aes(x=chimpgor_overlap_prev, y = ..count..)) + 
+  geom_vline(xintercept = chimpgor.range.realdata, color = "red", size=2) + 
+  ggtitle("Simulated Cluster-Level Chimpanzee-Gorilla-Overlap Prevalences") + 
+  vivid_theme + 
+  theme(legend.position = "none")
+
+
+```
+
+
+```{r}
+#---------------------------------------------- 
+# Housekeeping -- save out and write out
+#----------------------------------------------- 
+ 
+saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
+
+save(pntestmaps, caseprevmaps, case_n_maps, aperange_nhapv,
+      file = "results/basic_maps_results.rda")
+
+```
+

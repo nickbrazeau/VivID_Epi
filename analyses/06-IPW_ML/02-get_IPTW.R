@@ -8,9 +8,6 @@ library(tidyverse)
 library(ggridges)
 source("R/00-IPTW_functions.R")
 
-# read in param table and results of training
-#params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/params.RDS")
-#trainpaths <-  list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/final_models/_rslurm_vivid_preds/", pattern = ".RDS", full.names = T)
 
 params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
 ELpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
@@ -30,8 +27,8 @@ params$ensembl_cvRisk <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); r
 #...............................................................................................
 # Get IPTW Estimates
 #...............................................................................................
-params$ELpreds <-purrr::map(params$ensembl_cvRisk, "EL.predictions")
-params$iptw <- purrr::pmap(params[,c("task", "ELpreds")], get_iptw_prob)
+params$SLpreds <-purrr::map(params$ensembl_cvRisk, "EL.predictions")
+params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
 
 
 #................................................

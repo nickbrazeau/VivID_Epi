@@ -48,11 +48,10 @@ sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
 
 
-# drop observations with missing geospatial data 
+# drop clusters with missing geospatial data 
 dt <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::filter(hv103 == 1) # subset to de-facto https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
 
 #.............
 # dates
@@ -83,6 +82,8 @@ clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>%
 
 sf::st_geometry(clst_mnth_bounds.assign) <- NULL
 
+# first join assigned months
+# and then make date for unambigious months
 dt <- dt %>% 
   dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
   dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
@@ -130,7 +131,7 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 
 # NOTE, reading in masked temperature files
 tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS_NASA/", full.names = T, 
-                       pattern = "_Night_CMG.tif")
+                       pattern = "LST_Day_CMG.tif")
 tempfrst <- lapply(tempfiles, readRasterBB.temp, bb = caf)
 
 tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 
@@ -198,6 +199,9 @@ sf::st_geometry(wthrnd.mnth) <- NULL
 
 
 wthrnd.mnth <- dplyr::inner_join(clst_mnths.lag, wthrnd.mnth, by = c("hv001", "hvyrmnth_dtmnth_lag")) # dominant month needs to win
+
+
+
 
 #......................................................................................................
 # Precipitation and Temperature Considered as Means

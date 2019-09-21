@@ -44,30 +44,6 @@ sf::st_geometry(pf.clust.weighted.nosf) <- NULL
 #-------------------------------------------------------------------------
 # Conditional Autoregressive Spatial Model 
 #-------------------------------------------------------------------------
-#......................
-# Make Adjacency Matrix for Pvf
-#......................
-# https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
-W.nb <- spdep::poly2nb(sf::as_Spatial(pf.prov.weighted), row.names = pf.prov.weighted$adm1name)
-W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
-
-pf.prov.ret <- CARBayes::S.CARleroux(formula = "plsmdn ~ 1", 
-                                     W = W,
-                                     data = pf.prov.weighted.nosf,
-                                     trials = pf.prov.weighted.nosf$n, 
-                                     prior.var.beta = 5e4,
-                                     burnin = 1e3,
-                                     n.sample = 1e5,
-                                     family = "binomial")
-
-#........................
-# Moran's I for Pf Prov
-#........................
-pf.prov.moranI <- spdep::moran.mc(mp$data[[1]]$plsmdprev,
-                                  listw = spdep::mat2listw(W),
-                                  alternative = "greater",
-                                  nsim = 1e5)
-
 
 
 

@@ -1,6 +1,17 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to get the associations
-# between covariates using slurm
+# between covariates using slurm. Using this energy
+# function as the differing functional forms of covariates is 
+# not an issue... let's us compare binary and continuous 
+# covariates on the same scale
+# 
+# https://www.rdocumentation.org/packages/energy/versions/1.7-6/topics/distance%20correlation
+# https://cran.r-project.org/web/packages/energy/energy.pdf
+# https://projecteuclid.org/euclid.aoas/1267453933
+# http://yunus.hacettepe.edu.tr/~iozkan/eco742/Brownian.html
+# https://projecteuclid.org/download/pdfview_1/euclid.aos/1201012979
+# https://blogs.sas.com/content/iml/2018/04/04/distance-correlation.html
+# 
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
 library(energy)
@@ -10,12 +21,12 @@ library(energy)
 # Import Data
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "model_datamaps/~$sub_DECODER_covariate_map_v2.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
 # grab risk factors
 rskfctr <- dcdr %>% 
-  dplyr::filter(risk_factor_model == "y" ) %>% 
+  dplyr::filter(risk_factor_raw == "y" ) %>% 
   dplyr::select("column_name") %>% 
   unlist(.) %>% 
   unname(.)
@@ -44,6 +55,7 @@ slurm_calc_corr <- function(covar1, covar2, data){
   }
   
   ret <- energy::dcor(x = x1, y = x2)
+  
   return(ret)
 }
 
@@ -69,7 +81,7 @@ sjob <- rslurm::slurm_apply(f = slurm_calc_corr,
                                                  'cpus-per-task' = 8,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "1-00:00:00"))
+                                                 time = "5-00:00:00"))
 
 
 

@@ -1,0 +1,655 @@
+---
+title: "Univariate and Bivariate Summary Statistics for _P. vivax_ and _P. falciparum_ Malaria among Asymptomatic Adults in the DRC"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide')
+```
+
+```{r}
+#-----------------------------------------------------------------------------------------------
+# Purpose of this script is to do basic bivariate analyses
+#-----------------------------------------------------------------------------------------------
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R") 
+library(tidyverse)
+library(survey)
+library(srvyr) #wrap the survey package in dplyr syntax
+devtools::install_github("kaz-yos/tableone")
+library(tableone)
+options(scipen=999)
+
+setwd("~/Documents/GitHub/VivID_Epi/")
+
+#......................
+# Import Data
+#......................
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
+                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
+sf::st_geometry(dt) <- NULL
+dtsrvy <- makecd2013survey(survey = dt)
+
+
+
+```
+
+
+### Basic Summary Statistics
+
+#### Prevalence
+
+##### National Prevalence
+Fit basic intercept weighted-glm to derive weighted national prevalence. 
+
+```{r, results='asis'}
+
+#-------------------------------------------------------------------------------------------------
+# Basic Descriptive Statistics
+#------------------------------------------------------------------------------------------------
+# national prevalence
+sumnums <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
+                   pvn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
+                   pfn = srvyr::survey_total(pfldh, vartype = c("se", "ci")))
+
+
+drcpv <- survey::svyglm(pv18s ~ 1, design = dtsrvy)
+drcpv <- broom::tidy(drcpv, conf.int = T)
+
+# national prevalence
+drcpf <- survey::svyglm(pfldh ~ 1, design = dtsrvy)
+drcpf <- broom::tidy(drcpf, conf.int = T)
+
+rbind.data.frame( cbind.data.frame(species = "Pv", drcpv),
+                  cbind.data.frame(species = "Pf", drcpf)
+                  ) %>% 
+  dplyr::select(-c("term")) %>% 
+  dplyr::rename(Prevalence = estimate) %>% 
+  knitr::kable()
+  
+
+```
+
+##### Cluster Level Prevalence 
+NB Given that everyone is weighted the same in the cluster, we do not need to use weights explicitly. However, this will results in the slightly different numerator (e.g. $n_numerator$) but the denominators adjust for this. Caution is warranted when reporting weighted versus unweighted Ns at the cluster-level for this reason. 
+  
+NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used a logit transformation and the t-distribution to estimate these CIs.    
+    
+See the _Appendix_ for individual cluster counts.
+
+```{r, results='asis', fig.align='center', fig.width=11, fig.height=8}
+
+# cluster-level prevalence, because everyone is weighted the same in the cluster, don't use weights here
+# note, the numerators will be slightly different (e.g. N) but the denomminators adjust for this
+# Going to report whole numbers/unadjusted for clusters
+clst <- dt %>%
+  dplyr::mutate(count = 1) %>%
+  dplyr::group_by(hv001) %>%
+  dplyr::summarise(n = n(),
+                   pv18sn = sum(pv18s),
+                   pv18sprev = mean(pv18s),
+                   pv18sse = sqrt(pv18sn * pv18sprev * (1 - pv18sprev)) / sqrt(pv18sn),
+                   pv18sL95 = getCI_from_logit_transfrom(succeses = pv18sn, n = n, tol = 0, alpha = 0.05)[1],
+                   pv18sU95 = getCI_from_logit_transfrom(succeses = pv18sn, n = n, tol = 0, alpha = 0.05)[2],
+
+                   pfldhn = sum(pfldh),
+                   pfldhprev = mean(pfldh),
+                   pfldhse = sqrt(pfldhn * pfldhprev * (1 - pfldhprev)) / sqrt(pfldhn),
+                   pfldhL95 = getCI_from_logit_transfrom(succeses = pfldhn, n = n, tol = 0, alpha = 0.05)[1],
+                   pfldhU95 = getCI_from_logit_transfrom(succeses = pfldhn, n = n, tol = 0, alpha = 0.05)[2],
+
+                   )
+
+
+
+
+# ignore 95% CI but want the weighted numerator and denominator for the paper 
+clstprev <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
+                   pvn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
+                   pfn = srvyr::survey_total(pfldh, vartype = c("se", "ci")),
+                   
+                   pvprev = srvyr::survey_mean(pv18s, vartype = c("se", "ci")),
+                   pfprev = srvyr::survey_mean(pfldh, vartype = c("se", "ci"))
+                   ) %>% 
+  dplyr::select(c("n", "pvn", "pfn", "pvprev", "pfprev"))
+
+
+
+# extra items for making a pretty plot
+dhsreg <- dt %>% 
+  dplyr::select(c("hv001", "shnprovin")) %>% 
+  dplyr::mutate(prov = as.character( haven::as_factor(shnprovin) ),
+                prov = tools::toTitleCase(prov)) %>% 
+  dplyr::filter(!duplicated(.)) %>% 
+  dplyr::select(-c("shnprovin"))
+
+
+clst.prev.plotObj <- clst %>% 
+  dplyr::left_join(., y = dhsreg, by = "hv001") %>% 
+  dplyr::select(c("prov", "hv001", "pv18sprev", "pv18sL95", "pv18sU95",
+                  "pfldhprev", "pfldhL95", "pfldhU95")) %>% 
+  tidyr::gather(., key = "estlevel", value = "est", 3:ncol(.)) %>% 
+  dplyr::mutate(species = ifelse(grepl("pv", estlevel), "Pv", "Pf")) %>% 
+  dplyr::select(c("prov", "hv001", "species", dplyr::everything())) %>% 
+  dplyr::mutate(estlevel = gsub("pv18s", "", estlevel),
+                estlevel= gsub("pfldh", "", estlevel)) %>% 
+  tidyr::spread(., key = "estlevel", value = "est", 4:5) %>% 
+  ggplot() + 
+  geom_pointrange(aes(x = factor(hv001), y=prev, ymin=L95, ymax=U95, color = factor(species)), size =0.5, alpha = 0.5) +
+  coord_flip() + 
+  facet_wrap(~prov, scales = "free", ncol = 4) +
+  scale_color_viridis_d("Species") + 
+  ggtitle("Cluster-Level Prevelance of Pv and Pf Malaria") +
+  vivid_theme + 
+  theme(plot.title = element_text(family = "Helvetica", face = "bold", hjust = 0.5, size = 12),
+        legend.position = "bottom",
+        legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, size = 8),
+        legend.text = element_text(family = "Helvetica", hjust = 0.5, vjust = 0.5, size = 7, angle = 0),
+        strip.text = element_text(family = "Helvetica", hjust = 0.5, size = 6, face = "bold"),
+        axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_text(family = "Helvetica", hjust = 0.5, size = 6, angle = 90),
+        axis.ticks.y = element_blank()
+  )
+
+
+plot(clst.prev.plotObj)
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/cluster_prevalence_pointranges.jpg",
+     width = 11, height = 8, units = "in", res=500)
+plot(clst.prev.plotObj)
+graphics.off()
+
+
+```
+
+
+#### Coinfections
+##### Unweighted Counts
+```{r, results='asis'}
+
+# coinfections unweighted
+coinfxn <- dt %>% 
+  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 0, 1, 0),
+                pvmono =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 0, 1, 0),
+                pomono =  ifelse(pfldh == 0 & pv18s == 0 & po18s == 1, 1, 0),
+                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0),
+                pfpo =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 1, 1, 0),
+                pvpo =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 1, 1, 0),
+                pfpvpo =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 1, 1, 0)
+  ) %>% 
+  dplyr::summarise(
+    "pf" = sum(pfmono),
+    "pv" = sum(pvmono),
+    "po" = sum(pomono),
+    "pf/pv" = sum(pfpv),
+    "pf/po" = sum(pfpo),
+    "pv/po" = sum(pvpo),
+    "pf/pv/po" = sum(pfpvpo)
+  )
+
+knitr::kable(coinfxn)
+
+
+
+```
+
+##### Weighted Counts
+```{r, results='asis'}
+# need weighed counts
+coinfxn.wi <- dtsrvy %>% 
+  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 0, 1, 0),
+                pvmono =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 0, 1, 0),
+                pomono =  ifelse(pfldh == 0 & pv18s == 0 & po18s == 1, 1, 0),
+                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0),
+                pfpo =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 1, 1, 0),
+                pvpo =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 1, 1, 0),
+                pfpvpo =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 1, 1, 0)
+  ) %>% 
+  dplyr::summarise(
+    "pf" = srvyr::survey_total(x=pfmono),
+    "pv" = srvyr::survey_total(x=pvmono),
+    "po" = srvyr::survey_total(x=pomono),
+    "pf/pv" = srvyr::survey_total(x=pfpv),
+    "pf/po" = srvyr::survey_total(x=pfpo),
+    "pv/po" = srvyr::survey_total(x=pvpo),
+    "pf/pv/po" = srvyr::survey_total(x=pfpvpo)
+  ) %>% 
+  dplyr::select(-c(dplyr::ends_with("_se")))
+
+knitr::kable(coinfxn.wi)
+
+```
+
+### Table One(s)
+#### _P. vivax_ Infected vs. Uninfected
+```{r, results='asis'}
+#------------------------------------------------------------------------------------- 
+# TABLE ONE -- bivariate analyses, descriptive
+#------------------------------------------------------------------------------------- 
+
+#.......................
+# Pvivax 
+#.......................
+pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
+
+pvivtbl1 <- tableone::svyCreateTableOne(data = dtsrvy,
+                                        strata = "pv18s_fctb",
+                                        vars = pvivrskfctr,
+                                        includeNA = T,
+                                        test = F)
+
+tableone::kableone(pvivtbl1)
+
+```
+
+#### _P. falciparum_ Infected vs. Uninfected
+```{r, results='asis'}
+
+#.......................
+# Pfalciparum 
+#.......................
+pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y" & dcdr$column_name != "pfldh_fctb" ]
+pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
+
+pfaltbl1 <- tableone::svyCreateTableOne(
+  data = dtsrvy,
+  strata = "pfldh_fctb",
+  vars = pfalrskfctr,
+  includeNA = T,
+  test = F)
+
+tableone::kableone(pfaltbl1)
+
+```
+
+#### Infected with Malaria vs. Not-Infected
+```{r, results='asis'}
+#------------------------------------------------------------------------------------
+# Make Pv Cases, Pf Cases, and Non-Cases Table
+#------------------------------------------------------------------------------------
+dt.cases <- dt %>% 
+  dplyr::mutate(
+    case = ifelse(( pv18s == 1 | pfldh ==1 ), 1, 0),
+    case_fctb = factor(case, levels = c(0,1), labels = c("noncase", "case"))
+  )
+
+dt.cases.srvy <- makecd2013survey(dt.cases)
+casesrskfctr <- dcdr$column_name[dcdr$risk_factor_raw == "y"]
+casestbl1 <- tableone::svyCreateTableOne(
+  data = dt.cases.srvy,
+  strata = "case_fctb",
+  vars = casesrskfctr,
+  includeNA = T,
+  test = F)
+
+tableone::kableone(casestbl1)
+
+```
+
+### Table Two(s)
+N.B. We have no scaled (i.e. mean-centered and standardized) all continous variables with the exception of the wlth variable, as it was already a factor score. Dichotomized variables have the presumed protective level as the reference level.   
+  
+N.B. Parametric association test using GEE (`svyglm` is performing GEE with the sampling weights considered "repeat" observations). Given that we are not considering confounding in these estimates, they are purely assocations and should not be overly interpreted. 
+
+#### _P. vivax_ Risk Bivariate **Associations**
+```{r, results='asis'}
+
+#-----------------------------------------------------------------------------------------
+# TABLE 2
+# Parametric, Bivariate Analysis
+# note, that svyglm is really doing GEE
+#----------------------------------------------------------------------------------------
+
+# note overwriting risk factors to have scaled models now
+#.......................
+# Pvivax 
+#.......................
+pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
+pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
+                               covar = pvivrskfctr, stringsAsFactors=FALSE)
+
+pvivrskfctr_models$glmlog <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlog)
+pvivrskfctr_models$glmlog_tidy <- purrr::map(pvivrskfctr_models$glmlog,
+                                             .f=function(x){
+                                             broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+                                             )
+pvivrskfctr_est <- pvivrskfctr_models$glmlog_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2)
+
+knitr::kable(pvivrskfctr_est)
+
+```
+
+#### _P. falciparum_ Risk Bivariate **Associations**
+```{r, results='asis'}
+#.......................
+# Pfalciparum 
+#.......................
+pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y" & dcdr$column_name != "pfldh_fctb"]
+pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
+
+pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
+                               covar = pfalrskfctr, stringsAsFactors=FALSE)
+
+pfalrskfctr_models$glmlog <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlog)
+
+
+pfalrskfctr_models$glmlog_tidy <- purrr::map(pfalrskfctr_models$glmlog,
+                                             .f=function(x){
+                                             broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
+
+
+pfalrskfctr_est <- pfalrskfctr_models$glmlog_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2)
+
+knitr::kable(pfalrskfctr_est)
+
+
+```
+
+### Pretty Table
+Combine tables 1s and 2s to make a prettier output. 
+```{r}
+#------------------------------------------------------------------
+# Combine Table 1 and 2
+#------------------------------------------------------------------ 
+
+#.......................
+# Pvivax
+#.......................
+pvivtbl1df <- tableone2dataframe(pvivtbl1, columnnames = c("Covariates",
+                                                           "Pvivax-Negative",
+                                                           "Pvivax-Positive",
+                                                           "matchcol"))
+pvivtbl1df <- dcdr %>% 
+  dplyr::select(c("column_name", "var_label")) %>% 
+  dplyr::rename(matchcol = column_name) %>% 
+  dplyr::left_join(pvivtbl1df, ., by = "matchcol") %>% 
+  dplyr::select(c("var_label", dplyr::everything()))
+ 
+
+
+pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
+                                           tabletwoestdf = pvivrskfctr_est)
+
+pvivriskfactortable <- pvivriskfactortable %>% 
+  dplyr::select(-c("matchcol"))
+
+#.......................
+# Pfalciparum 
+#.......................
+pfaltbl1df <- tableone2dataframe(pfaltbl1, columnnames = c("Covariates",
+                                                           "Pfalciparum-Negative",
+                                                           "Pfalciparum-Positive",
+                                                           "matchcol"))
+
+pfaltbl1df <- dcdr %>% 
+  dplyr::select(c("column_name", "var_label")) %>% 
+  dplyr::rename(matchcol = column_name) %>% 
+  dplyr::left_join(pfaltbl1df, ., by = "matchcol") %>% 
+  dplyr::select(c("var_label", dplyr::everything()))
+
+
+pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,
+                                           tabletwoestdf = pfalrskfctr_est)
+
+
+pfalriskfactortable <- pfalriskfactortable %>% 
+  dplyr::select(-c("matchcol"))
+
+
+
+
+```
+
+#### _P. vivax_ Risk Association Table 
+```{r, results='asis'}
+DT::datatable(pvivriskfactortable, 
+              rownames = F,
+              options = list(
+                searching = F,
+                pageLength = 30,
+                dom = 'Bfrtip', 
+                buttons = c('csv')),
+              caption = htmltools::tags$caption(
+                style = 'caption-side: bottom; text-align: center;',
+                "P vivax Risk Factor Table with Counts and Risk Ratio Bivariate Associations"))
+
+```
+
+
+#### _P. falciparum_ Risk Association Table 
+```{r, results='asis'}
+DT::datatable(pfalriskfactortable, 
+              rownames = F,
+              options = list(
+                searching = F,
+                pageLength = 30,
+                dom = 'Bfrtip', 
+                buttons = c('csv')),
+              caption = htmltools::tags$caption(
+                style = 'caption-side: bottom; text-align: center;',
+                "P falciparum Risk Factor Table with Counts and Risk Ratio Bivariate Associations"))
+
+```
+
+
+#### Malaria Risk Association Figure
+
+```{r, results='asis', fig.align='center', fig.width=8, fig.height=8}
+#...................................................
+# Tidy
+#...................................................
+pvriskest <- pvivrskfctr_models$glmlog_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  dplyr::rename(column_name = term) %>% 
+  dplyr::mutate(
+    column_name = ifelse(grepl("_fctb", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb"),
+                         column_name)
+  )
+
+pvriskest <- dplyr::left_join(pvriskest, dcdr, by = "column_name")
+orderrf <- pvriskest %>% 
+  dplyr::arrange(level) %>% 
+  dplyr::select(abridged_var_label) %>% 
+  unlist(.)
+
+# PF
+pfriskest <- pfalrskfctr_models$glmlog_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  dplyr::rename(column_name = term) %>% 
+  dplyr::mutate(
+    column_name = ifelse(grepl("_fctb", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb"),
+                         column_name)
+  )
+
+pfriskest <- dplyr::left_join(pfriskest, dcdr, by = "column_name")
+orderrf <- pfriskest %>% 
+  dplyr::arrange(level) %>% 
+  dplyr::select(abridged_var_label) %>% 
+  unlist(.)
+
+#...................................................
+# Make Plots
+#...................................................
+
+pv_bivar_rf_plot <- pvriskest %>% 
+  dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>% 
+  ggplot() +
+  geom_hline(yintercept = 1, color = "#cb181d", linetype = "dashed") +
+  geom_pointrange(aes(x = abridged_var_label, y = estimate, 
+                      ymin = conf.low, ymax = conf.high,
+                      color = factor(level))) +
+  scale_color_manual("Level", values = c("#0868ac", "#4eb3d3")) +
+  ylim(c(0,2)) + 
+  coord_flip() + 
+  ggtitle(expression(bolditalic("P. vivax"))) +
+  ylab("Prevalence Ratio") + 
+  theme(
+    plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
+    axis.title.y = element_blank(),
+    legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    legend.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 10, angle = 0),
+    legend.position = "right",
+    axis.line.x = element_line(color = "black", size = 1.5),
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent"),
+    panel.grid = element_blank(),
+    panel.border = element_blank())
+    
+
+pf_bivar_rf_plot <- pfriskest %>% 
+  dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>%
+  ggplot() +
+  geom_hline(yintercept = 1, color = "#cb181d", linetype = "dashed") +
+  geom_pointrange(aes(x = abridged_var_label, y = estimate, 
+                      ymin = conf.low, ymax = conf.high,
+                      color = factor(level))) +
+  scale_color_manual("Level", values = c("#006d2c", "#41ae76")) +
+  ylim(c(0,2)) + 
+  coord_flip() + 
+  ggtitle(expression(bolditalic("P. falciparum"))) +
+  ylab("Prevalence Ratio") + 
+  theme(
+    plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
+    axis.title.y = element_blank(),
+    legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    legend.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 10, angle = 0),
+    legend.position = "right",
+    axis.line.x = element_line(color = "black", size = 1.5),
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent"),
+    panel.grid = element_blank(),
+    panel.border = element_blank())
+
+cowplot::plot_grid(pv_bivar_rf_plot, 
+                   pf_bivar_rf_plot, 
+                   nrow = 1, 
+                   align = "h",
+                   labels = c("A", "B"))
+
+
+# svglite::svglite(file = "results/figures/Figure1B.svg")
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/PfPv_Bivariate_dotplotRR.jpg", 
+     width = 11, height = 8, units = "in", res = 500)
+cowplot::plot_grid(pv_bivar_rf_plot, 
+                   pf_bivar_rf_plot, 
+                   nrow = 1, 
+                   align = "h",
+                   labels = c("A", "B"))
+graphics.off()
+
+
+
+
+```
+
+```{r}
+
+#-----------------------------------------------------------------------------
+# housekeeping -- Save out
+#-----------------------------------------------------------------------------
+save(pvivtbl1df, pfaltbl1df, # table one output 
+     pvivrskfctr_models, pfalrskfctr_models, # model datatframes
+     pvivriskfactortable, pfalriskfactortable, # final out table for report
+     casestbl1df, # for prettier table 1
+     file = "~/Documents/GitHub/VivID_Epi/results/bivariate_model_results.rda")
+
+
+#-----------------------------------------------------------------------------
+# housekeeping -- write out
+#-----------------------------------------------------------------------------
+# Case/NonCase Dist Tables
+
+readr::write_csv(x = pvivtbl1df, 
+                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pvivtblones_counts.csv",
+                 na = "")
+
+readr::write_csv(x = pfaltbl1df, 
+                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pfaltblones_counts.csv",
+                 na = "")
+
+readr::write_csv(x = casestbl1df, 
+                 path = "~/Documents/GitHub/VivID_Epi/results/tables/cases_noncases_tblones_counts.csv",
+                 na = "")
+
+
+
+
+
+readr::write_csv(x = pvivriskfactortable, 
+                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pvivriskfactortable_tabletwos.csv",
+                 na = "")
+
+readr::write_csv(x = pfalriskfactortable, 
+                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pfalriskfactortable_tabletwos.csv",
+                na = "")
+
+
+```
+
+## N.B. Future Exclusions
+The HIV covariates and temperatuare covariate are excluded in downstream analyses. HIV was excluded as too few people were HIV-positive to consider it a meaningful risk factor. Temperature was excluded as altitude was considered an instrumental variable for temperature (as well as being so collinear that we could not untangle them). As a result, only altitude was kept in the DAG and considered for IPTWs.
+
+
+## Appendix
+#### Cluster Level Prevalences Table (Unweighted Ns)
+```{r, results='asis'}
+
+clst %>% 
+  dplyr::mutate_if(is.numeric, round, 3) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+
+```
+
+#### Cluster Level Prevalences Table (Weighted Ns)
+```{r, results='asis'}
+
+clstprev %>% 
+  dplyr::mutate_if(is.numeric, round, 3) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+
+```
+
+
+
