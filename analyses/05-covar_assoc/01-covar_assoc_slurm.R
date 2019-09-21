@@ -21,7 +21,6 @@ library(energy)
 #......................
 # Import Data
 #......................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
 dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
@@ -37,8 +36,22 @@ paramsdf <- t( combn(rskfctr, 2) ) %>%
   tibble::as_tibble(.) %>% 
   magrittr::set_colnames(c("covar1", "covar2"))
 
+
+
+#......................
+# Subset to Final Data and remove missingness 
+#......................
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+sf::st_geometry(dt) <- NULL
+dt.ml.cc <- dt  %>% 
+  dplyr::select(rskfctr) %>% 
+  dplyr::filter(complete.cases(.)) 
+
 # add dt data in for it to find on slurm
-paramsdf$data <- lapply(1:nrow(paramsdf), function(x) return(dt))
+paramsdf$data <- lapply(1:nrow(paramsdf), function(x) return(dt.ml.cc))
+
+
+
 
 # slurm function
 slurm_calc_corr <- function(covar1, covar2, data){
