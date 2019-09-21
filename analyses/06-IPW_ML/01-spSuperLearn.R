@@ -92,15 +92,11 @@ paramsdf <- txs[,c("learnerlib", "task")]
 paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
 
 
-# start <- Sys.time()
-# ret <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred)
-# end <- Sys.time()
-# end - start
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = , 
+sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
                             params = paramsdf, 
                             jobname = 'vivid_spSL',
                             nodes = ntry, 
