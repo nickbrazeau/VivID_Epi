@@ -52,11 +52,10 @@ paramsdf$data <- lapply(1:nrow(paramsdf), function(x) return(dt.ml.cc))
 
 
 
-
 # slurm function
 slurm_calc_corr <- function(covar1, covar2, data){
-  x1 <- data[,covar1]
-  x2 <- data[,covar2]
+  x1 <- unlist( data[,covar1] )
+  x2 <- unlist( data[,covar2] )
   if(is.factor(x1)){
     x1 <- as.numeric(x1)
   }
@@ -95,4 +94,4 @@ sjob <- rslurm::slurm_apply(f = slurm_calc_corr,
 
 
 
-
+ret <- pmap(paramsdf, slurm_calc_corr)

@@ -1,5 +1,6 @@
 library(tidyverse)
 library(pwr)
+library(furrr)
 source("R/00-functions_basic.R")
 #...............................................................
 # Power Function
@@ -8,25 +9,25 @@ source("R/00-functions_basic.R")
 #' @param exp_prob numeric; probability of exposure in the population
 #' @param p numeric; probability of infection/prevalence of outcome 
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
-powercalculator.glmOR <- function(n=15879, exp_prob=0.5, p=0.03, p0=0.02){
+powercalculator.glmRR <- function(n=15879, exp_prob=0.5, p=0.03, p0=0.02){
   
   df <- data.frame(obs=factor(seq(1:n)),
                    exp=sample(x=c(0,1), size=n, replace = T, prob=c(exp_prob, 1-exp_prob))) # df of exposure
   p <- 2*p # inv average prev for both groups 
   p0 <- p0 # prev among unexposed
   p1 <- p-p0 # prev among exposed
-  OR <- exp(logit(p1) - logit(p0))
+  RR <- exp(log(p1) - log(p0))
 
   
     df$dz[df$exp == 1] <- rbinom(sum(df$exp == 1),1,p1)
     df$dz[df$exp == 0] <- rbinom(sum(df$exp == 0),1,p0)
 
     mod <- glm(dz ~ exp, data=df,
-                  family=binomial(link="logit"))
+                  family=binomial(link="log"))
 
     pi <- broom::tidy(mod)$p.value[2]
 
-    ret <- data.frame(OR=OR, p=pi)
+    ret <- data.frame(RR=RR, p=pi)
 
     return(ret)
 
@@ -41,16 +42,15 @@ p0sim <- seq(0.01, 0.032, by=0.0001)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 poweriters.paramsdf <- tibble::tibble(
-  n = 15879, # total pop
+  n = 15811, # total pop
   p = 0.03, # prev in population
   exp_prob = exppo[,1],
   p0 = exppo[,2]
 ) 
 
 # iters to run
-# iters <- 1e3
-iters <- 1e2
-poweriters.paramsdf <- lapply(1:iters, function(x) return(poweriters.paramsdf)) %>% 
+iters <- 1e4
+poweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(poweriters.paramsdf)) %>% 
   dplyr::bind_rows() %>% 
   dplyr::arrange(exp_prob, p0)
 
@@ -60,7 +60,7 @@ poweriters.paramsdf <- lapply(1:iters, function(x) return(poweriters.paramsdf)) 
 #...............................................................
 # Run in parallel
 #...............................................................
-poweriters.ret <- furrr::future_pmap(poweriters.paramsdf, powercalculator.glmOR)
+poweriters.ret <- furrr::future_pmap(poweriters.paramsdf, powercalculator.glmRR)
 save(poweriters.ret, poweriters.paramsdf, file = "results/powercalcs.rda")
 
 
