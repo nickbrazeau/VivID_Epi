@@ -78,11 +78,7 @@ sjob <- rslurm::slurm_apply(f = powercalculator.glmRR,
                                                  output = "%A_%a.out",
                                                  time = "1-00:00:00"))
 
-cat("*************************** \n Submitted SL models \n *************************** ")
+cat("*************************** \n Submitted Power Calc Models \n *************************** ")
 
-
-
-
-save(poweriters.ret, poweriters.paramsdf, file = "results/powercalcs.rda")
 
 
