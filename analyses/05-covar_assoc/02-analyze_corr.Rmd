@@ -8,6 +8,7 @@ output:
     highlight: textmate
     theme: lumen
     toc: yes
+    code_folding: hide
 editor_options: 
   chunk_output_type: console
 ---

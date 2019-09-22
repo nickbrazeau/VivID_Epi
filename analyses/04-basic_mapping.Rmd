@@ -7,6 +7,7 @@ output:
     highlight: textmate
     theme: lumen
     toc: yes
+    code_folding: hide
 editor_options: 
   chunk_output_type: console
 ---
@@ -14,6 +15,8 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
+Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
+
 ```
 ```{r}
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
@@ -105,25 +108,31 @@ graphics.off()
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Cluster_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
-cowplot::plot_grid(mp$plots[[3]],  mp$plots[[4]],  mp$plots[[6]],
+cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
                    align = "h",  nrow = 1,
                    labels = c("A", "B", "C"))
 graphics.off()
 
-cowplot::plot_grid(mp$plots[[3]],  mp$plots[[4]],  mp$plots[[6]],
+cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
                    align = "h",  nrow = 1,
                    labels = c("A", "B", "C"))
 
 
 ```
 
+```{r}
+mp.clst <- mp %>% 
+  dplyr::filter(maplvl == "hv001") %>% 
+  dplyr::ungroup()
+
+```
 
 ### Case Count Maps
 ```{r, results='asis'}
 #......................
 # Plot Cases
 #......................
-case_n_maps <- purrr::pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemap_n_plotter)
+case_n_maps <- purrr::pmap(mp.clst[,c("data", "plsmdmspec")], casemap_n_plotter)
 
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Case_N_ClusterPlots_3x1.jpg",
@@ -144,7 +153,7 @@ cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
 
 ```{r, results='asis'}
 
-caseprevmaps <- purrr::pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemap_prev_plotter)
+caseprevmaps <- purrr::pmap(mp.clst[,c("data", "plsmdmspec")], casemap_prev_plotter)
 
 cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
                    align = "h",
@@ -278,10 +287,6 @@ gcdist <- gcdist %>%
 
 gcdist.inv <- 1/gcdist
 diag(gcdist.inv) <- 0
-
-mp.clst <- mp %>% 
-  dplyr::filter(maplvl == "hv001") %>% 
-  dplyr::ungroup()
 
 
 mp.clst$moranIclust <- purrr::map(mp.clst$data, moran_mc_wrapper, listw = gcdist.inv)
