@@ -295,11 +295,11 @@ moranIclst <- mp.clst %>%
   dplyr::select(c("plsmdmspec", "moranIclust")) 
 
 
-moranIclst$Istatistic <- purrr::map(moranIclst$moranIclst, "statistic")
-moranIclst$pvalue <- purrr::map(moranIclst$moranIclst, "p.value")
+moranIclst$Istatistic <- purrr::map(moranIclst$moranIclust, "statistic")
+moranIclst$pvalue <- purrr::map(moranIclst$moranIclust, "p.value")
 
 moranIclst <- moranIclst %>% 
-  dplyr::select(-c("moranIclst")) %>% 
+  dplyr::select(-c("moranIclust")) %>% 
   tidyr::unnest(cols = c("Istatistic", "pvalue"))
 
 knitr::kable(moranIclst)
@@ -373,7 +373,9 @@ graphics.off()
 
 ## _P. vivax_ vs. Ape Distribution 
 ```{r, results='asis'}
-ape <- readRDS("data/derived_data/drc_ape.rds")
+
+ape <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/drc_ape.rds")
+
 aperange_nhapv <- 
   caseprevmaps[[2]] +
   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
@@ -442,7 +444,7 @@ real.ape.clstrprev <- mean(real.ape.clstrprev$pv18s)
 
 ape.range.plotObj <- ggplot() + 
   geom_bar(data = ape.range.iters, aes(x=ape_overlap_prev, y = ..count..)) + 
-  geom_vline(xintercept = ape.range.realdata, color = "red", size=2) + 
+  geom_vline(xintercept = real.ape.clstrprev, color = "red", size=2) + 
   ggtitle("Simulated Cluster-Level Ape-Overlap Prevalences") + 
   vivid_theme + 
   theme(legend.position = "none")
@@ -458,7 +460,7 @@ Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains bu
 chimpgor.range.iters <- data.frame(iter = 1:sims)
 
 chimpgor.range.iters$chimpgor_overlap_prev <- purrr::map(chimpgor.range.iters$iter, function(x){
-  return( run_chimpgor_permutations(dt18s = pv18s.dt, n.chimpgorclsts = length(chimpgor.clusters)) )
+  return( run_ape_permutations(dt18s = pv18s.dt, n.apeclsts = length(chimpgor.clusters)) )
 }) 
 
 chimpgor.range.iters$chimpgor_overlap_prev <- unlist(chimpgor.range.iters$chimpgor_overlap_prev )
@@ -471,7 +473,7 @@ real.chimpgor.clstrprev <- mean(real.chimpgor.clstrprev$pv18s)
 
 chimpgor.range.plotObj <- ggplot() + 
   geom_bar(data = chimpgor.range.iters, aes(x=chimpgor_overlap_prev, y = ..count..)) + 
-  geom_vline(xintercept = chimpgor.range.realdata, color = "red", size=2) + 
+  geom_vline(xintercept = real.chimpgor.clstrprev, color = "red", size=2) + 
   ggtitle("Simulated Cluster-Level Chimpanzee-Gorilla-Overlap Prevalences") + 
   vivid_theme + 
   theme(legend.position = "none")
@@ -487,10 +489,10 @@ plot(chimpgor.range.plotObj)
 # Housekeeping -- save out and write out
 #----------------------------------------------- 
  
-saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
+saveRDS(mp, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
 
 save(pntestmaps, caseprevmaps, case_n_maps, aperange_nhapv,
-      file = "results/basic_maps_results.rda")
+      file = "~/Documents/GitHub/VivID_Epi/results/basic_maps_results.rda")
 
 ```
 
@@ -509,7 +511,7 @@ prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettyb
 ##############################
 # Pf, Pv, Po All together
 ##############################
-jpeg("results/figures/pv-pf-po_crude_maps3x3.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-pf-po_crude_maps3x3.jpg", width = 11, height = 8, units = "in", res = 500)
 gridExtra::grid.arrange(
   pntestmaps_lrg[[1]], caseprevmaps_lrg[[1]], prevmaprasterplots[[1]],
   pntestmaps_lrg[[2]], caseprevmaps_lrg[[2]], prevmaprasterplots[[2]],
@@ -522,7 +524,7 @@ graphics.off()
 ##############################
 # Just Pv 
 ##############################
-jpeg("results/figures/pv-crude_maps2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-crude_maps2x2.jpg", width = 11, height = 8, units = "in", res = 500)
 gridExtra::grid.arrange(
   pntestmaps_lrg[[2]], prevmaprasterplots[[2]], 
   caseprevmaps_lrg[[2]], case_n_maps_lrg[[2]],
@@ -535,7 +537,7 @@ graphics.off()
 ##############################
 # Ape Overlap
 ##############################
-jpeg("results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
 aperange_nhapv + prettybasemap_nodrc
 graphics.off()
 
@@ -560,7 +562,7 @@ pvprevmap <-  prevmaprasterplots[[2]] +
     legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
   )
 
-jpeg("results/figures/pv-pf-prevmap2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-pf-prevmap2x2.jpg", width = 11, height = 8, units = "in", res = 500)
 cowplot::plot_grid(pfprevmap, 
                    pvprevmap, 
                    nrow = 1)

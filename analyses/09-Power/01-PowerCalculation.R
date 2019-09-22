@@ -66,7 +66,7 @@ ntry <- nrow(poweriters.paramsdf)
 sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
                             params = poweriters.paramsdf, 
                             jobname = 'powercalc',
-                            nodes = ntry, 
+                            nodes = 1028, # max number of nodes
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,

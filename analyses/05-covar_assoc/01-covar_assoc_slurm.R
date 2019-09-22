@@ -94,4 +94,3 @@ sjob <- rslurm::slurm_apply(f = slurm_calc_corr,
 
 
 
-ret <- pmap(paramsdf, slurm_calc_corr)

@@ -1,5 +1,5 @@
 ---
-title: "Basic Maps of Malaria among Asymptomatic Adults in the DRC"
+title: "Bayesian Hierarchial Spatial Province Models for _P. vivax_ among Asymptomatic Adults in the DRC"
 author: "Nicholas F. Brazeau"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
@@ -16,7 +16,7 @@ editor_options:
 knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
-
+Sys.setenv('R_MAX_VSIZE'=100000000000)
 ```
 
 ```{r}
@@ -50,7 +50,8 @@ pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
 sf::st_crs(pvprov.weighted) <-  sf::st_crs(ge)
 # need ints (binomail prob), so will round
 pvprov.weighted <- pvprov.weighted %>% 
-  dplyr::mutate_if(is.numeric, round, 0)
+  dplyr::mutate(plsmdn = round(plsmdn, 0),
+                n = round(n, 0))
 
 #-------------------------------------------------------------------------
 # Aggregate Covariates
@@ -63,8 +64,6 @@ prov.covar <- dtsrvy %>%
 pvprov.weighted <- dplyr::left_join(pvprov.weighted, prov.covar, by = "adm1name")
 pvprov.weighted.nosf <- pvprov.weighted
 sf::st_geometry(pvprov.weighted.nosf) <- NULL
-
-
 
 
 ```
@@ -95,7 +94,7 @@ mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept",
                                     rep(paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + ")), 3)),
                         rho = c(0, 1, NA, 0, 1, NA),
                         burnin = 1e3,
-                        n.sample = 1e5,
+                        n.sample = 1e5 + 1e3,
                         family = "binomial"
                         )
 
@@ -141,6 +140,7 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin
                                  data = data,
                                  burnin = burnin, 
                                  prior.var.beta = prior.var.betavec,
+                                 prior.tau2 = c(1, 0.01),
                                  n.sample = n.sample)
   } else if(is.na(rho)){ # rho needs to be NULL which has a hard time in a vector
     ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
@@ -217,7 +217,7 @@ chains <- mod.framework %>%
 
 mydiagnosticdir <- "analyses/08-spatial_prediction/prov_map_diagnostic_chains/"
 dir.create(mydiagnosticdir, recursive = T)
-wrap_chain_plotter(diag.dir = mytempdir, chains = chains)
+wrap_chain_plotter(diag.dir = mydiagnosticdir, chains = chains)
 
 
 ```
@@ -230,8 +230,8 @@ Now, we will run out one final long chain with 1e5 burnin iterations and 1e8 sam
 mod.framework.long <- mod.framework[,c("name", "formula", "family", "trials", "W", "rho", "data", "burnin", "n.sample")] %>% 
   dplyr::filter(!duplicated(.))
 
-mod.framework.long$burnin <- 1e5
-mod.framework.long$n.sample <- 1e8
+mod.framework.long$burnin <- 1e3
+mod.framework.long$n.sample <- 1e6 + 1e3
 
 mod.framework.long$MCMC <- pmap(mod.framework.long, wrap_S.CARleroux)
 
@@ -255,9 +255,11 @@ mod.framework.long$summresults <- purrr::map(mod.framework.long$summresults, fun
   return(ret)
 })
 
-mod.framework.long %>% 
+mod.framework.long.res <- mod.framework.long %>% 
   dplyr::select(c("name", "formula", "rho", "summresults")) %>% 
-  tidyr::unnest(cols = "summresults") %>% 
+  tidyr::unnest(cols = "summresults") 
+
+mod.framework.long.res %>% 
   dplyr::mutate(
     name = kableExtra::cell_spec(name, "html", 
                                  color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)),
@@ -268,7 +270,12 @@ mod.framework.long %>%
 
 
 # write out these final models
-readr::write_csv(x = mod.framework.long, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
+readr::write_csv(x = mod.framework.long.res, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
+
+
+saveRDS(objetct = mod.framework.long, 
+        file = "~/Documents/GitHub/VivID_Epi/results/Province_Bayes_Hierarchial_Model_longchain.rds")
+
 
 
 ```

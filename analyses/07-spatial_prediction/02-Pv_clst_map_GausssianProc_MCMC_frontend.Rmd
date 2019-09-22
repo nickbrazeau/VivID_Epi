@@ -1,0 +1,314 @@
+---
+title: "Bayesian Hierarchial Spatial Cluster Models for _P. vivax_ among Asymptomatic Adults in the DRC"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center', fig.width = 8, fig.height = 8)
+Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
+Sys.setenv('R_MAX_VSIZE'=100000000000)
+
+```
+
+
+```{r}
+setwd("~/Documents/GitHub/VivID_Epi/")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+library(tidyverse)
+library(sf)
+library(srvyr) 
+library(rgeos)
+library(rgdal)
+library(geoR)
+library(raster)
+library(PrevMap)
+set.seed(48)
+tol <- 1e-3
+#......................
+# Import Data
+#......................
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dtsrvy <- makecd2013survey(survey = dt)
+mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+ge <- sf::st_as_sf( readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+```
+
+```{r}
+#......................
+# Subset to Pv
+#......................
+pvclust.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001"][[1]]
+# vectors have destroyed spatial class, need to remake
+pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
+sf::st_crs(pvclust.weighted) <-  sf::st_crs(ge)
+
+# need to keep integers, so will round
+pvclust.weighted <- pvclust.weighted %>% 
+  dplyr::mutate(plsmdn = round(plsmdn, 0),
+                n = round(n, 0))
+
+
+```
+
+```{r}
+
+#-------------------------------------------------------------------------
+# Aggregate Covariates
+#-------------------------------------------------------------------------
+
+pvclst.covar <- dtsrvy %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(precip_mean_cont_scale_clst = srvyr::survey_mean(precip_mean_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95) # identical by clst but ok
+  )
+
+pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
+pvclust.weighted.nosf <- pvclust.weighted
+sf::st_geometry(pvclust.weighted.nosf) <- NULL
+
+```
+
+## Spatial Autocorrelation EDA for Gaussian Processes
+Note, using resourced from [Giorgi & Diggle 2017](https://www.jstatsoft.org/article/view/v078i08) and `rgeos`.
+
+
+```{r}
+riskvars = c("precip_mean_cont_scale_clst")
+uvec <- c(seq(0, 1, by = 0.2), seq(1, 10))
+```
+
+### Case Counts
+```{r, results='asis'}
+
+pvclust.weighted.geodata <- geoR::as.geodata(obj = pvclust.weighted.nosf,
+                                             coords.col = c("longnum", "latnum"),
+                                             data.col = "plsmdn",
+                                             covar.col = riskvars)
+
+plot(pvclust.weighted.geodata)
+
+```
+
+
+#### Case-Variogram
+
+```{r, results='asis'}
+
+pv.vario.counts <- geoR::variog(pvclust.weighted.geodata,
+                                bin.cloud = T,
+                                uvec = uvec)
+
+par(mfrow = c(1,3))
+points(pvclust.weighted.geodata, xlab = "Coord X", 
+       ylab = "Coord Y",
+       cex.max = 0.7, col = gray(seq(1, 0.1, l = 100)),
+       pt.divide = "equal")
+plot(pv.vario.counts)
+
+plot(pv.vario.counts, bin.cloud = T)
+mtext("Empirical Variogram for P.vivax Counts", side = 3,  line = -6, outer = TRUE)
+
+graphics.off()
+
+```
+
+This does not indicate a great degree (if any) spatial structuring. The classic variogram should follow a log-curve and have a sill that is reach at some distance. Of note, the potential nugget effect here is huge.  
+
+
+### Prevalence
+```{r, results='asis'}
+# transform count of "successes" to logit space
+pvclust.weighted.nosf$plsmdlogit <- log( (pvclust.weighted.nosf$plsmdn + 0.5)/(pvclust.weighted.nosf$n - pvclust.weighted.nosf$plsmdn + 0.5) ) # 0.5 as tolerance for 0s
+
+pvclust.weighted.geodata <- geoR::as.geodata(obj = pvclust.weighted.nosf,
+                                             coords.col = c("longnum", "latnum"),
+                                             data.col = "plsmdlogit",
+                                             covar.col = riskvars)
+plot(pvclust.weighted.geodata)
+
+
+```
+
+
+
+
+#### Prevelance-Variogram
+
+```{r, results='asis'}
+
+pv.vario.prev <- geoR::variog(pvclust.weighted.geodata,
+                              bin.cloud = T,
+                              uvec = uvec)
+
+par(mfrow = c(1,3))
+points(pvclust.weighted.geodata, xlab = "Coord X", 
+       ylab = "Coord Y",
+       cex.max = 0.7, col = gray(seq(1, 0.1, l = 100)),
+       pt.divide = "equal")
+plot(pv.vario.prev)
+
+plot(pv.vario.prev, bin.cloud = T)
+
+mtext("Empirical Variogram for P.vivax Prevelance", side = 3,  line = -6, outer = TRUE)
+
+graphics.off()
+
+```
+A remarkable lack of spatial structure...
+
+#### Estimation of Variogram Parameters
+I.e. nugget effect, sill, and range. Will test a Matern and Exponential Covariance and compare. 
+```{r}
+
+#..........................
+# Maximum Likelihood
+#..........................
+ml.exp <- likfit(pvclust.weighted.geodata, 
+                 ini = c(1, 0.5),
+                 cov.model = "exp",
+                 fix.nugget = F, 
+                 nugget = 0,
+                 fix.kappa = F)
+
+ml.matern <- likfit(pvclust.weighted.geodata, 
+                    ini = c(1, 0.5),
+                    cov.model = "matern",
+                    fix.nugget = F, 
+                    nugget = 0,
+                    fix.kappa = F)
+
+#..........................
+# OLS
+#..........................
+
+ols.exp <- variofit(pv.vario.prev, 
+                    ini = c(1, 0.5),
+                    cov.model = "exp",
+                    fix.nugget = F, 
+                    nugget = 0,
+                    fix.kappa = F) 
+
+ols.matern <- variofit(pv.vario.prev, 
+                       ini = c(1, 0.5),
+                       cov.model = "matern",
+                       fix.nugget = F, 
+                       nugget = 0,
+                       fix.kappa = F)
+
+
+
+par(mfrow = c(1, 2))
+plot(pv.vario.prev, main = "Maximum Likelihood Estimation")
+lines(ml.exp, max.dist = 20, lty = 1, lwd = 2)
+lines(ml.matern, max.dist = 20, lty = 2, lwd = 2, col = "red")
+legend(2, 4, legend = c("Exp", "Matern"), 
+       lty = c(1, 2), col = c("black", "red"), cex = 0.7)
+
+plot(pv.vario.prev, main = "Ordinary Least Square")
+lines(ols.exp, max.dist = 20, lty = 1, lwd = 2)
+lines(ols.matern, max.dist = 20, lty = 2, lwd = 2, col = "red")
+legend(2, 4, legend = c("Exp", "Matern"), 
+       lty = c(1, 2), col = c("black", "red"), cex = 0.7)
+
+graphics.off()
+
+```
+Truly impressive lack of spatial structure. From models above, an appropriate _kappa_ value fro the Matern covariance matrix appeared to be 0.5 or 1. Let's explore that specifically below.
+
+#### Matern Shape
+```{r, results='asis'}
+#......................
+# Matern Shape, K
+#......................
+
+# look at kappa smooth parameter for matern covariance
+profile.kappa <- PrevMap::shape.matern(plsmdlogit ~ 1,
+                                       coords = ~ longnum + latnum,
+                                       data = pvclust.weighted.nosf,
+                                       set.kappa = seq(0.1, 10, length = 16),
+                                       start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
+                                       coverage = NULL # CI coverage
+                                      )
+
+
+
+```
+The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 1.5 (fixed now in subsequent analyses).
+
+
+
+
+
+
+## Hierarchial Bayesian Spatial Models for Cluster Prevalence 
+### Model Framework 
+NB, here it is not quite the same to "turn off space". Instead, we will let the covariance matrix be considered as a continuous process and let $\sigma^2$ and Matern correlation, $\phi$ vary under the model (we fixed $\kappa$). 
+#### Priors & Sampling
+(Please open up code for inquiries).
+
+
+
+#### Diagnostic Chains
+Run out four diagnostic chains to check convergence. 
+```{r}
+
+# READRDS  
+  
+
+
+```
+
+
+#### MCMC Diagnostics 
+Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
+
+##### Param Diagnostics
+
+##### MCMC Trace Plots
+#TODO can overload coda here
+```{r}
+coda::effectiveSize(coda::mcmc(mod.framework$mcmc[[1]]$estimate[,1]))
+
+mod.framework$coda <- purrr::map(mod.framework$mcmc, coda::mcmc)
+mod.framework$neff <-  purrr::map(mod.framework$coda, coda::effectiveSize)
+
+fit.Bayes = mod.framework$mcmc[[1]]
+
+summary(fit.Bayes, hpd.coverage = 0.95)
+
+
+par(mfrow=c(2,4))
+autocor.plot(fit.Bayes,param="S",component.S="all")
+autocor.plot(fit.Bayes,param="beta",component.beta=1)
+autocor.plot(fit.Bayes,param="sigma2")
+autocor.plot(fit.Bayes,param="phi")
+trace.plot(fit.Bayes,param="S",component.S=30)
+trace.plot(fit.Bayes,param="beta",component.beta=1)
+trace.plot(fit.Bayes,param="sigma2")
+trace.plot(fit.Bayes,param="phi")
+```
+
+
+## Long Chain
+```{r}
+
+
+
+```
+
+
+
+
+
