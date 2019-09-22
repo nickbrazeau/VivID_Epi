@@ -1,6 +1,6 @@
 library(tidyverse)
 library(sf)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("R/00-functions_basic.R")
 
 
 # Set some colors
