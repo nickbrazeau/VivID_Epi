@@ -23,27 +23,20 @@ ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/
 #......................
 # Subset to Pv
 #......................
-pvprov.weighted <- mp %>% 
-  dplyr::filter(plsmdmspec == "pv18s" & maplvl == "adm1name") %>% 
-  dplyr::select(data) %>% 
-  tidyr::unnest()
+pvprov.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"][[1]]
 # vectors have destroyed spatial class, need to remake
 pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
 sf::st_crs(pvprov.weighted) <-  sf::st_crs(ge)
-# need to keep integers, so will round
+# need ints (binomail prob), so will round
 pvprov.weighted <- pvprov.weighted %>% 
   dplyr::mutate_if(is.numeric, round, 0)
-
-
 
 #-------------------------------------------------------------------------
 # Aggregate Covariates
 #-------------------------------------------------------------------------
-
 prov.covar <- dtsrvy %>% 
   dplyr::group_by(adm1name) %>% 
-  dplyr::summarise(meanprov_precip_lag_cont_scale_prov = srvyr::survey_mean(precip_ann_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95),
-                   meanprov_alt_dem_cont_scale_prov = srvyr::survey_mean(alt_dem_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
+  dplyr::summarise(precip_mean_cont_scale_prov = srvyr::survey_mean(precip_mean_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
   )
 
 pvprov.weighted <- dplyr::left_join(pvprov.weighted, prov.covar, by = "adm1name")
@@ -58,15 +51,15 @@ sf::st_geometry(pvprov.weighted.nosf) <- NULL
 #......................
 # Make Adjacency Matrix for Pv 
 #......................
-# https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
 W.nb <- spdep::poly2nb(sf::as_Spatial(pvprov.weighted), row.names = pvprov.weighted$adm1name)
 W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
 
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("meanprov_precip_lag_cont_scale_prov", "meanprov_alt_dem_cont_scale_prov")
-mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept", "CAR_intercept", "riid_covar", "ICAR_covar", "CAR_covar"),
+prov.covar.names <- c("precip_mean_cont_scale_prov", )
+mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept", 
+                                 "CAR_intercept", "riid_covar", "ICAR_covar", "CAR_covar"),
                         formula = c("plsmdn ~ 1", "plsmdn ~ 1", "plsmdn ~ 1",
                                     rep(paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + ")), 3)),
                         rho = c(0, 1, NA, 0, 1, NA),

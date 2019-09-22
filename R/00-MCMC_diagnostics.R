@@ -1,8 +1,3 @@
-# TODO add more diagnostics
-# https://www2.stat.duke.edu/courses/Fall09/sta290/Lectures/Diagnostics/param-diag.pdf
-# consider adding ACF plots
-# effectiveSize(theta.MCMC)
-
 
 
 # checkConvergence
@@ -58,13 +53,13 @@ make_mcmc_chain_plots <- function(chaindat, filename){
   }
 }
 
-wrap_chain_plotter <- function(tempdir, chains){
+wrap_chain_plotter <- function(diag.dir, chains){
   # this function does not return anything
   # it is internally making plots
   
   purrr::pmap(chains, function(data, name){
     
-    filename <- paste0(mytempdir, name, "_", colnames(data), ".jpg") 
+    filename <- paste0(diag.dir, name, "_", colnames(data), ".jpg") 
     
     for(i in 1:ncol(data)){
       make_mcmc_chain_plots(chaindat = data[,i], filename = filename[i])
