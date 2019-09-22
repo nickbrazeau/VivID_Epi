@@ -1,6 +1,6 @@
-setwd("~/Documents/GitHub/VivID_Epi/")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+
+source("R/00-functions_basic.R")
+source("R/00-functions_maps.R") 
 library(tidyverse)
 library(sf)
 library(srvyr) 

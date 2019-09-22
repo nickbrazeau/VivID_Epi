@@ -273,7 +273,7 @@ mod.framework.long.res %>%
 readr::write_csv(x = mod.framework.long.res, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
 
 
-saveRDS(objetct = mod.framework.long, 
+saveRDS(mod.framework.long, 
         file = "~/Documents/GitHub/VivID_Epi/results/Province_Bayes_Hierarchial_Model_longchain.rds")
 
 
