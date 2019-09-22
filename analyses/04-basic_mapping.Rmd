@@ -22,13 +22,16 @@ library(tidyverse)
 library(sf)
 library(geosphere)
 library(spdep)
+library(raster)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(RColorBrewer)
 
+setwd("~/Documents/GitHub/VivID_Epi/")
 
 #......................
 # Import Data
 #......................
+load("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
@@ -81,39 +84,42 @@ mp$plots <- pmap(mp, mapplotter)
 ```
 
 ### Province Prevalence Maps
-```{r}
+```{r, results='asis'}
 
 cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
-                   align = "h",
+                   align = "h", nrow = 1,
                    labels = c("A", "B", "C"))
 
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Province_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
-                   align = "h",
+                   align = "h",  nrow = 1,
                    labels = c("A", "B", "C"))
-
 graphics.off()
 
 ```
 
 ### Cluster Prevalence Maps
-```{r}
+```{r, results='asis'}
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Cluster_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(mp$plots[[3]],  mp$plots[[4]],  mp$plots[[6]],
-                   align = "h",
+                   align = "h",  nrow = 1,
+                   labels = c("A", "B", "C"))
+graphics.off()
+
+cowplot::plot_grid(mp$plots[[3]],  mp$plots[[4]],  mp$plots[[6]],
+                   align = "h",  nrow = 1,
                    labels = c("A", "B", "C"))
 
-graphics.off()
 
 ```
 
 
 ### Case Count Maps
-```{r}
+```{r, results='asis'}
 #......................
 # Plot Cases
 #......................
@@ -123,26 +129,89 @@ case_n_maps <- purrr::pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), cas
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Case_N_ClusterPlots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
-                   align = "h",
+                   align = "h",  nrow = 1,
                    labels = c("A", "B", "C"))
-
 graphics.off()
+
+
+cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
+                   align = "h",  nrow = 1,
+                   labels = c("A", "B", "C"))
 
 ```
 
 ### Point Prevalence (Prettier)
 
-```{r}
+```{r, results='asis'}
 
 caseprevmaps <- purrr::pmap(list(data = mp$data, plsmdmspec = mp$plsmdmspec), casemap_prev_plotter)
 
+cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
+                   align = "h",
+                   labels = c("A", "B", "C"))
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Prevalence_Case_ClusterPlots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
-                   align = "h",
+                   align = "h", nrow = 1,
                    labels = c("A", "B", "C"))
 graphics.off()
+
+
+
+```
+
+### Case Plot (Prettier)
+
+```{r, results='asis'}
+pvcasen <- case_n_maps[[2]] +
+  ggtitle("") +
+  prettybasemap_nodrc + 
+  theme(
+    legend.position = "right",
+    legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
+  )
+
+
+# make world map
+DRC <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm36_COD_0_sp.rds") %>% 
+  sf::st_as_sf(.)
+
+bb <- sf::st_bbox(
+  sf::st_sf(geom = sf::st_sfc(
+    sf::st_point(c(-19, -37)), # left lower
+    sf::st_point(c(51, -37)), # right lower
+    sf::st_point(c(-19, 38)), # left upper
+    sf::st_point(c(51, 38)), # right upper
+    crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs"))
+  ))
+
+africa <- rnaturalearth::ne_countries(scale = "large", returnclass = "sf") %>% 
+  dplyr::filter(continent == "Africa") %>% 
+  sf::st_crop(., y=bb)
+
+
+africaplot <- ggplot() + 
+  geom_sf(data = africa, fill = "#f0f0f0") +
+  geom_sf(data = DRC, fill = "#636363")  +
+  coord_sf(datum=NA) +
+  theme_bw() + 
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "white", color = "black", size = 1))
+
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Figure1B.jpg", width = 11, height = 8, units = "in", res = 500)
+cowplot::ggdraw() +
+  cowplot::draw_plot(pvcasen, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
+graphics.off()
+
+cowplot::ggdraw() +
+  cowplot::draw_plot(pvcasen, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 
 
 
@@ -151,7 +220,7 @@ graphics.off()
 ## Spatial Autocorrelation 
 
 ### Moran's I by Province
-```{r}
+```{r, results='asis'}
 
 #......................
 # Make Adjacency Matrix for Pvf
@@ -165,7 +234,7 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 moran_mc_wrapper <- function(data, listw){
   prev <- data$plsmdprev
   ret <- spdep::moran.mc(x = prev,
-                         listw = spdep::mat2listw(W),
+                         listw = spdep::mat2listw(listw),
                          alternative = "greater",
                          nsim = 1e5)
   return(ret)
@@ -195,17 +264,16 @@ knitr::kable(moranIprov)
 ```
 
 ### Moran's I by Cluster
-```{r}
+```{r, results='asis'}
 
 #........................
 # Moran's I for Cluster Level
 #........................
-gcdist <- mp %>% 
-  dplyr::filter(maplvl == "hv001" & plsmdmspec == "pfldh") %>% # just getting long lat, so species doesn't matter 
-  tidyr::unnest() %>% 
+gcdist <- ge 
+sf::st_geometry(gcdist) <- NULL
+gcdist <- gcdist %>% 
   dplyr::select(c("longnum", "latnum")) %>% 
   geosphere::distm(x =., fun = geosphere::distHaversine) 
-
 
 
 gcdist.inv <- 1/gcdist
@@ -237,15 +305,15 @@ knitr::kable(moranIclst)
 
 ## Krigged Prevalence Maps
 N.B. Simple MLE approach just modeling the intercept
-```{r}
+```{r, results='asis'}
 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
 
-pfldhprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pfldh) %>% 
+pfldhprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pfldh, clustgeom = ge) %>% 
   dplyr::mutate(plsmdmspec = "pfldh")
-pv18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pv18s) %>% 
+pv18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pv18s, clustgeom = ge) %>% 
   dplyr::mutate(plsmdmspec = "pv18s")
-po18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = po18s) %>% 
+po18sprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = po18s, clustgeom = ge) %>% 
   dplyr::mutate(plsmdmspec = "po18s")
 
 # bind those to a tibble
@@ -285,11 +353,21 @@ cowplot::plot_grid(prevmaprasterplots[[1]],
                    align = "h", 
                    labels = c("A", "B", "C"))
 
- 
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/PrevMap_Plots_3x1.jpg",
+     heigh = 8, width = 11, units = "in", res=500)
+cowplot::plot_grid(prevmaprasterplots[[1]],
+                   prevmaprasterplots[[2]],
+                   prevmaprasterplots[[3]],
+                   align = "h", 
+                   labels = c("A", "B", "C"))
+graphics.off()
+
+
 ```
 
 ## _P. vivax_ vs. Ape Distribution 
-```{r}
+```{r, results='asis'}
 ape <- readRDS("data/derived_data/drc_ape.rds")
 aperange_nhapv <- 
   caseprevmaps[[2]] +
@@ -341,7 +419,7 @@ pv18s.dt <- dt %>%
 There are `r length(ape.clusters)` clusters that overlap with apes and `r length(chimpgor.clusters)` clusters that overlap with chimpanzee and gorillas.
 
 #### All Apes 
-```{r}
+```{r, results='asis'}
 
 ape.range.iters <- data.frame(iter = 1:sims)
 
@@ -364,13 +442,13 @@ ape.range.plotObj <- ggplot() +
   vivid_theme + 
   theme(legend.position = "none")
 
-  
+plot(ape.range.plotObj)
 
 ```
 #### Chimpanzee & Gorillas
 Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains but mostly at a concentrated field site, Tshuapa–Lomami–Lualaba (TL2), near the Lomami River [Liu et al. 2018](https://www.nature.com/articles/s41467-017-01798-5)
 
-```{r}
+```{r, results='asis'}
 
 chimpgor.range.iters <- data.frame(iter = 1:sims)
 
@@ -393,6 +471,8 @@ chimpgor.range.plotObj <- ggplot() +
   vivid_theme + 
   theme(legend.position = "none")
 
+plot(chimpgor.range.plotObj)
+
 
 ```
 
@@ -408,4 +488,81 @@ save(pntestmaps, caseprevmaps, case_n_maps, aperange_nhapv,
       file = "results/basic_maps_results.rda")
 
 ```
+
+
+```{r}
+
+############################################################
+#########               MORE MAPS                  ######### 
+############################################################
+pntestmaps_lrg <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
+caseprevmaps_lrg <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
+case_n_maps_lrg <- map(case_n_maps, function(x){return(x + prettybasemap_nodrc)})
+prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
+
+
+##############################
+# Pf, Pv, Po All together
+##############################
+jpeg("results/figures/pv-pf-po_crude_maps3x3.jpg", width = 11, height = 8, units = "in", res = 500)
+gridExtra::grid.arrange(
+  pntestmaps_lrg[[1]], caseprevmaps_lrg[[1]], prevmaprasterplots[[1]],
+  pntestmaps_lrg[[2]], caseprevmaps_lrg[[2]], prevmaprasterplots[[2]],
+  pntestmaps_lrg[[3]], caseprevmaps_lrg[[3]], prevmaprasterplots[[3]],
+  ncol=3, top=grid::textGrob("Malaria Species #Prevalence in CD2013 DHS", 
+                             gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+
+graphics.off()
+
+##############################
+# Just Pv 
+##############################
+jpeg("results/figures/pv-crude_maps2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+gridExtra::grid.arrange(
+  pntestmaps_lrg[[2]], prevmaprasterplots[[2]], 
+  caseprevmaps_lrg[[2]], case_n_maps_lrg[[2]],
+  ncol=2, top=grid::textGrob("P. vivax Prevalence in CD2013 DHS", 
+                             gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
+
+graphics.off()
+
+
+##############################
+# Ape Overlap
+##############################
+jpeg("results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
+aperange_nhapv + prettybasemap_nodrc
+graphics.off()
+
+
+
+##############################
+# Pf, Pv, together
+##############################
+pfprevmap <-  prevmaprasterplots[[1]] +
+  ggtitle(expression(paste(bold("Prevalence of "), bolditalic("P. falciparum"), bold(" Across the DRC")))) +
+  prettybasemap_nodrc + 
+  theme(
+    legend.position = "right",
+    legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
+  )
+
+pvprevmap <-  prevmaprasterplots[[2]] +
+  ggtitle(expression(paste(bold("Prevalence of "), bolditalic("P. vivax"), bold(" Across the DRC")))) +
+  prettybasemap_nodrc + 
+  theme(
+    legend.position = "right",
+    legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
+  )
+
+jpeg("results/figures/pv-pf-prevmap2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+cowplot::plot_grid(pfprevmap, 
+                   pvprevmap, 
+                   nrow = 1)
+graphics.off()
+
+
+
+```
+
 
