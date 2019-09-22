@@ -115,7 +115,6 @@ cat("*************************** \n Submitted SL models \n *********************
 
 
 
-pmap(paramsdf[3,], mlrwrapSL::SL_crossval_risk_pred)
 
 
 

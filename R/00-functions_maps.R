@@ -106,8 +106,8 @@ casemap_prev_plotter <- function(data, plsmdmspec){
   
   ret <- ggplot() + 
     geom_sf(data = DRCprov) +
-    geom_jitter(data = neg, aes(x=longnum, y=latnum, size = n), shape = 4, show.legend = F, colour = "#377eb8") +
-    geom_point(data = pos, aes(x=longnum, y=latnum, colour = plsmdprev, size = n), alpha = 0.4) +
+    geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#377eb8") +
+    geom_sf(data = pos, aes(colour = plsmdprev, size = n), alpha = 0.4) +
     scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
     scale_size(guide = 'none') +
     ggtitle(paste(plsmdmspec)) +
@@ -134,8 +134,8 @@ casemap_n_plotter <- function(data, plsmdmspec){
   
   ret <- ggplot() + 
     geom_sf(data = DRCprov) +
-    geom_jitter(data = neg, aes(x=longnum, y=latnum, size = n), shape = 4, show.legend = F, colour = "#377eb8") +
-    geom_point(data = pos, aes(x=longnum, y=latnum, colour = plsmdn, size = n), alpha = 0.4) +
+    geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#377eb8") +
+    geom_sf(data = pos, aes(colour = plsmdn, size = n), alpha = 0.4) +
     scale_color_gradient2("Weighted \n Count", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
     scale_size(guide = 'none') +
     ggtitle(paste(plsmdmspec)) +
@@ -153,15 +153,14 @@ casemap_n_plotter <- function(data, plsmdmspec){
 #----------------------------------------------------------------------------------------------------
 # Guassian Surface Plot
 #----------------------------------------------------------------------------------------------------
-guass_map_clstr_summarizer <- function(data, plsmdmspec){
+guass_map_clstr_summarizer <- function(data, plsmdmspec, clustgeom){
   
-  clustgeom <- dt[!duplicated(dt$hv001), c("hv001", "latnum", "longnum")]
   
   plsmdmspec <- enquo(plsmdmspec)
   # clusters are weighted (each individual has same weight in cluster)
   ret <- data %>% 
     dplyr::mutate(count = 1) %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hiv05_cont) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hv005_wi) %>% 
     dplyr::group_by(hv001) %>% 
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 
@@ -211,9 +210,9 @@ prevmaprasterplotter <- function(prevrasters, smoothfct = 5, alpha = 0.8){
                                           prevrasters$prevalence$predictions),
                                     crs="+proj=longlat +datum=WGS84")
   
-  ret.smrstr <- focal(ret.rstr, w=matrix(1,
-                                         nrow=smoothfct,
-                                         ncol=smoothfct), mean)
+  ret.smrstr <- raster::focal(ret.rstr, w=matrix(1,
+                                                 nrow=smoothfct,
+                                                 ncol=smoothfct), mean)
   
   ret.smrstr.m  <-  raster::rasterToPoints(ret.smrstr)
   ret.smrstr.m.df <-  data.frame(lon = ret.smrstr.m[,1], 
