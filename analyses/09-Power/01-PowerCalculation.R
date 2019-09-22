@@ -49,7 +49,7 @@ poweriters.paramsdf <- tibble::tibble(
 ) 
 
 # iters to run
-iters <- 1e4
+iters <- 1e3 
 poweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(poweriters.paramsdf)) %>% 
   dplyr::bind_rows() %>% 
   dplyr::arrange(exp_prob, p0)
@@ -58,9 +58,31 @@ poweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(poweriters
 
 
 #...............................................................
-# Run in parallel
+# Run in parallel on slurm
 #...............................................................
-poweriters.ret <- furrr::future_pmap(poweriters.paramsdf, powercalculator.glmRR)
+# for slurm on LL
+setwd("analyses/09-Power/")
+ntry <- nrow(poweriters.paramsdf)
+sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
+                            params = poweriters.paramsdf, 
+                            jobname = 'powercalc',
+                            nodes = ntry, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 32000,
+                                                 array = sprintf("0-%d%%%d", 
+                                                                 ntry, 
+                                                                 128),
+                                                 'cpus-per-task' = 8,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "1-00:00:00"))
+
+cat("*************************** \n Submitted SL models \n *************************** ")
+
+
+
+
 save(poweriters.ret, poweriters.paramsdf, file = "results/powercalcs.rda")
 
 
