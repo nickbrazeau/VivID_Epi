@@ -62,11 +62,11 @@ poweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(poweriters
 #...............................................................
 # for slurm on LL
 setwd("analyses/09-Power/")
-ntry <- nrow(poweriters.paramsdf)
+ntry <- 1028 # max number of nodes
 sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
                             params = poweriters.paramsdf, 
                             jobname = 'powercalc',
-                            nodes = 1028, # max number of nodes
+                            nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,

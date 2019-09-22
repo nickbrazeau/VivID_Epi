@@ -491,7 +491,7 @@ plot(chimpgor.range.plotObj)
  
 saveRDS(mp, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
 
-save(pntestmaps, caseprevmaps, case_n_maps, aperange_nhapv,
+save(prevmaprasterplots, caseprevmaps, case_n_maps, aperange_nhapv,
       file = "~/Documents/GitHub/VivID_Epi/results/basic_maps_results.rda")
 
 ```
@@ -502,7 +502,6 @@ save(pntestmaps, caseprevmaps, case_n_maps, aperange_nhapv,
 ############################################################
 #########               MORE MAPS                  ######### 
 ############################################################
-pntestmaps_lrg <- map(pntestmaps, function(x){return(x + prettybasemap_nodrc)})
 caseprevmaps_lrg <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc)})
 case_n_maps_lrg <- map(case_n_maps, function(x){return(x + prettybasemap_nodrc)})
 prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
