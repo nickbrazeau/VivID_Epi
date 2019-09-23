@@ -13,7 +13,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 Sys.setenv('R_MAX_VSIZE'=32000000000)

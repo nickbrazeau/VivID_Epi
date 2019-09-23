@@ -50,6 +50,8 @@ pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
+# transform count of "successes" to logit space
+pvclust.weighted.nosf$plsmdlogit <- log( (pvclust.weighted.nosf$plsmdn + 0.5)/(pvclust.weighted.nosf$n - pvclust.weighted.nosf$plsmdn + 0.5) ) # 0.5 as tolerance for 0s
 
 #-------------------------------------------------------------------------
 # Make Model Framework
