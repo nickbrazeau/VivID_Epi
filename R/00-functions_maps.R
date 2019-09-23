@@ -1,6 +1,10 @@
 library(tidyverse)
 library(sf)
-source("R/00-functions_basic.R")
+
+logit <- function(x, tol=1e-4){ 
+  return( log(((x+tol)/(1-x+tol))) )
+}
+
 
 
 # Set some colors
@@ -167,7 +171,7 @@ guass_map_clstr_summarizer <- function(data, plsmdmspec, clustgeom){
     ) %>% 
     dplyr::inner_join(., clustgeom, by = "hv001")
   ret <- ret %>% 
-    dplyr::mutate(logitplsmdprev = logit(plsmdprev)) # weird how this is being held
+    dplyr::mutate(logitplsmdprev = logit(plsmdprev)) 
   
   # return
   return(ret)

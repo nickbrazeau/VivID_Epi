@@ -27,8 +27,8 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 #......................
 # Import Data
 #......................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
-dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
 # grab risk factors
@@ -49,6 +49,16 @@ rskfctr <- dcdr %>%
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
 
 ```{r}
+covar.files <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/05-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
+covar.files <- covar.files[!grepl("params.RDS|f.RDS", covar.files)]
+
+# need to sort properly
+covar.files <- tibble::tibble(covar.files = covar.files, 
+                              iteration = stringr::str_extract(basename(covar.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
+  dplyr::arrange(iteration)
+
+
+readRDS(covar.files$covar.files[1])
 
 ```
 

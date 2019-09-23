@@ -20,6 +20,7 @@ mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- sf::st_as_sf( readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 
+riskvars = c("precip_mean_cont_scale_clst")
 
 #......................
 # Subset to Pv

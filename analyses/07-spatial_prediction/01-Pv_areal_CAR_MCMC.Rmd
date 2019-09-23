@@ -16,7 +16,7 @@ editor_options:
 knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
-Sys.setenv('R_MAX_VSIZE'=100000000000)
+Sys.setenv('R_MAX_VSIZE'=32000000000)
 ```
 
 ```{r}
@@ -215,9 +215,9 @@ chains <- mod.framework %>%
   dplyr::group_by(name) %>% 
   tidyr::nest()
 
-mydiagnosticdir <- "analyses/08-spatial_prediction/prov_map_diagnostic_chains/"
+mydiagnosticdir <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_diagnostic_chains/"
 dir.create(mydiagnosticdir, recursive = T)
-wrap_chain_plotter(diag.dir = mydiagnosticdir, chains = chains)
+wrap_chain_plotter.carbayes(diag.dir = mydiagnosticdir, chains = chains)
 
 
 ```
@@ -299,9 +299,9 @@ chains <- mod.framework.long %>%
   dplyr::group_by(name) %>% 
   tidyr::nest()
 
-myfinalchain <- "analyses/08-spatial_prediction/prov_map_final_long_chain/"
+myfinalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/"
 dir.create(myfinalchain, recursive = T)
-wrap_chain_plotter(diag.dir = myfinalchain, chains = chains)
+wrap_chain_plotter.carbayes(diag.dir = myfinalchain, chains = chains)
 
 
 ```

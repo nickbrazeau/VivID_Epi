@@ -16,15 +16,16 @@ editor_options:
 knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
-Sys.setenv('R_MAX_VSIZE'=100000000000)
+Sys.setenv('R_MAX_VSIZE'=32000000000)
 
 ```
 
 
 ```{r}
-setwd("~/Documents/GitHub/VivID_Epi/")
+
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(sf)
 library(srvyr) 
@@ -38,11 +39,11 @@ tol <- 1e-3
 #......................
 # Import Data
 #......................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
-ge <- sf::st_as_sf( readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
-DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
+ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
+DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
 
 ```
 
@@ -249,9 +250,6 @@ The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.
 
 
 
-
-
-
 ## Hierarchial Bayesian Spatial Models for Cluster Prevalence 
 ### Model Framework 
 NB, here it is not quite the same to "turn off space". Instead, we will let the covariance matrix be considered as a continuous process and let $\sigma^2$ and Matern correlation, $\phi$ vary under the model (we fixed $\kappa$). 
@@ -264,51 +262,119 @@ NB, here it is not quite the same to "turn off space". Instead, we will let the 
 Run out four diagnostic chains to check convergence. 
 ```{r}
 
-# READRDS  
-  
+# READ RDS  
+mod.framework # <- 
 
 
 ```
 
 
-#### MCMC Diagnostics 
+#### MCMC Diagnostics Chains
 Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
-##### Param Diagnostics
-
-##### MCMC Trace Plots
-#TODO can overload coda here
-```{r}
-coda::effectiveSize(coda::mcmc(mod.framework$mcmc[[1]]$estimate[,1]))
-
-mod.framework$coda <- purrr::map(mod.framework$mcmc, coda::mcmc)
-mod.framework$neff <-  purrr::map(mod.framework$coda, coda::effectiveSize)
-
-fit.Bayes = mod.framework$mcmc[[1]]
-
-summary(fit.Bayes, hpd.coverage = 0.95)
+```{r, results='hide'}
+mod.framework$summresults <- purrr::map(mod.framework$mcmc, summary, hpd.coverage = 0.95)
+mod.framework$summdiagret <- purrr::map(mod.framework$mcmc, get_diag_summ_results.Bayes.PrevMap)
 
 
-par(mfrow=c(2,4))
-autocor.plot(fit.Bayes,param="S",component.S="all")
-autocor.plot(fit.Bayes,param="beta",component.beta=1)
-autocor.plot(fit.Bayes,param="sigma2")
-autocor.plot(fit.Bayes,param="phi")
-trace.plot(fit.Bayes,param="S",component.S=30)
-trace.plot(fit.Bayes,param="beta",component.beta=1)
-trace.plot(fit.Bayes,param="sigma2")
-trace.plot(fit.Bayes,param="phi")
+mod.framework$paramtable <- purrr::map(mod.framework$summdiagret, "summresults")
+mod.framework$traceplots <- purrr::map(mod.framework$summdiagret, "traceplots")
+mod.framework$autocorrplot <- purrr::map(mod.framework$summdiagret, "autocorrplots")
+
+```
+
+##### Param Diagnostics for Diagnostic Runs
+```{r, results='asis'}
+
+mod.framework %>% 
+  dplyr::select(c("name", "formula", "paramtable")) %>% 
+  tidyr::unnest(cols="paramtable") %>% 
+  kableExtra::kable(format = "html", escape = F) %>%
+  kableExtra::kable_styling("striped", full_width = F) 
+
+
+```
+
+
+
+##### MCMC Trace Plots for Diagnostic Runs
+Too many plots again to visualize here, so will send out locally.
+```{r, results='asis'}
+diagchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
+dir.create(diagchain, recursive = T)
+
+for(i in 1:nrow(mod.framework)){
+  fileout <- paste0(diagchain, "/", mod.framework$name[i], "_diagnostic_chains_TRACEPLOTS_", i, ".pdf")
+  pdf(fileout)
+  invisible(lapply(mod.framework$traceplots[i], print)) 
+  dev.off()
+}
+
+
+for(i in 1:nrow(mod.framework)){
+  fileout <- paste0(diagchain, "/", mod.framework$name[i], "_diagnostic_chains_AUTOPLOTS_", i, ".pdf")
+  pdf(fileout)
+  invisible(lapply(mod.framework$autocorrplot[i], print)) 
+  dev.off()
+}
+
 ```
 
 
 ## Long Chain
 ```{r}
 
+# READ RDS
+long.framework # <- 
 
 
 ```
 
+### Final Params
+```{r, results='asis'}
+
+long.framework$summresults <- purrr::map(long.framework$mcmc, summary, hpd.coverage = 0.95)
+long.framework$summdiagret <- purrr::map(long.framework$mcmc, get_diag_summ_results.Bayes.PrevMap)
+
+
+long.framework$paramtable <- purrr::map(long.framework$summdiagret, "summresults")
+long.framework$traceplots <- purrr::map(long.framework$summdiagret, "traceplots")
+long.framework$autocorrplot <- purrr::map(long.framework$summdiagret, "autocorrplots")
+
+long.frameworks.summresults <- long.framework %>% 
+  dplyr::select(c("name", "formula", "paramtable")) %>% 
+  tidyr::unnest(cols="paramtable") 
+
+long.frameworks.summresults %>% 
+  kableExtra::kable(format = "html", escape = F) %>%
+  kableExtra::kable_styling("striped", full_width = F) 
 
 
 
+```
+
+### Final Diag Plots
+Too many plots to visualize directly, see local dir. 
+```{r, results='hide'}
+
+finalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/cluster_gaus_final_chain/"
+dir.create(finalchain, recursive = T)
+
+for(i in 1:nrow(long.framework)){
+  fileout <- paste0(finalchain, "/", long.framework$name[i], "_final_chain_TRACEPLOTS_", i, ".pdf")
+  pdf(fileout)
+  invisible(lapply(long.framework$traceplots[i], print)) 
+  dev.off()
+}
+
+
+for(i in 1:nrow(long.framework)){
+  fileout <- paste0(finalchain, "/", long.framework$name[i], "_final_chain_AUTOPLOTS_", i, ".pdf")
+  pdf(fileout)
+  invisible(lapply(long.framework$autocorrplot[i], print)) 
+  dev.off()
+}
+
+
+```
 

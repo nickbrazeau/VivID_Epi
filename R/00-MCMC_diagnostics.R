@@ -31,13 +31,11 @@ checkConvergence <- function(burnin, samples) {
 }
 
 
-
-
-#----------------------------------------------
+#---------------------------------------------------
 # Internal use function, not good for corner cases
-#----------------------------------------------
+#----------------------------------------------------
 
-make_mcmc_chain_plots <- function(chaindat, filename){
+make_mcmc_chain_plots.carbayes <- function(chaindat, filename){
   # check if chaindat wasn't fit, i.e. rho in ICAR model
   if(is.na(chaindat[[1]][[1]])){
     plot(1)
@@ -53,7 +51,7 @@ make_mcmc_chain_plots <- function(chaindat, filename){
   }
 }
 
-wrap_chain_plotter <- function(diag.dir, chains){
+wrap_chain_plotter.carbayes <- function(diag.dir, chains){
   # this function does not return anything
   # it is internally making plots
   
@@ -71,8 +69,54 @@ wrap_chain_plotter <- function(diag.dir, chains){
 
 
 
+#---------------------------------------------------
+# Internal use function, not good for corner cases
+#----------------------------------------------------
+#' @details Extract betas and covariance parameters from PrevMap.Bayes Object and 
+#' calculate the effective sampling size base on my particular mcmc design
 
+get_diag_summ_results.Bayes.PrevMap <- function(mcmc, hpd.coverage = 0.95){
+  # coverage
+  summresults <- summary(mcmc, hpd.coverage)
+  betas <- as.data.frame(summresults$beta )
+  betas$param <- rownames(betas)
+  covars <- as.data.frame( rbind(summresults$sigma2, summresults$phi, summresults$tau2) )
+  covars$param <- c("sigma^2", "phi", "tau^2")
 
+  summresults <- rbind.data.frame(betas, covars) %>% 
+    dplyr::select(c("param", dplyr::everything()))
+
+  
+  # effective sampling
+  params <- summresults$param
+  chains <- lapply(params, function(x) return(mcmc$estimate[,x]))
+  neff <- lapply(chains, function(x){ return(coda::effectiveSize(coda::mcmc(x)))})
+  neff <- data.frame(param = params, neff = unlist(neff))
+  
+  summresults <- dplyr::left_join(summresults, neff, by = "param")
+  
+  # trace plots
+  beta <- recordPlot(PrevMap::trace.plot(mcmc, param = "beta", component.beta = 1))
+  sigma <- recordPlot(PrevMap::trace.plot(mcmc, param = "sigma2"))
+  phi <- recordPlot(PrevMap::trace.plot(mcmc, param = "phi"))
+  tau <- recordPlot(PrevMap::trace.plot(mcmc, param = "tau2"))
+  traceplots <- list(beta, sigma, phi, tau)
+  
+  # autocorr plots
+  beta <- recordPlot(PrevMap::autocor.plot(mcmc, param = "beta", component.beta = 1))
+  sigma <- recordPlot(PrevMap::autocor.plot(mcmc, param = "sigma2"))
+  phi <- recordPlot(PrevMap::autocor.plot(mcmc, param = "phi"))
+  tau <- recordPlot(PrevMap::autocor.plot(mcmc, param = "tau2"))
+  autocorr <- list(beta, sigma, phi, tau)
+  
+  
+  
+  ret <- list(summresults = summresults,
+              traceplots = traceplots,
+              autocorrplots = autocorr)
+  return(ret)
+  
+}
 
 
 
