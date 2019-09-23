@@ -78,10 +78,37 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
   }
 })
 
-#........................
-# From EDA, know some of these need to be dropped
-#........................
-# TODO let's see what happens
+#...............................................................................................
+# Manual processing from EDA, 
+# know some of these parameters need to be changed
+#...............................................................................................
+txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(mlr::makeLearner("regr.lm", predict.type = "response"))
+txs$learnerlib[txs$target == "wlthrcde_combscor_cont"] <- list(mlr::makeLearner("regr.lm", predict.type = "response"))
+txs$learnerlib[txs$target == "ITN_fctb"] <- list(mlr::makeLearner("classif.logreg", predict.type = "prob"))
+
+
+anemiamset<- c("hab57_fctb", "anyatm_cont_logit_scale_clst", "farmer_fctb",
+                "hiv03_fctb", "hv009_cont_scale", "hv21345_fctb",
+                "ITN_fctb", "wlthrcde_combscor_cont")
+
+txs$task[txs$target == "hab57_fctb"] <- list(mlr::makeClassifTask(target = "hab57_fctb", data = dt.ml.cc[,anemiamset], positive = "no"))
+
+
+
+farmermset <- c("farmer_fctb", "anyatm_cont_logit_scale_clst", "hab57_fctb",
+                "hiv03_fctb", "hv009_cont_scale", "hv21345_fctb",
+                "ITN_fctb", "wlthrcde_combscor_cont")
+
+txs$task[txs$target == "farmer_fctb"] <- list(mlr::makeClassifTask(target = "farmer_fctb", 
+                                                                   data = dt.ml.cc[,farmermset], positive = "farmer"))
+
+eduset <- c("hv108_cont_scale", "urban_rura_fctb", "hv104_fctb")
+txs$task[txs$target == "hv108_cont_scale"] <- list(mlr::makeRegrTask(target = "hv108_cont_scale", 
+                                                                           data = dt.ml.cc[,eduset]))
+
+
+
+
 
 #...............................................................................................
 # SUPERLEARNER
@@ -98,7 +125,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
                             params = paramsdf, 
-                            jobname = 'vivid_spSL',
+                            jobname = 'vivid_spSL_final',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

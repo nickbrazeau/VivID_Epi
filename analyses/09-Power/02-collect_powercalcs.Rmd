@@ -7,20 +7,39 @@ output:
     highlight: textmate
     theme: lumen
     toc: yes
+    code_folding: hide
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide')
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
 ```
 
 ```{r}
+library(tidyverse)
 # import data
-load("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/results/powercalcs.rda")
-poweriters.ret <- poweriters.ret %>% 
+power.files <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalc/", pattern = ".RDS", full.names = T)
+power.files <- power.files[!grepl("params.RDS|f.RDS", power.files)]
+
+# need to sort properly
+power.files <- tibble::tibble(power.files = power.files, 
+                              iteration = stringr::str_extract(basename(power.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
+  dplyr::arrange(iteration)
+
+read_power_files <- function(path){
+  ret <- readRDS(path)
+  ret <- dplyr::bind_rows(ret)
+  return(ret)
+}
+
+
+
+power.files.ret <- lapply(power.files$power.files, read_power_files) %>% 
   dplyr::bind_rows()
-poweriters.params.ret <- dplyr::bind_cols(poweriters.paramsdf, poweriters.ret)
+poweriters.ret <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalc/params.RDS") 
+poweriters.params.ret <- dplyr::bind_cols(poweriters.ret, power.files.ret)
+
 
 ```
 
@@ -29,7 +48,7 @@ poweriters.params.ret <- dplyr::bind_cols(poweriters.paramsdf, poweriters.ret)
 ```{r, results='asis', fig.align='center', fig.width=8, fig.height=6}
 
 poweriters.powercalc <- poweriters.params.ret %>% 
-  dplyr::group_by(n, p, exp_prob, p0, OR) %>% 
+  dplyr::group_by(n, p, exp_prob, p0, RR) %>% 
   dplyr::summarise(
     power = mean(p1 < 0.05)
   )
@@ -39,13 +58,13 @@ df <- poweriters.powercalc %>%
                 expprob_f = factor(exp_prob))
 
 
-PowerPlot <- ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
-#  stat_smooth( method = 'nls', formula = y ~ a * exp(b*x), se = FALSE, method.args = list(start=c(a=1,b=-1)) ) + 
+PowerPlot <- ggplot(df, aes(x=beta, y=RR, color = expprob_f)) +
   geom_jitter(alpha=0.8) +
   geom_vline(aes(xintercept=0.2), colour="#de2d26", linetype="dashed") +
-  ggtitle(label="Simulated Odds Ratio versus \n Type II Error (Complement of Power)") +
+  ggtitle(label="Simulated Risk Ratio versus \n Type II Error (Complement of Power)") +
   xlab("Type II Error") + ylab("Risk Ratio") +
   xlim(0,0.5) + # once we fall off we don't care that much
+  ylim(0, 3) + # not impressive to catch an RR of 5...
   scale_color_manual("Exposure Probability", values = c("#8214A0", "#005AC8", "#006E82")) +
   theme(plot.title = element_text(hjust = 0.5, face="bold", size=16),
         axis.title = element_text(hjust = 0.5, size=14),

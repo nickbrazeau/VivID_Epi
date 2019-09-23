@@ -1,16 +1,4 @@
----
-title: "Bayesian Hierarchial Spatial Cluster Models for _P. vivax_ among Asymptomatic Adults in the DRC"
-author: "Nicholas F. Brazeau"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
-output: 
-  html_document:
-    highlight: textmate
-    theme: lumen
-    toc: yes
-    code_folding: hide
-editor_options: 
-  chunk_output_type: console
----
+# Bayesian Hierarchial Spatial Cluster Models 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
@@ -19,7 +7,6 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 Sys.setenv('R_MAX_VSIZE'=32000000000)
 
 ```
-
 
 ```{r}
 
@@ -262,9 +249,15 @@ NB, here it is not quite the same to "turn off space". Instead, we will let the 
 Run out four diagnostic chains to check convergence. 
 ```{r}
 
-# READ RDS  
-mod.framework # <- 
+mod.framework <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Diagnostic_Chains/params.RDS")
 
+mcmc.ret <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Diagnostic_Chains/", full.names = T, pattern = ".RDS")
+mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
+
+# 0-7 index here so don't have to worry about char 10 and 1 being next to eachother
+
+
+mod.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
 
 ```
 
@@ -324,8 +317,14 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-# READ RDS
-long.framework # <- 
+
+long.framework <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/params.RDS")
+
+mcmc.ret <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/", full.names = T, pattern = ".RDS")
+mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
+
+# 0-1 index here so don't have to worry about char 10 and 1 being next to eachother
+long.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
 
 
 ```

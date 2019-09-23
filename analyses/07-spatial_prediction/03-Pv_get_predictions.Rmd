@@ -1,0 +1,143 @@
+# Bayesian Hierarchial Spatial Model Predictions 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center', fig.width = 8, fig.height = 8)
+Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
+Sys.setenv('R_MAX_VSIZE'=32000000000)
+
+```
+
+## Spatial Predictions
+Fitted values are taken from the Hierarchial Bayesian Spatial Models that were previously fit and determined to be the best model choice by model fit (Deviance Information Criteria).
+
+### Province Models
+```{r}
+# import data
+car.mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/results/Province_Bayes_Hierarchial_Model_longchain.rds")
+mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
+
+```
+
+```{r}
+
+car.mod.framework$mcmc.modsum <- purrr::map(car.mod.framework$MCMC, print) 
+car.mod.framework$summresults <- purrr::map(car.mod.framework$mcmc.modsum, "summary.results")
+car.mod.framework$modfit <- purrr::map(car.mod.framework$mcmc.modsum, "modelfit")
+car.mod.framework$DIC <- purrr::map(car.mod.framework$modfit, "DIC")
+
+
+#........................
+# Parameter Est Summaries
+#........................
+names(car.mod.framework$summresults) <- car.mod.framework$name
+car.mod.framework$summresults <- purrr::map(car.mod.framework$summresults, tibble::as_tibble)
+paramest.car.mod.framework <- car.mod.framework$summresults %>% 
+  dplyr::bind_rows(., .id = "model_formulation")
+
+
+DIC.car.mod.framework <- car.mod.framework %>% 
+  dplyr::select(c("name", "DIC")) %>% 
+  dplyr::filter(!duplicated(.)) %>% 
+  tidyr::unnest(DIC) %>% 
+  dplyr::mutate(DIC = round(DIC, 3))
+
+
+
+#........................
+# Subset to Best Model for Plotting
+#........................
+bestmodel.car.mod.framework <- DIC.car.mod.framework$name[DIC.car.mod.framework$DIC == min(DIC.car.mod.framework$DIC)]
+bestmodel.car.mod.framework <- car.mod.framework %>% 
+  dplyr::filter(name == bestmodel.car.mod.framework)
+
+fitted_cases_count <- as.data.frame(bestmodel.car.mod.framework$fitted)
+colnames(fitted_cases_count) <- dimnames(bestmodel.car.mod.framework$W[[1]])[[1]] 
+
+# go to long format
+fitted_cases_count.ret <- fitted_cases_count %>% 
+  tidyr::gather(., key = "adm1name", value = "fittedval") %>% 
+  dplyr::group_by(adm1name) %>% 
+  dplyr::summarise(
+    pv18sprevfitted_low = quantile(fittedval, 0.025),
+    pv18sprevfitted_median = quantile(fittedval, 0.5),
+    pv18sprevfitted_mean = mean(fittedval),
+    pv18sprevfitted_upp = quantile(fittedval, 0.975)
+    
+  )
+
+#........................
+# Bring it home
+#........................
+pv18s.adm1 <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"] 
+pv18s.adm1 <- pv18s.adm1[[1]]
+pv18s.adm1 <- dplyr::left_join(pv18s.adm1, fitted_cases_count.ret, by = "adm1name")
+
+#........................
+# Save out for prov
+#........................
+save(pv18s.adm1, car.mod.framework, 
+     paramest.car.mod.framework, DIC.car.mod.framework, 
+     bestmodel.car.mod.framework, 
+     moranI.car.mod.framework, 
+     file = "results/ProvAreal_BHM_CARBayes_models_out.rda")
+
+
+
+
+```
+
+### Cluster Models
+
+```{r}
+
+# import data 
+gp.mod.framework <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/params.RDS")
+
+mcmc.ret <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/", full.names = T, pattern = ".RDS")
+mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
+
+# 0-1 index here so don't have to worry about char 10 and 1 being next to eachother
+gp.mod.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
+
+
+```
+
+```{r}
+#...............................
+# make prediction surfaces
+#...............................
+
+# boundaries for prediction
+poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
+grid.pred <- splancs::gridpts(poly, xs=0.1, ys=0.1)
+colnames(grid.pred) <- c("long","lat")
+
+gp.mod.framework$grid.pred <- lapply(1:nrow(gp.mod.framework), function(x) return(grid.pred))
+
+pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred){
+  ret <- PrevMap::spatial.pred.binomial.Bayes(object = mcmc, grid.pred = grid.pred,
+                                              type = "marginal", 
+                                              scale.predictions = "prevalence",
+                                              quantiles = NULL, 
+                                              standard.error = T, 
+                                              thresholds = NULL)
+  return(ret)
+  
+}
+
+
+gp.mod.framework$prevrasters <- purrr::map2(gp.mod.framework$mcmc, gp.mod.framework$grid.pred, 
+                                            pred_PrevMap_bayes_wrapper) 
+
+# NEED TO FIGURE OUT HOW TO EXTRACT OUT JUST RESULTS
+# AND STANDARD ERRORS ... and then can use this function
+
+
+prevmaprasterplotter(prevrasters, smoothfct = 5, alpha = 0.8)
+
+
+
+```
+
+# TODO SE PLOTS

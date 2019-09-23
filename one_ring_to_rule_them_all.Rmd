@@ -1,0 +1,49 @@
+---
+title: "_P. vivax_ Among Asymptomatic Adults in the DRC"
+author: "Nicholas F. Brazeau"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    highlight: textmate
+    theme: lumen
+    toc: yes
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center')
+
+Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
+Sys.setenv('R_MAX_VSIZE'=32000000000)
+
+```
+
+```{r child1 = 'analyses/03-Univar_Bivar_Assoc.Rmd'}
+```
+
+```{r child2 = 'analyses/04-basic_mapping.Rmd'}
+```
+
+```{r child3 = 'analyses/05-covar_assoc/02-analyze_corr.Rmd'}
+```
+
+```{r child4 = 'analyses/06-IPW_ML/04-MSM_RRest.Rmd'}
+```
+
+```{r child5 = 'analyses/07-spatial_prediction/01-Pv_areal_CAR_MCMC.Rmd'}
+```
+
+```{r child6 = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'}
+```
+
+```{r child7 = 'analyses/07-spatial_prediction/03-Pv_get_predictions.Rmd'}
+```
+
+```{r child8 = 'analyses/08-species_interference.Rmd'}
+```
+
+```{r child9 = 'analyses/09-Power/02-collect_powercalcs.Rmd'}
+```

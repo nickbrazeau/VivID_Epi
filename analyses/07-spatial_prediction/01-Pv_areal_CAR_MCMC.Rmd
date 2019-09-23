@@ -13,7 +13,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 Sys.setenv('R_MAX_VSIZE'=32000000000)
@@ -162,7 +162,7 @@ mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
 ```
 
 #### MCMC Diagnostics 
-Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
+Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1, 000 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
 ##### Param Diagnostics
 ```{r, results='asis'}
@@ -203,15 +203,15 @@ Note, there are too many chains for visualizing here. Writing out to local direc
 # Let's Look at the Chains
 #............................
 mod.framework$samples <- purrr::map(mod.framework$MCMC, "samples")
-mod.framework$beta <- purrr::map(mod.framework$samples, "beta")
-mod.framework$phi <- purrr::map(mod.framework$samples, "phi")
-mod.framework$tau2 <- purrr::map(mod.framework$samples, "tau2")
-mod.framework$rho <- purrr::map(mod.framework$samples, "rho")
-mod.framework$fitted <- purrr::map(mod.framework$samples, "fitted")
+mod.framework$betachains <- purrr::map(mod.framework$samples, "beta")
+mod.framework$phichains <- purrr::map(mod.framework$samples, "phi")
+mod.framework$tau2chains <- purrr::map(mod.framework$samples, "tau2")
+mod.framework$rhochains <- purrr::map(mod.framework$samples, "rho")
+mod.framework$fittedchains <- purrr::map(mod.framework$samples, "fitted")
 
 
 chains <- mod.framework %>% 
-  dplyr::select(c("name", "beta", "phi", "tau2", "rho", "fitted")) %>% 
+  dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains", "fittedchains")) %>% 
   dplyr::group_by(name) %>% 
   tidyr::nest()
 
@@ -286,16 +286,16 @@ Note, still a lot of chains for visualizing here. Writing out to local directory
 #............................
 # Let's Look at the Chains
 #............................
-mod.framework.long$samples <- purrr::map(mod.framework$MCMC, "samples")
-mod.framework.long$beta <- purrr::map(mod.framework$samples, "beta")
-mod.framework.long$phi <- purrr::map(mod.framework$samples, "phi")
-mod.framework.long$tau2 <- purrr::map(mod.framework$samples, "tau2")
-mod.framework.long$rho <- purrr::map(mod.framework$samples, "rho")
-mod.framework.long$fitted <- purrr::map(mod.framework$samples, "fitted")
+mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
+mod.framework.long$betachains <- purrr::map(mod.framework.long$samples, "beta")
+mod.framework.long$phichains <- purrr::map(mod.framework.long$samples, "phi")
+mod.framework.long$tau2chains <- purrr::map(mod.framework.long$samples, "tau2")
+mod.framework.long$rhochains <- purrr::map(mod.framework.long$samples, "rho")
+mod.framework.long$fittedchains <- purrr::map(mod.framework.long$samples, "fitted")
 
 
 chains <- mod.framework.long %>% 
-  dplyr::select(c("name", "beta", "phi", "tau2", "rho", "fitted")) %>% 
+  dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains", "fittedchains")) %>% 
   dplyr::group_by(name) %>% 
   tidyr::nest()
 

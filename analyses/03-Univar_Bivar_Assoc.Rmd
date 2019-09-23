@@ -1,20 +1,4 @@
----
-title: "Univariate and Bivariate Summary Statistics for _P. vivax_ and _P. falciparum_ Malaria among Asymptomatic Adults in the DRC"
-author: "Nicholas F. Brazeau"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
-output: 
-  html_document:
-    highlight: textmate
-    theme: lumen
-    toc: yes
-    code_folding: hide
-editor_options: 
-  chunk_output_type: console
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide')
-```
+# Section 1: Univariate and Bivariate Summary Statistics
 
 ```{r}
 #-----------------------------------------------------------------------------------------------
@@ -46,11 +30,9 @@ dtsrvy <- makecd2013survey(survey = dt)
 ```
 
 
-### Basic Summary Statistics
+## Prevalence
 
-#### Prevalence
-
-##### National Prevalence
+### National Prevalence
 Fit basic intercept weighted-glm to derive weighted national prevalence. 
 
 ```{r, results='asis'}
@@ -83,7 +65,7 @@ rbind.data.frame( cbind.data.frame(species = "Pv", drcpv),
 
 ```
 
-##### Cluster Level Prevalence 
+### Cluster Level Prevalence 
 NB Given that everyone is weighted the same in the cluster, we do not need to use weights explicitly. However, this will results in the slightly different numerator (e.g. $n_numerator$) but the denominators adjust for this. Caution is warranted when reporting weighted versus unweighted Ns at the cluster-level for this reason. 
   
 NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used a logit transformation and the t-distribution to estimate these CIs.    
@@ -180,8 +162,8 @@ graphics.off()
 ```
 
 
-#### Coinfections
-##### Unweighted Counts
+## Coinfections
+### Unweighted Counts
 ```{r, results='asis'}
 
 # coinfections unweighted
@@ -210,7 +192,7 @@ knitr::kable(coinfxn)
 
 ```
 
-##### Weighted Counts
+### Weighted Counts
 ```{r, results='asis'}
 # need weighed counts
 coinfxn.wi <- dtsrvy %>% 
@@ -237,8 +219,8 @@ knitr::kable(coinfxn.wi)
 
 ```
 
-### Table One(s)
-#### _P. vivax_ Infected vs. Uninfected
+# Table One(s)
+## _P. vivax_ Infected vs. Uninfected
 ```{r, results='asis'}
 #------------------------------------------------------------------------------------- 
 # TABLE ONE -- bivariate analyses, descriptive
@@ -259,7 +241,7 @@ tableone::kableone(pvivtbl1)
 
 ```
 
-#### _P. falciparum_ Infected vs. Uninfected
+## _P. falciparum_ Infected vs. Uninfected
 ```{r, results='asis'}
 
 #.......................
@@ -279,7 +261,7 @@ tableone::kableone(pfaltbl1)
 
 ```
 
-#### Infected with Malaria vs. Not-Infected
+## Infected with Malaria vs. Not-Infected
 ```{r, results='asis'}
 #------------------------------------------------------------------------------------
 # Make Pv Cases, Pf Cases, and Non-Cases Table
@@ -303,12 +285,12 @@ tableone::kableone(casestbl1)
 
 ```
 
-### Table Two(s)
+# Table Two(s)
 N.B. We have no scaled (i.e. mean-centered and standardized) all continous variables with the exception of the wlth variable, as it was already a factor score. Dichotomized variables have the presumed protective level as the reference level.   
   
 N.B. Parametric association test using GEE (`svyglm` is performing GEE with the sampling weights considered "repeat" observations). Given that we are not considering confounding in these estimates, they are purely assocations and should not be overly interpreted. 
 
-#### _P. vivax_ Risk Bivariate **Associations**
+## _P. vivax_ Risk Bivariate **Associations**
 ```{r, results='asis'}
 
 #-----------------------------------------------------------------------------------------
@@ -338,7 +320,7 @@ knitr::kable(pvivrskfctr_est)
 
 ```
 
-#### _P. falciparum_ Risk Bivariate **Associations**
+## _P. falciparum_ Risk Bivariate **Associations**
 ```{r, results='asis'}
 #.......................
 # Pfalciparum 
@@ -418,10 +400,26 @@ pfalriskfactortable <- pfalriskfactortable %>%
 
 
 
+#.......................
+# Cases to DF 
+#.......................
+casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
+                                                           "Case-Negative",
+                                                           "Case-Positive",
+                                                           "matchcol"))
+
+casestbl1df <- dcdr %>% 
+  dplyr::select(c("column_name", "var_label")) %>% 
+  dplyr::rename(matchcol = column_name) %>% 
+  dplyr::left_join(casestbl11df, ., by = "matchcol") %>% 
+  dplyr::select(c("var_label", dplyr::everything()))
+
+
+
 
 ```
 
-#### _P. vivax_ Risk Association Table 
+## _P. vivax_ Risk Association Table 
 ```{r, results='asis'}
 DT::datatable(pvivriskfactortable, 
               rownames = F,
@@ -437,7 +435,7 @@ DT::datatable(pvivriskfactortable,
 ```
 
 
-#### _P. falciparum_ Risk Association Table 
+## _P. falciparum_ Risk Association Table 
 ```{r, results='asis'}
 DT::datatable(pfalriskfactortable, 
               rownames = F,
@@ -453,7 +451,7 @@ DT::datatable(pfalriskfactortable,
 ```
 
 
-#### Malaria Risk Association Figure
+## Malaria Risk Association Figure
 
 ```{r, results='asis', fig.align='center', fig.width=8, fig.height=8}
 #...................................................
@@ -619,12 +617,12 @@ readr::write_csv(x = pfalriskfactortable,
 
 ```
 
-## N.B. Future Exclusions
+#### N.B. Future Exclusions
 The HIV covariates and temperatuare covariate are excluded in downstream analyses. HIV was excluded as too few people were HIV-positive to consider it a meaningful risk factor. Temperature was excluded as altitude was considered an instrumental variable for temperature (as well as being so collinear that we could not untangle them). As a result, only altitude was kept in the DAG and considered for IPTWs.
 
 
-## Appendix
-#### Cluster Level Prevalences Table (Unweighted Ns)
+#### Appendix
+##### Cluster Level Prevalences Table (Unweighted Ns)
 ```{r, results='asis'}
 
 clst %>% 
@@ -638,7 +636,7 @@ clst %>%
 
 ```
 
-#### Cluster Level Prevalences Table (Weighted Ns)
+##### Cluster Level Prevalences Table (Weighted Ns)
 ```{r, results='asis'}
 
 clstprev %>% 

@@ -334,4 +334,7 @@ base.learners.regr <- append(base.learners.regr, list(regr.rf.m1t500,
                                                       regr.rf.m5t1000
 ))
 
-
+remove <- ls()
+remove <- remove[! remove %in% c("base.learners.regr", "base.learners.classif")]
+remove <- remove[grepl("regr.|classif.", remove)]
+rm(list = c(remove, "remove"))

@@ -60,7 +60,7 @@ wrap_chain_plotter.carbayes <- function(diag.dir, chains){
     filename <- paste0(diag.dir, name, "_", colnames(data), ".jpg") 
     
     for(i in 1:ncol(data)){
-      make_mcmc_chain_plots(chaindat = data[,i], filename = filename[i])
+      make_mcmc_chain_plots.carbayes(chaindat = data[,i], filename = filename[i])
     }
   })
   

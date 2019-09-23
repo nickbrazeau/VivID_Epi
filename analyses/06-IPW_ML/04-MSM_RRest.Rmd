@@ -13,7 +13,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide')
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
 ```
 
 ```{r}

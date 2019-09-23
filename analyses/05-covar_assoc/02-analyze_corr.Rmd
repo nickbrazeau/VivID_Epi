@@ -14,12 +14,13 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = F, message = F, eval = T, results = 'hide',
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 ```
 
 ```{r}
 library(tidyverse)
+library(sf)
 library(mice)
 library(srvyr)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
@@ -57,14 +58,76 @@ covar.files <- tibble::tibble(covar.files = covar.files,
                               iteration = stringr::str_extract(basename(covar.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
   dplyr::arrange(iteration)
 
+read_covar_files <- function(path){
+  ret <- readRDS(path)
+  ret <- unname(ret)
+  return(ret)
+}
 
-readRDS(covar.files$covar.files[1])
+
+
+covar.results.vals <- lapply(covar.files$covar.files, read_covar_files) %>% 
+  do.call("rbind", .)
+
+
+paramsdf <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/05-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
+  dplyr::select(-c(data))
+
+covar.results <- paramsdf
+covar.results$dist <- unlist(covar.results.vals)
+
+
+nameliftover <- dcdr %>% 
+  dplyr::select(c("column_name", "abridged_var_label")) %>% 
+  dplyr::rename(covar1 = column_name,
+                varlab = abridged_var_label)
+
+covar.results <- dplyr::left_join(covar.results, nameliftover, by = "covar1")
+
+nameliftover <- nameliftover %>% 
+  dplyr::rename(covar2 = covar1)
+
+covar.results <- dplyr::left_join(covar.results, nameliftover, by = "covar2")
 
 ```
 
+```{r}
+
+
+covar.plotObj <- covar.results %>% 
+    dplyr::mutate(varlab.x = forcats::fct_rev(forcats::fct_reorder(.f = varlab.x, .x = varlab.x, .fun = length)),
+                varlab.y = forcats::fct_rev(forcats::fct_reorder(.f = varlab.y, .x = varlab.y, .fun = length))) %>% 
+  ggplot() + 
+  geom_tile(aes(x=varlab.x, y=varlab.y, fill = dist)) + 
+  ggtitle("Covariate Collinearity") +
+  scale_fill_viridis_c("Distance Correlation") + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(vjust = 0.5, hjust = 0.5, size = 11, face = "bold"), 
+    axis.title = element_blank(),
+    axis.text.y = element_text(size = 8),
+    axis.text.x = element_text(angle = 90, size = 8, hjust = 1),
+    legend.position = "right",
+    legend.text = element_text(hjust = 0.5, vjust = 0.5, size = 8),
+    plot.background = element_blank(),
+    panel.grid = element_blank()
+    )
+
+plot(covar.plotObj)
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Covariate_Collinearity.jpg", width = 11, height = 8, units = "in", res = 500)
+plot(covar.plotObj)
+graphics.off()
+
+
+```
+
+
+
 #### Parametric Approach - VIFs
 
-```{r}
+```{r, results='asis'}
 
 dtsrvy <- makecd2013survey(survey = dt)
 # VIF
@@ -79,7 +142,7 @@ stargazer::stargazer(model.sat, type = "html")
 ```
   
    
-```{r, results=asis}
+```{r, results='asis'}
 
 vifs <- car::vif(model.sat)
 vifs.df <- cbind.data.frame(covar = names(vifs), VIF = vifs) 
@@ -92,25 +155,30 @@ Note, the VIFs are reasonable (none greater than 10). This is encouraging.
 
 
 ### Missingness
+
 #### `mice` Plot
-```{r}
+
+```{r mice, results='asis'}
 
 dtsrvy %>% 
   dplyr::select(rskfctr) %>% 
   as.data.frame(.) %>% 
   mice::md.pattern(., plot=T, rotate.names = T)
+
 ```
 
 #### Weighted Missingness
-```{r}
+
+```{r wichunk, results='asis'}
 # Are my missing cases fundamentally different?
-dt.cmpl <- dt %>% 
-  dplyr::select(c("hv001", "hv023", "hv005_wi", rskfctr)) %>% 
+dt.cmpl <- dt %>%
+  dplyr::select(c("hv001", "hv023", "hv005_wi", rskfctr)) %>%
   dplyr::mutate(
     ismissing = ifelse(rowSums(is.na(.)) == 0, "no", "yes"),
     ismissing = factor(ismissing))
 
 sf::st_geometry(dt.cmpl) <- NULL
+
 dt.cmpl.srvy <- makecd2013survey(dt.cmpl)
 
 
@@ -122,8 +190,13 @@ misstbl1 <- tableone::svyCreateTableOne(
   smd = T,
   test = F)
 
-print(misstbl1, smd = TRUE)
+tableone::kableone(misstbl1)
 
+```
+
+##### Missingness Widespread?
+
+```{r misspread, results = 'asis'}
 # are missing samples spread out?
 dt.cmpl %>% 
   dplyr::group_by(hv001) %>% 
@@ -131,12 +204,17 @@ dt.cmpl %>%
   dplyr::summarise(
     n = n()
   ) %>% 
-  DT::datatable()
-
+  DT::datatable(., extensions='Buttons',
+               options = list(
+              searching = T,
+              pageLength = 20,
+              dom = 'Bfrtip', 
+              buttons = c('csv')))
 
 
 
 ```
+
 
 ### Final Thoughts
 #### Collinearity
