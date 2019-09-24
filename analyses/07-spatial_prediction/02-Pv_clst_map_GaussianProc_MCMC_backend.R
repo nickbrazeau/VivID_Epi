@@ -170,7 +170,7 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,
-                                                 'cpus-per-task' = 8,
+                                                 'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
