@@ -1,17 +1,5 @@
----
-title: "Exploratory Data Analysis of Risk Factors"
-subtitle: "Primarily Exploration of Risk Factor Covariance and Missingness"
-author: "Nicholas F. Brazeau"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
-output: 
-  html_document:
-    highlight: textmate
-    theme: lumen
-    toc: yes
-    code_folding: hide
-editor_options: 
-  chunk_output_type: console
----
+
+# Exploratory Data Analysis of Risk Factors
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
