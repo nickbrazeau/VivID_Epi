@@ -82,9 +82,9 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 # Manual processing from EDA, 
 # know some of these parameters need to be changed
 #...............................................................................................
-txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(mlr::makeLearner("regr.lm", predict.type = "response"))
-txs$learnerlib[txs$target == "wlthrcde_combscor_cont"] <- list(mlr::makeLearner("regr.lm", predict.type = "response"))
-txs$learnerlib[txs$target == "ITN_fctb"] <- list(mlr::makeLearner("classif.logreg", predict.type = "prob"))
+txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+txs$learnerlib[txs$target == "wlthrcde_combscor_cont"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 
 
 anemiamset<- c("hab57_fctb", "anyatm_cont_logit_scale_clst", "farmer_fctb",
@@ -133,7 +133,7 @@ sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred,
                                                  array = sprintf("0-%d%%%d", 
                                                                  ntry, 
                                                                  17),
-                                                 'cpus-per-task' = 8,
+                                                 'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))

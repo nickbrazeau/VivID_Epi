@@ -50,6 +50,13 @@ brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI
 
 
 #..............................
+# Pull down ocean
+#..............................
+# https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_ocean.zip
+oceans <- sf::st_read("~/Documents/GitHub/VivID_Epi/data/map_bases/ne_10m_ocean/ne_10m_ocean.shp")
+
+
+#..............................
 # Pull down terrain and hill shading
 #..............................
 bb <- osmdata::getbb("Democratic Republic of the Congo", featuretype = "country")
@@ -90,6 +97,7 @@ prettybasemap_terraincolors <- list(
   geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
   geom_sf(data = DRCprov, fill = "NA"),
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
@@ -102,7 +110,7 @@ prettybasemap_terraincolors <- list(
         axis.title = element_blank()) # overwrite vivid theme
 )
 
-  
+
 prettybasemap_nodrc <- list(
   # geom_raster(data=hill.df, aes(lon, lat, fill=hill)) +
   # geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7) +
@@ -119,6 +127,7 @@ prettybasemap_nodrc <- list(
   geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
   # geom_sf(data = DRCprov, fill = "NA"),
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
@@ -130,6 +139,7 @@ prettybasemap_nodrc <- list(
         axis.text = element_blank(),
         axis.title = element_blank()) # overwrite vivid theme
 )
+
 
 
 prettybasemap_nodrc_nonorth <- list(
@@ -148,11 +158,12 @@ prettybasemap_nodrc_nonorth <- list(
   geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
   # geom_sf(data = DRCprov, fill = "NA"),
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
            datum = NA),
-#  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  # ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
   vivid_theme,
   theme(panel.background = element_rect(fill = "#9ecae1"),
         panel.grid = element_line(colour="transparent"),
@@ -177,6 +188,7 @@ prettybasemap_hillgrey <- list(
   geom_sf(data = brdrcnt[[10]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[11]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[12]], fill = "#f0f0f0", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
   geom_sf(data = DRCprov, fill = "NA"),
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
@@ -195,10 +207,7 @@ prettybasemap_hillgrey <- list(
 #----------------------------------------------------------------------------------------------------
 # Save Objects & Write out
 #----------------------------------------------------------------------------------------------------
-save(prettybasemap_terraincolors, prettybasemap_hillgrey, prettybasemap_nodrc, prettybasemap_nodrc_nonorth,
+save(prettybasemap_terraincolors, prettybasemap_hillgrey, prettybasemap_nodrc,
+     prettybasemap_nodrc_nonorth,
      file = "data/map_bases/vivid_maps_bases.rda")
 saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")
-
-
-
-

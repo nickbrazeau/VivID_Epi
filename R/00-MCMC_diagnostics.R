@@ -35,7 +35,7 @@ checkConvergence <- function(burnin, samples) {
 # Internal use function, not good for corner cases
 #----------------------------------------------------
 
-make_mcmc_chain_plots.carbayes <- function(chaindat, filename){
+make_mcmc_chain_plots.carbayes.diag <- function(chaindat, filename){
   # check if chaindat wasn't fit, i.e. rho in ICAR model
   if(is.na(chaindat[[1]][[1]])){
     plot(1)
@@ -51,7 +51,7 @@ make_mcmc_chain_plots.carbayes <- function(chaindat, filename){
   }
 }
 
-wrap_chain_plotter.carbayes <- function(diag.dir, chains){
+wrap_chain_plotter.carbayes.diag <- function(diag.dir, chains){
   # this function does not return anything
   # it is internally making plots
   
@@ -60,7 +60,35 @@ wrap_chain_plotter.carbayes <- function(diag.dir, chains){
     filename <- paste0(diag.dir, name, "_", colnames(data), ".jpg") 
     
     for(i in 1:ncol(data)){
-      make_mcmc_chain_plots.carbayes(chaindat = data[,i], filename = filename[i])
+      make_mcmc_chain_plots.carbayes.diag(chaindat = data[,i], filename = filename[i])
+    }
+  })
+  
+}
+
+make_mcmc_chain_plots.carbayes.final<- function(chaindat, filename){
+  # check if chaindat wasn't fit, i.e. rho in ICAR model
+  if(is.na(chaindat[[1]][[1]])){
+    plot(1)
+  } else {
+    
+    jpeg(filename, height = 8, width = 11, units = "in", res=200)
+    par(mfrow=c(2,2))
+    plot(chaindat[[1]][[1]])
+    graphics.off()
+  }
+}
+
+wrap_chain_plotter.carbayes.final <- function(final.dif, chains){
+  # this function does not return anything
+  # it is internally making plots
+  
+  purrr::pmap(chains, function(data, name){
+    
+    filename <- paste0(final.dif, name, "_", colnames(data), ".jpg") 
+    
+    for(i in 1:ncol(data)){
+      make_mcmc_chain_plots.carbayes.final(chaindat = data[,i], filename = filename[i])
     }
   })
   

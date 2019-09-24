@@ -217,7 +217,7 @@ chains <- mod.framework %>%
 
 mydiagnosticdir <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_diagnostic_chains/"
 dir.create(mydiagnosticdir, recursive = T)
-wrap_chain_plotter.carbayes(diag.dir = mydiagnosticdir, chains = chains)
+wrap_chain_plotter.carbayes.diag(diag.dir = mydiagnosticdir, chains = chains)
 
 
 ```
@@ -249,15 +249,15 @@ Note, our goal is still to have the effective sample sizes (`n.effective`) to be
 #-------------------------------------------------------------------------
 mod.framework.long$mcmc.modsum <- purrr::map(mod.framework.long$MCMC, print) # note, print is overloaded here
 mod.framework.long$summresults <- purrr::map(mod.framework.long$mcmc.modsum, "summary.results")
-mod.framework.long$summresults <- purrr::map(mod.framework.long$summresults, function(x){
+mod.framework.long$summresultsdf <- purrr::map(mod.framework.long$summresults, function(x){
   pars <- rownames(x)
   ret <- cbind.data.frame(pars = pars, as.data.frame(x))
   return(ret)
 })
 
 mod.framework.long.res <- mod.framework.long %>% 
-  dplyr::select(c("name", "formula", "rho", "summresults")) %>% 
-  tidyr::unnest(cols = "summresults") 
+  dplyr::select(c("name", "formula", "rho", "summresultsdf")) %>% 
+  tidyr::unnest(cols = "summresultsdf") 
 
 mod.framework.long.res %>% 
   dplyr::mutate(
@@ -267,7 +267,24 @@ mod.framework.long.res %>%
                                     color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>% 
   kableExtra::kable(format = "html", escape = F) %>%
   kableExtra::kable_styling("striped", full_width = F) 
+```
 
+### Long Chain DIC
+
+```{r, results='asis'}
+
+
+mod.framework.long$modfit <- purrr::map(mod.framework.long$mcmc.modsum, "modelfit")
+mod.framework.long$DIC <- purrr::map(mod.framework.long$modfit, "DIC")
+
+data.frame(name = mod.framework.long$name, DIC = unlist(mod.framework.long$DIC)) %>% 
+  kableExtra::kable(format = "html", escape = F) %>%
+  kableExtra::kable_styling("striped", full_width = F) 
+
+```
+
+
+```{r}
 
 # write out these final models
 readr::write_csv(x = mod.framework.long.res, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
@@ -301,7 +318,7 @@ chains <- mod.framework.long %>%
 
 myfinalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/"
 dir.create(myfinalchain, recursive = T)
-wrap_chain_plotter.carbayes(diag.dir = myfinalchain, chains = chains)
+wrap_chain_plotter.carbayes.final(final.dir = myfinalchain, chains = chains)
 
 
 ```

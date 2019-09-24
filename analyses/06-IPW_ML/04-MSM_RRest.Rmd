@@ -18,8 +18,8 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 
 ```{r}
 library(tidyverse)
-devtools::install_github("malcolmbarrett/ggdag"); library(ggdag)
-
+remotes::install_github("malcolmbarrett/ggdag"); library(ggdag)
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
 ```
 
 
@@ -54,6 +54,72 @@ graphics.off()
 
 ```
 
+```{r}
+# import data
+varstoinclude <- c("pv18s" , "pfldh", "hv001", "hv023", "hv005_wi", txs$target,
+                   "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
+                   "urban_rura_fctb", "alt_dem_cont_scale_clst",
+                   "hiv03_fctb", # no longer considered risk factor bc too few observations
+                   "longnum", "latnum")
+
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+sf::st_geometry(dt) <- NULL
+
+# subset to complete cases
+dt.ml.cc <- dt  %>% 
+  dplyr::select(varstoinclude) %>% 
+  dplyr::filter(complete.cases(.)) 
+
+
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
+                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model)) %>% 
+  dplyr::select(c("column_name", "abridged_var_label", "risk_factor_model", "level")) %>% 
+  dplyr::filter(risk_factor_model == "y") %>% 
+  dplyr::filter(column_name != "hiv03_fctb")
+
+```
+
+```{r}
+# weights
+
+params$SLpreds <-purrr::map(params$SL, "SL.predictions")
+params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
+params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
+
+wi <- params %>% 
+  dplyr::select(c("target", "iptw"))
+
+
+```
+
+```{r}
+
+makeiptwsrvy <- function(x){
+  if(is.null(x)){
+    x <- 1
+  }
+  dt.ml.cc$wi <- x*dt.ml.cc$hv005_wi
+  dtsrvy <- dt.ml.cc %>% srvyr::as_survey_design(ids = hv001, 
+                                              #   strata = hv023, 
+                                                 weights = wi)
+  return(dtsrvy)
+    }
+
+
+fitglmlogit <- function(outcome, target, iptwsrvy){
+    iptwsrvy <- iptwsrvy %>% 
+    dplyr::select(c(outcome, target))
+  
+  eq <- as.formula(paste0(outcome, "~", target))
+  ret <- survey::svyglm(eq,
+                        design = iptwsrvy,
+                        family = quasibinomial(link="logit"))
+  return(ret)
+}
+
+```
+
 
 ## _P. vivax_ Risk Factor IPTW-Prevelance Ratios
 ```{r}
@@ -62,41 +128,142 @@ graphics.off()
 #.......................
 pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
 pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
-                                 covar = pvivrskfctr, stringsAsFactors=FALSE)
+                                 target = pvivrskfctr, stringsAsFactors=FALSE)
 
-pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
-pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlog,
+pvivrskfctr_models <- dplyr::left_join(pvivrskfctr_models, wi, by = "target")
+
+
+pvivrskfctr_models$iptwsrvy <- purrr::map(pvivrskfctr_models$iptw, makeiptwsrvy)
+
+
+pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models[,c("outcome", "target", "iptwsrvy")], fitglmlogit)
+
+pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlogit,
                                                .f=function(x){
                                                  broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
 )
+
 pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
-  mutate_if(is.numeric, round, 2)
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(species = "Pv")
 
 ```
 
+## _P. falciparum_ IPTW-OR
+```{r, results='asis'}
+knitr::kable(pvivrskfctr_est)
+```
 
 ## _P. falciparum_ Risk Factor IPTW-Prevelance Ratios
 ```{r}
 #.......................
 # Pfalciparum 
 #.......................
+# TODO update to include pf and pv as risk factors as well
+
 pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y" & dcdr$column_name != "pfldh_fctb"]
-pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
-                                 covar = pfalrskfctr, stringsAsFactors=FALSE)
+                                 target = pfalrskfctr, stringsAsFactors=FALSE)
 
-pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlogit)
+pfalrskfctr_models <- dplyr::left_join(pfalrskfctr_models, wi, by = "target")
 
+pfalrskfctr_models$iptwsrvy <- purrr::map(pfalrskfctr_models$iptw, makeiptwsrvy)
+
+pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models[,c("outcome", "target", "iptwsrvy")], fitglmlogit)
 
 pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
                                                .f=function(x){
-                                                 broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
-
+                                                 broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+)
 
 pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
-  mutate_if(is.numeric, round, 2)
-
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(species = "Pf")
 
 ```
+
+## _P. falciparum_ IPTW-OR
+```{r, results='asis'}
+knitr::kable(pfalrskfctr_est)
+```
+
+## IPTW OR Plot
+```{r, results='asis'}
+
+#...................................................
+# Tidy
+#...................................................
+pvriskest <- pvivrskfctr_models$glmlogit_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  dplyr::rename(column_name = term) %>% 
+  dplyr::mutate(
+    column_name = ifelse(grepl("_fctb", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb"),
+                         column_name)
+  )
+
+pvriskest <- dplyr::left_join(pvriskest, dcdr, by = "column_name") %>% 
+  dplyr::mutate(species = "Pv")
+orderrf <- pvriskest %>% 
+  dplyr::arrange(level) %>% 
+  dplyr::select(abridged_var_label) %>% 
+  unlist(.)
+
+# PF
+pfriskest <- pfalrskfctr_models$glmlogit_tidy %>% 
+  bind_rows() %>% filter(term != "(Intercept)") %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  dplyr::rename(column_name = term) %>% 
+  dplyr::mutate(
+    column_name = ifelse(grepl("_fctb", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb"),
+                         column_name)
+  )
+
+pfriskest <- dplyr::left_join(pfriskest, dcdr, by = "column_name") %>% 
+  dplyr::mutate(species = "Pf")
+malriskest <- dplyr::bind_rows(pvriskest, pfriskest)
+
+
+
+#...................................................
+# Make Plots
+#...................................................
+
+mal_iptw_plot <- malriskest %>% 
+  dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>% 
+  ggplot() +
+  geom_hline(yintercept = 1, color = "#cb181d", linetype = "dashed") +
+  geom_pointrange(aes(x = abridged_var_label, y = estimate, 
+                      ymin = conf.low, ymax = conf.high,
+                      color = factor(species))) +
+  scale_color_viridis_d("Species") +
+  coord_flip() + 
+  ylab("Prevalence Odds Ratio") + 
+  theme(
+    plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
+    axis.title.y = element_blank(),
+    legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    legend.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 10, angle = 0),
+    legend.position = "right",
+    axis.line.x = element_line(color = "black", size = 1.5),
+    axis.line.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.background = element_rect(fill = "transparent"),
+    plot.background = element_rect(fill = "transparent"),
+    panel.grid = element_blank(),
+    panel.border = element_blank())
+    
+
+
+jpeg("~/Desktop/IPTW-figure-for-jon.jpg", height = 11, width = 8, units = "in", res = 500)
+plot(mal_iptw_plot)
+graphics.off()
+
+```
+

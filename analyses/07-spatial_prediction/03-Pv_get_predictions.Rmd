@@ -17,6 +17,9 @@ Fitted values are taken from the Hierarchial Bayesian Spatial Models that were p
 car.mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/results/Province_Bayes_Hierarchial_Model_longchain.rds")
 mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
 
+
+# TODO IMPORT THE BEST MODEL FIT NOT ALL OF THIS STUFF
+
 ```
 
 ```{r}

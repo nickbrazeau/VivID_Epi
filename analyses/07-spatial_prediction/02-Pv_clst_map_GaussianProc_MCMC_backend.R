@@ -94,8 +94,8 @@ mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0),
                                        log.normal.sigma = c(0,25)
 )
 
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e1, 
-                                                        n.sim = 1e2,
+mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
+                                                        n.sim = 1e5,
                                                         thin = 1, # don't thin
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
@@ -105,8 +105,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e1,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e1, 
-                                                  n.sim = 1e2,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
+                                                  n.sim = 1e5,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
@@ -225,8 +225,11 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
-                            slurm_options = list(mem = 128000,
-                                                 'cpus-per-task' = 8,
+                            slurm_options = list(mem = 32000,
+                                                 array = sprintf("0-%d%%%d", 
+                                                                 ntry, 
+                                                                 17),
+                                                 'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
