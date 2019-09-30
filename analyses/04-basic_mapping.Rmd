@@ -334,21 +334,21 @@ pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
 #..............................
 prevmaprasterplots <- lapply(pr$prevrasterspred,
                              prevmaprasterplotter, smoothfct = rep(7,3))
-prevmaprasterplots <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
+prevmaprasterplots.north <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
 
 
 
-cowplot::plot_grid(prevmaprasterplots[[1]],
-                   prevmaprasterplots[[2]],
-                   prevmaprasterplots[[3]],
+cowplot::plot_grid(prevmaprasterplots.north[[1]],
+                   prevmaprasterplots.north[[2]],
+                   prevmaprasterplots.north[[3]],
                   nrow = 1)
 
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/PrevMap_Plots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
-cowplot::plot_grid(prevmaprasterplots[[1]],
-                   prevmaprasterplots[[2]],
-                   prevmaprasterplots[[3]],
+cowplot::plot_grid(prevmaprasterplots.north[[1]],
+                   prevmaprasterplots.north[[2]],
+                   prevmaprasterplots.north[[3]],
                   ncol = 1)
 graphics.off()
 
@@ -509,13 +509,13 @@ gridExtra::grid.arrange(
 graphics.off()
 ```
 
-```{r, results = 'asis'}
+```{r, results = 'asis', fig.width= 12, fig.height=12}
 
 gridExtra::grid.arrange(
   provmaps_lrg[[1]], caseprevmaps_lrg[[1]], prevmaprasterplots_lrg[[1]],
   provmaps_lrg[[2]], caseprevmaps_lrg[[2]], prevmaprasterplots_lrg[[2]],
   provmaps_lrg[[3]], caseprevmaps_lrg[[3]], prevmaprasterplots_lrg[[3]],
-  ncol=3, top=grid::textGrob("Malaria Species #Prevalence in CD2013 DHS", 
+  ncol=3, top=grid::textGrob("Malaria Species Prevalence in CD2013 DHS", 
                              gp=grid::gpar(fontsize=15, fontfamily = "Arial", fontface = "bold"))) 
 ```
 
@@ -560,7 +560,7 @@ graphics.off()
 # Pf, Pv, together
 ##############################
 pfprevmap <-  prevmaprasterplots_lrg[[1]] +
-  ggtitle(expression(paste(bold("Prevalence of "), bolditalic("P. falciparum"), bold(" Across the DRC")))) +
+  ggtitle(expression(bolditalic("P. falciparum")))1 +
   prettybasemap_nodrc + 
   theme(
     legend.position = "right",
@@ -568,7 +568,7 @@ pfprevmap <-  prevmaprasterplots_lrg[[1]] +
   )
 
 pvprevmap <-  prevmaprasterplots_lrg[[2]] +
-  ggtitle(expression(paste(bold("Prevalence of "), bolditalic("P. vivax"), bold(" Across the DRC")))) +
+  ggtitle(expression(bolditalic("P. vivax"))) +
   prettybasemap_nodrc + 
   theme(
     legend.position = "right",

@@ -145,25 +145,14 @@ classif.rf.m2t1000 <- mlr::setHyperPars(classif.rf.m2t1000, num.trees  = 1000, m
 classif.rf.m3t1000 <- mlr::makeLearner("classif.ranger", predict.type = "prob")
 classif.rf.m3t1000 <- mlr::setHyperPars(classif.rf.m3t1000, num.trees  = 1000, mtry = 3)    
 
-classif.rf.m4t1000 <- mlr::makeLearner("classif.ranger", predict.type = "prob")
-classif.rf.m4t1000 <- mlr::setHyperPars(classif.rf.m4t1000, num.trees  = 1000, mtry = 4)    
-
-classif.rf.m5t1000 <- mlr::makeLearner("classif.ranger", predict.type = "prob")
-classif.rf.m5t1000 <- mlr::setHyperPars(classif.rf.m5t1000, num.trees  = 1000, mtry = 5)    
-
-
 
 base.learners.classif <- append(base.learners.classif, list(classif.rf.m1t500,
                                                             classif.rf.m2t500,
                                                             classif.rf.m3t500,
-                                                            classif.rf.m4t500,
-                                                            classif.rf.m5t500,
                                                             
                                                             classif.rf.m1t1000,
                                                             classif.rf.m2t1000,
-                                                            classif.rf.m3t1000,
-                                                            classif.rf.m4t1000,
-                                                            classif.rf.m5t1000
+                                                            classif.rf.m3t1000
                                                             ))
 
 
@@ -313,25 +302,16 @@ regr.rf.m2t1000 <- mlr::setHyperPars(regr.rf.m2t1000, num.trees  = 1000, mtry = 
 regr.rf.m3t1000 <- mlr::makeLearner("regr.ranger", predict.type = "response")
 regr.rf.m3t1000 <- mlr::setHyperPars(regr.rf.m3t1000, num.trees  = 1000, mtry = 3)    
 
-regr.rf.m4t1000 <- mlr::makeLearner("regr.ranger", predict.type = "response")
-regr.rf.m4t1000 <- mlr::setHyperPars(regr.rf.m4t1000, num.trees  = 1000, mtry = 4)    
-
-regr.rf.m5t1000 <- mlr::makeLearner("regr.ranger", predict.type = "response")
-regr.rf.m5t1000 <- mlr::setHyperPars(regr.rf.m5t1000, num.trees  = 1000, mtry = 5)    
 
 
 
 base.learners.regr <- append(base.learners.regr, list(regr.rf.m1t500,
                                                       regr.rf.m2t500,
                                                       regr.rf.m3t500,
-                                                      regr.rf.m4t500,
-                                                      regr.rf.m5t500,
                                                       
                                                       regr.rf.m1t1000,
                                                       regr.rf.m2t1000,
-                                                      regr.rf.m3t1000,
-                                                      regr.rf.m4t1000,
-                                                      regr.rf.m5t1000
+                                                      regr.rf.m3t1000
 ))
 
 remove <- ls()
