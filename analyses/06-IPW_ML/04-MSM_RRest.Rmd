@@ -261,9 +261,7 @@ mal_iptw_plot <- malriskest %>%
     
 
 
-jpeg("~/Desktop/IPTW-figure-for-jon.jpg", height = 11, width = 8, units = "in", res = 500)
-plot(mal_iptw_plot)
-graphics.off()
+
 
 ```
 

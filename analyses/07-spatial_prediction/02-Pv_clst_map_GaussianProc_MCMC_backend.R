@@ -218,7 +218,7 @@ mod.framework$mcmcdirections[[1]] <- mcmcdirections.mod
 mod.framework$mcmcdirections[[2]] <- mcmcdirections.intercept
 
 
-ntry <- nrow(mod.framework)
+ntry <- nrow(mod.framework) -1
 sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper, 
                             params = mod.framework, 
                             jobname = 'Prevmap_Long_Chain',
@@ -226,9 +226,6 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,
-                                                 array = sprintf("0-%d%%%d", 
-                                                                 ntry, 
-                                                                 17),
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
