@@ -95,7 +95,7 @@ mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0),
 )
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                        n.sim = 1e5,
+                                                        n.sim = 1e4+1e3,
                                                         thin = 1, # don't thin
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
@@ -106,7 +106,7 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                         start.S = predict(fit.glm))
 
 mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                  n.sim = 1e5,
+                                                  n.sim = 1e4+1e3,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
@@ -179,14 +179,11 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
 ####################################################################################
 ###########                          LONG Run                              #########
 ####################################################################################
-mod.framework <- mod.framework[!duplicated(mod.framework), ]
+# note that PrevMap::spatial.pred.binomial.Bayes access the "formula"
+# call within the model object for prediction (with covariates). As a result,
+# we can't use a wrapper with purrr as above. 
 
-
-
-####################################################################################
-###########                       Direction LONG RUN                      ##########
-#####################################################################################
-
+# Directions LONG RUN                      
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
                                                         n.sim = 1e6+1e3,
                                                         thin = 1, # don't thin
@@ -210,26 +207,29 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                   start.S = predict(fit.glm))
 
 
+longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
+  formula = as.formula("plsmdlogit ~ 1"),
+  units.m = as.formula("~ n"),
+  coords = as.formula("~ longnum + latnum"),
+  data = pvclust.weighted.nosf,
+  control.prior = mypriors.intercept,
+  control.mcmc = mcmcdirections.intercept,
+  kappa = 1.5
+)
 
+longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
+  formula = as.formula("plsmdlogit ~ 1 + precip_mean_cont_scale_clst"),
+  units.m = as.formula("~ n"),
+  coords = as.formula("~ longnum + latnum"),
+  data = pvclust.weighted.nosf,
+  control.prior = mypriors.mod,
+  control.mcmc = mcmcdirections.mod,
+  kappa = 1.5
+)
 
-
-# hack here but find for updated
-mod.framework$mcmcdirections[[1]] <- mcmcdirections.mod
-mod.framework$mcmcdirections[[2]] <- mcmcdirections.intercept
-
-
-ntry <- nrow(mod.framework) -1
-sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper, 
-                            params = mod.framework, 
-                            jobname = 'Prevmap_Long_Chain',
-                            nodes = ntry, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 32000,
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "11-00:00:00"))
-
+# save out
+dir.create("Prevmap_Long_Chains")
+saveRDS(object = longrun.prevmapbayes.intercept, file = "Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
+saveRDS(object = longrun.prevmapbayes.mod, file = "Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
 
 

@@ -94,7 +94,7 @@ mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept",
                                     rep(paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + ")), 3)),
                         rho = c(0, 1, NA, 0, 1, NA),
                         burnin = 1e3,
-                        n.sample = 1e5 + 1e3,
+                        n.sample = 1e4 + 1e3,
                         family = "binomial"
                         )
 
