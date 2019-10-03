@@ -8,7 +8,7 @@ library(mlr)
 library(rslurm)
 source("R/00-functions_basic.R")
 source("R/00-IPTW_functions.R")
-source("analyses/06-IPW_ML/00-import_learners_updated.R")
+source("analyses/06-IPW_ML/00-import_learners.R")
 set.seed(48, "L'Ecuyer")
 
 #...............................................................................................
@@ -84,6 +84,7 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 #...............................................................................................
 txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
 txs$learnerlib[txs$target == "wlthrcde_combscor_cont"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 
 

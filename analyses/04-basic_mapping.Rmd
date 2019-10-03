@@ -34,6 +34,8 @@ ge <- dt %>%
 
 ```
 
+## Notes
+**N.B. Everyone is weighted the same in the cluster, which results in the same cluster level prevalences whether you consider weights or not**. However, this will results in  slightly different numerator (e.g. $n_numerator$) and denominators between the weighted and unweighted approach. Caution is warranted when reporting weighted versus unweighted Ns and Standard Errors at the cluster-level for this reason. 
 
 ## Aggregated Prevalence Maps
 ```{r}
@@ -293,7 +295,7 @@ knitr::kable(moranIclst)
 
 
 ## Krigged Prevalence Maps
-N.B. Simple MLE approach just modeling the intercept.
+N.B. Simple MLE approach just modeling the intercept using an empirical logit transformation (e.g. logit transformation instead of binomial likelihood).
 ```{r}
 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
@@ -534,7 +536,7 @@ graphics.off()
 
 ```
 
-```{r, results = 'asis'}
+```{r, results = 'asis', fig.width= 12, fig.height=12}
 gridExtra::grid.arrange(
   provmaps_lrg[[2]], case_n_maps_lrg[[2]],
   caseprevmaps_lrg[[2]], prevmaprasterplots_lrg[[2]], 
@@ -543,7 +545,7 @@ gridExtra::grid.arrange(
 
 ```
 
-```{r, results = 'asis'}
+```{r}
 
 ##############################
 # Ape Overlap
@@ -552,6 +554,10 @@ jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-ape-overlap-crude_maps1x1.
 aperange_nhapv + prettybasemap_nodrc
 graphics.off()
 
+```
+
+```{r, results = 'asis', fig.width= 12, fig.height=12}
+aperange_nhapv + prettybasemap_nodrc
 ```
 
 ```{r}

@@ -231,7 +231,7 @@ mod.framework.long <- mod.framework[,c("name", "formula", "family", "trials", "W
   dplyr::filter(!duplicated(.))
 
 mod.framework.long$burnin <- 1e3
-mod.framework.long$n.sample <- 1e6 + 1e3
+mod.framework.long$n.sample <- 1e5 + 1e3
 
 mod.framework.long$MCMC <- pmap(mod.framework.long, wrap_S.CARleroux)
 

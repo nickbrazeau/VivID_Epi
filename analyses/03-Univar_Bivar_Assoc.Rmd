@@ -66,7 +66,7 @@ rbind.data.frame( cbind.data.frame(species = "Pv", drcpv),
 ```
 
 ### Cluster Level Prevalence 
-NB Given that everyone is weighted the same in the cluster, we do not need to use weights explicitly. However, this will results in the slightly different numerator (e.g. $n_numerator$) but the denominators adjust for this. Caution is warranted when reporting weighted versus unweighted Ns at the cluster-level for this reason. 
+**N.B. Everyone is weighted the same in the cluster, which results in the same cluster level prevalences whether you consider weights or not**. However, this will results in  slightly different numerator (e.g. $n_numerator$) and denominators between the weighted and unweighted approach. Caution is warranted when reporting weighted versus unweighted Ns and Standard Errors at the cluster-level for this reason. 
   
 NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used a logit transformation and the t-distribution to estimate these CIs.    
     
