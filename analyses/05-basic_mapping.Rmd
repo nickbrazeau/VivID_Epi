@@ -23,7 +23,7 @@ setwd("~/Documents/GitHub/VivID_Epi/")
 # Import Data
 #......................
 load("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
 

@@ -1,22 +1,11 @@
----
-title: "Bayesian Hierarchial Spatial Province Models for _P. vivax_ among Asymptomatic Adults in the DRC"
-author: "Nicholas F. Brazeau"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
-output: 
-  html_document:
-    highlight: textmate
-    theme: lumen
-    toc: yes
-    code_folding: hide
-editor_options: 
-  chunk_output_type: console
----
+# Section 7.1: Bayesian Hierarchial Spatial Province Models for _P. vivax_ among Asymptomatic Adults in the DRC"
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
-Sys.setenv('R_MAX_VSIZE'=32000000000)
+
 ```
 
 ```{r}
@@ -32,7 +21,7 @@ set.seed(48)
 #......................
 # Import Data
 #......................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
@@ -73,7 +62,7 @@ sf::st_geometry(pvprov.weighted.nosf) <- NULL
 ### Make Model Framework
 NB. When $\rho$ is `NULL`, it is estimated within the CAR model. As a result, we have three scenarios based on the _Leroux et al. 2000_ specifiation of the Gaussian Markov Random Field: (1) independent random effects ($\rho = 0$), (2) Intrinsic CAR (e.g. complete spatial dependence, $\rho = 1$), and (3) CAR where $\rho$ is estimated under the model.
 
-```{r}
+```{r, results='asis'}
 
 #-------------------------------------------------------------------------
 # Conditional Autoregressive Spatial Model 
@@ -165,7 +154,7 @@ mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
 Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1, 000 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
 ##### Param Diagnostics
-```{r, results='asis'}
+```{r}
 #-------------------------------------------------------------------------
 # MCMC Diagnostics
 #-------------------------------------------------------------------------
@@ -177,6 +166,9 @@ mod.framework$summresults <- purrr::map(mod.framework$summresults, function(x){
   return(ret)
   })
 
+```
+
+```{r, results='asis'}
 mod.framework %>% 
   dplyr::select(c("name", "formula", "rho", "summresults")) %>% 
   tidyr::unnest(cols = "summresults") %>% 
@@ -258,7 +250,9 @@ mod.framework.long$summresultsdf <- purrr::map(mod.framework.long$summresults, f
 mod.framework.long.res <- mod.framework.long %>% 
   dplyr::select(c("name", "formula", "rho", "summresultsdf")) %>% 
   tidyr::unnest(cols = "summresultsdf") 
+```
 
+```{r, results='asis'}
 mod.framework.long.res %>% 
   dplyr::mutate(
     name = kableExtra::cell_spec(name, "html", 

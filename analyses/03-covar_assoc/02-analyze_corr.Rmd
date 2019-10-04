@@ -1,5 +1,10 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 
-# Exploratory Data Analysis of Risk Factors
+# Section 3: Exploratory Data Analysis of Risk Factors
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
@@ -211,6 +216,21 @@ Although the VIF was reasonable, altitude and temperature are essentially truly 
 #### Missingingess
 N.B. This data does not appear to be MCAR, as there do appear to be some biases (more or less, poor, rural individuals with lots of household members, poor individuals have less nice houses [even after controls], etc.). However, given that this 0.44% of the unweighted data and 0.43% of the weighted data, we are well within the range of the rule of thumb that missing data less than 5-10% (even if it is MNAR) is largely inconsequential (see Bennett 2001). As a result, I feel comfortable subsetting to complete cases from here on out without worrying about the effect of any MNAR bias that may or may not be present and would affect my results.
 
+### Write Out Complete Cases
+```{r}
 
+# get final covariates
+dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  dplyr::pull(c("column_name"))
 
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+sf::st_geometry(dt) <- NULL
+dt.cc <- dt  %>% 
+  dplyr::select(dcdr) %>% 
+  dplyr::filter(complete.cases(.)) 
+
+saveRDS(object = dt.cc,
+        file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+
+```
 

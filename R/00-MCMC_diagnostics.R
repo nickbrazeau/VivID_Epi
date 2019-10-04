@@ -79,13 +79,13 @@ make_mcmc_chain_plots.carbayes.final<- function(chaindat, filename){
   }
 }
 
-wrap_chain_plotter.carbayes.final <- function(final.dif, chains){
+wrap_chain_plotter.carbayes.final <- function(final.dir, chains){
   # this function does not return anything
   # it is internally making plots
   
   purrr::pmap(chains, function(data, name){
     
-    filename <- paste0(final.dif, name, "_", colnames(data), ".jpg") 
+    filename <- paste0(final.dir, name, "_", colnames(data), ".jpg") 
     
     for(i in 1:ncol(data)){
       make_mcmc_chain_plots.carbayes.final(chaindat = data[,i], filename = filename[i])

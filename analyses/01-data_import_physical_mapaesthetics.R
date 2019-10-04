@@ -207,7 +207,9 @@ prettybasemap_hillgrey <- list(
 #----------------------------------------------------------------------------------------------------
 # Save Objects & Write out
 #----------------------------------------------------------------------------------------------------
-save(prettybasemap_terraincolors, prettybasemap_hillgrey, prettybasemap_nodrc,
+save(prettybasemap_terraincolors, 
+     prettybasemap_hillgrey, 
+     prettybasemap_nodrc,
      prettybasemap_nodrc_nonorth,
      file = "data/map_bases/vivid_maps_bases.rda")
 saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")

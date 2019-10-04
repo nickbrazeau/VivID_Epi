@@ -9,7 +9,7 @@ source("R/00-functions_basic.R")
 #' @param exp_prob numeric; probability of exposure in the population
 #' @param p numeric; probability of infection/prevalence of outcome 
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
-powercalculator.glmRR <- function(n=15879, exp_prob=0.5, p=0.03, p0=0.02){
+powercalculator.glmRR <- function(n=15811, exp_prob=0.5, p=0.03, p0=0.02){
   
   df <- data.frame(obs=factor(seq(1:n)),
                    exp=sample(x=c(0,1), size=n, replace = T, prob=c(exp_prob, 1-exp_prob))) # df of exposure

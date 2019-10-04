@@ -24,7 +24,7 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 
 # need weighed counts

@@ -12,14 +12,11 @@ set.seed(48)
 #......................
 # Import Data
 #......................
-gp.mod.framework <- readRDS("analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/params.RDS")
+intercept <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
+covar <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
+gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
+                                   mcmc = list(intercept, covar))
 
-mcmc.ret <- list.files(path = "analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/", 
-                       full.names = T, pattern = ".RDS")
-mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
-
-# 0-1 index here so don't have to worry about char 10 and 1 being next to eachother
-gp.mod.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
 
 #...............................
 # make prediction surfaces
@@ -36,9 +33,9 @@ gp.mod.framework$grid.pred <- lapply(1:nrow(gp.mod.framework), function(x) retur
 
 # set up predictors
 predictors <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
-gp.mod.framework$predictors <- NULL
-gp.mod.framework$predictors[gp.mod.framework$name == "covars"] <- predictors
-
+gp.mod.framework$predictors <- NA
+gp.mod.framework$predictors[gp.mod.framework$name == "covars"] <- list(predictors)
+gp.mod.framework$predictors[gp.mod.framework$name == "intercept"] <- list(NULL)
 
 
 # make wrapper
@@ -59,7 +56,7 @@ pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
 ###########                           Rslurm                               #########
 #####################################################################################
 
-paramsdf <- gp.mod.framework[, c("mcmc", "grid.pred")]
+paramsdf <- gp.mod.framework[, c("mcmc", "grid.pred", "predictors")]
 setwd("analyses/07-spatial_prediction")
 ntry <- nrow(gp.mod.framework) - 1
 sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper, 

@@ -104,6 +104,13 @@ prevmaprasterplotter(prevrasters, smoothfct = 5, alpha = 0.8)
 
 
 
+# Final Figure
+prettybasemap_hillgrey +
+  geom_raster(prevamp) +
+  geom_point(cities) + 
+  geom_label(cities)
+
+
 ```
 
 # TODO SE PLOTS

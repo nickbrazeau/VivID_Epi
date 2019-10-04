@@ -14,7 +14,7 @@ tol <- 1e-3
 #......................
 # Import Data
 #......................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- sf::st_as_sf( readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds") )

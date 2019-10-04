@@ -36,13 +36,8 @@ varstoinclude <- c("pv18s" , "pfldh", "hv001", "hv005_wi", txs$target,
 #...............................................................................................
 # Import Data
 #...............................................................................................
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 sf::st_geometry(dt) <- NULL
-
-# subset to complete cases
-dt.ml.cc <- dt  %>% 
-  dplyr::select(varstoinclude) %>% 
-  dplyr::filter(complete.cases(.)) 
 
 
 #...............................................................................................
