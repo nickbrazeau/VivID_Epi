@@ -34,6 +34,8 @@ powercalculator.glmRR <- function(n=15811, exp_prob=0.5, p=0.03, p0=0.02){
 }
 
 
+
+
 #...............................................................
 # Make Data Frame for params
 #...............................................................
@@ -42,7 +44,7 @@ p0sim <- seq(0.01, 0.032, by=0.0001)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 poweriters.paramsdf <- tibble::tibble(
-  n = 15811, # total pop
+  n = 15859, # total pop
   p = 0.03, # prev in population
   exp_prob = exppo[,1],
   p0 = exppo[,2]
@@ -73,7 +75,7 @@ sjob <- rslurm::slurm_apply(f = powercalculator.glmRR,
                                                  array = sprintf("0-%d%%%d", 
                                                                  ntry, 
                                                                  128),
-                                                 'cpus-per-task' = 8,
+                                                 'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "1-00:00:00"))

@@ -1,0 +1,108 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Check Weights
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center')
+
+```
+
+```{r}
+
+library(mlr)
+library(tidyverse)
+source("R/00-IPTW_functions.R")
+```
+
+```{r}
+
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  rename(target = column_name)
+
+
+params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/params.RDS")
+ELpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
+                      pattern = ".RDS", full.names = T)
+
+ELpaths <- ELpaths[!c(grepl("params.RDS", ELpaths) | grepl("f.RDS", ELpaths))]
+
+# sort properly to match rows in df
+ELpaths <- tibble::tibble(ELpaths = ELpaths) %>% 
+  mutate(order = stringr::str_extract(basename(ELpaths), "[0-9]+"),
+         order = as.numeric(order)) %>% 
+  dplyr::arrange(order) %>% 
+  dplyr::select(-c(order)) %>% 
+  unlist(.)
+params$ensembl_cvRisk <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
+
+#................................................................. 
+# Get IPTW Estimates
+#.................................................................
+params$SLpreds <-purrr::map(params$ensembl_cvRisk, "SL.predictions")
+params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
+
+
+```
+
+
+### Distribution of IPTW for each Risk Factor
+
+#### Table 
+```{r}
+
+widist <- purrr::map(params$iptw, summary) %>% 
+  do.call("rbind.data.frame", .) %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  magrittr::set_colnames(c("min", "1stquart", "median", "mean", "3rdqart", "max"))
+
+params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
+
+# get normal var name
+varnames <- dcdr %>% 
+  dplyr::select(c("target", "abridged_var_label"))
+params <- dplyr::left_join(params, varnames, by = "target")
+
+
+widist <- cbind.data.frame(params$abridged_var_label, widist)
+
+knitr::kable(widist)
+
+```
+
+### Boxplot
+```{r}
+
+# make plot
+iptw.dist.plotObj <- params %>% 
+  dplyr::select(c("abridged_var_label", "iptw")) %>% 
+  tidyr::unnest(cols = iptw) %>% 
+  dplyr::mutate(logiptw = log(iptw)) %>% 
+  ggplot() + 
+  geom_boxplot(aes(x = abridged_var_label, y = logiptw)) +
+  geom_hline(yintercept = 0, col = "#e41a1c") +
+  vivid_theme + 
+  ylab("log(IPTW)") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(family = "Helvetica", size = 10, angle = 90, hjust = 1, vjust = 0.5, face = "bold"),
+        axis.line.x = element_line(size = 0.5, linetype = "solid", colour = "#000000"),
+        axis.line.y = element_line(size = 0.5, linetype = "solid", colour = "#000000"))
+
+plot(iptw.dist.plotObj)
+
+```
+
+
+### Covariate Balance
+```{r}
+covar_IPTW_balance
+
+ggplot() + 
+  geom_boxplot() + 
+  facet_wrap(~target)
+
+```

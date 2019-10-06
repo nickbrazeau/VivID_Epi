@@ -84,7 +84,7 @@ sjob <- rslurm::slurm_apply(f = slurm_calc_corr,
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,
-                                                 'cpus-per-task' = 8,
+                                                 'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "5-00:00:00"))

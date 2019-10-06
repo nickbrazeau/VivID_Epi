@@ -59,7 +59,7 @@ ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>%
 # Waterways
 #----------------------------------------------------------------------------------------------------
 wtrlns <- sf::read_sf("data/raw_data/hotosm_data/hotosm_cod_waterways_lines_shp/hotosm_cod_waterways_lines.shp") %>% 
-  dplyr::filter(waterway %in% c("stream", "river", "riverbank")) %>% 
+  dplyr::filter(waterway == "river") %>% 
   dplyr::rename(watertype = waterway) %>% 
   dplyr::select(c("osm_id", "watertype", "geometry"))
 
