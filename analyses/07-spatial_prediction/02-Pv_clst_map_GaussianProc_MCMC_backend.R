@@ -50,15 +50,13 @@ pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
-# transform count of "successes" to logit space
-pvclust.weighted.nosf$plsmdlogit <- log( (pvclust.weighted.nosf$plsmdn + 0.5)/(pvclust.weighted.nosf$n - pvclust.weighted.nosf$plsmdn + 0.5) ) # 0.5 as tolerance for 0s
 
 #-------------------------------------------------------------------------
 # Make Model Framework
 #-------------------------------------------------------------------------
 mod.framework <- tibble::tibble(name = c("intercept", "covars"),
-                                formula = c("plsmdlogit ~ 1", 
-                                            paste0("plsmdlogit ~ ", paste(riskvars, collapse = "+")))
+                                formula = c("plsmdn ~ 1", 
+                                            paste0("plsmdn ~ ", paste(riskvars, collapse = "+")))
 )
 
 coords <- as.formula(paste0("~ longnum + latnum"))
@@ -118,8 +116,10 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
 
 
 
-mod.framework$mypriors <- lapply(1:nrow(mod.framework), function(x) return(mypriors.intercept))
-mod.framework$mcmcdirections <- lapply(1:nrow(mod.framework), function(x) return(mcmcdirections.intercept))
+mod.framework$mypriors <- lapply(1:nrow(mod.framework), 
+                                 function(x) return(mypriors.intercept))
+mod.framework$mcmcdirections <- lapply(1:nrow(mod.framework), 
+                                       function(x) return(mcmcdirections.intercept))
 
 
 # NOTE THIS HACK here, need to have multiple starting betas for the multiple betas in the model
@@ -208,7 +208,7 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
 
 
 longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
-  formula = as.formula("plsmdlogit ~ 1"),
+  formula = as.formula("plsmdn ~ 1"),
   units.m = as.formula("~ n"),
   coords = as.formula("~ longnum + latnum"),
   data = pvclust.weighted.nosf,
@@ -218,7 +218,7 @@ longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
 )
 
 longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
-  formula = as.formula("plsmdlogit ~ 1 + precip_mean_cont_scale_clst"),
+  formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst"),
   units.m = as.formula("~ n"),
   coords = as.formula("~ longnum + latnum"),
   data = pvclust.weighted.nosf,

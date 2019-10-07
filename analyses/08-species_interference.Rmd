@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 
 ```{r}
 remotes::install_github("OJWatson/icer")
+library(tidyverse)
 library(icer)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
@@ -64,6 +65,7 @@ We will use 50,000 iterations.
 
 # assuming independence
 ret.ind <- icer::cooccurence_test(data.vec,
+                                  density_func = icer:::independent,
                                   boot_iter = 5e4)
 
 

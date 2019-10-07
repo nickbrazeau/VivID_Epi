@@ -226,7 +226,7 @@ dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/s
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
 sf::st_geometry(dt) <- NULL
 dt.cc <- dt  %>% 
-  dplyr::select(dcdr) %>% 
+  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr)) %>% 
   dplyr::filter(complete.cases(.)) 
 
 saveRDS(object = dt.cc,

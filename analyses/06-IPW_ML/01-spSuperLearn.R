@@ -91,7 +91,7 @@ sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred,
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "11-00:00:00"))
+                                                 time = "5-00:00:00"))
 
 cat("*************************** \n Submitted SL models \n *************************** ")
 
