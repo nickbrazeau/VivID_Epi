@@ -4,8 +4,6 @@
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
-Sys.setenv('R_MAX_VSIZE'=32000000000)
-
 ```
 
 ```{r}
@@ -17,12 +15,11 @@ library(tidyverse)
 library(sf)
 library(srvyr) 
 library(rgeos)
-library(rgdal)
-library(geoR)
 library(raster)
 library(PrevMap)
 set.seed(48)
-tol <- 1e-3
+
+
 #......................
 # Import Data
 #......................
@@ -112,10 +109,11 @@ graphics.off()
 
 ```
 
-This does not indicate a great degree (if any) spatial structuring. The classic variogram should follow a log-curve and have a sill that is reach at some distance. Of note, the potential nugget effect here is huge.  
+This does not indicate a great degree (if any) spatial structuring. The classic variogram should follow a log-curve and have a sill that is reached at some distance. Of note, the potential nugget effect here is huge.  
 
 
 ### Prevalence
+N.B. I am using a empirical logit transformation here. However, in the Bayesian models, I am using an exact approach for the binomial counts. This is purely so we can model this as a normal process (and speed thnings up/use standard regression approachs for EDA).
 ```{r, results='asis'}
 # transform count of "successes" to logit space
 pvclust.weighted.nosf$plsmdlogit <- log( (pvclust.weighted.nosf$plsmdn + 0.5)/(pvclust.weighted.nosf$n - pvclust.weighted.nosf$plsmdn + 0.5) ) # 0.5 as tolerance for 0s
@@ -317,15 +315,10 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-
-long.framework <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/params.RDS")
-
-mcmc.ret <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Long_Chain/", full.names = T, pattern = ".RDS")
-mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
-
-# 0-1 index here so don't have to worry about char 10 and 1 being next to eachother
-long.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
-
+long.intercept <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
+long.covar <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
+long.framework <- tibble::tibble(name = c("intercept", "covars"),
+                                 mcmc = list(long.intercept, long.covar))
 
 ```
 
@@ -377,3 +370,71 @@ for(i in 1:nrow(long.framework)){
 
 ```
 
+## DIC of Final Models
+```{r}
+
+# note because the model returns the S matrix which is the posterior for the random effect
+# and it returns the posterior betas, we can calculate the Ti from each model 
+# from there, it is straightforward to calculate the likelihood as a series of 
+# independently drawn binomial trials
+
+long.framework$randomeff <- purrr::map(long.framework$mcmc, "S")
+long.framework$betas <- purrr::map(long.framework$mcmc, "estimate")
+long.framework$betas <- purrr::map(long.framework$betas, function(x){return(x[, colnames(x)[!colnames(x) %in% c("sigma^2", "phi", "tau^2")] ] )})
+long.framework$X <- purrr::map(long.framework$mcmc, "D") # matrix of covariates
+long.framework$Yi <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$plsmdn)) # binomial successes
+long.framework$ni <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$n)) # observations 
+
+long.framework$Ti <- purrr::pmap(long.framework[,c("X", "betas", "randomeff")], 
+                                 function(X, betas, randomeff){
+                                   bi <- X %*% t(betas) # get the X (nxp matrix) * the betas (pxsim matrix)
+                                   Ti <- randomeff + t(bi) # random effects is in sim x n so tranpose bi to match it
+                                   return(Ti)
+                                 })
+
+long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(Yi, ni, Ti){
+  LL <- c()
+  for(s in 1:nrow(Ti)){ # for every sim
+    LL.iter <- 0
+    for(i in 1:ncol(Ti)){ # for every spatial unit
+      LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = expit(Ti[s, i]), log = T) + LL.iter
+      LL.iter
+    }
+    LL <- append(LL.iter, LL)
+    
+  }
+  
+  LL <- 
+  return(LL)
+})
+
+
+long.framework$DIC <- purrr::map(long.framework$LL, function(x){
+  mu = mean(x)
+  sigma = var(x)/2
+  DICg = mu + sigma
+  return(DICg)
+})
+
+
+```
+
+```{r, results = 'asis'}
+
+long.framework %>% 
+  dplyr::select(c("name", "DIC")) %>% 
+  tidyr::unnest(cols="DIC") %>% 
+  magrittr::set_colnames(c("Model", "DIC")) %>% 
+  kableExtra::kable(format = "html", escape = F) %>%
+  kableExtra::kable_styling("striped", full_width = F) 
+
+
+```
+
+### Log Likelihood Trace Plots for Final Models
+```{r, results = 'asis'}
+
+plot(long.framework$LL[[1]], main = "Intercept Model")
+plot(long.framework$LL[[2]], main = "Covars Model")
+
+```

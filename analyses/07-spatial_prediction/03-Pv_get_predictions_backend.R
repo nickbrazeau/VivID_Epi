@@ -19,23 +19,34 @@ gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 
 
 #...............................
-# make prediction surfaces
+# make prediction surfaces for intercept
 #...............................
 # boundaries for prediction
 poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
-grid.pred <- splancs::gridpts(poly, xs=0.5, ys=0.5)
-colnames(grid.pred) <- c("long","lat")
+grid.pred.intercept <- splancs::gridpts(poly, xs=0.5, ys=0.5)
+colnames(grid.pred.intercept) <- c("longnum","latnum")
+
+
 # note, because we have a raster surface of precipitation, we can 
-# predict at all raster points
+# predict at all (or a random sample of) raster points
+
+predictors <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
+# make this into a manageable size
+predictors <- raster::sampleRandom(predictors, size = 1e4,
+                                   asRaster = T)
+pred.df <- data.frame(longnum = raster::coordinates(predictors)[,1],
+                      latnum = raster::coordinates(predictors)[,2],
+                      precip_mean_cont_scale_clst = raster::values(predictors)) %>% 
+  dplyr::filter(!is.na(precip_mean_cont_scale_clst)) # this removes NAs introducted above
+grid.pred.covars <- pred.df[,c("longnum", "latnum")]
+
 
 # set up grid.pred
-gp.mod.framework$grid.pred <- lapply(1:nrow(gp.mod.framework), function(x) return(grid.pred))
+gp.mod.framework$grid.pred <- list(grid.pred.intercept, grid.pred.covars)
 
 # set up predictors
-predictors <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
-gp.mod.framework$predictors <- NA
-gp.mod.framework$predictors[gp.mod.framework$name == "covars"] <- list(predictors)
-gp.mod.framework$predictors[gp.mod.framework$name == "intercept"] <- list(NULL)
+gp.mod.framework$predictors <- list(NULL, pred.df)
+
 
 
 # make wrapper
