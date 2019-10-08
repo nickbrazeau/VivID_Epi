@@ -1,9 +1,13 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Basic Maps & Spatial Autocorrelation of Malaria Across DRC
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
-Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 
 ```
 ```{r}
@@ -264,16 +268,13 @@ knitr::kable(moranIprov)
 #........................
 # Moran's I for Cluster Level
 #........................
-gcdist <- ge 
-sf::st_geometry(gcdist) <- NULL
-gcdist <- gcdist %>% 
-  dplyr::select(c("longnum", "latnum")) %>% 
-  geosphere::distm(x =., fun = geosphere::distHaversine) 
 
+gcdist <- ge %>% 
+  dplyr::select(c("longnum", "latnum")) %>% 
+  sf::st_distance(x = ., which = "Great Circle", by_element = F)
 
 gcdist.inv <- 1/gcdist
 diag(gcdist.inv) <- 0
-
 
 mp.clst$moranIclust <- purrr::map(mp.clst$data, moran_mc_wrapper, listw = gcdist.inv)
 
@@ -295,7 +296,9 @@ knitr::kable(moranIclst)
 
 
 ## Krigged Prevalence Maps
-N.B. Simple MLE approach just modeling the intercept using an empirical logit transformation (e.g. logit transformation instead of binomial likelihood).
+**N.B. Here I have employed an empirical logit transformation and used a "trans-Gaussian" approximation under a MLE framework**. This means that I now assume a model framework of:    
+$$\hat{Y}|S(x_i) \sim N(X_i^\intercal \space \beta \space + \space S(x_i), \space \tau^2)$$. Under this formulation, nugget effects are being absorbed by the conditional normal. 
+  
 ```{r}
 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")

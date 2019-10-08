@@ -25,19 +25,19 @@ dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.x
 
 
 params <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/params.RDS")
-ELpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
+SLpaths <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
                       pattern = ".RDS", full.names = T)
 
-ELpaths <- ELpaths[!c(grepl("params.RDS", ELpaths) | grepl("f.RDS", ELpaths))]
+SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
 
 # sort properly to match rows in df
-ELpaths <- tibble::tibble(ELpaths = ELpaths) %>% 
-  mutate(order = stringr::str_extract(basename(ELpaths), "[0-9]+"),
+SLpaths <- tibble::tibble(ELpaths = SLpaths) %>% 
+  mutate(order = stringr::str_extract(basename(SLpaths), "[0-9]+"),
          order = as.numeric(order)) %>% 
   dplyr::arrange(order) %>% 
   dplyr::select(-c(order)) %>% 
   unlist(.)
-params$ensembl_cvRisk <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
+params$ensembl_cvRisk <- purrr::map(  SLpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
 
 #................................................................. 
 # Get IPTW Estimates

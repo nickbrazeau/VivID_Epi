@@ -582,7 +582,7 @@ dt <- dt %>%
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
   dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst + tol),
                 wtrdist_cont_log_scale_clst = my.scale(wtrdist_cont_log_clst, center = T, scale = T),
-                wtrdist_fctb_clst = ifelse(wtrdist_cont_clst > 500, "far", "near"),
+                wtrdist_fctb_clst = ifelse(wtrdist_cont_clst > 2500, "far", "near"),
                 wtrdist_fctb_clst = factor(wtrdist_fctb_clst, levels = c("far", "near"))
                 )
 
