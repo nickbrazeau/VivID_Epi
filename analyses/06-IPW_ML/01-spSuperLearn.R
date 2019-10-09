@@ -9,7 +9,7 @@ library(rslurm)
 source("R/00-functions_basic.R")
 source("R/00-IPTW_functions.R")
 source("analyses/06-IPW_ML/00-import_learners.R")
-set.seed(48, "L'Ecuyer")
+set.seed(44, "L'Ecuyer")
 
 #...............................................................................................
 # Import Data & tx map
