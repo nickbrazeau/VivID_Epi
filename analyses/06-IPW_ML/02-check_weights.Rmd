@@ -12,7 +12,6 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```
 
 ```{r}
-
 library(mlr)
 library(tidyverse)
 source("R/00-IPTW_functions.R")
