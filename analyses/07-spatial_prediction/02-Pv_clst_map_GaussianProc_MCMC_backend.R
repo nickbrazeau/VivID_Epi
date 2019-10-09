@@ -173,7 +173,7 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "11-00:00:00"))
+                                                 time = "5-00:00:00"))
 
 
 ####################################################################################
