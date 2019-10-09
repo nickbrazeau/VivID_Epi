@@ -75,7 +75,7 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 
 
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
-                                             beta.covar = 1e4,
+                                             beta.covar = 1,
                                              log.normal.nugget = c(-5,5), # this is tau2
                                              uniform.phi = c(0,10),
                                              log.normal.sigma = c(0,25)
@@ -83,7 +83,7 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
 
 # NB covar matrix
 covarsmat <- matrix(0, ncol = 2, nrow=2)
-diag(covarsmat) <- 1e4
+diag(covarsmat) <- 1 # identity matrix
 
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0),
                                        beta.covar = covarsmat,
