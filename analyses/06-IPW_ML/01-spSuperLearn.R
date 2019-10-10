@@ -8,7 +8,7 @@ library(mlr)
 library(rslurm)
 source("R/00-functions_basic.R")
 source("R/00-IPTW_functions.R")
-source("analyses/06-IPW_ML/00-import_learners.R")
+source("analyses/06-IPW_ML/00-import_learners_updated.R")
 set.seed(44, "L'Ecuyer")
 
 #...............................................................................................
@@ -59,10 +59,10 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 # Manual processing from EDA, 
 # know some of these parameters need to be changed
 #...............................................................................................
-txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
-txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
+#txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+#txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
+#txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
+#txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 
 
 
@@ -76,12 +76,13 @@ paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalse
 
 
 
+
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
                             params = paramsdf, 
-                            jobname = 'vivid_spSL_final',
+                            jobname = 'vivid_spSL_test_biggerlearners',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
