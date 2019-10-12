@@ -9,7 +9,7 @@ source("R/00-functions_basic.R")
 #' @param exp_prob numeric; probability of exposure in the population
 #' @param p numeric; probability of infection/prevalence of outcome 
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
-powercalculator.glmRR <- function(n=15811, exp_prob=0.5, p=0.03, p0=0.02){
+powercalculator.glmRR <- function(n=15859, exp_prob=0.5, p=0.03, p0=0.02){
   
   df <- data.frame(obs=factor(seq(1:n)),
                    exp=sample(x=c(0,1), size=n, replace = T, prob=c(exp_prob, 1-exp_prob))) # df of exposure
@@ -37,13 +37,13 @@ powercalculator.glmRR <- function(n=15811, exp_prob=0.5, p=0.03, p0=0.02){
 
 
 #...............................................................
-# Make Data Frame for params
+# Make Data Frame for Pv params
 #...............................................................
 ### run lots of these at different levels of p0
 p0sim <- seq(0.01, 0.032, by=0.0001)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
-poweriters.paramsdf <- tibble::tibble(
+pvpoweriters.paramsdf <- tibble::tibble(
   n = 15859, # total pop
   p = 0.03, # prev in population
   exp_prob = exppo[,1],
@@ -52,7 +52,7 @@ poweriters.paramsdf <- tibble::tibble(
 
 # iters to run
 iters <- 1e3 
-poweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(poweriters.paramsdf)) %>% 
+pvpoweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(pvpoweriters.paramsdf)) %>% 
   dplyr::bind_rows() %>% 
   dplyr::arrange(exp_prob, p0)
 
@@ -66,8 +66,8 @@ poweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(poweriters
 setwd("analyses/09-Power/")
 ntry <- 1028 # max number of nodes
 sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
-                            params = poweriters.paramsdf, 
-                            jobname = 'powercalc',
+                            params = pvpoweriters.paramsdf, 
+                            jobname = 'powercalc_pf',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
@@ -80,7 +80,56 @@ sjob <- rslurm::slurm_apply(f = powercalculator.glmRR,
                                                  output = "%A_%a.out",
                                                  time = "1-00:00:00"))
 
-cat("*************************** \n Submitted Power Calc Models \n *************************** ")
+cat("*************************** \n Submitted Pv Power Calc Models \n *************************** ")
+
+
+
+#...............................................................
+# Make Data Frame for Pv params
+#...............................................................
+### run lots of these at different levels of p0
+p0sim <- seq(0.01, 0.3, by=0.001)
+expprob <- c(0.1, 0.25, 0.5)
+exppo <- expand.grid(expprob, p0sim)
+pfpoweriters.paramsdf <- tibble::tibble(
+  n = 15859, # total pop
+  p = 0.3, # prev in population
+  exp_prob = exppo[,1],
+  p0 = exppo[,2]
+) 
+
+# iters to run
+iters <- 1e3 
+pfpoweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(pfpoweriters.paramsdf)) %>% 
+  dplyr::bind_rows() %>% 
+  dplyr::arrange(exp_prob, p0)
+
+
+
+
+#...............................................................
+# Run in parallel on slurm
+#...............................................................
+# for slurm on LL
+setwd("analyses/09-Power/")
+ntry <- 1028 # max number of nodes
+sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
+                            params = pfpoweriters.paramsdf, 
+                            jobname = 'powercalc_pf',
+                            nodes = ntry, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 32000,
+                                                 array = sprintf("0-%d%%%d", 
+                                                                 ntry, 
+                                                                 128),
+                                                 'cpus-per-task' = 1,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "1-00:00:00"))
+
+cat("*************************** \n Submitted Pf Power Calc Models \n *************************** ")
+
 
 
 

@@ -159,21 +159,10 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 ####################################################################################
 ###########                      Diagnostic Runs                           #########
 #####################################################################################
+dir.create("analyses/07-spatial_prediction/prevmap_diagnostic_chains/")
 
-
-setwd("analyses/07-spatial_prediction")
-ntry <- nrow(mod.framework)
-sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper, 
-                            params = mod.framework, 
-                            jobname = 'Prevmap_Diagnostic_Chains',
-                            nodes = ntry, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 32000,
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "5-00:00:00"))
+mod.framework$diagruns <- furrr::future_pmap(mod.framework, fit_bayesmap_wrapper)
+saveRDS(object = mod.framework, file = "analyses/07-spatial_prediction/prevmap_diagnostic_chains/diagnostic_modelframework.RDS")
 
 
 ####################################################################################
@@ -184,8 +173,8 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
 # we can't use a wrapper with purrr as above. 
 
 # Directions LONG RUN                      
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                        n.sim = 1e5+1e3,
+mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
+                                                        n.sim = 1e5,
                                                         thin = 1, # don't thin
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
@@ -195,8 +184,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                  n.sim = 1e5+1e3,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
+                                                  n.sim = 1e5,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
@@ -228,8 +217,8 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
 )
 
 # save out
-dir.create("Prevmap_Long_Chains")
-saveRDS(object = longrun.prevmapbayes.intercept, file = "Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
-saveRDS(object = longrun.prevmapbayes.mod, file = "Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
+dir.create("analyses/07-spatial_prediction/prevmap_long_chains")
+saveRDS(object = longrun.prevmapbayes.intercept, file = "analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
+saveRDS(object = longrun.prevmapbayes.mod, file = "analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
 
 

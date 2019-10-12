@@ -315,8 +315,8 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-long.intercept <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
-long.covar <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
+long.intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
+long.covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 long.framework <- tibble::tibble(name = c("intercept", "covars"),
                                  mcmc = list(long.intercept, long.covar))
 
