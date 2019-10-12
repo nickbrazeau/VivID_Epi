@@ -65,7 +65,7 @@ modelmap.ml$data <- lapply(1:nrow(modelmap.ml), function(x) return(dt))
 
 # unnest to get all feats
 modelmap.ml <- modelmap.ml %>% 
-  tidyr::unnest(col = feat)
+  tidyr::unnest(cols = feat)
 
 
 
@@ -134,7 +134,7 @@ sjob <- rslurm::slurm_apply(f = slurm_calc_corr,
                             submit = T,
                             slurm_options = list(mem = 32000,
                                                  array = sprintf("0-%d%%%d", 
-                                                                 ntry, 
+                                                                 1028, 
                                                                  128),
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
