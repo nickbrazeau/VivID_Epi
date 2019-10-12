@@ -75,7 +75,7 @@ slurm_calc_corr <- function(covar1, covar2, data){
 
 
 # for slurm on LL
-setwd("analyses/05-covar_assoc/")
+setwd("analyses/03-covar_assoc/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = slurm_calc_corr, 
                             params = paramsdf, 
