@@ -1,4 +1,7 @@
-
+#----------------------------------------------------------------------------------------------------
+# Purpose of this script is to produce spatial models
+# from prevmap
+#----------------------------------------------------------------------------------------------------
 source("R/00-functions_basic.R")
 source("R/00-functions_maps.R") 
 library(tidyverse)

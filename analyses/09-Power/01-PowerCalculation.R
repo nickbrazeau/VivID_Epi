@@ -67,7 +67,7 @@ setwd("analyses/09-Power/")
 ntry <- 1028 # max number of nodes
 sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
                             params = pvpoweriters.paramsdf, 
-                            jobname = 'powercalc_pf',
+                            jobname = 'powercalc_pv',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
@@ -111,7 +111,6 @@ pfpoweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(pfpoweri
 # Run in parallel on slurm
 #...............................................................
 # for slurm on LL
-setwd("analyses/09-Power/")
 ntry <- 1028 # max number of nodes
 sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
                             params = pfpoweriters.paramsdf, 

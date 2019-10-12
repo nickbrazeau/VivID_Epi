@@ -1,3 +1,7 @@
+#----------------------------------------------------------------------------------------------------
+# Purpose of this script is to get spatial predictions from 
+# spatial models produced from prevmap
+#----------------------------------------------------------------------------------------------------
 source("R/00-functions_maps.R") 
 library(tidyverse)
 library(sf)
