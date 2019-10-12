@@ -12,19 +12,19 @@ source("R/00-IPTW_functions.R")
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 
 params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_spSL_final/params.RDS")
-ELpaths <- list.files("analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
+SLpaths <- list.files("analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
                       pattern = ".RDS", full.names = T)
 
-ELpaths <- ELpaths[!c(grepl("params.RDS", ELpaths) | grepl("f.RDS", ELpaths))]
+SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
 
 # sort properly to match rows in df
-ELpaths <- tibble::tibble(ELpaths = ELpaths) %>% 
-  mutate(order = stringr::str_extract(basename(ELpaths), "[0-9]+"),
+SLpaths <- tibble::tibble(SLpaths = SLpaths) %>% 
+  mutate(order = stringr::str_extract(basename(SLpaths), "[0-9]+"),
          order = as.numeric(order)) %>% 
   dplyr::arrange(order) %>% 
   dplyr::select(-c(order)) %>% 
   unlist(.)
-params$ensembl_cvRisk <- purrr::map(  ELpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
+params$ensembl_cvRisk <- purrr::map(  SLpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
 
 #............................................................
 # Get IPTW Estimates
@@ -47,12 +47,14 @@ select_samples_by_iptw_and_feattarget <- function(target, feat, iptw, data){
 
 
 #............................................................
-# Note, I want to sample 10 realizations of my
+# Note, I want to sample 100 realizations of my
 # sample weights since I can't apply the weights directly
 # in the energy function 
 #............................................................
 modelmap.ml <- params %>% 
-  dplyr::select(c("task", "iptw", "target"))
+  dplyr::mutate(target = purrr::map(.$task, mlr::getTaskTargetNames)) %>% 
+  dplyr::select(c("task", "iptw", "target")) %>% 
+  tidyr::unnest(col = target)
 
 modelmap.ml <- replicate(n = 100, modelmap.ml,
                          simplify = F) %>% 
@@ -79,8 +81,11 @@ modelmap.ml <- modelmap.ml %>%
 
 # get base target-feats too
 modelmap.nowi <- params %>% 
-  dplyr::select(c("task", "target"))
-modelmap.nowi$feat <- map(modelmap.ml$task, mlr::getTaskFeatureNames)
+  dplyr::mutate(target = purrr::map(.$task, mlr::getTaskTargetNames)) %>% 
+  dplyr::select(c("task", "target")) %>% 
+  tidyr::unnest(col = target)
+
+modelmap.nowi$feat <- map(modelmap.nowi$task, mlr::getTaskFeatureNames)
 modelmap.nowi$data <- lapply(1:nrow(modelmap.nowi), function(x) return(dt))
 
 modelmap.nowi <- modelmap.nowi %>% 

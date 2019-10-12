@@ -108,7 +108,7 @@ prevmaprasterplotter(prevrasters, smoothfct = 5, alpha = 0.8)
 prettybasemap_hillgrey +
   geom_raster(prevamp) +
   geom_point(cities) + 
-  geom_label(cities)
+  geom_label(cities) # cities are under map bases
 
 
 ```

@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```
 
 ```{r}
-remotes::install_github("OJWatson/icer")
+remotes::install_github("nickbrazeau/icer")
 library(tidyverse)
 library(icer)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
@@ -57,70 +57,72 @@ data.vec <- round(data.vec, 0)
 
 ```
 
-## ICER
+## Infection Composition Model (from Multinomial)
+```{r}
+surv <- new("surveillance")
+surv@denominator <- 15859
+surv@cases <- unlist(data.vec)
+surv@casenames <- names(data.vec)
+
+
+
+```
+
 We will use 50,000 iterations. 
 
 ### Indepdent Model for Interference 
 ```{r}
 
 # assuming independence
-ret.ind <- icer::cooccurence_test(data.vec,
-                                  density_func = icer:::independent,
-                                  boot_iter = 5e4)
+surv.mle <- icer::cooccurence_mle(obj = surv, 
+                      density_func = icer:::independent,
+                      max_moi = 25, poisson = T, plot = T, boot_iter = 5e4) 
 
-
-
-
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/icer_independence_model.jpg",
-     width = 11, height = 8, units = "in", res=500)
-ret.ind$plot$plot
-graphics.off()
 
 
 ```
 
-
-### Non-independence Model for Interference 
+### Cluster Level Prevalences-Interactions
 ```{r}
+mp <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
+ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>% 
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::rename(hv001 = dhsclust)
 
 
-# assuming interference
-ret.interference <- icer::cooccurence_test(data.vec,
-                                           density_func = icer:::interference, 
-                                           k_12 = 0.5, k_13 = 2, k_23 = 1, # arb starting params
-                                           boot_iter = 5e4)
+pfpvclst <- mp %>% 
+  dplyr::filter(plsmdmspec %in% c("pfldh", "pv18s") & maplvl == "hv001") %>% 
+  dplyr::ungroup() %>% 
+  dplyr::select(c("plsmdmspec", "data")) 
 
+# issue with casting from sf
+pf <- pfpvclst$data[[1]]
+pfclust <- cbind.data.frame(species = "pf", pf) %>% 
+  dplyr::select(c("species", "hv001", "plsmdprev", "n"))
+pv <- pfpvclst$data[[2]]
+pvclust <- cbind.data.frame(species = "pv", pv) %>% 
+  dplyr::select(c("species", "hv001", "plsmdprev", "n"))
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/icer_interference_model.jpg",
-     width = 11, height = 8, units = "in", res=500)
-ret.interference$plot$plot
-graphics.off()
-```
+pfpvclst <- left_join(pfclust, pvclust, by = c("hv001", "n")) %>% 
+  dplyr::left_join(., y = ge, by = "hv001")
 
-#### Plots Overlaid
-```{r}
-cowplot::plot_grid(ret.ind$plot$plot, 
-                   ret.interference$plot$plot, 
-                   ncol = 1, align = "v")
-
-
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/icer_overlaid.jpg",
-     width = 11, height = 8, units = "in", res=500)
-
-cowplot::plot_grid(ret.ind$plot$plot, 
-                   ret.interference$plot$plot,
-                   ncol = 1, labels = c("A", "B"),
-                   align = "v")
-                   
-graphics.off()
 
 ```
 
-```{r}
-#-------------------------- 
-# Housekeeping save out
-#-------------------------- 
-save(ret.ind, ret.interference,
-     file = "~/Documents/GitHub/VivID_Epi/results/icer_interference_models.rda")
+```{r, results='asis'}
+
+pfpvclst %>% 
+  ggplot() + 
+  geom_point(aes(x=plsmdprev.x, y = plsmdprev.y, size = n)) +
+  geom_smooth(aes(x=plsmdprev.x, y = plsmdprev.y, weight = n), method=loess) +
+  facet_wrap(~ urban_rura) +
+  xlab("Pfalciparum") + ylab("Pvivax") + 
+  labs(title ="Cluster Level Prevalences Seperated \n by Urbanicity",
+       caption = "Loess line and point sizes are weighted by cluster size") +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(vjust = 0.5, hjust = 0.5))
+               
+
 
 ```
