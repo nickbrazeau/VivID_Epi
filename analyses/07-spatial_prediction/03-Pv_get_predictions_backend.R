@@ -72,7 +72,7 @@ pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
 #####################################################################################
 paramsdf <- gp.mod.framework[, c("mcmc", "grid.pred", "predictors")]
 setwd("analyses/07-spatial_prediction")
-ntry <- nrow(gp.mod.framework) - 1
+ntry <- nrow(gp.mod.framework)
 sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper, 
                             params = paramsdf, 
                             jobname = 'Prevmap_predictions',
