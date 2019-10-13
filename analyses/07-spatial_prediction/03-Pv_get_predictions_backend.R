@@ -79,8 +79,8 @@ sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper,
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
-                            slurm_options = list(mem = 16000,
+                            slurm_options = list(mem = 64000,
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "2-00:00:00"))
+                                                 time = "3-00:00:00"))
