@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to produce spatial models
-# from prevmap
+# from prevmap for Pv 
 #----------------------------------------------------------------------------------------------------
 source("R/00-functions_basic.R")
 source("R/00-functions_maps.R") 
@@ -162,11 +162,19 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 ####################################################################################
 ###########                      Diagnostic Runs                           #########
 #####################################################################################
-dir.create("analyses/07-spatial_prediction/prevmap_diagnostic_chains/")
-
-mod.framework$diagruns <- furrr::future_pmap(mod.framework, fit_bayesmap_wrapper)
-saveRDS(object = mod.framework, file = "analyses/07-spatial_prediction/prevmap_diagnostic_chains/diagnostic_modelframework.RDS")
-
+setwd("analyses/07-spatial_prediction")
+ntry <- nrow(mod.framework)
+sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper, 
+                            params = mod.framework, 
+                            jobname = 'prevmap_diagnostic_chains',
+                            nodes = ntry, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 32000,
+                                                 'cpus-per-task' = 1,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "5-00:00:00"))
 
 ####################################################################################
 ###########                          LONG Run                              #########
@@ -221,7 +229,7 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
 
 # save out
 dir.create("analyses/07-spatial_prediction/prevmap_long_chains")
-saveRDS(object = longrun.prevmapbayes.intercept, file = "analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
-saveRDS(object = longrun.prevmapbayes.mod, file = "analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
+saveRDS(object = longrun.prevmapbayes.intercept, file = "analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
+saveRDS(object = longrun.prevmapbayes.mod, file = "analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 
 

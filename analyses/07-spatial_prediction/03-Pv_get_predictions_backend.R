@@ -16,8 +16,8 @@ set.seed(48)
 #......................
 # Import Data
 #......................
-intercept <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-intercept.rds")
-covar <- readRDS("analyses/07-spatial_prediction/Prevmap_Long_Chains/longrun-prevmapbayes-mod.rds")
+intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
+covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
                                    mcmc = list(intercept, covar))
 
@@ -70,10 +70,17 @@ pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
 ####################################################################################
 ###########                           Preds                                #########
 #####################################################################################
-gp.mod.framework$preds <- furrr::future_pmap(gp.mod.framework[, c("mcmc", "grid.pred", "predictors")], 
-                                             pred_PrevMap_bayes_wrapper)
-
-saveRDS(object = gp.mod.framework, 
-        file = "analyses/07-spatial_prediction/prevmap_long_chains/prevmap_preds_gpmodframework.rds")
-
-
+paramsdf <- gp.mod.framework[, c("mcmc", "grid.pred", "predictors")]
+setwd("analyses/07-spatial_prediction")
+ntry <- nrow(gp.mod.framework) - 1
+sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper, 
+                            params = paramsdf, 
+                            jobname = 'Prevmap_predictions',
+                            nodes = ntry, 
+                            cpus_per_node = 1, 
+                            submit = T,
+                            slurm_options = list(mem = 64000,
+                                                 'cpus-per-task' = 1,
+                                                 error =  "%A_%a.err",
+                                                 output = "%A_%a.out",
+                                                 time = "2-00:00:00"))
