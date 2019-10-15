@@ -1,6 +1,6 @@
 library(tidyverse)
 library(pwr)
-library(furrr)
+library(rslurm)
 source("R/00-functions_basic.R")
 #...............................................................
 # Power Function
@@ -9,14 +9,14 @@ source("R/00-functions_basic.R")
 #' @param exp_prob numeric; probability of exposure in the population
 #' @param p numeric; probability of infection/prevalence of outcome 
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
-powercalculator.glmRR <- function(n=15859, exp_prob=0.5, p=0.03, p0=0.02){
+powercalculator.glmOR <- function(n=15859, exp_prob=0.5, p=0.03, p0=0.02){
   
   df <- data.frame(obs=factor(seq(1:n)),
                    exp=sample(x=c(0,1), size=n, replace = T, prob=c(exp_prob, 1-exp_prob))) # df of exposure
   p <- 2*p # inv average prev for both groups 
   p0 <- p0 # prev among unexposed
   p1 <- p-p0 # prev among exposed
-  RR <- exp(log(p1) - log(p0))
+  OR <- exp(logit(p1) - logit(p0))
 
   
     df$dz[df$exp == 1] <- rbinom(sum(df$exp == 1),1,p1)
@@ -27,7 +27,7 @@ powercalculator.glmRR <- function(n=15859, exp_prob=0.5, p=0.03, p0=0.02){
 
     pi <- broom::tidy(mod)$p.value[2]
 
-    ret <- data.frame(RR=RR, p=pi)
+    ret <- data.frame(OR=OR, p=pi)
 
     return(ret)
 
@@ -65,7 +65,7 @@ pvpoweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(pvpoweri
 # for slurm on LL
 setwd("analyses/09-Power/")
 ntry <- 1028 # max number of nodes
-sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
+sjob <- rslurm::slurm_apply(f = powercalculator.glmOR, 
                             params = pvpoweriters.paramsdf, 
                             jobname = 'powercalc_pv',
                             nodes = ntry, 
@@ -112,7 +112,7 @@ pfpoweriters.paramsdf <- parallel::mclapply(1:iters, function(x) return(pfpoweri
 #...............................................................
 # for slurm on LL
 ntry <- 1028 # max number of nodes
-sjob <- rslurm::slurm_apply(f = powercalculator.glmRR, 
+sjob <- rslurm::slurm_apply(f = powercalculator.glmOR, 
                             params = pfpoweriters.paramsdf, 
                             jobname = 'powercalc_pf',
                             nodes = ntry, 

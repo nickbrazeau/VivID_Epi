@@ -1,54 +1,95 @@
 ---
-title: "Post-Hoc Power Analysis"
-author: "Nicholas F. Brazeau"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   html_document:
     highlight: textmate
-    theme: lumen
-    toc: yes
     code_folding: hide
 editor_options: 
   chunk_output_type: console
 ---
 
+# _post-hoc_ Power Calculation
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
 ```
 
 ```{r}
 library(tidyverse)
-# import data
-power.files <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalc/", pattern = ".RDS", full.names = T)
-power.files <- power.files[!grepl("params.RDS|f.RDS", power.files)]
+```
+
+
+```{r}
+#.....................................
+# Read in Pf Data
+#.....................................
+
+pfpower.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pf/", pattern = ".RDS", full.names = T)
+pfpower.files <- pfpower.files[!grepl("params.RDS|f.RDS", pfpower.files)]
 
 # need to sort properly
-power.files <- tibble::tibble(power.files = power.files, 
-                              iteration = stringr::str_extract(basename(power.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
+pfpower.files <- tibble::tibble(power.files = pfpower.files, 
+                              iteration = stringr::str_extract(basename(pfpower.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
   dplyr::arrange(iteration)
 
-read_power_files <- function(path){
+read_power_files <- function(path, species){
   ret <- readRDS(path)
   ret <- dplyr::bind_rows(ret)
+  ret$species <- species
   return(ret)
 }
 
 
 
-power.files.ret <- lapply(power.files$power.files, read_power_files) %>% 
+pfpower.files.ret <- lapply(pfpower.files$power.files, read_power_files, species = "Pf") %>% 
   dplyr::bind_rows()
-poweriters.ret <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalc/params.RDS") 
-poweriters.params.ret <- dplyr::bind_cols(poweriters.ret, power.files.ret)
+pfpoweriters.ret <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pf/params.RDS") 
+pfpoweriters.params.ret <- dplyr::bind_cols(pfpoweriters.ret, pfpower.files.ret)
 
 
 ```
 
-## _Post-Hoc_ Power Analysis 
+```{r}
+#.....................................
+# Read in Pv Data
+#.....................................
 
-```{r, results='asis', fig.align='center', fig.width=8, fig.height=6}
+pvpower.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pv/", pattern = ".RDS", full.names = T)
+pvpower.files <- pvpower.files[!grepl("params.RDS|f.RDS", pvpower.files)]
+
+# need to sort properly
+pvpower.files <- tibble::tibble(power.files = pvpower.files, 
+                                iteration = stringr::str_extract(basename(pvpower.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
+  dplyr::arrange(iteration)
+
+read_power_files <- function(path, species){
+  ret <- readRDS(path)
+  ret <- dplyr::bind_rows(ret)
+  ret$species <- species
+  return(ret)
+}
+
+
+
+pvpower.files.ret <- lapply(pvpower.files$power.files, read_power_files, species = "Pv") %>% 
+  dplyr::bind_rows()
+pvpoweriters.ret <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pv/params.RDS") 
+pvpoweriters.params.ret <- dplyr::bind_cols(pvpoweriters.ret, pvpower.files.ret)
+
+```
+
+```{r}
+#.....................................
+# Merge Data
+#.....................................
+
+poweriters.params.ret <- rbind.data.frame(pfpoweriters.params.ret, pvpoweriters.params.ret)
+
+```
+
+
+```{r}
 
 poweriters.powercalc <- poweriters.params.ret %>% 
-  dplyr::group_by(n, p, exp_prob, p0, RR) %>% 
+  dplyr::group_by(species, n, p, exp_prob, p0, OR) %>% 
   dplyr::summarise(
     power = mean(p1 < 0.05)
   )
@@ -58,13 +99,14 @@ df <- poweriters.powercalc %>%
                 expprob_f = factor(exp_prob))
 
 
-PowerPlot <- ggplot(df, aes(x=beta, y=RR, color = expprob_f)) +
+PowerPlot <- ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
   geom_jitter(alpha=0.8) +
   geom_vline(aes(xintercept=0.2), colour="#de2d26", linetype="dashed") +
-  ggtitle(label="Simulated Risk Ratio versus \n Type II Error (Complement of Power)") +
-  xlab("Type II Error") + ylab("Risk Ratio") +
+  facet_wrap(~species, nrow = 1) +
+  ggtitle(label="Simulated Prevalence Odds Ratio versus \n Type II Error (Complement of Power)") +
+  xlab("Type II Error") + ylab("Prevalence Odds Ratio") +
   xlim(0,0.5) + # once we fall off we don't care that much
-  ylim(0, 3) + # not impressive to catch an RR of 5...
+  ylim(0, 3) + # not impressive to catch an OR of 5...
   scale_color_manual("Exposure Probability", values = c("#8214A0", "#005AC8", "#006E82")) +
   theme(plot.title = element_text(hjust = 0.5, face="bold", size=16),
         axis.title = element_text(hjust = 0.5, size=14),
@@ -72,11 +114,28 @@ PowerPlot <- ggplot(df, aes(x=beta, y=RR, color = expprob_f)) +
         axis.line = element_line("black", size = 0.75))
 
 
-plot(PowerPlot)
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/RR_glm_posthoc_powercalc.jpg", width = 11, height = 8, res = 250, units = "in")
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/OR_glm_posthoc_powercalc.jpg", width = 11, height = 8, res = 250, units = "in")
 plot(PowerPlot)
 graphics.off()
+```
+
+```{r, results='asis', fig.align='center', fig.width=8, fig.height=6}
+
+plot(PowerPlot)
+```
+
+### Appendix: Simulated Values
+```{r, results='asis'}
+
+DT::datatable(df, extensions='Buttons',
+               options = list(
+              searching = T,
+              pageLength = 25,
+              dom = 'Bfrtip', 
+              buttons = c('csv')))
+
 
 
 ```
+
