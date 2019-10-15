@@ -1,17 +1,12 @@
 ---
-title: "Malaria Species Interference"
-author: "Nicholas F. Brazeau"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   html_document:
-    highlight: textmate
-    theme: lumen
-    toc: yes
     code_folding: hide
 editor_options: 
   chunk_output_type: console
 ---
 
+# Pf-Pv Interference
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
 ```
@@ -82,7 +77,7 @@ surv.mle <- icer::cooccurence_mle(obj = surv,
 
 ```
 
-### Cluster Level Prevalences-Interactions
+## Cluster Level Prevalences-Interactions
 ```{r}
 mp <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
 ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>% 
