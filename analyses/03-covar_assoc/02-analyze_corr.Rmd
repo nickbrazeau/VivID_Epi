@@ -4,9 +4,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Section 3: Exploratory Data Analysis of Risk Factors
+# Exploratory Data Analysis of Risk Factors
 
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 ```
@@ -43,7 +43,7 @@ rskfctr <- dcdr %>%
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
 
 ```{r}
-covar.files <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/05-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
+covar.files <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
 covar.files <- covar.files[!grepl("params.RDS|f.RDS", covar.files)]
 
 # need to sort properly
@@ -63,7 +63,7 @@ covar.results.vals <- lapply(covar.files$covar.files, read_covar_files) %>%
   do.call("rbind", .)
 
 
-paramsdf <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/05-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
+paramsdf <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
   dplyr::select(-c(data))
 
 covar.results <- paramsdf
@@ -129,8 +129,7 @@ model.sat <- survey::svyglm(eq,
                             design = dtsrvy,
                             family = quasibinomial(link="logit"))
 
-stargazer::stargazer(model.sat, type = "html")
-
+stargazer::stargazer(model.sat, type = "html") 
 
 ```
   
@@ -143,6 +142,7 @@ rownames(vifs.df) <- NULL
 knitr::kable(vifs.df)
 
 ```
+  
 Note, the VIFs are reasonable (none greater than 10). This is encouraging. 
 
 
@@ -151,14 +151,13 @@ Note, the VIFs are reasonable (none greater than 10). This is encouraging.
 
 #### `mice` Plot
 
-```{r mice, results='asis'}
-
-dtsrvy %>% 
+```{r}
+invisible(dtsrvy %>% 
   dplyr::select(rskfctr) %>% 
   as.data.frame(.) %>% 
-  mice::md.pattern(., plot=T, rotate.names = T)
-
+  mice::md.pattern(., plot=T, rotate.names = T)) # suppress text
 ```
+
 
 #### Weighted Missingness
 

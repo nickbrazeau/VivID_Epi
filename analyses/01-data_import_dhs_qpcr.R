@@ -128,6 +128,9 @@ ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled thi
 ge <- ge %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
+saveRDS(object = ge, file = "data/raw_data/dhsdata/VivIDge.RDS")
+
+
 gewrmrprar <- left_join(x=wrmrprar, y=ge, by = "hv001") 
 
 #---------------------------------------------------------------------------------
