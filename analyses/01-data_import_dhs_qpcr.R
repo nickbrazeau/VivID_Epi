@@ -126,7 +126,9 @@ ge$adm1name <- gsub(" ", "-", ge$adm1name) # for some reason some of the char (l
 ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled this province
 # remove clusters that were missing from the DHS, see readme
 ge <- ge %>% 
-  dplyr::rename(hv001 = dhsclust) # for easier merge with PR
+  dplyr::rename(hv001 = dhsclust) %>%  # for easier merge with PR
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
 
 saveRDS(object = ge, file = "data/raw_data/dhsdata/VivIDge.RDS")
 

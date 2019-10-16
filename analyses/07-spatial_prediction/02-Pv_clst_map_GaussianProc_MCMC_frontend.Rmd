@@ -1,6 +1,6 @@
 # Bayesian Hierarchial Spatial Cluster Models 
 
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
 Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
@@ -404,8 +404,7 @@ long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(
     
   }
   
-  LL <- 
-  return(LL)
+  LL <- return(LL)
 })
 
 

@@ -11,6 +11,10 @@ source("R/00-functions_basic.R")
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
 powercalculator.glmOR <- function(n=15859, exp_prob=0.5, p=0.03, p0=0.02){
   
+  logit <- function(x, tol=1e-3){ 
+    return( log(((x+tol)/(1-x+tol))) )
+  }
+  
   df <- data.frame(obs=factor(seq(1:n)),
                    exp=sample(x=c(0,1), size=n, replace = T, prob=c(exp_prob, 1-exp_prob))) # df of exposure
   p <- 2*p # inv average prev for both groups 

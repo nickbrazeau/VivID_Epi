@@ -18,7 +18,7 @@ datasets/
 db/
 data/
 olddata/
-
+**/_rslurm_*
 
 rdhs.json
 figures/
@@ -49,3 +49,4 @@ sandbox/
 # MAC files
 .DS_Store
 ~$*
+_rslurm

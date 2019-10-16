@@ -32,11 +32,11 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 ```{r, child = 'analyses/06-IPW_ML/02-check_weights.Rmd'}
 ```
 
-<!-- ```{r, child = 'analyses/06-IPW_ML/03-MSM_RRest.Rmd'} -->
-<!-- ``` -->
+```{r, child = 'analyses/06-IPW_ML/03-MSM_RRest.Rmd'}
+```
 
-<!-- ```{r, child = 'analyses/07-spatial_prediction/01-Pv_areal_CAR_MCMC.Rmd'} -->
-<!-- ``` -->
+```{r, child = 'analyses/07-spatial_prediction/01-Pv_areal_CAR_MCMC.Rmd'}
+```
 
 <!-- ```{r, child = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'} -->
 <!-- ``` -->

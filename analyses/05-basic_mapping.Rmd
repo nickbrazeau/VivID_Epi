@@ -5,7 +5,7 @@ editor_options:
 ---
 # Basic Maps & Spatial Autocorrelation of Malaria Across DRC
 
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
 
@@ -212,7 +212,7 @@ graphics.off()
 ```{r, results='asis'}
 
 cowplot::ggdraw() +
-  cowplot::draw_plot(pvcasen, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(pvcaseprev, x = 0, y = 0, width = 1, height = 1, scale = 1) +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 
 ```
@@ -269,11 +269,20 @@ knitr::kable(moranIprov)
 #........................
 # Moran's I for Cluster Level
 #........................
+ge.nosf <- ge
+sf::st_geometry(ge.nosf) <- NULL
 
-gcdist <- ge %>% 
-  dplyr::select(c("longnum", "latnum")) %>% 
-  sf::st_distance(x = ., which = "Great Circle", by_element = F)
+# note, need to remove three clusters that were not screened for malaria
+# one cluster due to no HIV testing in it(? DHS internal) and 
+# two clusters lost due to contamination
+maldhsclustlist <- unique( dt$hv001 )
+ge.nosf <- ge.nosf %>% 
+  dplyr::filter(hv001 %in% maldhsclustlist)
 
+# get GC Weight Matrix
+gcdist <- ge.nosf %>% 
+   dplyr::select(c("longnum", "latnum")) %>% 
+  geosphere::distm(x =., fun = geosphere::distGeo) # geodisc approach 
 gcdist.inv <- 1/gcdist
 diag(gcdist.inv) <- 0
 
@@ -582,7 +591,9 @@ graphics.off()
 
 ```{r, results='asis'}
 
-caseprevmaps[[2]] + ggrepel::geom_label_repel(aes(x = longnum, y = latnum, label = plsmdn))
+caseprevmaps_lrg[[2]] + ggrepel::geom_label_repel(data = pvclst.dat,
+                                                  aes(x = longnum, y = latnum, label = plsmdn)) +
+  ggtitle("Labeled with Cluster Case Counts > 5")
 
 ```
 
@@ -608,7 +619,7 @@ aperange_nhapv + prettybasemap_nodrc
 # Pf, Pv, together
 ##############################
 pfprevmap <-  prevmaprasterplots_lrg[[1]] +
-  ggtitle(expression(bolditalic("P. falciparum")))1 +
+  ggtitle(expression(bolditalic("P. falciparum"))) +
   prettybasemap_nodrc + 
   theme(
     legend.position = "right",

@@ -43,7 +43,7 @@ rskfctr <- dcdr %>%
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
 
 ```{r}
-covar.files <- list.files("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
+covar.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
 covar.files <- covar.files[!grepl("params.RDS|f.RDS", covar.files)]
 
 # need to sort properly
