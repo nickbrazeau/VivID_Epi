@@ -1,9 +1,15 @@
-# Section 1: Univariate and Bivariate Summary Statistics
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Univariate and Bivariate Summary Statistics
 
 ```{r}
-#-----------------------------------------------------------------------------------------------
+#------------------------------------------------------------------ 
 # Purpose of this script is to do basic bivariate analyses
-#-----------------------------------------------------------------------------------------------
+#------------------------------------------------------------------ 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R") 
 library(tidyverse)
@@ -18,13 +24,13 @@ options(scipen=999)
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
-dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
                 risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model))
-sf::st_geometry(dt) <- NULL
+
 dtsrvy <- makecd2013survey(survey = dt)
 
-
+ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
 
 ```
 
@@ -36,9 +42,9 @@ Fit basic intercept weighted-glm to derive weighted national prevalence.
 
 ```{r, results='asis'}
 
-#-------------------------------------------------------------------------------------------------
+#-------------------------------------------------------- 
 # Basic Descriptive Statistics
-#------------------------------------------------------------------------------------------------
+#-------------------------------------------------------- 
 # national prevalence
 sumnums <- dtsrvy %>% 
   dplyr::mutate(count = 1) %>% 
@@ -114,11 +120,12 @@ clstprev <- dtsrvy %>%
 
 # extra items for making a pretty plot
 dhsreg <- dt %>% 
-  dplyr::select(c("hv001", "shnprovin")) %>% 
-  dplyr::mutate(prov = as.character( haven::as_factor(shnprovin) ),
+  dplyr::left_join(., ge, by = "hv001") %>% 
+  dplyr::select(c("hv001", "adm1fipsna")) %>% 
+  dplyr::mutate(prov = as.character( haven::as_factor(adm1fipsna) ),
                 prov = tools::toTitleCase(prov)) %>% 
   dplyr::filter(!duplicated(.)) %>% 
-  dplyr::select(-c("shnprovin"))
+  dplyr::select(-c("adm1fipsna"))
 
 
 clst.prev.plotObj <- clst %>% 
@@ -306,12 +313,12 @@ pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
 pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
                                covar = pvivrskfctr, stringsAsFactors=FALSE)
 
-pvivrskfctr_models$glmlog <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlog)
-pvivrskfctr_models$glmlog_tidy <- purrr::map(pvivrskfctr_models$glmlog,
+pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
+pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlogit,
                                              .f=function(x){
                                              broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
                                              )
-pvivrskfctr_est <- pvivrskfctr_models$glmlog_tidy %>% 
+pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
@@ -330,15 +337,15 @@ pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
                                covar = pfalrskfctr, stringsAsFactors=FALSE)
 
-pfalrskfctr_models$glmlog <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlog)
+pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlogit)
 
 
-pfalrskfctr_models$glmlog_tidy <- purrr::map(pfalrskfctr_models$glmlog,
+pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
                                              .f=function(x){
                                              broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
 
 
-pfalrskfctr_est <- pfalrskfctr_models$glmlog_tidy %>% 
+pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
@@ -410,7 +417,7 @@ casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
 casestbl1df <- dcdr %>% 
   dplyr::select(c("column_name", "var_label")) %>% 
   dplyr::rename(matchcol = column_name) %>% 
-  dplyr::left_join(casestbl11df, ., by = "matchcol") %>% 
+  dplyr::left_join(casestbl1df, ., by = "matchcol") %>% 
   dplyr::select(c("var_label", dplyr::everything()))
 
 
@@ -429,7 +436,7 @@ DT::datatable(pvivriskfactortable,
                 buttons = c('csv')),
               caption = htmltools::tags$caption(
                 style = 'caption-side: bottom; text-align: center;',
-                "P vivax Risk Factor Table with Counts and Risk Ratio Bivariate Associations"))
+                "P vivax Risk Factor Table with Counts and Prevalence Odds Ratio Bivariate Associations"))
 
 ```
 
@@ -445,7 +452,7 @@ DT::datatable(pfalriskfactortable,
                 buttons = c('csv')),
               caption = htmltools::tags$caption(
                 style = 'caption-side: bottom; text-align: center;',
-                "P falciparum Risk Factor Table with Counts and Risk Ratio Bivariate Associations"))
+                "P falciparum Risk Factor Table with Counts and Prevalence Odds Ratio Bivariate Associations"))
 
 ```
 
@@ -456,12 +463,15 @@ DT::datatable(pfalriskfactortable,
 #...................................................
 # Tidy
 #...................................................
-pvriskest <- pvivrskfctr_models$glmlog_tidy %>% 
+pvriskest <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(column_name = term) %>% 
   dplyr::mutate(
-    column_name = ifelse(grepl("_fctb", column_name),
+     column_name = ifelse(grepl("_fctb_clst", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb_clst"),
+                         column_name),
+    column_name = ifelse(!grepl("_fctb_clst", column_name) & grepl("_fctb", column_name),
                          stringr::str_extract(column_name, "[ -~]+_fctb"),
                          column_name)
   )
@@ -473,12 +483,15 @@ orderrf <- pvriskest %>%
   unlist(.)
 
 # PF
-pfriskest <- pfalrskfctr_models$glmlog_tidy %>% 
+pfriskest <- pfalrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
-  dplyr::rename(column_name = term) %>% 
+  dplyr::rename(column_name = term)  %>% 
   dplyr::mutate(
-    column_name = ifelse(grepl("_fctb", column_name),
+     column_name = ifelse(grepl("_fctb_clst", column_name),
+                         stringr::str_extract(column_name, "[ -~]+_fctb_clst"),
+                         column_name),
+    column_name = ifelse(!grepl("_fctb_clst", column_name) & grepl("_fctb", column_name),
                          stringr::str_extract(column_name, "[ -~]+_fctb"),
                          column_name)
   )
@@ -501,13 +514,12 @@ pv_bivar_rf_plot <- pvriskest %>%
                       ymin = conf.low, ymax = conf.high,
                       color = factor(level))) +
   scale_color_manual("Level", values = c("#0868ac", "#4eb3d3")) +
-  ylim(c(0,2)) + 
   coord_flip() + 
   ggtitle(expression(bolditalic("P. vivax"))) +
-  ylab("Prevalence Ratio") + 
+  ylab("Prevalence Odds Ratio") + 
   theme(
     plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
-    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12, angle = 45),
     axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
     axis.title.y = element_blank(),
     legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
@@ -533,10 +545,10 @@ pf_bivar_rf_plot <- pfriskest %>%
   ylim(c(0,2)) + 
   coord_flip() + 
   ggtitle(expression(bolditalic("P. falciparum"))) +
-  ylab("Prevalence Ratio") + 
+  ylab("Prevalence Odds Ratio") + 
   theme(
     plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
-    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
+    axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12, angle = 45),
     axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 11),
     axis.title.y = element_blank(),
     legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 12),
@@ -617,7 +629,7 @@ readr::write_csv(x = pfalriskfactortable,
 ```
 
 #### N.B. Future Exclusions
-The HIV covariates and temperatuare covariate are excluded in downstream analyses. HIV was excluded as too few people were HIV-positive to consider it a meaningful risk factor. Temperature was excluded as altitude was considered an instrumental variable for temperature (as well as being so collinear that we could not untangle them). As a result, only altitude was kept in the DAG and considered for IPTWs.
+The temperatuare covariate is excluded in downstream analyses as altitude was considered an instrumental variable for temperature (as well as being so collinear that we could not untangle them). As a result, only altitude was kept in the DAG and considered for IPTWs.
 
 
 #### Appendix

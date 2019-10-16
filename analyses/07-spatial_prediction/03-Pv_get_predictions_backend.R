@@ -83,4 +83,4 @@ sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper,
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
-                                                 time = "3-00:00:00"))
+                                                 time = "11-00:00:00"))

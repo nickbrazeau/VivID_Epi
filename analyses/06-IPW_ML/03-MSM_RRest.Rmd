@@ -8,9 +8,11 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 ```
 
 ```{r}
+
 library(tidyverse)
 remotes::install_github("malcolmbarrett/ggdag"); library(ggdag)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
+
 ```
 
 
@@ -19,9 +21,9 @@ Note, the canonical set is all nodes in the DAG that are not on the casual pathw
   
 ```{r, results='asis', fig.align='center', fig.width=8, fig.height=6}
 vividdag <- dagitty::downloadGraph(x = "dagitty.net/mjKNQhB")
-tidy_dag <- tidy_dagitty(vividdag)
-DAGplot <- ggdag(tidy_dag) +
-  theme_dag()
+tidy_dag <- ggdag::tidy_dagitty(vividdag)
+DAGplot <- ggdag::ggdag(tidy_dag) +
+  ggdag::theme_dag()
 
 dagplot <- tidy_dag %>% 
   ggplot(aes(x = x, y = y, xend = xend, yend = yend, color = name)) +
@@ -47,55 +49,29 @@ graphics.off()
 
 ```{r}
 # import data
-varstoinclude <- c("pv18s" , "pfldh", "hv001", "hv023", "hv005_wi", txs$target,
-                   "hab1_cont_scale", "hv104_fctb", # need to add in covariates that don't have confounding ancestors but are needed elsewhere
-                   "urban_rura_fctb", "alt_dem_cont_scale_clst",
-                   "hiv03_fctb", # no longer considered risk factor bc too few observations
-                   "longnum", "latnum")
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
+params <- readRDS("~/Documents/GitHub/VivID_Epi/results/IPTWmodels.RDS")
 
-dt <- readRDS("data/derived_data/vividepi_recode.rds")
-sf::st_geometry(dt) <- NULL
-
-# subset to complete cases
-dt.ml.cc <- dt  %>% 
-  dplyr::select(varstoinclude) %>% 
-  dplyr::filter(complete.cases(.)) 
-
-
-dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
-  dplyr::mutate(risk_factor_raw = ifelse(is.na(risk_factor_raw), "n", risk_factor_raw),
-                risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model)) %>% 
-  dplyr::select(c("column_name", "abridged_var_label", "risk_factor_model", "level")) %>% 
-  dplyr::filter(risk_factor_model == "y") %>% 
-  dplyr::filter(column_name != "hiv03_fctb")
-
-```
-
-```{r}
-# weights
-
-params$SLpreds <-purrr::map(params$SL, "SL.predictions")
-params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
-params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
-
-wi <- params %>% 
+iptw <- params %>% 
   dplyr::select(c("target", "iptw"))
 
-
 ```
 
-```{r}
 
-makeiptwsrvy <- function(x){
+```{r}
+# TODO check that this and glm all match up
+
+makeiptwsrvy <- function(x){ # not good function practice
   if(is.null(x)){
     x <- 1
   }
-  dt.ml.cc$wi <- x*dt.ml.cc$hv005_wi
-  dtsrvy <- dt.ml.cc %>% srvyr::as_survey_design(ids = hv001, 
-                                              #   strata = hv023, 
-                                                 weights = wi)
+  dt$wi <- x*dt$hv005_wi
+  dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
+                                           #   strata = hv023, 
+                                           weights = wi)
   return(dtsrvy)
-    }
+}
 
 
 fitglmlogit <- function(outcome, target, iptwsrvy){
@@ -117,11 +93,11 @@ fitglmlogit <- function(outcome, target, iptwsrvy){
 #.......................
 # Pvivax 
 #.......................
-pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
+pvivrskfctr <- dcdr$target
 pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
                                  target = pvivrskfctr, stringsAsFactors=FALSE)
 
-pvivrskfctr_models <- dplyr::left_join(pvivrskfctr_models, wi, by = "target")
+pvivrskfctr_models <- dplyr::left_join(pvivrskfctr_models, iptw, by = "target")
 
 
 pvivrskfctr_models$iptwsrvy <- purrr::map(pvivrskfctr_models$iptw, makeiptwsrvy)
@@ -141,31 +117,39 @@ pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>%
 
 ```
 
-## _P. falciparum_ IPTW-OR
 ```{r, results='asis'}
-knitr::kable(pvivrskfctr_est)
+DT::datatable(pvivrskfctr_est, 
+              rownames = F,
+              options = list(
+                searching = F,
+                pageLength = 30,
+                dom = 'Bfrtip', 
+                buttons = c('csv')),
+              caption = htmltools::tags$caption(
+                style = 'caption-side: bottom; text-align: center;',
+                "P vivax Risk Factor Table for IPTW Prevalence Odds Ratio"))
+
+
 ```
 
-## _P. falciparum_ Risk Factor IPTW-Prevelance Ratios
+## _P. falciparum_ IPTW-Prevalence Odds Ratios Factor IPTW
 ```{r}
 #.......................
 # Pfalciparum 
 #.......................
-# TODO update to include pf and pv as risk factors as well
-
-pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y" & dcdr$column_name != "pfldh_fctb"]
+pfalrskfctr <- dcdr$target
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
                                  target = pfalrskfctr, stringsAsFactors=FALSE)
 
-pfalrskfctr_models <- dplyr::left_join(pfalrskfctr_models, wi, by = "target")
+pfalrskfctr_models <- dplyr::left_join(pfalrskfctr_models, iptw, by = "target")
 
 pfalrskfctr_models$iptwsrvy <- purrr::map(pfalrskfctr_models$iptw, makeiptwsrvy)
 
 pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models[,c("outcome", "target", "iptwsrvy")], fitglmlogit)
 
 pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
-                                               .f=function(x){
-                                                 broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+                                             .f=function(x){
+                                               broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
 )
 
 pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
@@ -175,69 +159,131 @@ pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>%
 
 ```
 
-## _P. falciparum_ IPTW-OR
 ```{r, results='asis'}
-knitr::kable(pfalrskfctr_est)
+DT::datatable(pfalrskfctr_est, 
+              rownames = F,
+              options = list(
+                searching = F,
+                pageLength = 30,
+                dom = 'Bfrtip', 
+                buttons = c('csv')),
+              caption = htmltools::tags$caption(
+                style = 'caption-side: bottom; text-align: center;',
+                "P falciparum Risk Factor Table for IPTW Prevalence Odds Ratio"))
 ```
 
-## IPTW OR Plot
-```{r, results='asis'}
+## IPTW Prevalence Odds Ratio Plot
+```{r}
 
 #...................................................
 # Tidy
 #...................................................
-pvriskest <- pvivrskfctr_models$glmlogit_tidy %>% 
-  bind_rows() %>% filter(term != "(Intercept)") %>% 
+pvivrskfctr_est <- pvivrskfctr_est %>% 
+  bind_rows() %>% 
+  filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
-  dplyr::rename(column_name = term) %>% 
+  dplyr::rename(target = term) %>% 
   dplyr::mutate(
-    column_name = ifelse(grepl("_fctb", column_name),
-                         stringr::str_extract(column_name, "[ -~]+_fctb"),
-                         column_name)
-  )
+    target = ifelse(grepl("_fctb_clst", target),
+                    stringr::str_extract(target, "[ -~]+_fctb_clst"),
+                    target),
+    target = ifelse(!grepl("_fctb_clst", target) & grepl("_fctb", target),
+                    stringr::str_extract(target, "[ -~]+_fctb"),
+                    target),
+    species = "Pv"
+  ) %>% 
+  dplyr::left_join(., dcdr, by = "target") 
 
-pvriskest <- dplyr::left_join(pvriskest, dcdr, by = "column_name") %>% 
-  dplyr::mutate(species = "Pv")
-orderrf <- pvriskest %>% 
-  dplyr::arrange(level) %>% 
-  dplyr::select(abridged_var_label) %>% 
-  unlist(.)
 
 # PF
-pfriskest <- pfalrskfctr_models$glmlogit_tidy %>% 
-  bind_rows() %>% filter(term != "(Intercept)") %>% 
+pfalrskfctr_est <- pfalrskfctr_est %>% 
+  bind_rows() %>% 
+  filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2) %>% 
-  dplyr::rename(column_name = term) %>% 
+  dplyr::rename(target = term) %>% 
   dplyr::mutate(
-    column_name = ifelse(grepl("_fctb", column_name),
-                         stringr::str_extract(column_name, "[ -~]+_fctb"),
-                         column_name)
-  )
+    target = ifelse(grepl("_fctb_clst", target),
+                    stringr::str_extract(target, "[ -~]+_fctb_clst"),
+                    target),
+    target = ifelse(!grepl("_fctb_clst", target) & grepl("_fctb", target),
+                    stringr::str_extract(target, "[ -~]+_fctb"),
+                    target),
+    species = "Pf"
+  ) %>% 
+  dplyr::left_join(., dcdr, by = "target") 
 
-pfriskest <- dplyr::left_join(pfriskest, dcdr, by = "column_name") %>% 
-  dplyr::mutate(species = "Pf")
-malriskest <- dplyr::bind_rows(pvriskest, pfriskest)
+
+
+malriskest <- dplyr::bind_rows(pvivrskfctr_est, pfalrskfctr_est)
 
 
 
 #...................................................
 # Make Plots
 #...................................................
+liftover <- data.frame(label = 
+                         c("Sex (Male)",
+                           "Age",
+                           "HIV (+)",
+                           "Farmer",
+                           "Wealth",
+                           "Education",
+                           "Precipitation",
+                           "Altitude",
+                           "Water Dist.",
+                           "Housing Materials (Trad.)",
+                           "ITN Use (No)",
+                           "Urbanicity (Rur.)",
+                           "Hospital Dist."),
+                       labelnum = 1:13)
 
-mal_iptw_plot <- malriskest %>% 
-  dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>% 
-  ggplot() +
-  geom_hline(yintercept = 1, color = "#cb181d", linetype = "dashed") +
-  geom_pointrange(aes(x = abridged_var_label, y = estimate, 
+blocks <- data.frame(ymin = c(0, 0, 0),
+                     ymax = c(3.5, 3.5, 3.5),
+                     xmin = c(0.5, 5.5, 11.5), 
+                     xmax = c(2.5, 9.5, 13.5)
+)
+
+text <- data.frame(x = c(1.5, 3.75, 7.5, 10.5, 12.5),
+                   y = c(2.5, 2.5, 2.5, 2.5, 2.5),
+                   label = 
+                     c("Demographic",
+                       "Individual",
+                       "Ecological",
+                       "Interventions",
+                       "Urbanicity"))
+
+malriskest <- malriskest %>% 
+  dplyr::left_join(., liftover, by = "label")
+
+finalMSMplot <- ggplot() +
+  geom_rect(data = blocks, 
+            aes(xmin = xmin, xmax = xmax,  ymin = ymin, ymax = ymax), 
+            fill = "#d9d9d9",
+            color = "#d9d9d9") +
+  geom_hline(yintercept = 1, color = "#e41a1c", linetype = "dashed", size = 1) +
+  geom_hline(yintercept = 0, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  geom_hline(yintercept = 2, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  geom_hline(yintercept = 3, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  geom_text(data = text,
+            aes(x = x, y = y, label = label), 
+            fontface = "bold",
+            color = "#525252",
+            size = 6) +
+  geom_pointrange(data = malriskest,
+                  aes(x = labelnum, y = estimate, 
                       ymin = conf.low, ymax = conf.high,
-                      color = factor(species)), alpha = 0.8, size = 1.5) +
+                      color = factor(species)), alpha = 0.8, size = 1.25) + 
   scale_color_viridis_d("Species") +
-  coord_flip() + 
+  coord_flip() +
+  scale_x_continuous(breaks = c(1:nrow(liftover)), 
+                     labels = liftover$label) +
+  scale_y_continuous(breaks = c(0, 1, 2, 3)) +
   ylab("Prevalence Odds Ratio") + 
   theme(
     plot.title =  element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 14),
     axis.title.x = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 16),
-    axis.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.text.x = element_text(family = "Helvetica", color = "#000000", vjust = 0.5, hjust = 0.5, size = 14),
+    axis.text.y = element_text(family = "Helvetica", color = "#000000", face = "bold", vjust = 0.5, hjust = 1, size = 14),
     axis.title.y = element_blank(),
     legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, hjust = 0.5, size = 16),
     legend.text = element_text(family = "Helvetica", vjust = 0.5, hjust = 0.5, size = 14, angle = 0),
@@ -248,11 +294,63 @@ mal_iptw_plot <- malriskest %>%
     panel.background = element_rect(fill = "transparent"),
     plot.background = element_rect(fill = "transparent"),
     panel.grid = element_blank(),
-    panel.border = element_blank())
-    
+    panel.border = element_blank()
+    )
+
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/IPTWMSM_final_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(finalMSMplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(finalMSMplot)
+```
+
+### Appendix: Unadjusted vs. Adjusted RR Estimates
+```{r}
+load("~/Documents/GitHub/VivID_Epi/results/bivariate_model_results.rda")
+
+pvconf <- pvivrskfctr_models$glmlogit_tidy %>% 
+  dplyr::bind_rows() %>% 
+  dplyr::filter(term != "(Intercept") %>% 
+  dplyr::select(c("term", "estimate", "conf.low", "conf.high")) %>% 
+  dplyr::mutate(species = "Pv") %>% 
+  dplyr::rename(target = term)
+
+
+pfconf <- pfalrskfctr_models$glmlogit_tidy %>% 
+  dplyr::bind_rows() %>% 
+  dplyr::filter(term != "(Intercept") %>% 
+  dplyr::select(c("term", "estimate", "conf.low", "conf.high")) %>% 
+  dplyr::mutate(species = "Pf") %>% 
+  dplyr::rename(target = term)
+
+confmalriskest <- rbind.data.frame(pvconf, pfconf) %>% 
+  magrittr::set_colnames(c("target", "est_conf", "conf.low_conf", "conf.high_conf", "species"))
+
+iptwest <- malriskest %>% 
+  dplyr::select(c("target", "estimate", "conf.low", "conf.high", "species")) %>% 
+  magrittr::set_colnames(c("target", "est_iptw", "conf.low_iptw", "conf.high_iptw", "species"))
 
 
 
+out <- left_join(iptwest, confmalriskest, by = c("target", "species"))
 
+```
+
+```{r, results='asis'}
+DT::datatable(out, 
+              rownames = F,
+              options = list(
+                searching = F,
+                pageLength = 30,
+                dom = 'Bfrtip', 
+                buttons = c('csv')),
+              caption = htmltools::tags$caption(
+                style = 'caption-side: bottom; text-align: center;',
+                "Malaria Risk Factor Table with Unadjusted (Bivariate Assoc.) and IPTW Prevalence Odds Ratio")
+              )
 ```
 

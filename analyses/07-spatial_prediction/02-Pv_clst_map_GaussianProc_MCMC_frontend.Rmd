@@ -26,7 +26,7 @@ set.seed(48)
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
 
 ```

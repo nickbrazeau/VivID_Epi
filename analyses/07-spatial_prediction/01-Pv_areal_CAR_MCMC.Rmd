@@ -1,4 +1,4 @@
-# Section 7.1: Bayesian Hierarchial Spatial Province Models for _P. vivax_ among Asymptomatic Adults in the DRC"
+# Bayesian Hierarchial Spatial Province Models for _P. vivax_ among Asymptomatic Adults in the DRC"
 
 
 ```{r setup, include=FALSE}
@@ -23,8 +23,8 @@ set.seed(48)
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
-ge <- sf::st_as_sf( readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
+mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
+ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
 
 ```
 
