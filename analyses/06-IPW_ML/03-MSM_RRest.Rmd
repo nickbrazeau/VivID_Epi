@@ -314,18 +314,37 @@ load("~/Documents/GitHub/VivID_Epi/results/bivariate_model_results.rda")
 
 pvconf <- pvivrskfctr_models$glmlogit_tidy %>% 
   dplyr::bind_rows() %>% 
-  dplyr::filter(term != "(Intercept") %>% 
+  dplyr::filter(term != "(Intercept)") %>% 
   dplyr::select(c("term", "estimate", "conf.low", "conf.high")) %>% 
   dplyr::mutate(species = "Pv") %>% 
-  dplyr::rename(target = term)
+  dplyr::rename(target = term) %>% 
+  dplyr::mutate(
+     target = ifelse(grepl("_fctb_clst", target),
+                         stringr::str_extract(target, "[ -~]+_fctb_clst"),
+                         target),
+    target = ifelse(!grepl("_fctb_clst", target) & grepl("_fctb", target),
+                         stringr::str_extract(target, "[ -~]+_fctb"),
+                         target)
+  ) %>% 
+  mutate_if(is.numeric, round, 2)
 
 
 pfconf <- pfalrskfctr_models$glmlogit_tidy %>% 
   dplyr::bind_rows() %>% 
-  dplyr::filter(term != "(Intercept") %>% 
+  dplyr::filter(term != "(Intercept)") %>% 
   dplyr::select(c("term", "estimate", "conf.low", "conf.high")) %>% 
   dplyr::mutate(species = "Pf") %>% 
-  dplyr::rename(target = term)
+  dplyr::rename(target = term) %>% 
+  dplyr::mutate(
+     target = ifelse(grepl("_fctb_clst", target),
+                         stringr::str_extract(target, "[ -~]+_fctb_clst"),
+                         target),
+    target = ifelse(!grepl("_fctb_clst", target) & grepl("_fctb", target),
+                         stringr::str_extract(target, "[ -~]+_fctb"),
+                         target)
+  ) %>% 
+  mutate_if(is.numeric, round, 2)
+
 
 confmalriskest <- rbind.data.frame(pvconf, pfconf) %>% 
   magrittr::set_colnames(c("target", "est_conf", "conf.low_conf", "conf.high_conf", "species"))
@@ -336,7 +355,8 @@ iptwest <- malriskest %>%
 
 
 
-out <- left_join(iptwest, confmalriskest, by = c("target", "species"))
+out <- left_join(iptwest, confmalriskest, by = c("target", "species")) %>% 
+  dplyr::select(c("species", dplyr::everything()))
 
 ```
 
@@ -347,10 +367,10 @@ DT::datatable(out,
                 searching = F,
                 pageLength = 30,
                 dom = 'Bfrtip', 
-                buttons = c('csv')),
-              caption = htmltools::tags$caption(
-                style = 'caption-side: bottom; text-align: center;',
-                "Malaria Risk Factor Table with Unadjusted (Bivariate Assoc.) and IPTW Prevalence Odds Ratio")
+                buttons = c('csv'))
+            #  , caption = htmltools::tags$caption(
+            #    style = 'caption-side: bottom; text-align: center;',
+            #    "Malaria Risk Factor Table with Unadjusted (Bivariate Assoc.) and IPTW Prevalence Odds Ratio")
               )
 ```
 

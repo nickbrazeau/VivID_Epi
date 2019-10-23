@@ -113,8 +113,7 @@ A classic definition of confounding in a cross-sectional survey is an unequal di
   
 Given that this fancy statistic doesn't take into account weights, I made 100 pseudopopulations (by sampling from the base population with respect to the calculated IPTW) and calculated the energy correlation for each iteration. Plotted is the distribution of the correlations for each covariate (e.g. Precipitation-Temperature, Precipitation-Wealth, etc. etc.) given that we focused on canonical sets when possible. 
 ```{r}
-covarbalparams <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") %>% 
-  dplyr::select(-c("data"))
+covarbalparams <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
 
 covarretfiles <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/",
                             pattern = ".RDS", full.names = T)

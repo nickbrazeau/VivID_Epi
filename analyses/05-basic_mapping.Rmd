@@ -497,6 +497,22 @@ save(provmaps, caseprevmaps, case_n_maps, aperange_nhapv,
 
 ```
 
+```{r}
+
+##############################
+# Ape Overlap
+##############################
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
+aperange_nhapv + prettybasemap_nodrc
+graphics.off()
+
+```
+
+```{r, results = 'asis', fig.width= 12, fig.height=12}
+aperange_nhapv + prettybasemap_nodrc
+```
+
+
 #### More Maps
 
 ```{r}
@@ -587,30 +603,12 @@ graphics.off()
 ```
 
 
-
-
 ```{r, results='asis'}
 
 caseprevmaps_lrg[[2]] + ggrepel::geom_label_repel(data = pvclst.dat,
                                                   aes(x = longnum, y = latnum, label = plsmdn)) +
   ggtitle("Labeled with Cluster Case Counts > 5")
 
-```
-
-
-```{r}
-
-##############################
-# Ape Overlap
-##############################
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
-aperange_nhapv + prettybasemap_nodrc
-graphics.off()
-
-```
-
-```{r, results = 'asis', fig.width= 12, fig.height=12}
-aperange_nhapv + prettybasemap_nodrc
 ```
 
 ```{r}

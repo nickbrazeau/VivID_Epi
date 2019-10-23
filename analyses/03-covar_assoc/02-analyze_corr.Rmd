@@ -63,7 +63,7 @@ covar.results.vals <- lapply(covar.files$covar.files, read_covar_files) %>%
   do.call("rbind", .)
 
 
-paramsdf <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
+paramsdf <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
   dplyr::select(-c(data))
 
 covar.results <- paramsdf
