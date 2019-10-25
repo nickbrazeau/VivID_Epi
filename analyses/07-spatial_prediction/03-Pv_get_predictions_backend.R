@@ -60,7 +60,7 @@ pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
                                               predictors = predictors, 
                                               type = "marginal", 
                                               scale.predictions = "prevalence",
-                                              quantiles = c(0.025, 0.975), 
+                                              quantiles = NULL, 
                                               standard.error = T, 
                                               thresholds = NULL)
   return(ret)
