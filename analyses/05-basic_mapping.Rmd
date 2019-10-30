@@ -405,13 +405,24 @@ Data will be simulated by randomly assigning clusters as ape or not territories 
   
 ```{r}
 
-run_ape_permutations <- function(dt18s, n.apeclsts){
-  clsts <- dt18s$hv001[!duplicated(dt18s$hv001)]
+run_ape_permutations <- function(dtsrvy18s, n.apeclsts){
+  
+  clsts <- dtsrvy18s %>% 
+    tibble::as_tibble(.) %>% 
+    dplyr::select("hv001") %>% 
+    dplyr::filter(!duplicated(.)) %>% 
+    unlist(.)
+  
   apeclsts <- sample(clsts, size = n.apeclsts, replace = F)
 
-  ape.ovrlp.pos <- dt18s %>% 
-    dplyr::filter(hv001 %in% apeclsts)
-  return( mean( ape.ovrlp.pos$pv18s ) )
+  ape.ovrlp.pos <- dtsrvy18s %>% 
+    dplyr::filter(hv001 %in% apeclsts) %>% 
+    dplyr::summarise(pv18s = srvyr::survey_mean(pv18s)) %>% 
+    dplyr::select(-c(dplyr::ends_with("_se")))
+  
+  ret <- unname(as.vector(ape.ovrlp.pos))
+  
+  return(ret)
 
 }
 
