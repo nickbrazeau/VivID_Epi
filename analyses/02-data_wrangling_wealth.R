@@ -21,7 +21,7 @@ sf::st_geometry(dt) <- NULL
 # weights
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hv005_wi = hv005/1e6
+  dplyr::mutate(hiv05_wi = hiv05/1e6
   )
 
 # As desrcibed in this manuscript (PMID: 28222094)
@@ -234,7 +234,7 @@ sum(is.na(wlth_scores$combscor))
 # Account for Sampling Weights
 ##############################
 dtsub <- dt %>% 
-  dplyr::select(c("hv001", "hv023", "hv005_wi", "hivrecode_barcode")) %>% 
+  dplyr::select(c("hv001", "hv023", "hiv05_wi", "hivrecode_barcode")) %>% 
   dplyr::left_join(., wlth_scores)
 
 dtsrvy <- makecd2013survey(survey = dtsub)

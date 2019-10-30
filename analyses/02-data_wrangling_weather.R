@@ -13,6 +13,12 @@ library(sf)
 readRasterBB.precip <- function(rstfile, bb = bb){
   ret <- raster::raster(rstfile)
   ret <- raster::crop(x = ret, y = bb)
+  
+  vals <- raster::values(ret) 
+  vals <- ifelse(vals == -9999, NA, vals) # improper values
+  raster::values(ret) <- vals
+  
+  
   ret <- raster::projectRaster(from = ret, to = ret,
                                crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
   
@@ -42,71 +48,6 @@ readRasterBB.temp <- function(rstfile, bb = bb){
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
 
-#......................................................................................................
-# Set up Lagged Month for Study Collection time
-#......................................................................................................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
-
-
-# drop clusters with missing geospatial data 
-dt <- dt %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
-
-#.............
-# dates
-#.............
-dt <- dt %>% 
-  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
-
-
-# NOTE, some clusters have survey start and end dates that are in two months 
-# (eg boundaries aren't clean/coinciding with a month. Naturally). Given
-# grouping by month, need to assign a clusters "month" on the majority of days 
-# that were spent surveying that clusters
-
-# clusters without clean boundaries
-clst_mnth_bounds <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-  dplyr::mutate(mnth = lubridate::month(hvdate_dtdmy)) %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(moremnths = length(unique(mnth))) %>% 
-  dplyr::filter(moremnths > 1)
-
-clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-  dplyr::filter(hv001 %in% clst_mnth_bounds$hv001) %>% 
-  dplyr::mutate(hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
-  dplyr::group_by(hv001, hvyrmnth_dtmnth) %>% 
-  dplyr::summarise(n = n()) %>% 
-  dplyr::filter(n == max(n)) %>% 
-  dplyr::select(-c("n"))
-
-sf::st_geometry(clst_mnth_bounds.assign) <- NULL
-
-# first join assigned months
-# and then make date for unambigious months
-dt <- dt %>% 
-  dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
-  dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
-                                         paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"),
-                                         hvyrmnth_dtmnth))
-
-dates <- readr::read_csv("internal_datamap_files/pr_date_liftover.csv")
-dt <- dt %>% 
-  dplyr::left_join(x=., y=dates, by = "hvyrmnth_dtmnth") %>% 
-  dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-
-xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
-
-
-# final dataframe for lagged months
-clst_mnths.lag <- dt %>% 
-  dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag"))
-sf::st_geometry(clst_mnths.lag) <- NULL  
-clst_mnths.lag <- clst_mnths.lag %>% 
-  dplyr::filter(!duplicated(.))
-
-# months of study period
-studyperiod <- levels(factor(dt$hvyrmnth_dtmnth))
 
 #......................................................................................................
 # Precipitation (CHRIPS) and Temperature (MODIS/LAADS) Read In Data
@@ -123,9 +64,9 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
                 hvdate_dtdmy = lubridate::dmy(paste(1, mnth, year, sep = "/")),
                 year = lubridate::year(hvdate_dtdmy),
                 mnth = lubridate::month(hvdate_dtdmy),
-                hvyrmnth_dtmnth_lag = factor(paste(year, mnth, sep = "-")),
+                hvyrmnth_dtmnth = factor(paste(year, mnth, sep = "-")),
                 precipraster = precipfrst) %>% 
-  dplyr::select(c("hvyrmnth_dtmnth_lag", "precipraster"))
+  dplyr::select(c("hvyrmnth_dtmnth", "precipraster"))
 
 
 
@@ -144,10 +85,10 @@ tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>%
                 hvdate_dtdy = lubridate::ymd(hvdate_dtdy),
                 year =  lubridate::year(hvdate_dtdy),
                 month = lubridate::month(hvdate_dtdy),
-                hvyrmnth_dtmnth_lag = factor(paste(year, month, sep = "-")),
+                hvyrmnth_dtmnth = factor(paste(year, month, sep = "-")),
                 tempraster = tempfrst
   ) %>% 
-  dplyr::select(c("hvyrmnth_dtmnth_lag", "tempraster"))
+  dplyr::select(c("hvyrmnth_dtmnth", "tempraster"))
 
 
 
@@ -155,8 +96,19 @@ tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>%
 #......................................................................................................
 # Precipitation and Temperature Considered by Month 
 #......................................................................................................
+dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
+# drop observations with missing geospatial data 
+dt <- dt %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
 
-wthrnd.mnth <- dt[,c("hv001", "hvyrmnth_dtmnth_lag", "geometry", "urban_rura")] %>% 
+wthrnd.mnth <- dt %>% 
+  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")),
+                hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
+  dplyr::select(c("hv001", "hvyrmnth_dtmnth", "geometry", "urban_rura"))
+
+
+wthrnd.mnth <- wthrnd.mnth %>% 
   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
 wthrnd.mnth <- wthrnd.mnth[!duplicated(wthrnd.mnth$hv001),]
 
@@ -165,55 +117,20 @@ wthrnd.mnth <- wthrnd.mnth %>%
   dplyr::left_join(., precipdf)
 
 
-# Drop in a for loop to acount for dhs buffering
-wthrnd.mnth$precip_lag_cont_clst <- NA
-wthrnd.mnth$temp_lag_cont_clst <- NA
-
-for(i in 1:nrow(wthrnd.mnth)){
-  # precip
-  wthrnd.mnth$precip_lag_cont_clst[i] <- 
-    raster::extract(x = wthrnd.mnth$precipraster[[i]],
-                    y = sf::as_Spatial(wthrnd.mnth$geometry[i]),
-                    buffer = wthrnd.mnth$buffer[i],
-                    fun = mean,
-                    na.rm = T, 
-                    sp = F
-    )
-  
-  # temp
-  wthrnd.mnth$temp_lag_cont_clst[i] <- 
-    raster::extract(x = wthrnd.mnth$tempraster[[i]],
-                    y = sf::as_Spatial(wthrnd.mnth$geometry[i]),
-                    buffer = wthrnd.mnth$buffer[i],
-                    fun = mean,
-                    na.rm = T, 
-                    sp = F
-    )
-  
-}
-
-wthrnd.mnth <- wthrnd.mnth %>% 
-  dplyr::select(c("hv001", "hvyrmnth_dtmnth_lag", "precip_lag_cont_clst", "temp_lag_cont_clst")) %>% 
-  dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-sf::st_geometry(wthrnd.mnth) <- NULL
-
-
-wthrnd.mnth <- dplyr::inner_join(clst_mnths.lag, wthrnd.mnth, by = c("hv001", "hvyrmnth_dtmnth_lag")) # dominant month needs to win
-
-
-
-
 #......................................................................................................
 # Precipitation and Temperature Considered as Means
 #......................................................................................................
+# months of study period
+studyperiod <- levels(factor(wthrnd.mnth$hvyrmnth_dtmnth))
+
 precipdf <- precipdf %>% 
-  dplyr::filter(hvyrmnth_dtmnth_lag %in% studyperiod)
+  dplyr::filter(hvyrmnth_dtmnth %in% studyperiod)
 
 precipstack <- raster::stack(precipdf$precipraster)
 precipstack.mean <- raster::calc(precipstack, mean, na.rm = T)
 
 tempdf <- tempdf %>% 
-  dplyr::filter(hvyrmnth_dtmnth_lag %in% studyperiod)
+  dplyr::filter(hvyrmnth_dtmnth %in% studyperiod)
 
 tempstack <- raster::stack(tempdf$tempraster)
 tempstack.mean <- raster::calc(tempstack, mean, na.rm = T)
@@ -260,8 +177,6 @@ sf::st_geometry(wthrnd.mean) <- NULL
 saveRDS(object = precipstack.mean, 
         file = "data/derived_data/vividepi_precip_study_period_effsurface.rds")
 
-saveRDS(object = wthrnd.mnth, 
-        file = "data/derived_data/vividep_weather_recoded_monthly.rds")
 
 saveRDS(object = wthrnd.mean, 
         file = "data/derived_data/vividep_weather_recoded_mean.rds")

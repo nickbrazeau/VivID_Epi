@@ -6,6 +6,7 @@
 library(tidyverse)
 library(sf)
 
+# set boundaries
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
 
@@ -15,15 +16,13 @@ sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
 ape <- sf::read_sf("data/raw_data/redlist_species_data_primate/data_0.shp")
 ape <- ape[grepl("pan paniscus|pan troglodytes|gorilla", tolower(ape$BINOMIAL)), ] %>%  # pan trog, pan panisus, gorilla sp
   dplyr::rename(species = BINOMIAL)
-
-
 drc_ape <- sf::st_crop(x = ape, y = sf::st_as_sf(caf))
-
 
 
 #---------------------------------------------------------------------------------
 # Precipation Data
 #---------------------------------------------------------------------------------
+dir.create(path = "data/raw_data/weather_data/CHIRPS/", recursive = T)
 heavyRain::getCHIRPS(region = "africa",
                      format = "tifs",
                      tres = "monthly", 
@@ -40,8 +39,6 @@ system('gunzip data/raw_data/weather_data/CHIRPS/*')
 # Temperature Data
 #---------------------------------------------------------------------------------
 # Manually downloaded from LAADS by requesting on their server and using `wget`
-# See 01-data_mask_temperatureregions for masking of water bodies that have 
-# low reflective and low imputted temps
 
 
 ##################################################################################
@@ -87,6 +84,7 @@ wtrdist_out <- data.frame(
 #----------------------------------------------------------------------------------------------------
 # write out
 #----------------------------------------------------------------------------------------------------
+dir.create(path = "data/derived_data/", recursive = T)
 saveRDS(drc_ape, file = "data/derived_data/drc_ape.rds")
 saveRDS(object = wtrdist_out, file = "data/derived_data/hotosm_waterways_dist.rds")
 save(wtrply, wtrlns, file = "data/derived_data/hotosm_waterways.RDA")

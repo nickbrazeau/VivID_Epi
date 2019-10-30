@@ -5,8 +5,8 @@
 #----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)
-# DHS munging
-devtools::install_github("OJWatson/rdhs", ref="master")
+# DHS wrangling
+remotes::install_github("OJWatson/rdhs", ref="master")
 library(rdhs)
 
 
@@ -82,9 +82,9 @@ ar <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/dataset
   dplyr::mutate(hivrecode_barcode = gsub(" ", "", hivrecode_barcode),
                 hivrecode_barcode = tolower(hivrecode_barcode)) # rename and fix barcode for ar
 # match HIV/PCR barcodes with the PR recode
-arpr <- inner_join(ar,pr, by = c("hv001", "hv002", "hvidx"))
+arpr <- dplyr::inner_join(ar,pr, by = c("hv001", "hv002", "hvidx"))
 arpr <- arpr %>% 
-  mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
+  dplyr::mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
 
 #---------------------------------------------------------------------------------
 # Read in MR and IR 
@@ -104,7 +104,7 @@ wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/dataset
 
 mrwr <- dplyr::full_join(mr, wr)
 mrwr <- mrwr %>%
-  mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
+  dplyr::mutate(hmid = paste(hv001, hv002, hvidx, sep = "_"))
 
 wrmrprar <- dplyr::left_join(arpr, mrwr)
 
@@ -133,7 +133,7 @@ ge <- ge %>%
 saveRDS(object = ge, file = "data/raw_data/dhsdata/VivIDge.RDS")
 
 
-gewrmrprar <- left_join(x=wrmrprar, y=ge, by = "hv001") 
+gewrmrprar <- dplyr::left_join(x=wrmrprar, y=ge, by = "hv001") 
 
 #---------------------------------------------------------------------------------
 # DHS Geospatial Covariates

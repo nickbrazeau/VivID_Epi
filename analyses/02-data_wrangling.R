@@ -17,7 +17,7 @@ tol <- 1e-3
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
 #-------------------------------------------------------------- 
-# cd2013 was under phase 6
+# CD2013 was under phase 6
 # https://dhsprogram.com/publications/publication-DHSG4-DHS-Questionnaires-and-Manuals.cfm
 # https://dhsprogram.com/data/Guide-to-DHS-Statistics/ -- note this is version 7
 # recode map https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
@@ -29,7 +29,7 @@ dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
 dt <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::filter(hv103 == 1) # subset to de-facto https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(hv102 == 1) # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
 
 #--------------------------------------------------------------
 # Section 2: Looking at recodes, manual data wrangle
@@ -45,9 +45,8 @@ dt <- dt %>%
 
 # COINFECTIONS/BIOMARKER VARIABLES
 # 1. pfldh coinfection ; (personal)
-# 3. HIV Status (HIV03) ; (personal)
-# 4. Anemia Level (HA57 & HB57)
-# 5. Duffy phenotype (wetlab result -- nearly all Duffyneg, so won't be formally considered in model)
+# 2. HIV Status (HIV03) ; (personal)
+# 3. Duffy phenotype (wetlab result -- nearly all Duffyneg, so won't be formally considered in model)
 
 # SOCIOECOLOGICAL VARIABLES
 # 1. Biological Sex (HV104)
@@ -56,23 +55,19 @@ dt <- dt %>%
 # 3. Main wall material (categorical: HV214)
 # 3. Main roof material (categorical: HV215)
 # 3 -> 4. Building material (recode)
-# 5. Wealth Index (recode; base wealth is hv270) 
+# 5. Wealth Index (my recode; base wealth is hv270) 
 # 6. Highest year of education completed (continous: HV108) 
-# 7. Livestock ownership (categorical: HV246)
-# 8. Occupation (categorical: "hv717")
-# 9. Number of Household Members (continuous: HV009)
-# 10. Number of Children Under Age of 5 (continuous: HV014)
+# 7. Occupation (categorical: "hv717")
+# 8. Number of Household Members (continuous: HV009)
 
 
 # MALARIA-INTERVENTIONS
 # 1. ITN Use
-# 2. Cluster level antimalarial use
 # 
 # PHYSICAL/LANDSCAPE/CLIMATE VARIABLES
 # 1. Cluster altitude (HV040)
-# 2. Temparature (gc recode)
-# 3. Precipation (gc recode)
-# 4. Urbanicity (my recode)
+# 2. Temparature (my recode)
+# 3. Precipation (my recode)
 
 
 
@@ -83,7 +78,7 @@ dt <- dt %>%
 # weights
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hv005_wi = hv005/1e6
+  dplyr::mutate(hiv05_wi = hiv05/1e6
   )
 
 
@@ -106,43 +101,8 @@ dt <- dt %>%
 # dates
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")))
-
-# NOTE, some clusters have survey start and end dates that are in two months 
-# (eg boundaries aren't clean/coinciding with a month. Naturally). Given
-# grouping by month, need to assign a clusters "month" on the majority of days 
-# that were spent surveying that clusters
-
-# clusters without clean boundaries
-clst_mnth_bounds <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-  dplyr::mutate(mnth = lubridate::month(hvdate_dtdmy)) %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(moremnths = length(unique(mnth))) %>% 
-  dplyr::filter(moremnths > 1)
-
-clst_mnth_bounds.assign <- dt[, c("hv001", "hvdate_dtdmy")] %>% 
-  dplyr::filter(hv001 %in% clst_mnth_bounds$hv001) %>% 
-  dplyr::mutate(hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
-  dplyr::group_by(hv001, hvyrmnth_dtmnth) %>% 
-  dplyr::summarise(n = n()) %>% 
-  dplyr::filter(n == max(n)) %>% 
-  dplyr::select(-c("n"))
-
-sf::st_geometry(clst_mnth_bounds.assign) <- NULL
-
-dt <- dt %>% 
-  dplyr::left_join(x=., y = clst_mnth_bounds.assign, by = "hv001") %>% 
-  dplyr::mutate(hvyrmnth_dtmnth = ifelse(is.na(hvyrmnth_dtmnth),
-                                         paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"),
-                                         hvyrmnth_dtmnth))
-
-dates <- readr::read_csv("internal_datamap_files/pr_date_liftover.csv")
-dt <- dt %>% 
-  dplyr::left_join(x=., y=dates, by = "hvyrmnth_dtmnth") %>% 
-  dplyr::mutate(hvyrmnth_dtmnth_lag = factor(hvyrmnth_dtmnth_lag))
-
-xtabs(~dt$hvyrmnth_dtmnth + dt$hvyrmnth_dtmnth_lag)
-
+  dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")),
+                hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-"))
 
 
 #########################################################################################################
@@ -191,92 +151,6 @@ dt <- dt %>%
 
 xtabs(~hiv03_fctb + hiv03, data = dt, addNA = T)
 
-
-#.............
-# hemoglobin -- in ha56 (ha for females) and hb56 (hb for males)
-# has been adjusted for altitude and smoking. 
-# Note, even with the adjustments there are some extreme 
-# readings (e.g. hemoglobins >20 and <5) that are clinically concerning...
-#.............
-levels(factor(haven::as_factor(dt$ha56))) # need to divide by 10; var is separate column for men and women
-levels(factor(haven::as_factor(dt$hb56)))
-# confirm no missing sex and then can use this variable to distinguish ha56 and hv56
-xtabs(~haven::as_factor(dt$hv104), addNA = T)
-
-dt <- dt %>% 
-  dplyr::mutate(hab56_cont = ifelse(haven::as_factor(hv104) == "female", ha56, hb56),
-                hab56_cont = ifelse(hab56_cont %in% c("997", "999"), NA, hab56_cont),
-                hab56_cont = as.numeric(hab56_cont)/10,
-                hab56_cont_scale = my.scale(hab56_cont))
-
-
-
-# check hemoglobin recode for WOMEN
-summary(dt$ha56)
-nrow(dt) - length(dt$ha56[dt$hv104 == 2]) # missing tracks to male observations
-summary(dt$ha56[dt$hv104 == 2 & dt$ha56 != 999 & dt$ha56 != 996 & dt$ha56 != 995])
-sum(dt$ha56 %in% c(997, 999)) # 24 missing women hbs (23 missing, 1 inconsistent)
-
-# check visually
-dt %>% 
-  dplyr::mutate(ha56 = ha56/10,
-                ha56 = ifelse(ha56 %in% c(997, 999), NA, ha56)) %>% 
-  ggplot() +
-  geom_point(aes(x=hab56_cont, y=ha56)) + ylim(c(0,25)) + xlim(c(0,25))
-# note, 7527 "rows" missing which corresponds to the 7503 males + 24 NAs coded in the dataset
-
-# check hemoglobin recode for MEN
-summary(dt$hb56)
-summary(dt$hb56[dt$hv104 == 1 & dt$hb56 != 999 & dt$hb56 != 997])
-sum(dt$hb56 %in% c(997, 999)) # 23 missing men hbs, 1 inconsistent
-
-# check visually
-dt %>% 
-  dplyr::mutate(hb56 = hb56/10,
-                hb56 = ifelse(hb56 %in% c(997, 999), NA, hb56)) %>% 
-  ggplot() +
-  geom_point(aes(x=hab56_cont, y=hb56)) + ylim(c(0,25)) + xlim(c(0,25))
-# note, 8400 "rows" missing which corresponds to the 8376 females + 24 NAs coded in the dataset
-hist(dt$hab56_cont)
-xtabs(~dt$hab56_cont, addNA = T)
-
-
-
-#.............
-# Anemia
-#.............
-levels(factor(haven::as_factor(dt$ha57))) 
-levels(factor(haven::as_factor(dt$hb57)))
-# confirm no missing sex and then can use this variable to distinguish ha56 and hv56
-xtabs(~haven::as_factor(dt$hv104), addNA = T)
-# no missing anemia (that isn't dhs-recode dependent)
-xtabs(~haven::as_factor(dt$ha57), addNA = T)
-xtabs(~haven::as_factor(dt$hb57), addNA = T)
-
-dt <- dt %>% 
-  dplyr::mutate(hab57_fctb = ifelse(haven::as_factor(hv104) == "female", ha57, hb57),
-                hab57_fctb = ifelse(hab57_fctb == 9, NA, hab57_fctb),
-                hab57_fctb = ifelse(hab57_fctb == 4, "no", ifelse(
-                  hab57_fctb %in% c(1:3), "yes", NA)),
-                hab57_fctb = factor(hab57_fctb, levels = c("no", "yes")),
-                hab57_fctb = relevel(hab57_fctb, "yes") # anemia is protective
-  )
-
-# check recode
-xtabs(~dt$hab57_fctb + haven::as_factor(dt$ha57) + haven::as_factor(dt$hv104), addNA = T)  
-xtabs(~dt$hab57_fctb + haven::as_factor(dt$hb57) + haven::as_factor(dt$hv104), addNA = T)  
-
-
-# Recoding Anemia for with increased sensitivity/less strict cutoff
-dt <- dt %>% 
-  dplyr::mutate(lowhb_fctb = ifelse(haven::as_factor(hv104) == "female" & hab56_cont < 12.5, "yes", 
-                                     ifelse(haven::as_factor(hv104) == "male" & hab56_cont < 13.5, "yes", 
-                                            "no")),
-                lowhb_fctb = factor(lowhb_fctb, levels = c("no", "yes"))
-  )
-                                     
-
-xtabs(~dt$hab57_fctb + dt$lowhb_fctb, addNA = T)
 
 
 #.............
@@ -393,12 +267,11 @@ xtabs(~dt$hv21345_fctb, addNA = T)
 # effect when considering the covar housing materials (as they did above)
 wlth <- readRDS(file = "data/derived_data/vividepi_wealth_recoded.rds")
 dt <- dplyr::left_join(dt, wlth, by = "hivrecode_barcode")
-xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks OK. Some poor/poorest got placed higher than expected
-xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270)) # looks OK. Some poor/poorest got placed higher than expected
+tab <- xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks just OK. 
+tab 
+sum(diag(tab))/sum(tab) # 56% concordance. Presumambly, household type was a big driver given the 0 cells in the lower corner
 
-dt <- dt %>% 
-  dplyr::mutate(wlthrcde_fctb = relevel(wlthrcde_fctb, "not poor"))
-  
+
 #.............
 # years of education (continuous)
 #.............
@@ -543,20 +416,10 @@ xtabs(~dt$hml4 + dt$insctcd_fctm, addNA=T) # nope
 #########################################################################################################
 ##############                             CLUSTER LEVEL VARIABLES                         ##############
 #########################################################################################################
-# ALL CLUSTER LEVEL VARIABLES WILL BE APPENDED WTIH "_clst"  
-dtsrvy <- makecd2013survey(survey = dt)
 
 #.............
 # Weather
 #.............
-wthrnd.mth <- readRDS(file = "data/derived_data/vividep_weather_recoded_monthly.rds")
-dt <- dt %>% 
-  dplyr::left_join(., wthrnd.mth, by = c("hv001", "hvyrmnth_dtmnth_lag")) %>% 
-  dplyr::mutate(
-    precip_lag_cont_scale_clst = my.scale(precip_lag_cont_clst, center = T, scale = T),
-    temp_lag_cont_scale_clst = my.scale(temp_lag_cont_clst, center = T, scale = T)
-  )
-
 wthrnd.mean <- readRDS(file = "data/derived_data/vividep_weather_recoded_mean.rds")
 dt <- dt %>% 
   dplyr::left_join(., wthrnd.mean, by = c("hv001")) %>% 
@@ -605,28 +468,10 @@ hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") %>%
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
-    hlthdist_cont_log_clst = log(hlthdist_mean_duration),
-    hlthdist_cont_log_scale_clst = my.scale(hlthdist_cont_log_clst, center = T, scale = T),
     hlthst_duration_fctb_clst = ifelse(hlthdist_mean_duration > 120, "far", "near"),
     hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far"))
     
   )
-
-
-
-
-#.............
-# Antimalarial Cluster Usage
-#.............
-#https://dhsprogram.com/data/Guide-to-DHS-Statistics/
-actuse <- readRDS(file = "data/derived_data/vividepi_kids_act_use_imputed.rds")
-dt <- dplyr::left_join(dt, actuse, by = "hv001")
-dt %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(
-    actuse = mean(anyatm_cont_clst),
-    actuse.scale = mean(anyatm_cont_logit_scale_clst)) # looks good
-
 
 
 

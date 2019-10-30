@@ -159,6 +159,7 @@ clst.prev.plotObj <- clst %>%
 
 plot(clst.prev.plotObj)
 
+dir.create(path = "~/Documents/GitHub/VivID_Epi/results/figures/", recursive = T)
 jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/cluster_prevalence_pointranges.jpg",
      width = 11, height = 8, units = "in", res=500)
 plot(clst.prev.plotObj)
@@ -580,8 +581,6 @@ cowplot::plot_grid(pv_bivar_rf_plot,
 graphics.off()
 
 
-
-
 ```
 
 ```{r}
@@ -600,7 +599,7 @@ save(pvivtbl1df, pfaltbl1df, # table one output
 # housekeeping -- write out
 #-----------------------------------------------------------------------------
 # Case/NonCase Dist Tables
-
+dir.create(path = "~/Documents/GitHub/VivID_Epi/results/tables/", recursive = T)
 readr::write_csv(x = pvivtbl1df, 
                  path = "~/Documents/GitHub/VivID_Epi/results/tables/pvivtblones_counts.csv",
                  na = "")

@@ -38,7 +38,7 @@ kesteda.plotObj <- keda.df %>%
   ggplot() +
   geom_line(aes(x=k, y=totalwss)) + 
   geom_point(aes(x=k, y=totalwss)) +
-  geom_vline(xintercept = 50, color = "red", linetype = 2, alpha = 0.8) +
+  geom_vline(xintercept = 15, color = "red", linetype = 2, alpha = 0.8) +
   theme_minimal() + 
   ylab("Total Within-Cluster Sum of Squares") +
   xlab("K")
@@ -46,7 +46,7 @@ plot(kesteda.plotObj)
 
 
 # K means of 8 appears to be the infelction point
-k <- kmeans(coords[,2:3], 8)
+k <- kmeans(coords[,2:3], 14)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
 drcpart.plotObj <- drcpart %>% 

@@ -9,7 +9,6 @@ library(tidyverse)
 library(sf)
 library(raster)
 library(ggspatial)
-library(osmdata)
 library(elevatr)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
@@ -25,7 +24,6 @@ colnames(DRCprov)[4] <- "adm1name" # to match the DHS province names
 # need to strip accent marks also to match the DHS province names
 # https://stackoverflow.com/questions/20495598/replace-accented-characters-in-r-with-non-accented-counterpart-utf-8-encoding
 # thanks to @Thomas for this great trick
-
 unwanted_array = list(   'Š'='S', 'š'='s', 'Ž'='Z', 'ž'='z', 'À'='A', 'Á'='A', 'Â'='A', 'Ã'='A', 'Ä'='A', 'Å'='A', 'Æ'='A', 'Ç'='C', 'È'='E', 'É'='E',
                          'Ê'='E', 'Ë'='E', 'Ì'='I', 'Í'='I', 'Î'='I', 'Ï'='I', 'Ñ'='N', 'Ò'='O', 'Ó'='O', 'Ô'='O', 'Õ'='O', 'Ö'='O', 'Ø'='O', 'Ù'='U',
                          'Ú'='U', 'Û'='U', 'Ü'='U', 'Ý'='Y', 'Þ'='B', 'ß'='Ss', 'à'='a', 'á'='a', 'â'='a', 'ã'='a', 'ä'='a', 'å'='a', 'æ'='a', 'ç'='c',
@@ -55,12 +53,9 @@ brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI
 # https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/physical/ne_10m_ocean.zip
 oceans <- sf::st_read("~/Documents/GitHub/VivID_Epi/data/map_bases/ne_10m_ocean/ne_10m_ocean.shp")
 
-
 #..............................
 # Pull down terrain and hill shading
 #..............................
-bb <- osmdata::getbb("Democratic Republic of the Congo", featuretype = "country")
-polybb <- osmdata::getbb("Democratic Republic of the Congo", featuretype = "country",  format_out = 'polygon')
 dem.raster <- elevatr::get_elev_raster(sf::as_Spatial(DRCprov), z=5) # elevatr expects sp 
 
 # raster to ggplot for color
@@ -76,11 +71,9 @@ hill.m <- raster::rasterToPoints(hill.raster)
 hill.df <-  data.frame(lon = hill.m[,1], lat = hill.m[,2], hill = hill.m[,3])
 
 
-
 #---------------------------------------------------------------------------------
 # write out lists of map bases for later plotting
 #---------------------------------------------------------------------------------
-
 prettybasemap_terraincolors <- list(
   geom_raster(data=hill.df, aes(lon, lat, fill=hill)),
   geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7),
@@ -102,7 +95,8 @@ prettybasemap_terraincolors <- list(
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
            datum = NA),
-  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true",
+                                    pad_y = unit(1.25, "cm")),
   vivid_theme,
   theme(panel.background = element_rect(fill = "#9ecae1"),
         panel.grid = element_line(colour="transparent"),
@@ -132,7 +126,8 @@ prettybasemap_nodrc <- list(
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
            datum = NA),
-  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true",
+                                    pad_y = unit(1.25, "cm")),
   vivid_theme,
   theme(panel.background = element_rect(fill = "#9ecae1"),
         panel.grid = element_line(colour="transparent"),
@@ -163,7 +158,7 @@ prettybasemap_nodrc_nonorth <- list(
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
            datum = NA),
-  # ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  #   ggspatial::annotation_north_arrow(location = "bl", which_north = "true", pad_y = unit(1.25, "cm")),
   vivid_theme,
   theme(panel.background = element_rect(fill = "#9ecae1"),
         panel.grid = element_line(colour="transparent"),
@@ -193,7 +188,8 @@ prettybasemap_hillgrey <- list(
   coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
            ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
            datum = NA),
-  ggspatial::annotation_north_arrow(location = "bl", which_north = "true"),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true",
+                                    pad_y = unit(1.25, "cm")),
   vivid_theme,
   theme(panel.background = element_rect(fill = "#9ecae1"),
         panel.grid = element_line(colour="transparent"),

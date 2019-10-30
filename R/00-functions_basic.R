@@ -20,8 +20,8 @@ makecd2013survey <- function(survey = dt){
   # http://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
   options(survey.lonely.psu="adjust")
   dtsrvy <- survey %>% srvyr::as_survey_design(ids = hv001, 
-                                           strata = hv023, 
-                                           weights = hv005_wi)
+                                               strata = hv023, 
+                                               weights = hiv05_wi)
   return(dtsrvy)
 }
 

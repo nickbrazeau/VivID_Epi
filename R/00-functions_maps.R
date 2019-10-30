@@ -163,7 +163,7 @@ guass_map_clstr_summarizer <- function(data, plsmdmspec, clustgeom){
   # clusters are weighted (each individual has same weight in cluster)
   ret <- data %>% 
     dplyr::mutate(count = 1) %>% 
-    srvyr::as_survey_design(ids = hv001, weights = hv005_wi) %>% 
+    srvyr::as_survey_design(ids = hv001, weights = hiv05_wi) %>% 
     dplyr::group_by(hv001) %>% 
     dplyr::summarise(n = srvyr::survey_total(count), 
                      plsmdn = srvyr::survey_total(!!plsmdmspec, na.rm = T), 

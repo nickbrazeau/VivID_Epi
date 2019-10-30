@@ -42,11 +42,6 @@ get_canonical_set <- function(dag, exposure, outcome,
 
 
 
-
-
-
-
-
 #' @param dag daggity object
 #' @param exposure character; 
 #' @param outcome character;
