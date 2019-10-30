@@ -6,7 +6,7 @@
 #    This is inspired by/is a slight extension of the function/methods presented in 
 #     Y. Zhu et al. "A Boosting Algorithm ..." 2015
 #----------------------------------------------------------------------------------------------------
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source(paste0(here::here(), "/R/00-functions_basic.R"))
 library(mlr)
 
 
