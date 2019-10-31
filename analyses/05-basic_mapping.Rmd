@@ -661,3 +661,39 @@ cowplot::plot_grid(pfprevmap,
 ```
 
 
+```{r}
+# make sample location plots
+clstcounts <- dtsrvy %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::summarise( 
+    n = srvyr::survey_total(count)
+    )
+clstcounts <- dplyr::left_join(clstcounts, ge, by = "hv001")
+
+clstcountsplot <- ggplot() + 
+  geom_sf(data = DRCprov, fill = "#e5f5e0", color = "#969696") +
+  geom_point(data = clstcounts, aes(x = longnum, y = latnum, size = n), fill = "#252525", shape = 4, alpha = 0.5, show.legend = F) +
+  prettybasemap_nodrc
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Africa_Inset_clsts.jpg", width = 11, height = 8, units = "in", res = 500)
+cowplot::ggdraw() +
+  cowplot::draw_plot(clstcountsplot, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
+graphics.off()
+
+
+```
+
+```{r, results='asis'}
+
+cowplot::ggdraw() +
+  cowplot::draw_plot(pvcaseprev, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
+
+```
+
+
+
+

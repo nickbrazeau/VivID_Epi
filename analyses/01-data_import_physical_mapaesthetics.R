@@ -38,7 +38,7 @@ DRCprov$adm1name <- chartr(paste(names(unwanted_array), collapse=''),
 #..............................
 # Pull down the border cntrs w/ raster
 #..............................
-brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI", "GAB", "CMR", "GNQ"), 
+brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "COD", "AGO", "ZMB", "TZA", "RWA", "BDI", "GAB", "CMR", "GNQ"), 
                   function(x){
                     ret <- raster::getData(name = "GADM", country = x, level = 0, path = "data/map_bases/gadm/")
                     ret <- sf::st_as_sf(ret)
