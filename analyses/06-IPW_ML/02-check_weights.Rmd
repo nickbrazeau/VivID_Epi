@@ -23,8 +23,8 @@ dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/s
   rename(target = column_name)
 
 
-params <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/params.RDS")
-SLpaths <- list.files("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
+params <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
+SLpaths <- list.files("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
                       pattern = ".RDS", full.names = T)
 
 SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]

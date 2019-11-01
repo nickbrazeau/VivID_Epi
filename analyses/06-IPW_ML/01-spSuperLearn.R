@@ -82,7 +82,7 @@ setwd("analyses/06-IPW_ML/")
 ntry <- nrow(paramsdf)
 sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
                             params = paramsdf, 
-                            jobname = 'vivid_spSL_test_biggerlearners',
+                            jobname = 'vivid_spSL',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

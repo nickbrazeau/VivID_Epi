@@ -22,8 +22,11 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 # Import Data
 #......................
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt.cc <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+
 dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
+
 
 # grab risk factors
 rskfctr <- dcdr %>% 
@@ -122,7 +125,7 @@ graphics.off()
 
 ```{r, results='asis'}
 
-dtsrvy <- makecd2013survey(survey = dt)
+dtsrvy <- makecd2013survey(survey = dt.cc)
 # VIF
 eq <- as.formula(paste0("pv18s~", paste(rskfctr, collapse = "+")))
 model.sat <- survey::svyglm(eq,
@@ -152,7 +155,11 @@ Note, the VIFs are reasonable (none greater than 10). This is encouraging.
 #### `mice` Plot
 
 ```{r}
-invisible(dtsrvy %>% 
+
+
+dtsrvy.full <- makecd2013survey(survey = dt)
+
+invisible(dtsrvy.full %>% 
   dplyr::select(rskfctr) %>% 
   as.data.frame(.) %>% 
   mice::md.pattern(., plot=T, rotate.names = T)) # suppress text
@@ -163,15 +170,15 @@ invisible(dtsrvy %>%
 
 ```{r wichunk, results='asis'}
 # Are my missing cases fundamentally different?
-dt.cmpl <- dt %>%
+dt.full <- dt %>%
   dplyr::select(c("hv001", "hv023", "hv005_wi", rskfctr)) %>%
   dplyr::mutate(
     ismissing = ifelse(rowSums(is.na(.)) == 0, "no", "yes"),
     ismissing = factor(ismissing))
 
-sf::st_geometry(dt.cmpl) <- NULL
+sf::st_geometry(dt.full) <- NULL
 
-dt.cmpl.srvy <- makecd2013survey(dt.cmpl)
+dt.cmpl.srvy <- makecd2013survey(dt.full)
 
 
 misstbl1 <- tableone::svyCreateTableOne(
@@ -190,7 +197,7 @@ tableone::kableone(misstbl1)
 
 ```{r misspread, results = 'asis'}
 # are missing samples spread out?
-dt.cmpl %>% 
+dt.full %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::filter(ismissing == "yes") %>% 
   dplyr::summarise(
@@ -214,22 +221,4 @@ Although the VIF was reasonable, altitude and temperature are essentially truly 
 
 #### Missingingess
 N.B. This data does not appear to be MCAR, as there do appear to be some biases (more or less, poor, rural individuals with lots of household members, poor individuals have less nice houses [even after controls], etc.). However, given that this 0.44% of the unweighted data and 0.43% of the weighted data, we are well within the range of the rule of thumb that missing data less than 5-10% (even if it is MNAR) is largely inconsequential (see Bennett 2001). As a result, I feel comfortable subsetting to complete cases from here on out without worrying about the effect of any MNAR bias that may or may not be present and would affect my results.
-
-### Write Out Complete Cases
-```{r}
-
-# get final covariates
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
-  dplyr::pull(c("column_name"))
-
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-sf::st_geometry(dt) <- NULL
-dt.cc <- dt  %>% 
-  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr)) %>% 
-  dplyr::filter(complete.cases(.)) 
-
-saveRDS(object = dt.cc,
-        file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
-
-```
 

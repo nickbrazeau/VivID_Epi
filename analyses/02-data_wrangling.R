@@ -24,12 +24,12 @@ tol <- 1e-3
 # https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
 
-
-# drop observations with missing geospatial data 
+# subset
 dt <- dt %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>%  # drop observations with missing geospatial data 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::filter(hv102 == 1) # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(hiv05 != 0) # drop observations with samplings weights set to 0
 
 #--------------------------------------------------------------
 # Section 2: Looking at recodes, manual data wrangle
@@ -39,7 +39,7 @@ dt <- dt %>%
 # Exposure of Interests
 #..........................
 # SURVEY CHARACTERISTICS/WEIGHTS
-# 1. hv005, cluster level weights
+# 1. hiv05, hiv level weights
 # 2. hv002, households
 
 
@@ -478,6 +478,25 @@ dt <- dt %>%
 #..........................................................................................
 #                               Final Write Out
 #..........................................................................................
+#...........................
+# All Observations
+#...........................
 saveRDS(dt, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+
+#...........................
+# Complete Observations
+#...........................
+# get final covariates
+dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  dplyr::pull(c("column_name"))
+
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+sf::st_geometry(dt) <- NULL
+dt.cc <- dt  %>% 
+  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr)) %>% 
+  dplyr::filter(complete.cases(.)) 
+
+saveRDS(object = dt.cc,
+        file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 
 
