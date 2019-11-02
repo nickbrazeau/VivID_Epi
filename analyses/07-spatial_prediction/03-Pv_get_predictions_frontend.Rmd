@@ -1,113 +1,177 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Bayesian Hierarchial Spatial Model Predictions 
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
-Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 
 ```
 
+```{r}
+library(tidyverse)
+library(CARBayes)
+library(PrevMap)
+load("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
+drccites <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/map_bases/DRC_city_coordinates.xlsx") %>% 
+  dplyr::mutate(latnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,1] ),
+                longnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,2] ) 
+                )
+
+```
+  
 ## Spatial Predictions
 Fitted values are taken from the Hierarchial Bayesian Spatial Models that were previously fit and determined to be the best model choice by model fit (Deviance Information Criteria).
 
 ### Province Models
 ```{r}
 # import data
-car.mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/results/Province_Bayes_Hierarchial_Model_longchain.rds")
-mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-
-
-# TODO IMPORT THE BEST MODEL FIT NOT ALL OF THIS STUFF
+DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
+provmodel <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/Province_Bayes_Hierarchial_Model_longchain.rds")
+provmodel <- provmodel[provmodel$name == "ICAR_covar", ] # best model
 
 ```
 
+#### Fitted Values (Posterior Medians)
 ```{r}
+provs <- provmodel$data[[1]]$adm1name
+provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
 
-car.mod.framework$mcmc.modsum <- purrr::map(car.mod.framework$MCMC, print) 
-car.mod.framework$summresults <- purrr::map(car.mod.framework$mcmc.modsum, "summary.results")
-car.mod.framework$modfit <- purrr::map(car.mod.framework$mcmc.modsum, "modelfit")
-car.mod.framework$DIC <- purrr::map(car.mod.framework$modfit, "DIC")
+provmodel.posteriormedians <- apply(provmodel.samples.fittedvalues, 2, median)
+```
 
+```{r, results='asis'}
+provmodel.posteriormedians <- cbind.data.frame(adm1name = provs, posteriormedians = provmodel.posteriormedians) 
+rownames(provmodel.posteriormedians) <- NULL
 
-#........................
-# Parameter Est Summaries
-#........................
-names(car.mod.framework$summresults) <- car.mod.framework$name
-car.mod.framework$summresults <- purrr::map(car.mod.framework$summresults, tibble::as_tibble)
-paramest.car.mod.framework <- car.mod.framework$summresults %>% 
-  dplyr::bind_rows(., .id = "model_formulation")
-
-
-DIC.car.mod.framework <- car.mod.framework %>% 
-  dplyr::select(c("name", "DIC")) %>% 
-  dplyr::filter(!duplicated(.)) %>% 
-  tidyr::unnest(DIC) %>% 
-  dplyr::mutate(DIC = round(DIC, 3))
+provmodel.posteriormedians %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  DT::datatable(., extensions='Buttons',
+               options = list(
+              searching = T,
+              pageLength = 10,
+              dom = 'Bfrtip', 
+              buttons = c('csv')))
+```
 
 
-
-#........................
-# Subset to Best Model for Plotting
-#........................
-bestmodel.car.mod.framework <- DIC.car.mod.framework$name[DIC.car.mod.framework$DIC == min(DIC.car.mod.framework$DIC)]
-bestmodel.car.mod.framework <- car.mod.framework %>% 
-  dplyr::filter(name == bestmodel.car.mod.framework)
-
-fitted_cases_count <- as.data.frame(bestmodel.car.mod.framework$fitted)
-colnames(fitted_cases_count) <- dimnames(bestmodel.car.mod.framework$W[[1]])[[1]] 
-
-# go to long format
-fitted_cases_count.ret <- fitted_cases_count %>% 
-  tidyr::gather(., key = "adm1name", value = "fittedval") %>% 
-  dplyr::group_by(adm1name) %>% 
-  dplyr::summarise(
-    pv18sprevfitted_low = quantile(fittedval, 0.025),
-    pv18sprevfitted_median = quantile(fittedval, 0.5),
-    pv18sprevfitted_mean = mean(fittedval),
-    pv18sprevfitted_upp = quantile(fittedval, 0.975)
-    
-  )
+```{r}
 
 #........................
 # Bring it home
 #........................
-pv18s.adm1 <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"] 
-pv18s.adm1 <- pv18s.adm1[[1]]
-pv18s.adm1 <- dplyr::left_join(pv18s.adm1, fitted_cases_count.ret, by = "adm1name")
+provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormedians) 
 
-#........................
-# Save out for prov
-#........................
-save(pv18s.adm1, car.mod.framework, 
-     paramest.car.mod.framework, DIC.car.mod.framework, 
-     bestmodel.car.mod.framework, 
-     moranI.car.mod.framework, 
-     file = "results/ProvAreal_BHM_CARBayes_models_out.rda")
+provmodelplotObj <- ggplot() + 
+  prettybasemap_hillgrey +
+  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormedians), alpha = 0.7, color = "#737373") +
+  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+  coord_sf(datum=NA)   # to get rid of gridlines
 
-
-
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postMedians.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(provmodelplotObj)
+graphics.off()
 
 ```
+
+```{r, results='asis'}
+plot(provmodelplotObj)
+```
+
+#### Standard Errors
+```{r}
+provmodel.sd <- apply(provmodel.samples.fittedvalues, 2, sd)
+provmodel.se <- provmodel.sd/sqrt(nrow(provmodel.samples.fittedvalues))
+
+```
+
+```{r, results='asis'}
+provmodel.posteriorse <- cbind.data.frame(adm1name = provs, posteriorses = provmodel.se) 
+rownames(provmodel.posteriorse) <- NULL
+
+provmodel.posteriorse %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 10,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+```{r}
+provmodel.posteriorselotObj <- dplyr::left_join(DRCprov, provmodel.posteriorse) %>%  
+  geom_sf(data = ., aes(fill = posteriorses), alpha = 0.7, color = "#737373") +
+  scale_fill_gradient2("Standard Error", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+  coord_sf(datum=NA)   # to get rid of gridlines
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postSEs.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(provmodel.posteriorselotObj)
+graphics.off()
+
+```
+```{r, results='asis'}
+plot(provmodel.posteriorselotObj)
+```
+
 
 ### Cluster Models
 
 ```{r}
+# A "pred.PrevMap" object list with the following components: logit; prevalence; odds; probit;exceedance.prob, corresponding to a matrix of the exceedance probabilities where each column corresponds to a specified value in thresholds; samples, corresponding to a matrix of the posterior samples at each prediction locations for the linear predictor; grid.pred prediction locations. Each of the three components logit, prevalence, odds and probit is also a list with the following components:
+
 # read rds
+# TODO fix this path
+clstmodel <- readRDS("~/Desktop/VivID_Epi_old/analyses/07-spatial_prediction/_rslurm_Prevmap_predictions/results_0.RDS")
+clstmodel.fitted <- clstmodel[[1]]$samples
+clstmodel.coords <- clstmodel[[1]]$grid.pred
+clstmodel.fitted.postmedians <- apply(clstmodel.fitted, 2, median)
+```
+
+```{r}
+clstmodel.fitted.postmedians.raster <- 
+  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
+                              clstmodel.coords[, "latnum"],
+                              clstmodel.fitted.postmedians),
+                        crs="+proj=longlat +datum=WGS84 +no_defs")
+
+plot( raster(clstmodel.fitted.postmedians.raster) )
+
+  ret.rstr <- raster::rasterFromXYZ(cbind(prevrasters$grid.pred[,1],
+                                          prevrasters$grid.pred[,2],
+                                          prevrasters$prevalence$predictions),
+                                    crs="+proj=longlat +datum=WGS84")
 
 
-# NEED TO FIGURE OUT HOW TO EXTRACT OUT JUST RESULTS
-# AND STANDARD ERRORS ... and then can use this function
+
+
+
+# make spatial polygon
+ggspatial::df_spatial()
+
+```
+
+
+
+
+
+
+
+
 
 
 prevmaprasterplotter(prevrasters, smoothfct = 5, alpha = 0.8)
 
 
 
-# Final Figure
-prettybasemap_hillgrey +
-  geom_raster(prevamp) +
-  geom_point(cities) + 
-  geom_label(cities) # cities are under map bases
 
 
 ```

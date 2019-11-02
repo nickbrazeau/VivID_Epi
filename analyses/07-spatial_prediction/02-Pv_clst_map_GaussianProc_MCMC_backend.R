@@ -228,7 +228,7 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
 )
 
 # save out
-dir.create("analyses/07-spatial_prediction/prevmap_long_chains", recursive = T)
+dir.create("prevmap_long_chains")
 saveRDS(object = longrun.prevmapbayes.intercept, file = "analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
 saveRDS(object = longrun.prevmapbayes.mod, file = "analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 

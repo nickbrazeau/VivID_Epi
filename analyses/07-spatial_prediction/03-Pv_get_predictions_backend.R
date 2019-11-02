@@ -4,11 +4,6 @@
 #----------------------------------------------------------------------------------------------------
 source("R/00-functions_maps.R") 
 library(tidyverse)
-library(sf)
-library(srvyr) 
-library(rgeos)
-library(rgdal)
-library(geoR)
 library(raster)
 library(PrevMap)
 set.seed(48)
@@ -60,7 +55,7 @@ pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
                                               predictors = predictors, 
                                               type = "marginal", 
                                               scale.predictions = "prevalence",
-                                              quantiles = NULL, 
+                                              quantiles = c(0.5), 
                                               standard.error = T, 
                                               thresholds = NULL)
   return(ret)
@@ -79,7 +74,7 @@ sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper,
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
-                            slurm_options = list(mem = 128000,
+                            slurm_options = list(mem = 64000,
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",

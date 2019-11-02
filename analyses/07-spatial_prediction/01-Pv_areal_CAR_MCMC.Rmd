@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Bayesian Hierarchial Spatial Province Models for _P. vivax_ among Asymptomatic Adults in the DRC"
 
 
@@ -276,7 +281,7 @@ mod.framework.long$modfit <- purrr::map(mod.framework.long$mcmc.modsum, "modelfi
 # CarBayes nicely outputs the Fitted Values, from which I can calculate a log-likelihood
 dimnames(mod.framework.long$W[[1]])[[1]]
 
-mod.framework.long$LL <- purrr::pmap(mod.framework.long["data", "trials", "MCMC"], 
+mod.framework.long$LL <- purrr::pmap(mod.framework.long[, c("data", "trials", "MCMC")], 
   function(data, trials, MCMC){
   Yi <- data$plsmdn
   ni <- trials
@@ -297,7 +302,7 @@ mod.framework.long$LL <- purrr::pmap(mod.framework.long["data", "trials", "MCMC"
 })
 
 
-mod.framework.long$DICg <- ppurrr::map(mod.framework.long$LL, function(x){
+mod.framework.long$DICg <- purrr::map(mod.framework.long$LL, function(x){
   mu = mean(x)
   sigma = var(x)/2
   DICg = mu + sigma
@@ -322,11 +327,13 @@ data.frame(name = mod.framework.long$name, DICg = unlist(mod.framework.long$DICg
 ```{r}
 
 # write out these final models
+dir.create("/results/tables/", recursive = T)
 readr::write_csv(x = mod.framework.long.res, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
 
 
+dir.create("analyses/07-spatial_prediction/prov_map_long_chains/", recursive = T)
 saveRDS(mod.framework.long, 
-        file = "~/Documents/GitHub/VivID_Epi/results/Province_Bayes_Hierarchial_Model_longchain.rds")
+        file = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/Province_Bayes_Hierarchial_Model_longchain.rds")
 
 
 
@@ -336,7 +343,7 @@ Note, still a lot of chains for visualizing here. Writing out to local directory
 ```{r}
 
 #............................
-# Let's Look at the Chains
+# Let's Look at the final chain
 #............................
 mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
 mod.framework.long$betachains <- purrr::map(mod.framework.long$samples, "beta")
