@@ -11,8 +11,8 @@ source("R/00-IPTW_functions.R")
 #............................................................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 
-params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_spSL_final/params.RDS")
-SLpaths <- list.files("analyses/06-IPW_ML/_rslurm_vivid_spSL_final/", 
+params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
+SLpaths <- list.files("analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
                       pattern = ".RDS", full.names = T)
 
 SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
