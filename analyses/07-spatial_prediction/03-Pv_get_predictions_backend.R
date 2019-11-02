@@ -33,6 +33,7 @@ predictors <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface
 # make this into a manageable size
 predictors <- raster::sampleRandom(predictors, size = 1e4,
                                    asRaster = T)
+
 pred.df <- data.frame(longnum = raster::coordinates(predictors)[,1],
                       latnum = raster::coordinates(predictors)[,2],
                       precip_mean_cont_scale_clst = raster::values(predictors)) %>% 
@@ -55,7 +56,7 @@ pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
                                               predictors = predictors, 
                                               type = "marginal", 
                                               scale.predictions = "prevalence",
-                                              quantiles = c(0.5), 
+                                              quantiles = NULL, 
                                               standard.error = T, 
                                               thresholds = NULL)
   return(ret)
