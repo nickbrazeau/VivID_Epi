@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 library(tidyverse)
 library(CARBayes)
 library(PrevMap)
+library(ggspatial)
 load("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
 drccites <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/map_bases/DRC_city_coordinates.xlsx") %>% 
   dplyr::mutate(latnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,1] ),
@@ -35,19 +36,19 @@ provmodel <- provmodel[provmodel$name == "ICAR_covar", ] # best model
 
 ```
 
-#### Fitted Values (Posterior Medians)
+#### Fitted Values (Posterior Means)
 ```{r}
 provs <- provmodel$data[[1]]$adm1name
 provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
 
-provmodel.posteriormedians <- apply(provmodel.samples.fittedvalues, 2, median)
+provmodel.posteriormeans <- apply(provmodel.samples.fittedvalues, 2, mean)
 ```
 
 ```{r, results='asis'}
-provmodel.posteriormedians <- cbind.data.frame(adm1name = provs, posteriormedians = provmodel.posteriormedians) 
-rownames(provmodel.posteriormedians) <- NULL
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeans = provmodel.posteriormeans) 
+rownames(provmodel.posteriormeans) <- NULL
 
-provmodel.posteriormedians %>% 
+provmodel.posteriormeans %>% 
   dplyr::mutate_if(is.numeric, round, 2) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
@@ -63,18 +64,18 @@ provmodel.posteriormedians %>%
 #........................
 # Bring it home
 #........................
-provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormedians) 
+provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans) 
 
 provmodelplotObj <- ggplot() + 
   prettybasemap_hillgrey +
-  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormedians), alpha = 0.7, color = "#737373") +
+  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeans), alpha = 0.7, color = "#737373") +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
             hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
   scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
   coord_sf(datum=NA)   # to get rid of gridlines
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postMedians.jpg",
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postMeans.jpg",
      height = 11, width = 8, units = "in", res = 500)
 plot(provmodelplotObj)
 graphics.off()
@@ -123,52 +124,135 @@ plot(provmodel.posteriorselotObj)
 ```
 
 
-### Cluster Models
+### Cluster Models 
+
+### Fitted Values (Posterior Means)
 
 ```{r}
 # A "pred.PrevMap" object list with the following components: logit; prevalence; odds; probit;exceedance.prob, corresponding to a matrix of the exceedance probabilities where each column corresponds to a specified value in thresholds; samples, corresponding to a matrix of the posterior samples at each prediction locations for the linear predictor; grid.pred prediction locations. Each of the three components logit, prevalence, odds and probit is also a list with the following components:
-
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 # read rds
 # TODO fix this path
 clstmodel <- readRDS("~/Desktop/VivID_Epi_old/analyses/07-spatial_prediction/_rslurm_Prevmap_predictions/results_0.RDS")
-clstmodel.fitted <- clstmodel[[1]]$samples
+clstmodel.fitted <- expit(clstmodel[[1]]$samples)
 clstmodel.coords <- clstmodel[[1]]$grid.pred
-clstmodel.fitted.postmedians <- apply(clstmodel.fitted, 2, median)
+clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
+
 ```
+
+```{r, results='asis'}
+
+clstmodel.fitted.postmeansdf <- data.frame(PrevPred = clstmodel.fitted.postmeans)
+clstmodel.fitted.postmeansdf %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  DT::datatable(., extensions='Buttons',
+               options = list(
+              searching = T,
+              pageLength = 10,
+              dom = 'Bfrtip', 
+              buttons = c('csv')))
+```
+
 
 ```{r}
-clstmodel.fitted.postmedians.raster <- 
+clstmodel.fitted.postmeans.raster <- 
   raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
                               clstmodel.coords[, "latnum"],
-                              clstmodel.fitted.postmedians),
+                              clstmodel.fitted.postmeans),
                         crs="+proj=longlat +datum=WGS84 +no_defs")
 
-plot( raster(clstmodel.fitted.postmedians.raster) )
 
-  ret.rstr <- raster::rasterFromXYZ(cbind(prevrasters$grid.pred[,1],
-                                          prevrasters$grid.pred[,2],
-                                          prevrasters$prevalence$predictions),
-                                    crs="+proj=longlat +datum=WGS84")
+clstmodel.rstr.smooth <- raster::focal(clstmodel.fitted.postmeans.raster, w=matrix(1,
+                                                                                   nrow=5,
+                                                                                   ncol=5), mean)
+ret.smrstr.m  <-  raster::rasterToPoints(clstmodel.rstr.smooth)
+ret.smrstr.m.df <-  data.frame(lon = clstmodel.rstr.smooth[,1], 
+                               lat = clstmodel.rstr.smooth[,2], 
+                               prev = clstmodel.rstr.smooth[,3])
+
+ret.smrstr.m.plot <- ggplot() + 
+  prettybasemap_hillgrey +
+  geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.7) +
+  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+  coord_sf(datum=NA)   # to get rid of gridlines
 
 
 
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(ret.smrstr.m.plot)
+graphics.off()
+
+```
+
+```{r, results='asis'}
+plot(ret.smrstr.m.plot)
+```
 
 
-# make spatial polygon
-ggspatial::df_spatial()
+### Standard Errors
 
+```{r}
+clstmodel.fitted.se <- apply(clstmodel.fitted, 2, sd)
+clstmodel.fitted.se <- clstmodel.fitted.se/nrow(clstmodel.fitted)
+
+```
+
+```{r, results='asis'}
+
+clstmodel.fitted.sedf <- data.frame(PrevSE = clstmodel.fitted.se)
+clstmodel.fitted.sedf %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 10,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+
+```{r}
+clstmodel.fitted.se.raster <- 
+  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
+                              clstmodel.coords[, "latnum"],
+                              clstmodel.fitted.se),
+                        crs="+proj=longlat +datum=WGS84 +no_defs")
+
+
+clstmodel.rstr.smooth <- raster::focal(clstmodel.fitted.se.raster, w=matrix(1,
+                                                                                   nrow=5,
+                                                                                   ncol=5), mean)
+ret.smrstr.m  <-  raster::rasterToPoints(clstmodel.rstr.smooth)
+ret.smrstr.m.df <-  data.frame(lon = clstmodel.rstr.smooth[,1], 
+                               lat = clstmodel.rstr.smooth[,2], 
+                               prev = clstmodel.rstr.smooth[,3])
+
+ret.smrstr.m.plot <- ggplot() + 
+  geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.7) +
+  scale_fill_gradient2("Standard Error", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+  coord_sf(datum=NA)   # to get rid of gridlines
+
+
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postSE.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(ret.smrstr.m.plot)
+graphics.off()
+
+```
+
+```{r, results='asis'}
+plot(ret.smrstr.m.plot)
 ```
 
 
 
 
 
-
-
-
-
-
-prevmaprasterplotter(prevrasters, smoothfct = 5, alpha = 0.8)
 
 
 
