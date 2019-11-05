@@ -27,20 +27,12 @@ dtsrvy <- makecd2013survey(survey = dt)
 data <- dtsrvy %>% 
   dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 0, 1, 0),
                 pvmono =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 0, 1, 0),
-                pomono =  ifelse(pfldh == 0 & pv18s == 0 & po18s == 1, 1, 0),
-                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0),
-                pfpo =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 1, 1, 0),
-                pvpo =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 1, 1, 0),
-                pfpvpo =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 1, 1, 0)
+                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0)
   ) %>% 
   dplyr::summarise(
     "pf" = srvyr::survey_total(x=pfmono),
     "pv" = srvyr::survey_total(x=pvmono),
-    "po" = srvyr::survey_total(x=pomono),
-    "pf/pv" = srvyr::survey_total(x=pfpv),
-    "pf/po" = srvyr::survey_total(x=pfpo),
-    "pv/po" = srvyr::survey_total(x=pvpo),
-    "pf/pv/po" = srvyr::survey_total(x=pfpvpo)
+    "pf/pv" = srvyr::survey_total(x=pfpv)
   ) %>% 
   dplyr::select(-c(dplyr::ends_with("_se")))
 
@@ -55,7 +47,7 @@ data.vec <- round(data.vec, 0)
 ## Infection Composition Model (from Multinomial)
 ```{r}
 surv <- new("surveillance")
-surv@denominator <- 15859
+surv@denominator <- nrow(dt)
 surv@cases <- unlist(data.vec)
 surv@casenames <- names(data.vec)
 
@@ -71,11 +63,24 @@ We will use 50,000 iterations.
 # assuming independence
 surv.mle <- icer::cooccurence_mle(obj = surv, 
                       density_func = icer:::independent,
-                      max_moi = 25, poisson = T, plot = T, boot_iter = 5e4) 
+                      max_moi = 25, poisson = T, plot = F, boot_iter = 5e4) 
 
 
+
+coinfxnplotObj <- surv.mle$coinfxnplot$plot +
+  theme(axis.text.x = element_text(angle = 90))
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/PvPfInterference.jpg",
+     height = 8, width = 8, units = "in", res = 500)
+plot(coinfxnplotObj)
+graphics.off()
 
 ```
+
+```{r, results='asis'}
+plot(coinfxnplotObj)
+```
+
 
 ## Cluster Level Prevalences-Interactions
 ```{r}

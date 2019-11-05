@@ -67,7 +67,9 @@ params <- dplyr::left_join(params, varnames, by = "target")
 
 
 widist <- cbind.data.frame(params$abridged_var_label, widist)
+```
 
+```{r, results='asis'}
 knitr::kable(widist)
 
 ```

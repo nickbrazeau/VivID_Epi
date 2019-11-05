@@ -27,7 +27,7 @@ powercalculator.glmOR <- function(n=15571, exp_prob=0.5, p=0.03, p0=0.02){
     df$dz[df$exp == 0] <- rbinom(sum(df$exp == 0),1,p0)
 
     mod <- glm(dz ~ exp, data=df,
-                  family=binomial(link="log"))
+                  family=binomial(link="logit"))
 
     pi <- broom::tidy(mod)$p.value[2]
 

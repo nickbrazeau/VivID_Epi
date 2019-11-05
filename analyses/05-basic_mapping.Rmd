@@ -380,9 +380,6 @@ aperange_nhapv <-
   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
   scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
 
-
-
-
 ```
 
 ### Permutation Test for _P. vivax_ vs. Ape Distribution 
@@ -427,9 +424,6 @@ run_ape_permutations <- function(dtsrvy18s, n.apeclsts){
 }
 
 sims <- 1e4
-pv18s.dt <- dt %>% 
-  dplyr::select(c("hv001", "pv18s"))
-
 
 ```
      
@@ -442,7 +436,7 @@ There are `r length(ape.clusters)` clusters that overlap with apes and `r length
 ape.range.iters <- data.frame(iter = 1:sims)
 
 ape.range.iters$ape_overlap_prev <- purrr::map(ape.range.iters$iter, function(x){
-  return( run_ape_permutations(dt18s = pv18s.dt, n.apeclsts = length(ape.clusters)) )
+  return( run_ape_permutations(dtsrvy18s = dtsrvy, n.apeclsts = length(ape.clusters)) )
   }) 
   
 ape.range.iters$ape_overlap_prev <- unlist(ape.range.iters$ape_overlap_prev )
@@ -472,7 +466,7 @@ Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains bu
 chimpgor.range.iters <- data.frame(iter = 1:sims)
 
 chimpgor.range.iters$chimpgor_overlap_prev <- purrr::map(chimpgor.range.iters$iter, function(x){
-  return( run_ape_permutations(dt18s = pv18s.dt, n.apeclsts = length(chimpgor.clusters)) )
+  return( run_ape_permutations(dtsrvy18s = dtsrvy, n.apeclsts = length(chimpgor.clusters)) )
 }) 
 
 chimpgor.range.iters$chimpgor_overlap_prev <- unlist(chimpgor.range.iters$chimpgor_overlap_prev )

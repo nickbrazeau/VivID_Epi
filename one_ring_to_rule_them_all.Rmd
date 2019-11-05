@@ -29,6 +29,9 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 ```{r, child = 'analyses/05-basic_mapping.Rmd'}
 ```
 
+```{r, child = 'analyses/06-IPW_ML/00-kmeans_DRC.Rmd'}
+```
+
 ```{r, child = 'analyses/06-IPW_ML/02-check_weights.Rmd'}
 ```
 
@@ -44,8 +47,8 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 <!-- ```{r, child = 'analyses/07-spatial_prediction/03-Pv_get_predictions.Rmd'} -->
 <!-- ``` -->
 
-<!-- ```{r, child = 'analyses/08-species_interference.Rmd'} -->
-<!-- ``` -->
+```{r, child = 'analyses/08-species_interference.Rmd'}
+```
 
-<!-- ```{r, child = 'analyses/09-Power/02-collect_powercalcs.Rmd'} -->
-<!-- ``` -->
+```{r, child = 'analyses/09-Power/02-collect_powercalcs.Rmd'}
+```

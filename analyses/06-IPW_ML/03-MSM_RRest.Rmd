@@ -9,9 +9,11 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 
 ```{r}
 
+library(srvyr)
 library(tidyverse)
 remotes::install_github("malcolmbarrett/ggdag"); library(ggdag)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
+source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 
 ```
 
@@ -66,7 +68,7 @@ makeiptwsrvy <- function(x){ # not good function practice
   if(is.null(x)){
     x <- 1
   }
-  dt$wi <- x*dt$hv005_wi
+  dt$wi <- x*dt$hiv05_wi
   dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
                                            #   strata = hv023, 
                                            weights = wi)
@@ -307,6 +309,49 @@ graphics.off()
 ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
 plot(finalMSMplot)
 ```
+
+### Appendix: Digging into _Pv_-Precipitation
+```{r}
+pvprecip <- makecd2013survey(survey = dt)
+
+pvsrvyr <- pvprecip %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::mutate(count = 1) %>% 
+  srvyr::summarise(n = srvyr::survey_total(count), 
+                   pv = srvyr::survey_mean(pv18s, vartype = "se"),
+                   pf = srvyr::survey_mean(pfldh, vartype = "se"))
+
+precip <- dt %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(
+    precip = mean(precip_mean_cont_clst) # clst has same precip)
+  )
+
+pvprecip <- dplyr::left_join(pvsrvyr, precip, by = "hv001") %>% 
+  dplyr::select(-c(dplyr::ends_with("_se"))) %>% 
+  dplyr::select(c("hv001", "n", "precip", dplyr::everything())) %>% 
+  tidyr::gather(., key = "species", value = "prev", 4:5)
+
+pvprecipplot <- pvprecip %>% 
+  ggplot() +
+  geom_point(aes(x=precip, y = prev, size = n)) +
+  facet_wrap(~species) + 
+  xlab("Lagged Precipitation (cm)") + 
+  ylab("Prevalence") +
+  theme_classic() + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 90))
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvprecip_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvprecipplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvprecipplot)
+```
+
 
 ### Appendix: Unadjusted vs. Adjusted RR Estimates
 ```{r}

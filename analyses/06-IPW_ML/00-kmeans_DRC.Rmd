@@ -1,14 +1,27 @@
-#----------------------------------------------------------------------------------------------------
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Partition DRC for Spatial Cross Validation
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center')
+
+```
+```{r}
+#--------------------------------------------
 # Purpose of this script is partition the DRC
 # by geographic coordinates for spatial cross-validation
-#----------------------------------------------------------------------------------------------------
+#--------------------------------------------
 
 library(tidyverse)
 library(sf)
 
 
-DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
+DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
+ge <- sf::st_as_sf(readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
 
 coords <- ge %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
@@ -38,14 +51,25 @@ kesteda.plotObj <- keda.df %>%
   ggplot() +
   geom_line(aes(x=k, y=totalwss)) + 
   geom_point(aes(x=k, y=totalwss)) +
-  geom_vline(xintercept = 15, color = "red", linetype = 2, alpha = 0.8) +
+  geom_vline(xintercept = 14, color = "red", linetype = 2, alpha = 0.8) +
   theme_minimal() + 
   ylab("Total Within-Cluster Sum of Squares") +
   xlab("K")
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/kmean_drc_paritition.jpg",
+     width = 11, height = 8, units = "in", res = 500)
 plot(kesteda.plotObj)
+graphics.off()
 
 
-# K means of 8 appears to be the infelction point
+```
+
+```{r, results='asis'}
+plot(kesteda.plotObj)
+```
+**K means of 14 appears to be the a good inflection point.**
+
+```{r}
 k <- kmeans(coords[,2:3], 14)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
@@ -54,13 +78,25 @@ drcpart.plotObj <- drcpart %>%
   geom_sf(data = DRCprov) + 
   geom_point(aes(x=longnum, y=latnum, color = factor(k))) +
   theme(legend.position = "none")
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/map_drc_paritition.jpg",
+     width = 11, height = 8, units = "in", res = 500)
 plot(drcpart.plotObj)
+graphics.off()
 
 
+```
+
+```{r, results='asis'}
+plot(drcpart.plotObj)
+```
+
+
+```{r}
 drcpart <- drcpart %>% 
   dplyr::select(c("hv001", "k")) %>% 
   dplyr::rename(kmeansk = k)
 
-saveRDS(drcpart, "data/derived_data/kmean_drcpartitioned.rds")
+saveRDS(drcpart, "~/Documents/GitHub/VivID_Epi/data/derived_data/kmean_drcpartitioned.rds")
 
-
+```
