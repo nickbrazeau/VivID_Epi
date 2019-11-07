@@ -168,6 +168,61 @@ graphics.off()
 
 ```
 
+## Duffy Negativity
+### Counts and Prevalences
+```{r}
+# three samples with duffy negativity
+duffypos <- tolower(c("C1T5C", "G9M2E", "J3Q9M"))
+
+duff <- dt %>% 
+  dplyr::mutate(duffy = ifelse(hivrecode_barcode%in% duffypos, 1, 0)) %>% 
+  dplyr::summarise(
+    duff_total = sum(duffy)
+  ) 
+
+duffn <- sum(dt$pv18s)
+duff <- duff %>% 
+  dplyr::mutate(duff_total = mean(duff_total),
+                duff_prev = duff_total/duffn * 100,
+                duffse = sqrt( duff_total * (duff_total/duffn) * (1-(duff_total/duffn)) ),
+                duffL95 = getCI_from_logit_transfrom(succeses = duff_total, n = duffn, tol = 0, alpha = 0.05)[1] * 100,
+                duffU95 = getCI_from_logit_transfrom(succeses = duff_total, n = duffn, tol = 0, alpha = 0.05)[2] * 100
+  )
+
+
+# weighted
+duffn <- sum( dt$hiv05_wi[dt$pv18s == 1] )
+duff_wi <- dtsrvy %>% 
+  dplyr::mutate(duffy = ifelse(hivrecode_barcode%in% duffypos, 1, 0)) %>% 
+  dplyr::summarise(
+    duff_wi_total = srvyr::survey_total(duffy, vartype = "ci")
+  ) 
+
+duff_wi <- duff_wi %>% 
+  dplyr::mutate(duff_wi_total = mean(duff_wi_total),
+                duff_wi_prev = duff_wi_total/duffn * 100,
+                duffse = sqrt( duff_wi_total * (duff_wi_total/duffn) * (1-(duff_wi_total/duffn)) ),
+                duffL95 = getCI_from_logit_transfrom(succeses = duff_wi_total, n = duffn, tol = 0, alpha = 0.05)[1] * 100,
+                duffU95 = getCI_from_logit_transfrom(succeses = duff_wi_total, n = duffn, tol = 0, alpha = 0.05)[2] * 100
+  )
+
+
+
+```
+
+Note, prevalences below are in percentages.
+```{r, results='asis'}
+
+duff %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+knitr::kable(.)
+
+duff_wi %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
+knitr::kable(.)
+
+```
+
 
 ## Coinfections
 ### Unweighted Counts

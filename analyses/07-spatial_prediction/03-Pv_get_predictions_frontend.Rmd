@@ -45,7 +45,23 @@ provmodel.posteriormeans <- apply(provmodel.samples.fittedvalues, 2, mean)
 ```
 
 ```{r, results='asis'}
-provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeans = provmodel.posteriormeans) 
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeanscounts = provmodel.posteriormeans) 
+rownames(provmodel.posteriormeans) <- NULL
+
+provmodel.posteriormeans %>% 
+  dplyr::mutate_if(., is.numeric, round, 2) %>% 
+  DT::datatable(., extensions='Buttons',
+               options = list(
+              searching = T,
+              pageLength = 10,
+              dom = 'Bfrtip', 
+              buttons = c('csv')))
+```
+
+
+```{r, results='asis'}
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeansprev = provmodel.posteriormeans$posteriormeanscounts) 
+provmodel.posteriormeans$posteriormeansprev <- provmodel.posteriormeans$posteriormeansprev/provmodel$data[[1]]$n
 rownames(provmodel.posteriormeans) <- NULL
 
 provmodel.posteriormeans %>% 
@@ -59,6 +75,8 @@ provmodel.posteriormeans %>%
 ```
 
 
+
+
 ```{r}
 
 #........................
@@ -67,13 +85,13 @@ provmodel.posteriormeans %>%
 provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans) 
 
 provmodelplotObj <- ggplot() + 
-  prettybasemap_hillgrey +
-  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeans), alpha = 0.7, color = "#737373") +
+  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeansprev), alpha = 0.7, color = "#737373") +
+  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+  coord_sf(datum=NA) +  # to get rid of gridlines
+  prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
-  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
-  coord_sf(datum=NA)   # to get rid of gridlines
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") 
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postMeans.jpg",
      height = 11, width = 8, units = "in", res = 500)
@@ -171,7 +189,7 @@ ret.smrstr.m.df <-  data.frame(lon = clstmodel.rstr.smooth[,1],
                                prev = clstmodel.rstr.smooth[,3])
 
 ret.smrstr.m.plot <- ggplot() + 
-  prettybasemap_hillgrey +
+  prettybasemap_nodrc +
   geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.7) +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
@@ -256,8 +274,3 @@ plot(ret.smrstr.m.plot)
 
 
 
-
-
-```
-
-# TODO SE PLOTS

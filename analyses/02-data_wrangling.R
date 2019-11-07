@@ -308,20 +308,6 @@ dt <- dt %>%
                 farmer_fctb = factor(farmer_fctb, levels = c("not farmer", "farmer"))) # not being a farmer protective
 # note, we have coded missing as not a farmer
 
-#------------------------------------------
-# Owns livestock, herds, or farm animals
-#------------------------------------------
-summary(dt$hv246)
-table(dt$hv246) # 9 is missing
-
-dt <- dt %>% 
-  dplyr::mutate(
-    hv246_fctb = haven::as_factor(dt$hv246),
-    hv246_fctb = forcats::fct_recode(hv246_fctb, NULL = "missing"),
-    hv246_fctb =  forcats::fct_drop(hv246_fctb), 
-    hv246_fctb = relevel(hv246_fctb, "no")
-  ) 
-xtabs(~ dt$hv246 + dt$hv246_fctb, addNA = T)
 
 #------------------------------------------
 # children under 5 number

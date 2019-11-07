@@ -18,7 +18,7 @@ source("~/Documents/GitHub/VivID_Epi/R/00-IPTW_functions.R")
 
 ```
 
-```{r}
+```{r checkwidcdr}
 dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   rename(target = column_name)
 
@@ -51,7 +51,7 @@ params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
 ### Distribution of IPTW for each Risk Factor
 
 #### Table 
-```{r}
+```{r checkwidist}
 
 widist <- purrr::map(params$iptw, summary) %>% 
   do.call("rbind.data.frame", .) %>% 
@@ -67,15 +67,13 @@ params <- dplyr::left_join(params, varnames, by = "target")
 
 
 widist <- cbind.data.frame(params$abridged_var_label, widist)
-```
 
-```{r, results='asis'}
 knitr::kable(widist)
 
 ```
 
 ### Boxplot
-```{r}
+```{r checkwiboxplot}
 
 # make plot
 iptw.dist.plotObj <- params %>% 
@@ -101,7 +99,7 @@ graphics.off()
 
 ```
 
-```{r, results='asis'}
+```{r checkwiboxplotplot, results='asis'}
 
 plot(iptw.dist.plotObj)
 
@@ -114,7 +112,7 @@ plot(iptw.dist.plotObj)
 A classic definition of confounding in a cross-sectional survey is an unequal distribution of baseline exposures. This will result in various covariates being correlated (e.g. being poor and living in a traditional house). If our weights have worked, we will have removed baseline confounding (i.e. removed baseline correlations). One way to check this is to measure the correlations of all the covariates at baseline (_Base_) as compared to covariate correlations with IPTW weights applied. Given that we have a mix of continuous and binary covariates, pearson correlation and/or standard-mean difference are not on the same squale. To overcome this, we will use the an *energy* function which calculates correlations despite functional form [Rizzo/Szekely 2016](https://onlinelibrary.wiley.com/doi/full/10.1002/wics.1375). This is more or less measuring correlation with euclidean distances of our data points in a multidimensional space (relating to kernel density and multi-dimensional GPs).     
   
 Given that this fancy statistic doesn't take into account weights, I made 100 pseudopopulations (by sampling from the base population with respect to the calculated IPTW) and calculated the energy correlation for each iteration. Plotted is the distribution of the correlations for each covariate (e.g. Precipitation-Temperature, Precipitation-Wealth, etc. etc.) given that we focused on canonical sets when possible. 
-```{r}
+```{r checkwicovarbalparams}
 covarbalparams <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
 
 covarretfiles <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/",
@@ -125,9 +123,8 @@ covarretfiles <- tibble::tibble(path = covarretfiles,
                                 ord = basename(covarretfiles)) %>% 
   dplyr::mutate(ord = stringr::str_extract(ord, "[0-9]+"),
                 ord = as.numeric(ord)) %>% 
-  dplyr::arrange(ord) %>% 
-  select(c("path")) %>% 
-  unlist(.)
+  dplyr::arrange(ord) 
+covarretfiles <- covarretfiles$path
 
 covarretfiles <- split(covarretfiles, 1:length(covarretfiles))
 
@@ -167,7 +164,7 @@ graphics.off()
 
 ```
 
-```{r, results='asis'}
+```{r checkwicovarbalparamsplot, results='asis'}
 
 plot(covarbalanceplot)
 
@@ -176,7 +173,7 @@ plot(covarbalanceplot)
 **Very nice!** 
 
 ### Appendix: Cross-Validated Risk Contributions
-```{r}
+```{r checkwiappendix1}
 
 #.......................................
 # Pull out some relevant features
@@ -202,7 +199,7 @@ stbmdldf$learners <- purrr::map(stbmdldf$alg.cvrisk.validationset,
 
 ```
 
-```{r, results='asis'}
+```{r checkwiappendix2, results='asis'}
 
 stbmdldf %>% 
   dplyr::select(-c("ensembl_cvRisk")) %>% 
@@ -218,7 +215,7 @@ stbmdldf %>%
 ```
 
 
-```{r}
+```{r checkwihousekeep}
 #.............................
 # House keeping
 #.............................

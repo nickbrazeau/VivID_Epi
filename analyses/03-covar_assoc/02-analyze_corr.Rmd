@@ -171,7 +171,7 @@ invisible(dtsrvy.full %>%
 ```{r wichunk, results='asis'}
 # Are my missing cases fundamentally different?
 dt.full <- dt %>%
-  dplyr::select(c("hv001", "hv023", "hv005_wi", rskfctr)) %>%
+  dplyr::select(c("hv001", "hv023", "hiv05_wi", rskfctr)) %>%
   dplyr::mutate(
     ismissing = ifelse(rowSums(is.na(.)) == 0, "no", "yes"),
     ismissing = factor(ismissing))

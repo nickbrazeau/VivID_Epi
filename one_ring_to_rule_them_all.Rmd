@@ -41,11 +41,11 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 ```{r, child = 'analyses/07-spatial_prediction/01-Pv_areal_CAR_MCMC.Rmd'}
 ```
 
-<!-- ```{r, child = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'} -->
-<!-- ``` -->
+```{r, child = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'}
+```
 
-<!-- ```{r, child = 'analyses/07-spatial_prediction/03-Pv_get_predictions.Rmd'} -->
-<!-- ``` -->
+```{r, child = 'analyses/07-spatial_prediction/03-Pv_get_predictions.Rmd'}
+```
 
 ```{r, child = 'analyses/08-species_interference.Rmd'}
 ```

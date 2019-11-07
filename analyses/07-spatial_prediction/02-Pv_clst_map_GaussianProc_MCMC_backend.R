@@ -185,7 +185,7 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
 
 # Directions LONG RUN                      
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                        n.sim = 1e5,
+                                                        n.sim = 1e5 + 1e4,
                                                         thin = 1, # don't thin
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
@@ -196,7 +196,7 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                         start.S = predict(fit.glm))
 
 mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                  n.sim = 1e5,
+                                                  n.sim = 1e5 + 1e4,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),

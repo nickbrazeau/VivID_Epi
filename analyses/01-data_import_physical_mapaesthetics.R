@@ -38,7 +38,7 @@ DRCprov$adm1name <- chartr(paste(names(unwanted_array), collapse=''),
 #..............................
 # Pull down the border cntrs w/ raster
 #..............................
-brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "COD", "AGO", "ZMB", "TZA", "RWA", "BDI", "GAB", "CMR", "GNQ"), 
+brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI", "GAB", "CMR", "GNQ"), 
                   function(x){
                     ret <- raster::getData(name = "GADM", country = x, level = 0, path = "data/map_bases/gadm/")
                     ret <- sf::st_as_sf(ret)
@@ -46,6 +46,7 @@ brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "COD", "AGO", "ZMB", "TZA", "RWA
                     
                   })
 
+drcadm0 <- raster::getData(name = "GADM", country = "COD", level = 0, path = "data/map_bases/gadm/")
 
 #..............................
 # Pull down ocean
@@ -170,7 +171,7 @@ prettybasemap_nodrc_nonorth <- list(
 prettybasemap_hillgrey <- list(
   geom_raster(data=hill.df, aes(lon, lat, fill=hill)),
   # geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7),
-  scale_fill_manual(values = "#bdbdbd", guide = F),
+  scale_fill_gradientn(colors = grey.colors(100), guide = F),
   geom_sf(data = brdrcnt[[1]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[2]], fill = "#f0f0f0", lwd = 0.5),
   geom_sf(data = brdrcnt[[3]], fill = "#f0f0f0", lwd = 0.5),

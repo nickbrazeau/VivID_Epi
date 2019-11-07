@@ -3,7 +3,6 @@
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
-Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 ```
 
 ```{r}
@@ -26,7 +25,7 @@ set.seed(48)
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
 
 ```
@@ -66,7 +65,7 @@ sf::st_geometry(pvclust.weighted.nosf) <- NULL
 ```
 
 ## Spatial Autocorrelation EDA for Gaussian Processes
-Note, using resourced from [Giorgi & Diggle 2017](https://www.jstatsoft.org/article/view/v078i08) and `rgeos`.
+Note, using the vignette/resource provided by [Giorgi & Diggle 2017](https://www.jstatsoft.org/article/view/v078i08) and `rgeos`.
 
 
 ```{r}
@@ -214,21 +213,27 @@ graphics.off()
 Truly impressive lack of spatial structure. From models above, an appropriate _kappa_ value fro the Matern covariance matrix appeared to be 0.5 or 1. Let's explore that specifically below.
 
 #### Matern Shape
-```{r, results='asis'}
+```{r}
 #......................
 # Matern Shape, K
 #......................
 
 # look at kappa smooth parameter for matern covariance
-profile.kappa <- PrevMap::shape.matern(plsmdlogit ~ 1,
-                                       coords = ~ longnum + latnum,
-                                       data = pvclust.weighted.nosf,
-                                       set.kappa = seq(0.1, 10, length = 16),
-                                       start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
-                                       coverage = NULL # CI coverage
-                                      )
+profile.kappa <- invisible( PrevMap::shape.matern(plsmdlogit ~ 1,
+                                                  coords = ~ longnum + latnum,
+                                                  data = pvclust.weighted.nosf,
+                                                  set.kappa = seq(0.1, 10, length = 16),
+                                                  start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
+                                                  coverage = NULL # CI coverage
+) )
 
 
+
+```
+
+```{r, results='asis'}
+
+plot(profile.kappa)
 
 ```
 The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 1.5 (fixed now in subsequent analyses).
@@ -236,26 +241,27 @@ The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.
 
 
 ## Hierarchial Bayesian Spatial Models for Cluster Prevalence 
+
 ### Model Framework 
 NB, here it is not quite the same to "turn off space". Instead, we will let the covariance matrix be considered as a continuous process and let $\sigma^2$ and Matern correlation, $\phi$ vary under the model (we fixed $\kappa$). 
+
 #### Priors & Sampling
 (Please open up code for inquiries).
 
 
 
-#### Diagnostic Chains
+### Diagnostic Chains
 Run out four diagnostic chains to check convergence. 
 ```{r}
 
-mod.framework <- readRDS("~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Diagnostic_Chains/params.RDS")
+mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/params.RDS")
 
-mcmc.ret <- list.files(path = "~/Documents/MountPoints/mountedMeshnick/Projects/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_Diagnostic_Chains/", full.names = T, pattern = ".RDS")
+mcmc.ret <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/", full.names = T, pattern = ".RDS")
 mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
 
 # 0-7 index here so don't have to worry about char 10 and 1 being next to eachother
 
-
-mod.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
+mod.framework$mcmc <- purrr::map(mcmc.ret, function(x){return(readRDS(x)[[1]])})
 
 ```
 
@@ -263,7 +269,7 @@ mod.framework$mcmc <- purrr::map(mcmc.ret, readRDS)
 #### MCMC Diagnostics Chains
 Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
-```{r, results='hide'}
+```{r}
 mod.framework$summresults <- purrr::map(mod.framework$mcmc, summary, hpd.coverage = 0.95)
 mod.framework$summdiagret <- purrr::map(mod.framework$mcmc, get_diag_summ_results.Bayes.PrevMap)
 
@@ -290,7 +296,7 @@ mod.framework %>%
 
 ##### MCMC Trace Plots for Diagnostic Runs
 Too many plots again to visualize here, so will send out locally.
-```{r, results='asis'}
+```{r}
 diagchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
 dir.create(diagchain, recursive = T)
 
@@ -315,28 +321,28 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-long.intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
-long.covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+long.intercept <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
+long.covar <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 long.framework <- tibble::tibble(name = c("intercept", "covars"),
                                  mcmc = list(long.intercept, long.covar))
 
 ```
 
 ### Final Params
-```{r, results='asis'}
+```{r}
 
 long.framework$summresults <- purrr::map(long.framework$mcmc, summary, hpd.coverage = 0.95)
-long.framework$summdiagret <- purrr::map(long.framework$mcmc, get_diag_summ_results.Bayes.PrevMap)
+long.framework$summdiagret <- invisible( purrr::map(long.framework$mcmc, get_diag_summ_results.Bayes.PrevMap) )
 
 
 long.framework$paramtable <- purrr::map(long.framework$summdiagret, "summresults")
-long.framework$traceplots <- purrr::map(long.framework$summdiagret, "traceplots")
-long.framework$autocorrplot <- purrr::map(long.framework$summdiagret, "autocorrplots")
 
 long.frameworks.summresults <- long.framework %>% 
-  dplyr::select(c("name", "formula", "paramtable")) %>% 
+  dplyr::select(c("name", "paramtable")) %>% 
   tidyr::unnest(cols="paramtable") 
+```
 
+```{r, results='asis'}
 long.frameworks.summresults %>% 
   kableExtra::kable(format = "html", escape = F) %>%
   kableExtra::kable_styling("striped", full_width = F) 
@@ -346,29 +352,43 @@ long.frameworks.summresults %>%
 ```
 
 ### Final Diag Plots
-Too many plots to visualize directly, see local dir. 
-```{r, results='hide'}
+#### Intercept Only Diagnostics 
+```{r, results='asis'}
+PrevMap::trace.plot(long.intercept, param = "beta", component.beta = 1)
+PrevMap::autocor.plot(long.intercept, param = "beta", component.beta = 1)
 
-finalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/cluster_gaus_final_chain/"
-dir.create(finalchain, recursive = T)
+PrevMap::trace.plot(long.intercept, param = "tau2")
+PrevMap::autocor.plot(long.intercept, param = "tau2")
 
-for(i in 1:nrow(long.framework)){
-  fileout <- paste0(finalchain, "/", long.framework$name[i], "_final_chain_TRACEPLOTS_", i, ".pdf")
-  pdf(fileout)
-  invisible(lapply(long.framework$traceplots[i], print)) 
-  dev.off()
-}
+PrevMap::trace.plot(long.intercept, param = "sigma2")
+PrevMap::autocor.plot(long.intercept, param = "sigma2")
+
+PrevMap::trace.plot(long.intercept, param = "phi")
+PrevMap::autocor.plot(long.intercept, param = "phi")
+
+```
+
+#### Covariate Model Diagnostics 
+```{r, results='asis'}
+PrevMap::trace.plot(long.covar, param = "beta", component.beta = 1)
+PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 1)
 
 
-for(i in 1:nrow(long.framework)){
-  fileout <- paste0(finalchain, "/", long.framework$name[i], "_final_chain_AUTOPLOTS_", i, ".pdf")
-  pdf(fileout)
-  invisible(lapply(long.framework$autocorrplot[i], print)) 
-  dev.off()
-}
+PrevMap::trace.plot(long.covar, param = "beta", component.beta = 2)
+PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 2)
+
+PrevMap::trace.plot(long.covar, param = "tau2")
+PrevMap::autocor.plot(long.covar, param = "tau2")
+
+PrevMap::trace.plot(long.covar, param = "sigma2")
+PrevMap::autocor.plot(long.covar, param = "sigma2")
+
+PrevMap::trace.plot(long.covar, param = "phi")
+PrevMap::autocor.plot(long.covar, param = "phi")
 
 
 ```
+
 
 ## DIC of Final Models
 ```{r}
@@ -408,7 +428,7 @@ long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(
 })
 
 
-long.framework$DIC <- purrr::map(long.framework$LL, function(x){
+long.framework$DICg <- purrr::map(long.framework$LL, function(x){
   mu = mean(x)
   sigma = var(x)/2
   DICg = mu + sigma
@@ -421,9 +441,9 @@ long.framework$DIC <- purrr::map(long.framework$LL, function(x){
 ```{r, results = 'asis'}
 
 long.framework %>% 
-  dplyr::select(c("name", "DIC")) %>% 
-  tidyr::unnest(cols="DIC") %>% 
-  magrittr::set_colnames(c("Model", "DIC")) %>% 
+  dplyr::select(c("name", "DICg")) %>% 
+  tidyr::unnest(cols="DICg") %>% 
+  magrittr::set_colnames(c("Model", "DICg")) %>% 
   kableExtra::kable(format = "html", escape = F) %>%
   kableExtra::kable_styling("striped", full_width = F) 
 
@@ -433,7 +453,7 @@ long.framework %>%
 ### Log Likelihood Trace Plots for Final Models
 ```{r, results = 'asis'}
 
-plot(long.framework$LL[[1]], main = "Intercept Model")
-plot(long.framework$LL[[2]], main = "Covars Model")
+plot(long.framework$LL[[1]], main = "Intercept Model", type = "l")
+plot(long.framework$LL[[2]], main = "Covars Model", type = "l")
 
 ```
