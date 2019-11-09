@@ -47,7 +47,7 @@ ge.croopland$cropprop <- NA
 for(i in 1:nrow(ge.croopland)){
   
   ge.croopland$cropprop[i] <- 
-    temp=raster::extract(x = landcov2013.drc, # this doesn't change
+    raster::extract(x = landcov2013.drc, # this doesn't change
                     y = sf::as_Spatial(ge.croopland$geometry[i]),
                     buffer = ge.croopland$buffer[i],
                     fun = mean,
@@ -57,7 +57,7 @@ for(i in 1:nrow(ge.croopland)){
 }
 
 # liftover
-ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.nightlights$nightlightsmean, tol = tol))
+ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.croopland$cropprop, tol = tol))
 
 # save out
 saveRDS(object = ge.croopland, 

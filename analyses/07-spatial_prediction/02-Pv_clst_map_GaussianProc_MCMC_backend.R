@@ -39,24 +39,27 @@ pvclust.weighted <- pvclust.weighted %>%
 # Aggregate Covariates
 #-------------------------------------------------------------------------
 
-# precipitation already in srvyr obj
-pvclst.covar <- dtsrvy %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(precip_mean_cont_scale_clst = srvyr::survey_mean(precip_mean_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95) # identical by clst but ok
-  )
+# precipitation already in dataset 
+pvclst.covar <- dt %>% 
+  dplyr::select("hv001", "precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst")
 
 # bring in cropland
-crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds")
+crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
+  dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
 # bring in nightlights
+nightlists <- readRDS("data/derived_data/vividepi_night_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
 
-
+pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
+  dplyr::left_join(x = ., y = nightlists, by = "hv001")
 
 # join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
-riskvars = c("precip_mean_cont_scale_clst")
+riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
+             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
 
 
 
@@ -91,10 +94,10 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
 )
 
 # NB covar matrix
-covarsmat <- matrix(0, ncol = 2, nrow=2)
+covarsmat <- matrix(0, ncol = 5, nrow=5) # four risk factors, 5 betas
 diag(covarsmat) <- 1 # identity matrix
 
-mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0),
+mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(-5,5), # this is tau2
                                        uniform.phi = c(0,10),
@@ -119,7 +122,7 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 0.05,
                                                   start.sigma2 = 3, 
-                                                  start.beta = c(-5, -2),
+                                                  start.beta = c(-4, -0.2, -0.2, 0, -0.02),
                                                   start.phi = 0.5,
                                                   start.S = predict(fit.glm))
 
@@ -132,8 +135,8 @@ mod.framework$mcmcdirections <- lapply(1:nrow(mod.framework),
 
 
 # NOTE THIS HACK here, need to have multiple starting betas for the multiple betas in the model
-mod.framework$mypriors[[2]] <- mypriors.mod
-mod.framework$mcmcdirections[[2]] <- mcmcdirections.mod
+mod.framework$mypriors[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mypriors.mod
+mod.framework$mcmcdirections[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mcmcdirections.mod
 
 
 #......................

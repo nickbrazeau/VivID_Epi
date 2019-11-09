@@ -4,7 +4,6 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-library(gdalUtils)
 library(raster)
 library(sp)
 library(sf)
@@ -30,7 +29,7 @@ N75W180 <- raster::raster("data/raw_data/night_lights/SVDNB_npp_20150101-2015123
 nightlights.rstrs <- list(N0E60, N0W60, N0W180,
                           N75E60, N75W60, N75W180)
 
-nightlights.merge <- Reduce(function(...) merge(...,tolerance=1), myrstrs)
+nightlights.merge <- Reduce(function(...) merge(...), nightlights.rstrs)
 nightlights.drc <- raster::crop(x = nightlights.merge, y = caf)
 nightlights.drc <- raster::projectRaster(from = nightlights.drc, to = nightlights.drc,
                                          crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
@@ -42,7 +41,8 @@ saveRDS(object = nightlights.drc, file = "data/derived_data/vividepi_nightlights
 # look at data for clusters
 summary(values(nightlights.drc))
 hist( values(nightlights.drc) )
-sum(values(nightlights.drc) < 0) # there are 117 values less than 0 out of 44920800
+hist( values(nightlights.drc)[values(nightlights.drc) > 0] )
+sum(values(nightlights.drc) < 0) # there are 2237 values less than 0 out of 44920800
 # apparently these <0 values can result from too much correction https://oceancolor.gsfc.nasa.gov/forum/oceancolor/topic_show.pl?tid=5888
 # given that there are so few, I am going to ignore them
 

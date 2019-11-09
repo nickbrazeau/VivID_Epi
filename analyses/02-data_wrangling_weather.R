@@ -175,6 +175,9 @@ sf::st_geometry(wthrnd.mean) <- NULL
 saveRDS(object = precipstack.mean, 
         file = "data/derived_data/vividepi_precip_study_period_effsurface.rds")
 
+saveRDS(object = tempstack.mean, 
+        file = "data/derived_data/vividepi_temperature_study_period_effsurface.rds")
+
 
 saveRDS(object = wthrnd.mean, 
         file = "data/derived_data/vividep_weather_recoded_mean.rds")
