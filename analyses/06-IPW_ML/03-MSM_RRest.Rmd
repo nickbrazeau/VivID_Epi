@@ -230,6 +230,7 @@ liftover <- data.frame(label =
                            "Wealth",
                            "Education",
                            "Precipitation",
+                           "Temperature",
                            "Altitude",
                            "Water Dist.",
                            "Housing Materials (Trad.)",
