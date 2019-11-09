@@ -108,8 +108,6 @@ wthrnd.mnth <- dt %>%
   dplyr::select(c("hv001", "hvyrmnth_dtmnth", "geometry", "urban_rura"))
 
 
-wthrnd.mnth <- wthrnd.mnth %>% 
-  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
 wthrnd.mnth <- wthrnd.mnth[!duplicated(wthrnd.mnth$hv001),]
 
 wthrnd.mnth <- wthrnd.mnth %>% 
@@ -136,7 +134,7 @@ tempstack <- raster::stack(tempdf$tempraster)
 tempstack.mean <- raster::calc(tempstack, mean, na.rm = T)
 
 wthrnd.mean <- dt[,c("hv001", "geometry", "urban_rura")] %>% 
-  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10, 2))
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
 wthrnd.mean <- wthrnd.mean[!duplicated(wthrnd.mean$hv001),]
 
 

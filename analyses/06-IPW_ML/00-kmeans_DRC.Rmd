@@ -69,6 +69,7 @@ plot(kesteda.plotObj)
 ```
 **K means of 14 appears to be the a good inflection point.**
 
+
 ```{r}
 k <- kmeans(coords[,2:3], 14)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
@@ -98,5 +99,16 @@ drcpart <- drcpart %>%
   dplyr::rename(kmeansk = k)
 
 saveRDS(drcpart, "~/Documents/GitHub/VivID_Epi/data/derived_data/kmean_drcpartitioned.rds")
+
+```
+
+```{r}
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/kmeans_map_drc_paritition.jpg",
+     width = 11, height = 8, units = "in", res = 500)
+cowplot::plot_grid(kesteda.plotObj, drcpart.plotObj, align = "h")
+graphics.off()
+
 
 ```

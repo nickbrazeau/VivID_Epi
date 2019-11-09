@@ -9,7 +9,6 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
-Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 
 ```
 
@@ -20,7 +19,9 @@ source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
+library(raster)
 set.seed(48)
+tol <- 1e-3
 
 #......................
 # Import Data
@@ -34,9 +35,9 @@ ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge
 
 ```{r}
 
-#-------------------------------------------------------------------------
+#------------------------------------------------------------------------
 # Subset to Pv
-#-------------------------------------------------------------------------
+#------------------------------------------------------------------------
 pvprov.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"][[1]]
 # vectors have destroyed spatial class, need to remake
 pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
@@ -46,17 +47,54 @@ pvprov.weighted <- pvprov.weighted %>%
   dplyr::mutate(plsmdn = round(plsmdn, 0),
                 n = round(n, 0))
 
-#-------------------------------------------------------------------------
-# Aggregate Covariates
-#-------------------------------------------------------------------------
-prov.covar <- dtsrvy %>% 
-  dplyr::group_by(adm1name) %>% 
-  dplyr::summarise(precip_mean_cont_scale_prov = srvyr::survey_mean(precip_mean_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95)
-  )
-
-pvprov.weighted <- dplyr::left_join(pvprov.weighted, prov.covar, by = "adm1name")
 pvprov.weighted.nosf <- pvprov.weighted
 sf::st_geometry(pvprov.weighted.nosf) <- NULL
+
+```
+
+```{r}
+#-------------------------------------------------------------------------
+# Aggregate Covariates
+# means within each adm1
+#-------------------------------------------------------------------------
+precip <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_precip_study_period_effsurface.rds")
+cropland <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_surface.rds")
+nightlights <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.rds")
+
+
+
+
+extract_agg_raster_polygon <- function(rstrlyr, plygn){
+  vals <- raster::extract(x = rstrlyr, y = sf::as_Spatial(plygn),
+                          fun = mean,
+                          na.rm = T, 
+                          sp = F
+                          )
+  return(as.vector(vals))
+  
+}
+
+# split admins
+adm1 <- pvprov.weighted %>% 
+  dplyr::select(c("adm1name", "geometry"))
+adm1 <- split(adm1, 1:nrow(adm1))
+
+pvcovar <- pvprov.weighted %>% 
+  dplyr::select(c("adm1name"))
+
+
+pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
+pvcovar$crop <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = cropland) )
+pvcovar$nightlight <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = nightlights) )
+
+
+pvcovar$precip_scale <- my.scale(pvcovar$precip)
+pvcovar$crop_scale <- my.scale(logit(pvcovar$crop, tol = tol))
+pvcovar$nightlight_scale <- my.scale(pvcovar$nightlight)
+sf::st_geometry(pvcovar) <- NULL
+
+# combine
+pvprov.weighted <- dplyr::left_join(pvprov.weighted, pvcovar, by = "adm1name")
 
 
 ```
@@ -80,7 +118,7 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("precip_mean_cont_scale_prov")
+prov.covar.names <- c("precip_scale", "crop_scale", "nightlight_scale")
 mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept", 
                                  "CAR_intercept", "riid_covar", "ICAR_covar", "CAR_covar"),
                         formula = c("plsmdn ~ 1", "plsmdn ~ 1", "plsmdn ~ 1",

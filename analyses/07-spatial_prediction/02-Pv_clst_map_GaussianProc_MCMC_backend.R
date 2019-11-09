@@ -7,9 +7,6 @@ source("R/00-functions_maps.R")
 library(tidyverse)
 library(sf)
 library(srvyr) 
-library(rgeos)
-library(rgdal)
-library(geoR)
 library(raster)
 library(PrevMap)
 set.seed(48)
@@ -22,8 +19,6 @@ dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- sf::st_as_sf( readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds") )
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-
-riskvars = c("precip_mean_cont_scale_clst")
 
 #......................
 # Subset to Pv
@@ -44,14 +39,25 @@ pvclust.weighted <- pvclust.weighted %>%
 # Aggregate Covariates
 #-------------------------------------------------------------------------
 
+# precipitation already in srvyr obj
 pvclst.covar <- dtsrvy %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(precip_mean_cont_scale_clst = srvyr::survey_mean(precip_mean_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95) # identical by clst but ok
   )
 
+# bring in cropland
+crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds")
+# bring in nightlights
+
+
+
+# join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
+
+riskvars = c("precip_mean_cont_scale_clst")
+
 
 
 #-------------------------------------------------------------------------
