@@ -17,7 +17,7 @@ tol <- 1e-3
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
 mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 
 #......................
