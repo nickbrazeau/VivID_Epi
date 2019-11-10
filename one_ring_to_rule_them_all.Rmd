@@ -16,8 +16,6 @@ editor_options:
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
 
-Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
-
 ```
 
 ```{r, child = 'analyses/03-covar_assoc/02-analyze_corr.Rmd'}
@@ -52,3 +50,6 @@ Sys.setenv(RSTUDIO_PANDOC="/usr/local/Cellar/pandoc/2.7.3/bin/")
 
 ```{r, child = 'analyses/09-Power/02-collect_powercalcs.Rmd'}
 ```
+
+
+
