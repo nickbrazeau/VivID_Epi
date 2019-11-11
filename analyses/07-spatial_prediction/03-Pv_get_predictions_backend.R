@@ -13,6 +13,7 @@ set.seed(48)
 #......................
 intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
 covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+# to do add covars if needed
 gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
                                    mcmc = list(intercept, covar))
 

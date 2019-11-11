@@ -211,7 +211,7 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 0.05,
                                                   start.sigma2 = 3, 
-                                                  start.beta = c(-5, -2),
+                                                  start.beta = c(-4, -0.2, -0.2, 0, -0.02),
                                                   start.phi = 0.5,
                                                   start.S = predict(fit.glm))
 
