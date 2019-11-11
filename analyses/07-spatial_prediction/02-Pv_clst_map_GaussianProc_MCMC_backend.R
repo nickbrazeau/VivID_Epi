@@ -77,12 +77,25 @@ mod.framework$data <- lapply(1:nrow(mod.framework), function(x) return(pvclust.w
 
 mod.framework$coords <- lapply(1:nrow(mod.framework), function(x) return(coords))
 
+####################################################################################
+###########      Create Grid and Knots for Low-Rank Approximation         ##########
+####################################################################################
+xmin <- min(pvclust.weighted.nosf$longnum) + -1.5
+xmax <- max(pvclust.weighted.nosf$longnum) + 1.5
+ymin <- min(pvclust.weighted.nosf$latnum) + -1.5
+ymax <- max(pvclust.weighted.nosf$latnum) + 1.5
+
+knots <- expand.grid(seq(xmin, xmax, length = 10),
+                     seq(ymin, ymax, length = 10))
+
 
 ####################################################################################
 ###########           PRIORS  & Direction Diagnostic                      ##########
-#####################################################################################
+####################################################################################
+dtsubsmpl <- pvclust.weighted.nosf[ sample(1:nrow(pvclust.weighted.nosf), 
+                                           size = nrow(knots)), ]
 fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1, 
-               data = pvclust.weighted.nosf,
+               data = dtsubsmpl,
                family = binomial)
 
 
@@ -90,8 +103,7 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
                                              log.normal.nugget = c(-5,5), # this is tau2
                                              uniform.phi = c(0,10),
-                                             log.normal.sigma = c(0,25)
-)
+                                             log.normal.sigma = c(0,25))
 
 # NB covar matrix
 covarsmat <- matrix(0, ncol = 5, nrow=5) # four risk factors, 5 betas
@@ -101,8 +113,7 @@ mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(-5,5), # this is tau2
                                        uniform.phi = c(0,10),
-                                       log.normal.sigma = c(0,25)
-)
+                                       log.normal.sigma = c(0,25))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
                                                         n.sim = 1e4+1e3,
@@ -125,7 +136,6 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                   start.beta = c(-4, -0.2, -0.2, 0, -0.02),
                                                   start.phi = 0.5,
                                                   start.S = predict(fit.glm))
-
 
 
 mod.framework$mypriors <- lapply(1:nrow(mod.framework), 
@@ -156,7 +166,9 @@ fit_bayesmap_wrapper <- function(name,
     data = data,
     control.prior = mypriors,
     control.mcmc = mcmcdirections,
-    kappa = kappa
+    kappa = kappa,
+    low.rank = T,
+    knots = knots
   )
   return(ret)
 }
@@ -204,8 +216,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                  n.sim = 1e5 + 1e4,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 10, 
+                                                  n.sim = 20,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
@@ -223,8 +235,11 @@ longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.intercept,
   control.mcmc = mcmcdirections.intercept,
-  kappa = 1.5
+  kappa = 1.5,
+  low.rank = T,
+  knots = knots
 )
+
 
 longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
   formula = as.formula(paste("plsmdn ~ 1 + ", paste(riskvars, collapse = "+"))),
@@ -233,7 +248,9 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.mod,
   control.mcmc = mcmcdirections.mod,
-  kappa = 1.5
+  kappa = 1.5,
+  low.rank = T,
+  knots = knots
 )
 
 # save out
