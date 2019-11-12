@@ -85,8 +85,8 @@ xmax <- max(pvclust.weighted.nosf$longnum) + 1.5
 ymin <- min(pvclust.weighted.nosf$latnum) + -1.5
 ymax <- max(pvclust.weighted.nosf$latnum) + 1.5
 
-knots <- expand.grid(seq(xmin, xmax, length = 10),
-                     seq(ymin, ymax, length = 10))
+knots <- expand.grid(seq(xmin, xmax, length = 5),
+                     seq(ymin, ymax, length = 5))
 
 
 ####################################################################################
@@ -148,7 +148,8 @@ mod.framework$mcmcdirections <- lapply(1:nrow(mod.framework),
 mod.framework$mypriors[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mypriors.mod
 mod.framework$mcmcdirections[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mcmcdirections.mod
 
-
+# add in knots
+mod.framework$knots <- purrr::map(mod.framework$name, function(x) return(knots))
 #......................
 # Make a wrapper for PrevMap
 #......................
@@ -157,7 +158,9 @@ fit_bayesmap_wrapper <- function(name,
                                  trials = "n", 
                                  coords, 
                                  data, 
-                                 mypriors, mcmcdirections, kappa = 1.5){
+                                 mypriors, mcmcdirections, 
+                                 kappa = 1.5,
+                                 knots){
   
   ret <- PrevMap::binomial.logistic.Bayes(
     formula = as.formula(formula),
@@ -216,8 +219,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 10, 
-                                                  n.sim = 20,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
+                                                  n.sim = 1e5 + 1e4,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
