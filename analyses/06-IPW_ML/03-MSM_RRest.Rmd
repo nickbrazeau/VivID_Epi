@@ -23,6 +23,9 @@ Note, the canonical set is all nodes in the DAG that are not on the casual pathw
 ```{r, results='asis', fig.align='center', fig.width=8, fig.height=6}
 vividdag <- dagitty::downloadGraph(x = "dagitty.net/mjKNQhB")
 tidy_dag <- ggdag::tidy_dagitty(vividdag)
+# sub out vivax for malaria
+tidy_dag$data$name[tidy_dag$data$name == "I:Pv18s"] <- "Malaria"
+
 DAGplot <- ggdag::ggdag(tidy_dag) +
   ggdag::theme_dag()
 
@@ -45,6 +48,10 @@ plot(dagplot)
 graphics.off()
 
 
+svglite::svglite("~/Documents/GitHub/VivID_Epi/results/figures/dag.svg",
+     width = 11, height = 8)
+plot(dagplot)
+graphics.off()
 
 ```
 
@@ -237,7 +244,7 @@ liftover <- data.frame(label =
                            "ITN Use (No)",
                            "Urbanicity (Rur.)",
                            "Hospital Dist."),
-                       labelnum = 1:13)
+                       labelnum = 1:14)
 
 blocks <- data.frame(ymin = c(0, 0, 0),
                      ymax = c(3.5, 3.5, 3.5),
@@ -304,6 +311,10 @@ jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/IPTWMSM_final_figu
 plot(finalMSMplot)
 graphics.off()
 
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/IPTWMSM_final_figure_long.jpg", width = 14, height = 8, units = "in", res = 600)
+plot(finalMSMplot)
+graphics.off()
+
 ```
 
 ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
@@ -312,14 +323,15 @@ plot(finalMSMplot)
 
 ### Appendix: Digging into _Pv_-Precipitation
 ```{r}
-pvprecip <- makecd2013survey(survey = dt)
+dtsrvyr.app <- makecd2013survey(survey = dt)
 
-pvsrvyr <- pvprecip %>% 
+pvsrvyr <- dtsrvyr.app %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::mutate(count = 1) %>% 
   srvyr::summarise(n = srvyr::survey_total(count), 
                    pv = srvyr::survey_mean(pv18s, vartype = "se"),
                    pf = srvyr::survey_mean(pfldh, vartype = "se"))
+
 
 precip <- dt %>% 
   dplyr::group_by(hv001) %>% 
@@ -352,6 +364,61 @@ graphics.off()
 plot(pvprecipplot)
 ```
 
+
+
+### Appendix: Digging into _Pv_-Temperature
+```{r}
+
+dtsrvyr.app <- makecd2013survey(survey = dt)
+
+pvsrvyr <- dtsrvyr.app %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::mutate(count = 1) %>% 
+  srvyr::summarise(n = srvyr::survey_total(count), 
+                   pv = srvyr::survey_mean(pv18s, vartype = "se"),
+                   pf = srvyr::survey_mean(pfldh, vartype = "se"))
+
+temp <- dt %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(
+    temp = mean(temp_mean_cont_clst) # clst has same precip)
+  )
+
+tempprecip <- dplyr::left_join(pvsrvyr, temp, by = "hv001") %>% 
+  dplyr::select(-c(dplyr::ends_with("_se"))) %>% 
+  dplyr::select(c("hv001", "n", "temp", dplyr::everything())) %>% 
+  tidyr::gather(., key = "species", value = "prev", 4:5)
+
+pvtempplot <- tempprecip %>% 
+  ggplot() +
+  geom_point(aes(x=temp, y = prev, size = n)) +
+  facet_wrap(~species) + 
+  xlab("Lagged Temperature (C)") + 
+  ylab("Prevalence") +
+  theme_classic() + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 90))
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvtempplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvtempplot)
+```
+
+### Appendix: Digging into _Pv_-Farming
+```{r, results='asis'}
+
+dtsrvyr.app <- makecd2013survey(survey = dt)
+
+dtsrvyr.app %>% 
+  dplyr::group_by(farmer_fctb, pv18s_fctb) %>% 
+  dplyr::summarise(counts = srvyr::survey_total())
+
+```
 
 ### Appendix: Unadjusted vs. Adjusted RR Estimates
 ```{r}
@@ -403,6 +470,12 @@ iptwest <- malriskest %>%
 out <- left_join(iptwest, confmalriskest, by = c("target", "species")) %>% 
   dplyr::select(c("species", dplyr::everything()))
 
+
+
+
+out <- dplyr::left_join(dcdr, out, by = "target") %>% 
+  dplyr::select(-c("group")) %>% 
+  dplyr::arrange(dplyr::desc(species))
 ```
 
 ```{r, results='asis'}

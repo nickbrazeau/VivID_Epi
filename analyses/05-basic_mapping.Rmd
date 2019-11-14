@@ -656,6 +656,33 @@ cowplot::plot_grid(pfprevmap,
 
 
 ```{r}
+
+##############################
+# Pf nice
+##############################
+drccites <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/map_bases/DRC_city_coordinates.xlsx") %>% 
+  dplyr::mutate(latnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,1] ),
+                longnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,2] ) 
+                )
+
+pfprevmap <- pfprevmap  +
+  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") 
+
+
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pf-prevmap_nice.jpg", width = 11, height = 8, units = "in", res = 500)
+plot(pfprevmap)
+graphics.off()
+
+```
+
+```{r, results = 'asis'}
+plot(pfprevmap)
+```
+
+
+```{r}
 # make sample location plots
 clstcounts <- dtsrvy %>% 
   dplyr::group_by(hv001) %>% 

@@ -33,8 +33,6 @@ pvclust.weighted <- pvclust.weighted %>%
   dplyr::mutate(plsmdn = round(plsmdn, 0),
                 n = round(n, 0))
 
-
-
 #-------------------------------------------------------------------------
 # Aggregate Covariates
 #-------------------------------------------------------------------------
@@ -258,7 +256,7 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
 
 # save out
 dir.create("prevmap_long_chains")
-saveRDS(object = longrun.prevmapbayes.intercept, file = "analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
-saveRDS(object = longrun.prevmapbayes.mod, file = "analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+saveRDS(object = longrun.prevmapbayes.intercept, file = "prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
+saveRDS(object = longrun.prevmapbayes.mod, file = "prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 
 

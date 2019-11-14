@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 
 library(tidyverse)
 library(sf)
-
+set.seed(48)
 
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
 ge <- sf::st_as_sf(readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
@@ -51,7 +51,7 @@ kesteda.plotObj <- keda.df %>%
   ggplot() +
   geom_line(aes(x=k, y=totalwss)) + 
   geom_point(aes(x=k, y=totalwss)) +
-  geom_vline(xintercept = 14, color = "red", linetype = 2, alpha = 0.8) +
+  geom_vline(xintercept = 15, color = "red", linetype = 2, alpha = 0.8) +
   theme_minimal() + 
   ylab("Total Within-Cluster Sum of Squares") +
   xlab("K")
@@ -67,11 +67,11 @@ graphics.off()
 ```{r, results='asis'}
 plot(kesteda.plotObj)
 ```
-**K means of 14 appears to be the a good inflection point.**
+**K means of 15 appears to be the a good inflection point.**
 
 
 ```{r}
-k <- kmeans(coords[,2:3], 14)
+k <- kmeans(coords[,2:3], 15)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
 drcpart.plotObj <- drcpart %>% 

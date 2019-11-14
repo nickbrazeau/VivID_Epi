@@ -85,7 +85,7 @@ provmodel.posteriormeans %>%
 provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans) 
 
 provmodelplotObj <- ggplot() + 
-  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeansprev), alpha = 0.7, color = "#737373") +
+  geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeansprev), color = "#737373") +
   scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
   coord_sf(datum=NA) +  # to get rid of gridlines
   prettybasemap_nodrc +
@@ -127,7 +127,7 @@ provmodel.posteriorse %>%
 
 ```{r}
 provmodel.posteriorselotObj <- dplyr::left_join(DRCprov, provmodel.posteriorse) %>%  
-  geom_sf(data = ., aes(fill = posteriorses), alpha = 0.7, color = "#737373") +
+  geom_sf(data = ., aes(fill = posteriorses), color = "#737373") +
   scale_fill_gradient2("Standard Error", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
   coord_sf(datum=NA)   # to get rid of gridlines
 
@@ -179,11 +179,8 @@ clstmodel.fitted.postmeans.raster <-
                               clstmodel.fitted.postmeans),
                         crs="+proj=longlat +datum=WGS84 +no_defs")
 
-
-clstmodel.rstr.smooth <- raster::focal(clstmodel.fitted.postmeans.raster, w=matrix(1,
-                                                                                   nrow=5,
-                                                                                   ncol=5), mean)
-ret.smrstr.m  <-  raster::rasterToPoints(clstmodel.rstr.smooth)
+# no smoothing like in "basic eda plots"
+ret.smrstr.m  <-  raster::rasterToPoints(clstmodel.fitted.postmeans.raster)
 ret.smrstr.m.df <-  data.frame(lon = clstmodel.rstr.smooth[,1], 
                                lat = clstmodel.rstr.smooth[,2], 
                                prev = clstmodel.rstr.smooth[,3])
@@ -195,8 +192,10 @@ ret.smrstr.m.plot <- ggplot() +
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
             hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
   scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
-  coord_sf(datum=NA)   # to get rid of gridlines
-
+  coord_sf(datum=NA) +   # to get rid of gridlines
+  theme(legend.position = "left",
+        legend.text = element_text(size = 14, face = "bold", angle = 0),
+        legend.text = element_text(size = 15, face = "bold", vjust = 0.5, hjust = 0.5))
 
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans.jpg",

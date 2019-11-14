@@ -60,9 +60,7 @@ sf::st_geometry(pvprov.weighted.nosf) <- NULL
 precip <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_precip_study_period_effsurface.rds")
 temp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_temperature_study_period_effsurface.rds")
 cropland <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_surface.rds")
-nightlights <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.rds")
-
-
+nightlights <- raster::raster("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.grd")
 
 
 extract_agg_raster_polygon <- function(rstrlyr, plygn){
@@ -97,7 +95,7 @@ pvcovar$nightlight_scale <- my.scale(pvcovar$nightlight)
 sf::st_geometry(pvcovar) <- NULL
 
 # combine
-pvprov.weighted <- dplyr::left_join(pvprov.weighted, pvcovar, by = "adm1name")
+pvprov.weighted.nosf <- dplyr::left_join(pvprov.weighted.nosf, pvcovar, by = "adm1name")
 
 
 ```
@@ -121,7 +119,7 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("precip_scale", "crop_scale", "nightlight_scale")
+prov.covar.names <- c("precip_scale", "temp_scale", "crop_scale", "nightlight_scale")
 mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept", 
                                  "CAR_intercept", "riid_covar", "ICAR_covar", "CAR_covar"),
                         formula = c("plsmdn ~ 1", "plsmdn ~ 1", "plsmdn ~ 1",
@@ -196,7 +194,7 @@ mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
 ```
 
 #### MCMC Diagnostics 
-Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1, 000 for all parameters. In addition, we will visually check for convergence among the four chains. 
+Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 500 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
 ##### Param Diagnostics
 ```{r}
@@ -368,11 +366,11 @@ data.frame(name = mod.framework.long$name, DICg = unlist(mod.framework.long$DICg
 ```{r}
 
 # write out these final models
-dir.create("/results/tables/", recursive = T)
+dir.create("~/Documents/GitHub/VivID_Epi/results/tables/", recursive = T)
 readr::write_csv(x = mod.framework.long.res, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
 
 
-dir.create("analyses/07-spatial_prediction/prov_map_long_chains/", recursive = T)
+dir.create("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/", recursive = T)
 saveRDS(mod.framework.long, 
         file = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/Province_Bayes_Hierarchial_Model_longchain.rds")
 

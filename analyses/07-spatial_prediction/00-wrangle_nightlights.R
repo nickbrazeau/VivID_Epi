@@ -34,8 +34,10 @@ nightlights.drc <- raster::crop(x = nightlights.merge, y = caf)
 nightlights.drc <- raster::projectRaster(from = nightlights.drc, to = nightlights.drc,
                                          crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
 
+# need to write out merge object because it is not saving correctly as .RDS potentially due to layering
 # save out this surface
-saveRDS(object = nightlights.drc, file = "data/derived_data/vividepi_nightlights_surface.rds")
+raster::writeRaster(nightlights.drc,  filename = "data/derived_data/vividepi_nightlights_surface.grd ")
+
 
 
 # look at data for clusters
@@ -69,8 +71,11 @@ for(i in 1:nrow(ge.nightlights)){
     )
 }
 
-
-ge.nightlights$nightlightsmean_cont_scale_clst <- my.scale((ge.nightlights$nightlightsmean + tol))
+# given that the vast majority of these are 0-values
+# going to do a zero truncated scale
+nonzeroes <- which( ge.nightlights$nightlightsmean > 0 )
+ge.nightlights$nightlightsmean_cont_scale_clst <- ge.nightlights$nightlightsmean
+ge.nightlights$nightlightsmean_cont_scale_clst[nonzeroes] <- my.scale(ge.nightlights$nightlightsmean[nonzeroes])
 
 # save out
 saveRDS(object = ge.nightlights, 
