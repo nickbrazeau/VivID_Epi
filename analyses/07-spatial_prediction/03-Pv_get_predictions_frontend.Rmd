@@ -86,12 +86,15 @@ provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans)
 
 provmodelplotObj <- ggplot() + 
   geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeansprev), color = "#737373") +
-  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+   scale_fill_gradientn("Prevalence", colors = c("#FFEC00", "#FF0000")) +
   coord_sf(datum=NA) +  # to get rid of gridlines
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postMeans.jpg",
      height = 11, width = 8, units = "in", res = 500)
@@ -126,10 +129,17 @@ provmodel.posteriorse %>%
 ```
 
 ```{r}
-provmodel.posteriorselotObj <- dplyr::left_join(DRCprov, provmodel.posteriorse) %>%  
-  geom_sf(data = ., aes(fill = posteriorses), color = "#737373") +
-  scale_fill_gradient2("Standard Error", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
-  coord_sf(datum=NA)   # to get rid of gridlines
+provmodel.posteriorseplotdf <- dplyr::left_join(DRCprov, provmodel.posteriorse) 
+
+
+provmodel.posteriorselotObj <- ggplot() +
+  geom_sf(data = provmodel.posteriorseplotdf, 
+          aes(fill = posteriorses), color = "#737373") +
+    scale_fill_gradientn("Standard Error", colors = c("#FFEC00", "#FF0000")) +
+  coord_sf(datum=NA) +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ProvMap_postSEs.jpg",
      height = 11, width = 8, units = "in", res = 500)
@@ -178,24 +188,21 @@ clstmodel.fitted.postmeans.raster <-
                               clstmodel.coords[, "latnum"],
                               clstmodel.fitted.postmeans),
                         crs="+proj=longlat +datum=WGS84 +no_defs")
+  
 
-# no smoothing like in "basic eda plots"
-ret.smrstr.m  <-  raster::rasterToPoints(clstmodel.fitted.postmeans.raster)
-ret.smrstr.m.df <-  data.frame(lon = clstmodel.rstr.smooth[,1], 
-                               lat = clstmodel.rstr.smooth[,2], 
-                               prev = clstmodel.rstr.smooth[,3])
-
+ret.smrstr.m.df <-  data.frame(lon = clstmodel.fitted.postmeans.raster[,1], 
+                               lat = clstmodel.fitted.postmeans.raster[,2], 
+                               prev = clstmodel.fitted.postmeans.raster[,3])
 ret.smrstr.m.plot <- ggplot() + 
+  geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev)) +
+  scale_fill_gradientn("Prevalence", colors = c("#FFEC00", "#FF0000")) +
   prettybasemap_nodrc +
-  geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.7) +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
             hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
-  scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
-  coord_sf(datum=NA) +   # to get rid of gridlines
-  theme(legend.position = "left",
-        legend.text = element_text(size = 14, face = "bold", angle = 0),
-        legend.text = element_text(size = 15, face = "bold", vjust = 0.5, hjust = 0.5))
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans.jpg",

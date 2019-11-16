@@ -23,22 +23,56 @@ gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 #...............................
 # boundaries for prediction
 poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
-grid.pred.intercept <- splancs::gridpts(poly, xs=0.5, ys=0.5)
+grid.pred.intercept <- splancs::gridpts(poly, xs=0.05, ys=0.05)
 colnames(grid.pred.intercept) <- c("longnum","latnum")
 
 
-# note, because we have a raster surface of precipitation, we can 
-# predict at all (or a random sample of) raster points
+# Raster surfaces for risk factors
+# riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
+#             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
+tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds")
+cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
+nightlisthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
 
-predictors <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
-# make this into a manageable size
-predictors <- raster::sampleRandom(predictors, size = 1e4,
-                                   asRaster = T)
+# manipulate crop raster
+cropraster.smooth <- cropraster
+xy <- raster::coordinates(cropraster.smooth)
+sp.points <- sp::SpatialPoints(coords = xy, 
+                               proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
 
-pred.df <- data.frame(longnum = raster::coordinates(predictors)[,1],
-                      latnum = raster::coordinates(predictors)[,2],
-                      precip_mean_cont_scale_clst = raster::values(predictors)) %>% 
-  dplyr::filter(!is.na(precip_mean_cont_scale_clst)) # this removes NAs introducted above
+
+for(i in 1:length(values(cropraster.smooth))){
+  values(cropraster.smooth)[i] <- 
+    raster::extract(x = cropraster.smooth,
+                    y = sp.points[i,],
+                    buffer = 6000,
+                    fun = mean,
+                    na.rm = T,
+                    sp = F)
+  
+}
+
+# reproject so all on same scale
+# precipraster
+# tempreaster
+cropraster.smooth.repr <- raster::projectRaster(cropraster.smooth, precipraster)
+nightlisthraster.repr <- raster::projectRaster(nightlisthraster, precipraster)
+
+
+
+pred.df <- data.frame(longnum = raster::coordinates(precipraster)[,1],
+                      latnum = raster::coordinates(precipraster)[,2],
+                      precip_mean_cont_scale_clst = raster::values(precipraster),
+                      temp_mean_cont_scale_clst = raster::values(tempraster),
+                      cropprop_cont_scale_clst = raster::values(cropraster.smooth.repr),
+                      nightlightsmean_cont_scale_clst = raster::values(nightlisthraster.repr)
+) %>% 
+  dplyr::filter(!is.na(precip_mean_cont_scale_clst),
+                !is.na(temp_mean_cont_scale_clst),
+                !is.na(cropprop_cont_scale_clst),
+                !is.na(nightlightsmean_cont_scale_clst)) # this removes NAs introducted above
+
 grid.pred.covars <- pred.df[,c("longnum", "latnum")]
 
 
