@@ -86,7 +86,7 @@ provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans)
 
 provmodelplotObj <- ggplot() + 
   geom_sf(data = provmodelplotObjdf, aes(fill = posteriormeansprev), color = "#737373") +
-   scale_fill_gradientn("Prevalence", colors = c("#FFEC00", "#FF0000")) +
+      scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") +
   coord_sf(datum=NA) +  # to get rid of gridlines
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
@@ -135,7 +135,7 @@ provmodel.posteriorseplotdf <- dplyr::left_join(DRCprov, provmodel.posteriorse)
 provmodel.posteriorselotObj <- ggplot() +
   geom_sf(data = provmodel.posteriorseplotdf, 
           aes(fill = posteriorses), color = "#737373") +
-    scale_fill_gradientn("Standard Error", colors = c("#FFEC00", "#FF0000")) +
+       scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu") +
   coord_sf(datum=NA) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
@@ -195,7 +195,7 @@ ret.smrstr.m.df <-  data.frame(lon = clstmodel.fitted.postmeans.raster[,1],
                                prev = clstmodel.fitted.postmeans.raster[,3])
 ret.smrstr.m.plot <- ggplot() + 
   geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev)) +
-  scale_fill_gradientn("Prevalence", colors = c("#FFEC00", "#FF0000")) +
+  scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
@@ -257,7 +257,7 @@ ret.smrstr.m.df <-  data.frame(lon = clstmodel.rstr.smooth[,1],
 
 ret.smrstr.m.plot <- ggplot() + 
   geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = 0.7) +
-  scale_fill_gradient2("Standard Error", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") +
+  scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu") +
   coord_sf(datum=NA)   # to get rid of gridlines
 
 

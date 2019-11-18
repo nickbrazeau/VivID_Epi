@@ -7,18 +7,6 @@ logit <- function(x, tol=1e-4){
 
 
 
-# Set some colors
-# took this from here https://rjbioinformatics.com/2016/07/10/creating-color-palettes-in-r/
-# Here is a fancy color palette inspired by http://www.colbyimaging.com/wiki/statistics/color-bars
-# color for prev
-prevscale <- rev(heat.colors(101))
-
-# diff colors
-cool <- rainbow(50, start=rgb2hsv(col2rgb('cyan'))[1], end=rgb2hsv(col2rgb('blue'))[1])
-warm <- rainbow(50, start=rgb2hsv(col2rgb('red'))[1], end=rgb2hsv(col2rgb('yellow'))[1])
-cols <- c(rev(cool), rev(warm))
-mypalettediff <- colorRampPalette(cols)(101)
-
 
 
 
@@ -76,17 +64,13 @@ mapplotter <- function(data, maplvl, plsmdmspec){
   if(maplvl == "adm1name"){
     
     ret <- ret + geom_sf(data = data, aes(fill = plsmdprev)) +
-      # scale_fill_distiller("Prevalence", palette = "Spectral") +
-      scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-      # scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmdprev[data$plsmdprev != 0], 0.75)) + 
+      scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") +
       coord_sf(datum=NA)  # to get rid of gridlines
     
   } else if(maplvl == "hv001"){
     
     ret <- ret + geom_sf(data = data, aes(fill = plsmdprev, colour = plsmdprev, size = n), alpha = 0.4) +
-      # scale_fill_distiller("Prevalence", palette = "Spectral") +
-      scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
-      # scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000", midpoint = quantile(data$plsmdprev[data$plsmdprev != 0], 0.75)) + 
+      scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") +
       scale_size(guide = 'none') +  scale_fill_continuous(guide = 'none') +
       coord_sf(datum=NA)  # to get rid of gridlines
     
@@ -110,9 +94,9 @@ casemap_prev_plotter <- function(data, plsmdmspec){
   
   ret <- ggplot() + 
     geom_sf(data = DRCprov) +
-    geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#377eb8") +
+    geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#000000") +
     geom_sf(data = pos, aes(colour = plsmdprev, size = n), alpha = 0.4) +
-    scale_color_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+    scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") +
     scale_size(guide = 'none') +
     ggtitle(paste(plsmdmspec)) +
     coord_sf(datum=NA) + # to get rid of gridlines
@@ -137,9 +121,9 @@ casemap_n_plotter <- function(data, plsmdmspec){
   
   ret <- ggplot() + 
     geom_sf(data = DRCprov) +
-    geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#377eb8") +
+    geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#000000") +
     geom_sf(data = pos, aes(colour = plsmdn, size = n), alpha = 0.4) +
-    scale_color_gradient2("Weighted \n Count", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") + 
+    scale_color_distiller("Weighted \n Count", type = "div", palette = "RdYlBu") +
     scale_size(guide = 'none') +
     ggtitle(paste(plsmdmspec)) +
     coord_sf(datum=NA) + # to get rid of gridlines
@@ -223,7 +207,7 @@ prevmaprasterplotter <- function(prevrasters, smoothfct = 5, alpha = 0.8){
                                  prev = ret.smrstr.m[,3])
   ret.smrstr.m.plot <- ggplot() + 
     geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = alpha) +
-    scale_fill_gradient2("Prevalence", low = "#0000FF", mid = "#FFEC00", high = "#FF0000") 
+    scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") 
   
   return(ret.smrstr.m.plot)
 }

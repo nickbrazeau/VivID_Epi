@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Bayesian Hierarchial Spatial Cluster Models 
 
 ```{r, include=FALSE}
@@ -52,15 +57,29 @@ pvclust.weighted <- pvclust.weighted %>%
 #-------------------------------------------------------------------------
 # Aggregate Covariates
 #-------------------------------------------------------------------------
+# precipitation already in dataset 
+pvclst.covar <- dt %>% 
+  dplyr::select("hv001", "precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst") %>% 
+  dplyr::filter(!duplicated(.))
 
-pvclst.covar <- dtsrvy %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(precip_mean_cont_scale_clst = srvyr::survey_mean(precip_mean_cont_scale_clst, na.rm = T, vartype = c("se", "ci"), level = 0.95) # identical by clst but ok
-  )
+# bring in cropland
+crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
+  dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
+# bring in nightlights
+nightlists <- readRDS("data/derived_data/vividepi_night_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
 
+pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
+  dplyr::left_join(x = ., y = nightlists, by = "hv001")
+
+# join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
+
+riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
+             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+
 
 ```
 
@@ -69,7 +88,6 @@ Note, using the vignette/resource provided by [Giorgi & Diggle 2017](https://www
 
 
 ```{r}
-riskvars = c("precip_mean_cont_scale_clst")
 uvec <- c(seq(0, 1, by = 0.2), seq(1, 10))
 ```
 

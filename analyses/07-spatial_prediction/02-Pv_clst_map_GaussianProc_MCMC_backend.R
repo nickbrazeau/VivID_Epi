@@ -39,7 +39,8 @@ pvclust.weighted <- pvclust.weighted %>%
 
 # precipitation already in dataset 
 pvclst.covar <- dt %>% 
-  dplyr::select("hv001", "precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst")
+  dplyr::select("hv001", "precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst") %>% 
+  dplyr::filter(!duplicated(.))
 
 # bring in cropland
 crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
@@ -70,30 +71,16 @@ mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 )
 
 coords <- as.formula(paste0("~ longnum + latnum"))
-
 mod.framework$data <- lapply(1:nrow(mod.framework), function(x) return(pvclust.weighted.nosf))
-
 mod.framework$coords <- lapply(1:nrow(mod.framework), function(x) return(coords))
 
-####################################################################################
-###########      Create Grid and Knots for Low-Rank Approximation         ##########
-####################################################################################
-xmin <- min(pvclust.weighted.nosf$longnum) + -1.5
-xmax <- max(pvclust.weighted.nosf$longnum) + 1.5
-ymin <- min(pvclust.weighted.nosf$latnum) + -1.5
-ymax <- max(pvclust.weighted.nosf$latnum) + 1.5
-
-knots <- expand.grid(seq(xmin, xmax, length = 5),
-                     seq(ymin, ymax, length = 5))
 
 
 ####################################################################################
 ###########           PRIORS  & Direction Diagnostic                      ##########
 ####################################################################################
-dtsubsmpl <- pvclust.weighted.nosf[ sample(1:nrow(pvclust.weighted.nosf), 
-                                           size = nrow(knots)), ]
 fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1, 
-               data = dtsubsmpl,
+               data = pvclust.weighted.nosf,
                family = binomial)
 
 
@@ -146,8 +133,7 @@ mod.framework$mcmcdirections <- lapply(1:nrow(mod.framework),
 mod.framework$mypriors[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mypriors.mod
 mod.framework$mcmcdirections[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mcmcdirections.mod
 
-# add in knots
-mod.framework$knots <- purrr::map(mod.framework$name, function(x) return(knots))
+
 #......................
 # Make a wrapper for PrevMap
 #......................
@@ -157,8 +143,7 @@ fit_bayesmap_wrapper <- function(name,
                                  coords, 
                                  data, 
                                  mypriors, mcmcdirections, 
-                                 kappa = 1.5,
-                                 knots){
+                                 kappa = 1.5){
   
   ret <- PrevMap::binomial.logistic.Bayes(
     formula = as.formula(formula),
@@ -167,9 +152,7 @@ fit_bayesmap_wrapper <- function(name,
     data = data,
     control.prior = mypriors,
     control.mcmc = mcmcdirections,
-    kappa = kappa,
-    low.rank = T,
-    knots = knots
+    kappa = kappa
   )
   return(ret)
 }
@@ -236,9 +219,7 @@ longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.intercept,
   control.mcmc = mcmcdirections.intercept,
-  kappa = 1.5,
-  low.rank = T,
-  knots = knots
+  kappa = 1.5
 )
 
 
@@ -249,10 +230,10 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.mod,
   control.mcmc = mcmcdirections.mod,
-  kappa = 1.5,
-  low.rank = T,
-  knots = knots
+  kappa = 1.5
 )
+
+
 
 # save out
 dir.create("prevmap_long_chains")
