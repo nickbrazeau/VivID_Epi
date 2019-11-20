@@ -197,17 +197,9 @@ prevmaprasterplotter <- function(prevrasters, smoothfct = 5, alpha = 0.8){
                                           prevrasters$prevalence$predictions),
                                     crs="+proj=longlat +datum=WGS84")
   
-  ret.smrstr <- raster::focal(ret.rstr, w=matrix(1,
-                                                 nrow=smoothfct,
-                                                 ncol=smoothfct), mean)
-  
-  ret.smrstr.m  <-  raster::rasterToPoints(ret.smrstr)
-  ret.smrstr.m.df <-  data.frame(lon = ret.smrstr.m[,1], 
-                                 lat = ret.smrstr.m[,2], 
-                                 prev = ret.smrstr.m[,3])
   ret.smrstr.m.plot <- ggplot() + 
-    geom_raster(data = ret.smrstr.m.df, aes(lon, lat, fill = prev), alpha = alpha) +
-    scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") 
+    ggspatial::layer_spatial(data = ret.rstr, aes(fill = stat(band1)), alpha = alpha) +
+    scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") 
   
   return(ret.smrstr.m.plot)
 }

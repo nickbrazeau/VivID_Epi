@@ -35,29 +35,37 @@ tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsu
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
 nightlisthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
 
-# manipulate crop raster
-cropraster.smooth <- cropraster
-xy <- raster::coordinates(cropraster.smooth)
-sp.points <- sp::SpatialPoints(coords = xy, 
-                               proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-
-
-for(i in 1:length(values(cropraster.smooth))){
-  values(cropraster.smooth)[i] <- 
-    raster::extract(x = cropraster.smooth,
-                    y = sp.points[i,],
-                    buffer = 6000,
-                    fun = mean,
-                    na.rm = T,
-                    sp = F)
-  
-}
-
 # reproject so all on same scale
 # precipraster
 # tempreaster
-cropraster.smooth.repr <- raster::projectRaster(cropraster.smooth, precipraster)
+cropraster.repr <- raster::projectRaster(cropraster, precipraster)
 nightlisthraster.repr <- raster::projectRaster(nightlisthraster, precipraster)
+
+
+# manipulate crop raster
+xy <- raster::coordinates(cropraster.repr)
+xy.list <- split(xy, 1:nrow(xy))
+xy.list <- lapply(xy.list, function(x){
+  ret <- sf::st_sfc(sf::st_point(x), 
+                    crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+  return(ret)
+})
+
+
+cropraster.smooth.values <- sapply(xy.list, function(sppoint){
+  ret <- raster::extract(x = cropraster,
+                  y = sf::as_Spatial(sppoint),
+                  buffer = 6000,
+                  fun = mean,
+                  na.rm = T,
+                  sp = F)
+  return(ret)
+})
+
+cropraster.smooth <- cropraster
+values(cropraster.smooth) <- cropraster.smooth.values
+
+
 
 
 

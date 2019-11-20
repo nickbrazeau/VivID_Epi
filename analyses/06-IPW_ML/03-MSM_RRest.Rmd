@@ -235,7 +235,7 @@ liftover <- data.frame(label =
                            "HIV (+)",
                            "Farmer",
                            "Wealth",
-                           "Education",
+                           "Education (Lower)",
                            "Precipitation",
                            "Temperature",
                            "Altitude",

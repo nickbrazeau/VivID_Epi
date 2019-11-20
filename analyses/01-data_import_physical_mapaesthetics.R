@@ -200,6 +200,36 @@ prettybasemap_hillgrey <- list(
 
 
 
+prettybasemap_nodrc_dark <- list(
+  # geom_raster(data=hill.df, aes(lon, lat, fill=hill)) +
+  # geom_raster(data = dem.df, aes(lon, lat, fill = alt), alpha = 0.7) +
+  #  scale_fill_manual(values = "#bdbdbd", guide = F) +
+  geom_sf(data = brdrcnt[[1]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[2]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[3]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[4]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[5]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[6]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[7]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[8]], fill = "#000000", color = "#737373",lwd = 0.5),
+  geom_sf(data = brdrcnt[[9]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[10]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[11]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = brdrcnt[[12]], fill = "#000000", color = "#737373", lwd = 0.5),
+  geom_sf(data = oceans, fill = "#9ecae1"),
+  # geom_sf(data = DRCprov, fill = "NA"),
+  coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
+           ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
+           datum = NA),
+  ggspatial::annotation_north_arrow(location = "bl", which_north = "true",
+                                    pad_y = unit(1.25, "cm")),
+  vivid_theme,
+  theme(panel.background = element_rect(fill = "#9ecae1"),
+        panel.grid = element_line(colour="transparent"),
+        axis.text = element_blank(),
+        axis.title = element_blank()) # overwrite vivid theme
+)
+
 
 #----------------------------------------------------------------------------------------------------
 # Save Objects & Write out
@@ -208,5 +238,6 @@ save(prettybasemap_terraincolors,
      prettybasemap_hillgrey, 
      prettybasemap_nodrc,
      prettybasemap_nodrc_nonorth,
+     prettybasemap_nodrc_dark,
      file = "data/map_bases/vivid_maps_bases.rda")
 saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")
