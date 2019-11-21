@@ -62,13 +62,11 @@ cropraster.smooth.values <- sapply(xy.list, function(sppoint){
   return(ret)
 })
 
-cropraster.smooth <- cropraster
+# overlay new values
+cropraster.smooth <- cropraster.repr
 values(cropraster.smooth) <- cropraster.smooth.values
 
-
-
-
-
+# get predictive df
 pred.df <- data.frame(longnum = raster::coordinates(precipraster)[,1],
                       latnum = raster::coordinates(precipraster)[,2],
                       precip_mean_cont_scale_clst = raster::values(precipraster),
