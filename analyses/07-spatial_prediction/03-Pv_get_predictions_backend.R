@@ -71,13 +71,13 @@ pred.df <- data.frame(longnum = raster::coordinates(precipraster)[,1],
                       latnum = raster::coordinates(precipraster)[,2],
                       precip_mean_cont_scale_clst = raster::values(precipraster),
                       temp_mean_cont_scale_clst = raster::values(tempraster),
-                      cropprop_cont_scale_clst = raster::values(cropraster.smooth.repr),
+                      cropprop_cont_scale_clst = raster::values(cropraster.smooth),
                       nightlightsmean_cont_scale_clst = raster::values(nightlisthraster.repr)
 ) %>% 
   dplyr::filter(!is.na(precip_mean_cont_scale_clst),
                 !is.na(temp_mean_cont_scale_clst),
                 !is.na(cropprop_cont_scale_clst),
-                !is.na(nightlightsmean_cont_scale_clst)) # this removes NAs introducted above
+                !is.na(nightlightsmean_cont_scale_clst)) 
 
 grid.pred.covars <- pred.df[,c("longnum", "latnum")]
 
