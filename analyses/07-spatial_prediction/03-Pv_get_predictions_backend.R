@@ -28,8 +28,8 @@ colnames(grid.pred.intercept) <- c("longnum","latnum")
 
 
 # Raster surfaces for risk factors
-# riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
-#             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
+             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
 precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
 tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds")
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
