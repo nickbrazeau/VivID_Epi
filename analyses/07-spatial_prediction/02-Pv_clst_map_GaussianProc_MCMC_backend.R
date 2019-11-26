@@ -224,7 +224,8 @@ longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
 
 
 longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
-  formula = as.formula(paste("plsmdn ~ 1 + ", paste(riskvars, collapse = "+"))),
+  formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
+    temp_mean_cont_scale_clst + cropprop_cont_scale_clst + nightlightsmean_cont_scale_clst"),
   units.m = as.formula("~ n"),
   coords = as.formula("~ longnum + latnum"),
   data = pvclust.weighted.nosf,
