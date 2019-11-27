@@ -2,7 +2,7 @@
 
 #SBATCH --ntasks=1
 #SBATCH --time=11-00:00:00
-#SBATCH --mem=32g
+#SBATCH --mem=128g
 #SBATCH --mail-type=all
 #SBATCH --mail-user=nbrazeau@med.unc.edu
 
