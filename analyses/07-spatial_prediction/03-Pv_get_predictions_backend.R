@@ -3,6 +3,7 @@
 # spatial models produced from prevmap
 #----------------------------------------------------------------------------------------------------
 source("R/00-functions_maps.R") 
+source("R/00-functions_basic.R")
 library(tidyverse)
 library(raster)
 library(PrevMap)
@@ -62,19 +63,19 @@ rstrmeans <- lapply(list(precipraster, tempraster, cropraster, nightlisthraster)
                     extract_rstr_values, coords = grid.pred.coords.df)
 
 names(rstrmeans) <- riskvars
-values(rstrmeans[["precip_mean_cont_scale_clst"]]) <- my.scale(values(rstrmeans[["precip_mean_cont_scale_clst"]]))
-values(rstrmeans[["temp_mean_cont_scale_clst"]]) <- my.scale(values(rstrmeans[["temp_mean_cont_scale_clst"]]))
-values(rstrmeans[["nightlightsmean_cont_scale_clst"]]) <- my.scale(values(rstrmeans[["nightlightsmean_cont_scale_clst"]]))
-values(rstrmeans[["cropprop_cont_scale_clst"]]) <- my.scale(logit(values(rstrmeans[["cropprop_cont_scale_clst"]]), tol = 1e-3))
+rstrmeans[["precip_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["precip_mean_cont_scale_clst"]])
+rstrmeans[["temp_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["temp_mean_cont_scale_clst"]])
+rstrmeans[["nightlightsmean_cont_scale_clst"]] <- my.scale(rstrmeans[["nightlightsmean_cont_scale_clst"]])
+rstrmeans[["cropprop_cont_scale_clst"]] <- my.scale(logit(rstrmeans[["cropprop_cont_scale_clst"]], tol = 1e-3))
 
 
 # get predictive df
 pred.df <- data.frame(longnum = grid.pred.coords.df[,"longnum"],
                       latnum = grid.pred.coords.df[, "latnum"],
-                      precip_mean_cont_scale_clst = values(rstrmeans[["precip_mean_cont_scale_clst"]]),
-                      temp_mean_cont_scale_clst = values(rstrmeans[["temp_mean_cont_scale_clst"]]),
-                      cropprop_cont_scale_clst = values(rstrmeans[["cropprop_cont_scale_clst"]]),
-                      nightlightsmean_cont_scale_clst = values(rstrmeans[["nightlightsmean_cont_scale_clst"]])
+                      precip_mean_cont_scale_clst = rstrmeans[["precip_mean_cont_scale_clst"]],
+                      temp_mean_cont_scale_clst = rstrmeans[["temp_mean_cont_scale_clst"]],
+                      cropprop_cont_scale_clst = rstrmeans[["cropprop_cont_scale_clst"]],
+                      nightlightsmean_cont_scale_clst = rstrmeans[["nightlightsmean_cont_scale_clst"]]
 ) %>% 
   dplyr::filter(!is.na(precip_mean_cont_scale_clst),
                 !is.na(temp_mean_cont_scale_clst),
