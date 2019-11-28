@@ -19,14 +19,24 @@ gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 
 
 #...............................
-# make prediction surfaces for intercept
+# sample coordinates for prediction surface 
 #...............................
 # boundaries for prediction
 poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
-grid.pred.intercept <- splancs::gridpts(poly, xs=0.05, ys=0.05)
-colnames(grid.pred.intercept) <- c("longnum","latnum")
+grid.pred.coords <- splancs::gridpts(poly, xs=0.05, ys=0.05)
+colnames(grid.pred.coords) <- c("longnum","latnum")
 
-
+#...............................
+# downsample for computational burden
+#...............................
+coords_smpl <- sample(1:nrow(grid.pred.coords), 
+                      size = 16000, replace = F)
+coords_smpl <- sort(coords_smpl)
+grid.pred.coords <- grid.pred.coords[coords_smpl, ]
+grid.pred.coords.df <- as.data.frame(grid.pred.coords)
+#...............................
+# extract covariate information for prediction surface 
+#...............................
 # Raster surfaces for risk factors
 riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
              "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
@@ -35,55 +45,46 @@ tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsu
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
 nightlisthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
 
-# reproject so all on same scale
-# precipraster
-# tempreaster
-cropraster.repr <- raster::projectRaster(cropraster, precipraster)
-nightlisthraster.repr <- raster::projectRaster(nightlisthraster, precipraster)
 
-
-# manipulate crop raster
-xy <- raster::coordinates(cropraster.repr)
-xy.list <- split(xy, 1:nrow(xy))
-xy.list <- lapply(xy.list, function(x){
-  ret <- sf::st_sfc(sf::st_point(x), 
-                    crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+extract_rstr_values <- function(rstr, coords){
+  ret <- raster::extract(x = rstr,
+                         y = sf::as_Spatial(sf::st_as_sf(coords, coords = c("longnum", "latnum"), 
+                                                         crs = "+proj=utm +zone=34 +datum=WGS84 +units=m")),
+                         buffer = 6000,
+                         fun = mean,
+                         na.rm = T,
+                         sp = F)
   return(ret)
-})
+  
+}
+# note, every raster needs to be transformed 
+rstrmeans <- lapply(list(precipraster, tempraster, cropraster, nightlisthraster), 
+                    extract_rstr_values, coords = grid.pred.coords.df)
 
+names(rstrmeans) <- riskvars
+values(rstrmeans[["precip_mean_cont_scale_clst"]]) <- my.scale(values(rstrmeans[["precip_mean_cont_scale_clst"]]))
+values(rstrmeans[["temp_mean_cont_scale_clst"]]) <- my.scale(values(rstrmeans[["temp_mean_cont_scale_clst"]]))
+values(rstrmeans[["nightlightsmean_cont_scale_clst"]]) <- my.scale(values(rstrmeans[["nightlightsmean_cont_scale_clst"]]))
+values(rstrmeans[["cropprop_cont_scale_clst"]]) <- my.scale(logit(values(rstrmeans[["cropprop_cont_scale_clst"]]), tol = 1e-3))
 
-cropraster.smooth.values <- sapply(xy.list, function(sppoint){
-  ret <- raster::extract(x = cropraster,
-                  y = sf::as_Spatial(sppoint),
-                  buffer = 6000,
-                  fun = mean,
-                  na.rm = T,
-                  sp = F)
-  return(ret)
-})
-
-# overlay new values
-cropraster.smooth <- cropraster.repr
-values(cropraster.smooth) <- cropraster.smooth.values
 
 # get predictive df
-pred.df <- data.frame(longnum = raster::coordinates(precipraster)[,1],
-                      latnum = raster::coordinates(precipraster)[,2],
-                      precip_mean_cont_scale_clst = raster::values(precipraster),
-                      temp_mean_cont_scale_clst = raster::values(tempraster),
-                      cropprop_cont_scale_clst = raster::values(cropraster.smooth),
-                      nightlightsmean_cont_scale_clst = raster::values(nightlisthraster.repr)
+pred.df <- data.frame(longnum = grid.pred.coords.df[,"longnum"],
+                      latnum = grid.pred.coords.df[, "latnum"],
+                      precip_mean_cont_scale_clst = values(rstrmeans[["precip_mean_cont_scale_clst"]]),
+                      temp_mean_cont_scale_clst = values(rstrmeans[["temp_mean_cont_scale_clst"]]),
+                      cropprop_cont_scale_clst = values(rstrmeans[["cropprop_cont_scale_clst"]]),
+                      nightlightsmean_cont_scale_clst = values(rstrmeans[["nightlightsmean_cont_scale_clst"]])
 ) %>% 
   dplyr::filter(!is.na(precip_mean_cont_scale_clst),
                 !is.na(temp_mean_cont_scale_clst),
                 !is.na(cropprop_cont_scale_clst),
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
-grid.pred.covars <- pred.df[,c("longnum", "latnum")]
 
 
 # set up grid.pred
-gp.mod.framework$grid.pred <- list(grid.pred.intercept, grid.pred.covars)
+gp.mod.framework$grid.pred <- list(grid.pred.coords, grid.pred.coords)
 
 # set up predictors
 gp.mod.framework$predictors <- list(NULL, pred.df)
@@ -116,7 +117,7 @@ sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper,
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
-                            slurm_options = list(mem = "2000g",
+                            slurm_options = list(mem = "500g",
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",

@@ -36,7 +36,7 @@ nightlights.drc <- raster::projectRaster(from = nightlights.drc, to = nightlight
 
 # need to write out merge object because it is not saving correctly as .RDS potentially due to layering
 # save out this surface
-raster::writeRaster(nightlights.drc,  filename = "data/derived_data/vividepi_nightlights_surface.grd ")
+raster::writeRaster(nightlights.drc,  filename = "data/derived_data/vividepi_nightlights_surface.grd")
 
 
 
