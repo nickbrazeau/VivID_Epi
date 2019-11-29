@@ -31,7 +31,7 @@ colnames(grid.pred.coords) <- c("longnum","latnum")
 # downsample for computational burden
 #...............................
 coords_smpl <- sample(1:nrow(grid.pred.coords), 
-                      size = 16000, replace = F)
+                      size = 32000, replace = F)
 coords_smpl <- sort(coords_smpl)
 grid.pred.coords <- grid.pred.coords[coords_smpl, ]
 grid.pred.coords.df <- as.data.frame(grid.pred.coords)
@@ -44,29 +44,33 @@ riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst",
 precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
 tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds")
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
-nightlisthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
-
+nightligthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
 
 extract_rstr_values <- function(rstr, coords){
-  ret <- raster::extract(x = rstr,
-                         y = sf::as_Spatial(sf::st_as_sf(coords, coords = c("longnum", "latnum"), 
-                                                         crs = "+proj=utm +zone=34 +datum=WGS84 +units=m")),
-                         buffer = 6000,
-                         fun = mean,
-                         na.rm = T,
-                         sp = F)
+  coords <- sf::st_as_sf(coords, coords = c("longnum", "latnum"), 
+                                        crs = 4326)
+  ret <- raster::extract(
+    x = rstr,
+    y = sf::as_Spatial(coords),
+    buffer = 6000,
+    fun = mean,
+    na.rm = T,
+    sp = F
+  ) 
   return(ret)
-  
 }
 # note, every raster needs to be transformed 
-rstrmeans <- lapply(list(precipraster, tempraster, cropraster, nightlisthraster), 
-                    extract_rstr_values, coords = grid.pred.coords.df)
+rstrdf <- tibble::tibble(name = riskvars,
+                         rstr = list(precipraster, tempraster, cropraster, nightligthraster))
+rstrdf$coords <- lapply(1:nrow(rstrdf), function(x){return(grid.pred.coords.df)})
+
+rstrmeans <- purrr::pmap(rstrdf[,c("rstr", "coords")], extract_rstr_values)
 
 names(rstrmeans) <- riskvars
 rstrmeans[["precip_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["precip_mean_cont_scale_clst"]])
 rstrmeans[["temp_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["temp_mean_cont_scale_clst"]])
-rstrmeans[["nightlightsmean_cont_scale_clst"]] <- my.scale(rstrmeans[["nightlightsmean_cont_scale_clst"]])
 rstrmeans[["cropprop_cont_scale_clst"]] <- my.scale(logit(rstrmeans[["cropprop_cont_scale_clst"]], tol = 1e-3))
+rstrmeans[["nightlightsmean_cont_scale_clst"]] <- my.scale(rstrmeans[["nightlightsmean_cont_scale_clst"]])
 
 
 # get predictive df
@@ -83,7 +87,23 @@ pred.df <- data.frame(longnum = grid.pred.coords.df[,"longnum"],
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
 
+#...............................
+# downsample for computational burden and
+# now accounting for missingness  
+#...............................
+coords_smpl <- sample(1:nrow(pred.df), 
+                      size = 16000, replace = F)
+coords_smpl <- sort(coords_smpl)
+# extract pred.df
+pred.df <- pred.df[coords_smpl, ]
+# extract coords
+grid.pred.coords <- pred.df[coords_smpl, c("longnum", "latnum")]
+grid.pred.coords.df <- as.data.frame(grid.pred.coords)
 
+
+#...............................
+# Setup Map Dataframe  
+#...............................
 # set up grid.pred
 gp.mod.framework$grid.pred <- list(grid.pred.coords, grid.pred.coords)
 
