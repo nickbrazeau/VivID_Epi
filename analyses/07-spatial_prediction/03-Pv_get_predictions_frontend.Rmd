@@ -24,6 +24,7 @@ drccites <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/map_bases/DRC_
 
 ```
   
+
 ## Spatial Predictions
 Fitted values are taken from the Hierarchial Bayesian Spatial Models that were previously fit and determined to be the best model choice by model fit (Deviance Information Criteria).
 

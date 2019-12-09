@@ -143,7 +143,7 @@ fit_bayesmap_wrapper <- function(name,
                                  coords, 
                                  data, 
                                  mypriors, mcmcdirections, 
-                                 kappa = 1.5){
+                                 kappa = 1){
   
   ret <- PrevMap::binomial.logistic.Bayes(
     formula = as.formula(formula),
@@ -219,7 +219,7 @@ longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.intercept,
   control.mcmc = mcmcdirections.intercept,
-  kappa = 1.5
+  kappa = 1
 )
 
 
@@ -231,7 +231,7 @@ longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.mod,
   control.mcmc = mcmcdirections.mod,
-  kappa = 1.5
+  kappa = 1
 )
 
 

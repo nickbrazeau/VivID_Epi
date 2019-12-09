@@ -10,10 +10,13 @@ library(sf)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 
-# create bounding box of Central Africa for Speed
+# create bounding box of Central Africa for mrm
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+
+# create mask 
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 #.............................................................................. 
 # Read in Land Coverage
@@ -22,6 +25,8 @@ landcov2013 <- raster::raster("data/raw_data/land_coverage/dataset-satellite-lan
 landcov2013.drc <- raster::crop(x = landcov2013, y = caf)
 landcov2013.drc <- raster::projectRaster(from = landcov2013.drc, to = landcov2013.drc,
                                          crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+# mask out non DRC 
+landcov2013.drc <- raster::mask(landcov2013.drc, DRCprov)
 
 #.............................................................................. 
 # Lift Over to Binary Cropland yes or no

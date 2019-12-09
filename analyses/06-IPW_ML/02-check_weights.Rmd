@@ -136,12 +136,14 @@ covarretfiles <- split(covarretfiles, 1:length(covarretfiles))
 
 covarret <- lapply(covarretfiles, function(x){
   ret <- readRDS(x)
-  return(unlist(ret))
-}) 
+  ret <- tibble( var = names(ret), vals = unlist(ret))
+  return(ret)
+}) %>% 
+  dplyr::bind_rows()
 
 # add in distance observations
 covarbalparams <- covarbalparams %>% 
-  dplyr::mutate(dist = unlist(covarret))
+  dplyr::mutate(dist = covarret$vals)
 
 
 # make pretty plot

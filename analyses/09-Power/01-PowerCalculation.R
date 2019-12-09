@@ -9,7 +9,7 @@ source("R/00-functions_basic.R")
 #' @param exp_prob numeric; probability of exposure in the population
 #' @param p numeric; probability of infection/prevalence of outcome 
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
-powercalculator.glmOR <- function(n=15571, exp_prob=0.5, p=0.03, p0=0.02){
+powercalculator.glmOR <- function(n=15490, exp_prob=0.5, p=0.03, p0=0.02){
   
   logit <- function(x, tol=1e-3){ 
     return( log(((x+tol)/(1-x+tol))) )
@@ -48,7 +48,7 @@ p0sim <- seq(0.01, 0.032, by=0.0001)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 pvpoweriters.paramsdf <- tibble::tibble(
-  n = 15571, # total pop
+  n = 15490, # total pop (weighted)
   p = 0.03, # prev in population
   exp_prob = exppo[,1],
   p0 = exppo[,2]
@@ -96,7 +96,7 @@ p0sim <- seq(0.01, 0.3, by=0.001)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 pfpoweriters.paramsdf <- tibble::tibble(
-  n = 15571, # total pop
+  n = 15490, # total pop (weighted)
   p = 0.3, # prev in population
   exp_prob = exppo[,1],
   p0 = exppo[,2]

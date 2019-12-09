@@ -63,10 +63,10 @@ pvclst.covar <- dt %>%
   dplyr::filter(!duplicated(.))
 
 # bring in cropland
-crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
+crop <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_propmeans.rds") %>% 
   dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
 # bring in nightlights
-nightlists <- readRDS("data/derived_data/vividepi_night_clstmeans.rds") %>% 
+nightlists <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_night_clstmeans.rds") %>% 
   dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
 
 pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
@@ -252,9 +252,9 @@ profile.kappa <- invisible( PrevMap::shape.matern(plsmdlogit ~ 1,
 ```{r, results='asis'}
 
 plot(profile.kappa)
-
+abline(v = 1, col = "blue", lty = 2)
 ```
-The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 1.5 (fixed now in subsequent analyses).
+The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 1 (fixed now in subsequent analyses).
 
 
 
@@ -394,6 +394,17 @@ PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 1)
 
 PrevMap::trace.plot(long.covar, param = "beta", component.beta = 2)
 PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 2)
+
+PrevMap::trace.plot(long.covar, param = "beta", component.beta = 3)
+PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 3)
+
+
+PrevMap::trace.plot(long.covar, param = "beta", component.beta = 4)
+PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 4)
+
+
+PrevMap::trace.plot(long.covar, param = "beta", component.beta = 5)
+PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 5)
 
 PrevMap::trace.plot(long.covar, param = "tau2")
 PrevMap::autocor.plot(long.covar, param = "tau2")

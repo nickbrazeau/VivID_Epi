@@ -3,10 +3,12 @@ title: "_P. vivax_ Among Asymptomatic Adults in the DRC"
 author: "Nicholas F. Brazeau"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
-  html_document:
+    html_document:
     highlight: textmate
     theme: lumen
     toc: yes
+    toc_float: yes
+    toc_depth: 3
     code_folding: hide
 editor_options: 
   chunk_output_type: console
@@ -42,7 +44,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```{r, child = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'}
 ```
 
-```{r, child = 'analyses/07-spatial_prediction/03-Pv_get_predictions.Rmd'}
+```{r, child = 'analyses/07-spatial_prediction/03-Pv_get_predictions_frontend.Rmd'}
 ```
 
 ```{r, child = 'analyses/08-species_interference.Rmd'}

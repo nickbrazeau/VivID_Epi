@@ -10,10 +10,13 @@ library(sf)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 
-# create bounding box of Central Africa for Speed
+# create bounding box of Central Africa for mem
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+
+# create mask 
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 #.............................................................................. 
 # Night Light Raster Merge
@@ -33,6 +36,9 @@ nightlights.merge <- Reduce(function(...) merge(...), nightlights.rstrs)
 nightlights.drc <- raster::crop(x = nightlights.merge, y = caf)
 nightlights.drc <- raster::projectRaster(from = nightlights.drc, to = nightlights.drc,
                                          crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+# mask out non DRC 
+nightlights.drc <- raster::mask(nightlights.drc, DRCprov)
+
 
 # need to write out merge object because it is not saving correctly as .RDS potentially due to layering
 # save out this surface

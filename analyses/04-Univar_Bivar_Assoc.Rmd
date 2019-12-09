@@ -36,6 +36,19 @@ ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge
 
 
 ## Prevalence
+```{r}
+popN.wi <- dtsrvy %>% 
+  dplyr::mutate(cnt = 1) %>% 
+  dplyr::summarise(
+    n = srvyr::survey_total(cnt)
+  ) %>% 
+  unlist(.)
+
+```
+
+
+Overall, we have `r nrow(dt)` individuals considered in the study.
+
 
 ### National Prevalence
 Fit basic intercept weighted-glm to derive weighted national prevalence. 

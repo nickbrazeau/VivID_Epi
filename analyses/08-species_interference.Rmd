@@ -7,7 +7,7 @@ editor_options:
 ---
 
 # Pf-Pv Interference
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
 ```
 

@@ -8,7 +8,7 @@ editor_options:
 ---
 
 # _post-hoc_ Power Calculation
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
 ```
 

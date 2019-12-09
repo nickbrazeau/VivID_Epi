@@ -59,7 +59,7 @@ extract_rstr_values <- function(rstr, coords){
   ) 
   return(ret)
 }
-# note, every raster needs to be transformed 
+
 rstrdf <- tibble::tibble(name = riskvars,
                          rstr = list(precipraster, tempraster, cropraster, nightligthraster))
 rstrdf$coords <- lapply(1:nrow(rstrdf), function(x){return(grid.pred.coords.df)})
@@ -134,7 +134,7 @@ setwd("analyses/07-spatial_prediction")
 ntry <- nrow(gp.mod.framework)
 sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper, 
                             params = paramsdf, 
-                            jobname = 'Prevmap_predictions',
+                            jobname = 'Prevmap_predictions_smaller',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,

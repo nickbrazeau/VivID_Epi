@@ -10,9 +10,9 @@ library(sf)
 #..............................
 # Housekeeping
 #..............................
-readRasterBB.precip <- function(rstfile, bb = bb){
+readRasterBB.precip <- function(rstfile, sp = sp){
   ret <- raster::raster(rstfile)
-  ret <- raster::crop(x = ret, y = bb)
+  ret <- raster::mask(x = ret, y = sp)
   
   vals <- raster::values(ret) 
   vals <- ifelse(vals == -9999, NA, vals) # improper values
@@ -26,7 +26,7 @@ readRasterBB.precip <- function(rstfile, bb = bb){
   
 }
 
-readRasterBB.temp <- function(rstfile, bb = bb){
+readRasterBB.temp <- function(rstfile, sp = sp){
   ret <- raster::raster(rstfile)
   
   vals <- raster::values(ret) 
@@ -34,7 +34,7 @@ readRasterBB.temp <- function(rstfile, bb = bb){
   vals <- (vals * 0.02) - 273.15
   raster::values(ret) <- vals
   
-  ret <- raster::crop(x = ret, y = bb)
+  ret <- raster::crop(x = ret, y = sp)
   ret <- raster::projectRaster(from = ret, to = ret,
                                crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
   
@@ -43,11 +43,8 @@ readRasterBB.temp <- function(rstfile, bb = bb){
 }
 
 
-# create bounding box of Central Africa for Speed
-# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
-caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
-sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
-
+# create mask 
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 #......................................................................................................
 # Precipitation (CHRIPS) and Temperature (MODIS/LAADS) Read In Data
@@ -55,7 +52,7 @@ sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
 
 precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T, 
                      pattern = ".tif")
-precipfrst <- lapply(precip, readRasterBB.precip, bb = caf)
+precipfrst <- lapply(precip, readRasterBB.precip, sp = DRCprov)
 
 precipdf <- tibble::tibble(names = basename(precip)) %>% 
   dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
@@ -73,7 +70,7 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 # NOTE, reading in masked temperature files
 tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS_NASA/", full.names = T, 
                        pattern = "LST_Day_CMG.tif")
-tempfrst <- lapply(tempfiles, readRasterBB.temp, bb = caf)
+tempfrst <- lapply(tempfiles, readRasterBB.temp, sp = DRCprov)
 
 tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 
   dplyr::mutate(namestemp = stringr::str_extract(string = namestemp, pattern = "A[0-9][0-9][0-9][0-9][0-9][0-9][0-9]"),
@@ -139,6 +136,9 @@ wthrnd.mean <- wthrnd.mean[!duplicated(wthrnd.mean$hv001),]
 
 
 # Drop in a for loop again to account for DHS buffering
+# note the 0.05 degree resolution is approximately 6km, so the buffer
+# for urbanicity shouldn't be doing anything... but to be consistent with 
+# DHS "The Geospatial Covariate Datasets Manual", we will do it
 wthrnd.mean$precip_mean_cont_clst <- NA
 wthrnd.mean$temp_mean_cont_clst <- NA
 
