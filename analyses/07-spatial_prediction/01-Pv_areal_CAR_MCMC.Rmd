@@ -120,11 +120,9 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 # Make Model Framework
 #......................
 prov.covar.names <- c("precip_scale", "temp_scale", "crop_scale", "nightlight_scale")
-mod.framework <- tibble(name = c("riid_intercept", "ICAR_intercept", 
-                                 "CAR_intercept", "riid_covar", "ICAR_covar", "CAR_covar"),
-                        formula = c("plsmdn ~ 1", "plsmdn ~ 1", "plsmdn ~ 1",
-                                    rep(paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + ")), 3)),
-                        rho = c(0, 1, NA, 0, 1, NA),
+mod.framework <- tibble(name = c("CAR_intercept", "CAR_covar"),
+                        formula = c("plsmdn ~ 1", 
+                                    paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + "))),
                         burnin = 1e3,
                         n.sample = 1e4 + 1e3,
                         family = "binomial"
@@ -161,29 +159,16 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin
   betacount <- ifelse(grepl("1", formvec), 1, betacount) # corner case of just intercept
   prior.var.betavec <- rep(5e4, betacount) # note prior setting here
   
+  # rho here is NULL by default and esimtated in the model
+  ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
+                               family = family, 
+                               trials = trials, 
+                               W = W,
+                               data = data,
+                               burnin = burnin, 
+                               prior.var.beta = prior.var.betavec,
+                               n.sample = n.sample)
   
-  # don't need name but want it here for posterity
-  if(!is.na(rho)){
-    ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
-                                 family = family, 
-                                 trials = trials, 
-                                 W = W,
-                                 rho = rho,
-                                 data = data,
-                                 burnin = burnin, 
-                                 prior.var.beta = prior.var.betavec,
-                                 prior.tau2 = c(1, 0.01),
-                                 n.sample = n.sample)
-  } else if(is.na(rho)){ # rho needs to be NULL which has a hard time in a vector
-    ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
-                                 family = family, 
-                                 trials = trials, 
-                                 W = W,
-                                 data = data,
-                                 burnin = burnin, 
-                                 prior.var.beta = prior.var.betavec,
-                                 n.sample = n.sample)
-  }
   
   return(ret)
 }
@@ -211,24 +196,25 @@ mod.framework$summresults <- purrr::map(mod.framework$summresults, function(x){
 
 ```
 
-```{r, results='asis'}
-mod.framework %>% 
-  dplyr::select(c("name", "formula", "rho", "summresults")) %>% 
-  tidyr::unnest(cols = "summresults") %>% 
-  dplyr::mutate(
-    name = kableExtra::cell_spec(name, "html", 
-                                 color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)),
-     formula = kableExtra::cell_spec(formula, "html", 
-                                     color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) %>% 
-  kableExtra::pack_rows("Chain Set 1", 1, 16) %>%
-  kableExtra::pack_rows("Chain Set 2", 17, 28) %>% 
-  kableExtra::pack_rows("Chain Set 3", 29, 44) %>% 
-  kableExtra::pack_rows("Chain Set 4", 45, 56) %>% 
-  kableExtra::pack_rows("Chain Set 5", 57, 72) %>% 
-  kableExtra::pack_rows("Chain Set 6", 73, 84) 
-```
+<!-- ```{r, results='asis'} -->
+<!-- mod.framework %>%  -->
+<!--   dplyr::select(c("name", "formula", "rho", "summresults")) %>%  -->
+<!--   tidyr::unnest(cols = "summresults") %>%  -->
+<!--   dplyr::mutate( -->
+<!--     name = kableExtra::cell_spec(name, "html",  -->
+<!--                                  color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)), -->
+<!--      formula = kableExtra::cell_spec(formula, "html",  -->
+<!--                                      color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>%  -->
+<!--   kableExtra::kable(format = "html", escape = F) %>% -->
+<!--   kableExtra::kable_styling("striped", full_width = F) %>%  -->
+<!--   kableExtra::pack_rows("Chain Set 1", 1, 16) %>% -->
+<!--   kableExtra::pack_rows("Chain Set 2", 17, 28) %>%  -->
+<!--   kableExtra::pack_rows("Chain Set 3", 29, 44) %>%  -->
+<!--   kableExtra::pack_rows("Chain Set 4", 45, 56) %>%  -->
+<!--   kableExtra::pack_rows("Chain Set 5", 57, 72) %>%  -->
+<!--   kableExtra::pack_rows("Chain Set 6", 73, 84)  -->
+<!-- ``` -->
+
 
 ```{r, results='asis'}
 mod.framework %>% 
@@ -308,16 +294,18 @@ mod.framework.long.res <- mod.framework.long %>%
   tidyr::unnest(cols = "summresultsdf") 
 ```
 
-```{r, results='asis'}
-mod.framework.long.res %>% 
-  dplyr::mutate(
-    name = kableExtra::cell_spec(name, "html", 
-                                 color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)),
-    formula = kableExtra::cell_spec(formula, "html", 
-                                    color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) 
-```
+
+<!-- ```{r, results='asis'} -->
+<!-- mod.framework.long.res %>%  -->
+<!--   dplyr::mutate( -->
+<!--     name = kableExtra::cell_spec(name, "html",  -->
+<!--                                  color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)), -->
+<!--     formula = kableExtra::cell_spec(formula, "html",  -->
+<!--                                     color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>%  -->
+<!--   kableExtra::kable(format = "html", escape = F) %>% -->
+<!--   kableExtra::kable_styling("striped", full_width = F)  -->
+<!-- ``` -->
+
 
 ```{r, results='asis'}
 mod.framework.long.res %>% 
