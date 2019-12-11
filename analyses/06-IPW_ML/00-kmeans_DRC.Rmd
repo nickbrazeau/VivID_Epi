@@ -3,7 +3,9 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-# Partition DRC for Spatial Cross Validation
+# IPTW-Prep: Spatial Cross Validation
+
+## Partition DRC for Spatial Cross Validation
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',

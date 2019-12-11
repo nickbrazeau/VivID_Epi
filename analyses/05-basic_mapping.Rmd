@@ -87,7 +87,9 @@ mp$plots <- pmap(mp, mapplotter)
 cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
                   nrow = 1)
 
+```
 
+```{r}
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Province_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
@@ -98,16 +100,16 @@ graphics.off()
 
 ### Cluster Prevalence Maps
 ```{r, results='asis'}
+cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
+                   nrow = 1)
+```
 
+```{r}
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Cluster_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
                    nrow = 1)
 graphics.off()
-
-cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
-                   nrow = 1)
-
 
 ```
 
@@ -119,7 +121,7 @@ mp.clst <- mp %>%
 ```
 
 ### Case Count Maps
-```{r, results='asis'}
+```{r}
 #......................
 # Plot Cases
 #......................
@@ -132,7 +134,9 @@ cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
                    nrow = 1)
 graphics.off()
 
+```
 
+```{r, results='asis'}
 cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
                    nrow = 1)
 
@@ -140,12 +144,9 @@ cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
 
 ### Point Prevalence (Prettier)
 
-```{r, results='asis'}
+```{r}
 
 caseprevmaps <- purrr::pmap(mp.clst[,c("data", "plsmdmspec")], casemap_prev_plotter)
-
-cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
-                  nrow = 1)
 
 jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Prevalence_Case_ClusterPlots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
@@ -153,21 +154,40 @@ cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
                   nrow = 1)
 graphics.off()
 
+```
 
-
+```{r, results='asis'}
+cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
+                  nrow = 1)
 ```
 
 ### Case Plot (Prettier)
 
 ```{r}
 
-pvcaseprev <- caseprevmaps[[2]] +
-  ggtitle("") +
-  prettybasemap_nodrc + 
-  theme(
-    legend.position = "right",
-    legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
-  )
+pvcaseprev <- mp.clst[,c("data", "plsmdmspec")] %>% 
+  dplyr::filter(plsmdmspec == "pv18s") 
+pvcaseprev <- pvcaseprev$data[[1]]
+
+pos <- pvcaseprev %>% 
+    dplyr::filter(plsmdprev > 0)
+neg <- pvcaseprev %>% 
+    dplyr::filter(plsmdprev == 0)
+  
+pvret <- ggplot() + 
+  geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
+  geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#f0f0f0") +
+  geom_sf(data = pos, aes(colour = plsmdprev, size = n), alpha = 0.9) +
+  scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") +
+  scale_size(guide = 'none') +
+  coord_sf(datum=NA) + # to get rid of gridlines
+  vivid_theme +
+  prettybasemap_nodrc_dark +
+  theme(axis.text = element_blank(),
+        axis.line = element_blank(), 
+        axis.title = element_blank(),
+        legend.position = "right",
+        legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)) 
 
 
 # make world map
@@ -200,9 +220,9 @@ africaplot <- ggplot() +
 
 
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Africa_Inset_PvClstPrev.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Africa_Inset_PvClstPrev_dark.jpg", width = 11, height = 8, units = "in", res = 500)
 cowplot::ggdraw() +
-  cowplot::draw_plot(pvcaseprev, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(pvret, x = 0, y = 0, width = 1, height = 1, scale = 1) +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 graphics.off()
 
@@ -212,7 +232,7 @@ graphics.off()
 ```{r, results='asis'}
 
 cowplot::ggdraw() +
-  cowplot::draw_plot(pvcaseprev, x = 0, y = 0, width = 1, height = 1, scale = 1) +
+  cowplot::draw_plot(pvret, x = 0, y = 0, width = 1, height = 1, scale = 1) +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 
 ```
@@ -307,7 +327,8 @@ knitr::kable(moranIclst)
 
 ## Krigged Prevalence Maps
 **N.B. Here I have employed an empirical logit transformation and used a "trans-Gaussian" approximation under a MLE framework**. This means that I now assume a model framework of:    
-$$\hat{Y}|S(x_i) \sim N(X_i^\intercal \space \beta \space + \space S(x_i), \space \tau^2)$$. Under this formulation, nugget effects are being absorbed by the conditional normal. 
+$$\hat{Y}|S(x_i) \sim N(X_i^\intercal \space \beta \space + \space S(x_i), \space \tau^2)$$    
+Under this formulation, nugget effects are being absorbed by the conditional normal. 
   
 ```{r}
 
@@ -369,6 +390,8 @@ graphics.off()
 
 
 ```
+**Order is Pf, Pv, Po**.
+
 
 ## _P. vivax_ vs. Ape Distribution 
 ```{r, results='asis'}
@@ -378,7 +401,8 @@ ape <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/drc_ape.rds")
 aperange_nhapv <- 
   caseprevmaps[[2]] +
   geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
-  scale_fill_manual("Non-Human \n Ape Range", values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
+  scale_fill_manual("Non-Human \n Ape Range", 
+                    values = c("#bcbddc", "#807dba", "#6a51a3", "#54278f"))
 
 ```
 
@@ -717,82 +741,4 @@ cowplot::ggdraw() +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
 
 ```
-
-### Case Plot (Prettier - Dark Background)
-
-```{r}
-
-pvcaseprev <- mp.clst[,c("data", "plsmdmspec")] %>% 
-  dplyr::filter(plsmdmspec == "pv18s") 
-pvcaseprev <- pvcaseprev$data[[1]]
-
-pos <- pvcaseprev %>% 
-    dplyr::filter(plsmdprev > 0)
-neg <- pvcaseprev %>% 
-    dplyr::filter(plsmdprev == 0)
-  
-pvret <- ggplot() + 
-  geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
-  geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#f0f0f0") +
-  geom_sf(data = pos, aes(colour = plsmdprev, size = n), alpha = 0.9) +
-  scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") +
-  scale_size(guide = 'none') +
-  coord_sf(datum=NA) + # to get rid of gridlines
-  vivid_theme +
-  prettybasemap_nodrc_dark +
-  theme(axis.text = element_blank(),
-        axis.line = element_blank(), 
-        axis.title = element_blank(),
-        legend.position = "right",
-        legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)) 
-
-
-# make world map
-DRC <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm36_COD_0_sp.rds") %>% 
-  sf::st_as_sf(.)
-
-bb <- sf::st_bbox(
-  sf::st_sf(geom = sf::st_sfc(
-    sf::st_point(c(-19, -37)), # left lower
-    sf::st_point(c(51, -37)), # right lower
-    sf::st_point(c(-19, 38)), # left upper
-    sf::st_point(c(51, 38)), # right upper
-    crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs"))
-  ))
-
-africa <- rnaturalearth::ne_countries(scale = "large", returnclass = "sf") %>% 
-  dplyr::filter(continent == "Africa") %>% 
-  sf::st_crop(., y=bb)
-
-
-africaplot <- ggplot() + 
-  geom_sf(data = africa, fill = "#f0f0f0") +
-  geom_sf(data = DRC, fill = "#636363")  +
-  coord_sf(datum=NA) +
-  theme_bw() + 
-  theme(legend.position = "none", 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_rect(fill = "white", color = "black", size = 1))
-
-
-
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Africa_Inset_PvClstPrev_dark.jpg", width = 11, height = 8, units = "in", res = 500)
-cowplot::ggdraw() +
-  cowplot::draw_plot(pvret, x = 0, y = 0, width = 1, height = 1, scale = 1) +
-  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
-graphics.off()
-
-
-```
-
-```{r, results='asis'}
-
-cowplot::ggdraw() +
-  cowplot::draw_plot(pvcaseprev, x = 0, y = 0, width = 1, height = 1, scale = 1) +
-  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
-
-```
-
-
 

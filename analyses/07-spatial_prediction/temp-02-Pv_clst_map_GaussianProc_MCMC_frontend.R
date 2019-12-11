@@ -86,7 +86,7 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
-                                             log.normal.nugget = c(0,25), # this is tau2
+                                             log.normal.nugget = c(-25,25), # this is tau2
                                              uniform.phi = c(0,50),
                                              log.normal.sigma = c(0,50))
 
@@ -96,7 +96,7 @@ diag(covarsmat) <- 1 # identity matrix
 
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0, 0),
                                        beta.covar = covarsmat,
-                                       log.normal.nugget = c(0,25), # this is tau2
+                                       log.normal.nugget = c(-25,25), # this is tau2
                                        uniform.phi = c(0,50),
                                        log.normal.sigma = c(0,50))
 
@@ -105,8 +105,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                         thin = 1, # don't thin
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
-                                                        start.nugget = 0.05,
-                                                        start.sigma2 = 1,
+                                                        start.nugget = 0,
+                                                        start.sigma2 = 25,
                                                         start.beta = -5,
                                                         start.phi = 25,
                                                         start.S = predict(fit.glm))
@@ -116,8 +116,8 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
-                                                  start.nugget = 0.05,
-                                                  start.sigma2 = 1, 
+                                                  start.nugget = 0,
+                                                  start.sigma2 = 25, 
                                                   start.beta = c(-4, -0.2, -0.2, 0, -0.02),
                                                   start.phi = 25,
                                                   start.S = predict(fit.glm))
@@ -189,28 +189,27 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
 # we can't use a wrapper with purrr as above. 
 
 # Directions LONG RUN                      
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                        n.sim = 1e5 + 1e4,
+mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
+                                                        n.sim = 1e4,
                                                         thin = 1, # don't thin
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
                                                         start.nugget = 0.05,
-                                                        start.sigma2 = 1,
+                                                        start.sigma2 = 25,
                                                         start.beta = -5,
                                                         start.phi = 25,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                  n.sim = 1e5 + 1e4,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
+                                                  n.sim = 1e4,
                                                   thin = 1, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 0.05,
-                                                  start.sigma2 = 1, 
+                                                  start.sigma2 = 25, 
                                                   start.beta = c(-4, -0.2, -0.2, 0, -0.02),
                                                   start.phi = 25,
                                                   start.S = predict(fit.glm))
-
 
 
 longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(

@@ -230,6 +230,19 @@ mod.framework %>%
   kableExtra::pack_rows("Chain Set 6", 73, 84) 
 ```
 
+```{r, results='asis'}
+mod.framework %>% 
+  dplyr::select(c("name", "formula", "rho", "summresults")) %>% 
+  tidyr::unnest(cols = "summresults") %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 5,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
 ##### Diagnostic Chains
 Note, there are too many chains for visualizing here. Writing out to local directory. 
 ```{r}
@@ -306,6 +319,18 @@ mod.framework.long.res %>%
   kableExtra::kable_styling("striped", full_width = F) 
 ```
 
+```{r, results='asis'}
+mod.framework.long.res %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 5,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+
 ### Long Chain DIC
 
 ```{r}
@@ -357,8 +382,13 @@ mod.framework.long$DICs <- purrr::map(mod.framework.long$modfit, "DIC")
 ```{r, results='asis'}
 data.frame(name = mod.framework.long$name, DICg = unlist(mod.framework.long$DICg),
            DICs = unlist(mod.framework.long$DICs)) %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) 
+  DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 6,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 
 ```
 

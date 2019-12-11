@@ -40,14 +40,27 @@ ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge
 popN.wi <- dtsrvy %>% 
   dplyr::mutate(cnt = 1) %>% 
   dplyr::summarise(
-    n = srvyr::survey_total(cnt)
+    n = srvyr::survey_total(cnt, vartype = c("se", "ci"), level = 0.95)
   ) %>% 
-  unlist(.)
+  dplyr::mutate_if(is.numeric, round, 2)
+
+
+malN.wi <- dtsrvy %>% 
+  dplyr::summarise(
+    pv18sn = srvyr::survey_total(pv18s, vartype = c("se", "ci"), level = 0.95),
+    pfldhn = srvyr::survey_total(pfldh, vartype = c("se", "ci"), level = 0.95),
+  ) %>% 
+  dplyr::mutate_if(is.numeric, round, 2)
 
 ```
 
 
-Overall, we have `r nrow(dt)` individuals considered in the study.
+Overall, we have `r nrow(dt)` individuals considered in the study which results in a weighted population of:   
+
+```{r, results='asis'}
+knitr::kable(popN.wi)
+```
+
 
 
 ### National Prevalence
@@ -59,13 +72,15 @@ Fit basic intercept weighted-glm to derive weighted national prevalence.
 # Basic Descriptive Statistics
 #-------------------------------------------------------- 
 # national prevalence
-sumnums <- dtsrvy %>% 
+dtsrvy %>% 
   dplyr::mutate(count = 1) %>% 
   dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
                    pvn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
-                   pfn = srvyr::survey_total(pfldh, vartype = c("se", "ci")))
+                   pfn = srvyr::survey_total(pfldh, vartype = c("se", "ci"))) %>% 
+  knitr::kable(.)
+```
 
-
+```{r, results='asis'}
 drcpv <- survey::svyglm(pv18s ~ 1, design = dtsrvy)
 drcpv <- broom::tidy(drcpv, conf.int = T)
 
@@ -88,7 +103,6 @@ rbind.data.frame( cbind.data.frame(species = "Pv", drcpv),
   
 NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used a logit transformation and the t-distribution to estimate these CIs.    
     
-See the _Appendix_ for individual cluster counts.
 
 ```{r, results='asis', fig.align='center', fig.width=11, fig.height=8}
 
@@ -181,6 +195,35 @@ graphics.off()
 
 ```
 
+### Cluster Level Prevalences Table (Unweighted Ns)
+```{r, results='asis'}
+
+clst %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 5,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+
+```
+
+### Cluster Level Prevalences Table (Weighted Ns)
+```{r, results='asis'}
+
+clstprev %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
+  DT::datatable(., extensions='Buttons',
+                options = list(
+                  searching = T,
+                  pageLength = 5,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+
+```
+
+
 ## Duffy Negativity
 ### Counts and Prevalences
 ```{r}
@@ -243,22 +286,14 @@ knitr::kable(.)
 
 # coinfections unweighted
 coinfxn <- dt %>% 
-  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 0, 1, 0),
-                pvmono =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 0, 1, 0),
-                pomono =  ifelse(pfldh == 0 & pv18s == 0 & po18s == 1, 1, 0),
-                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0),
-                pfpo =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 1, 1, 0),
-                pvpo =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 1, 1, 0),
-                pfpvpo =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 1, 1, 0)
+  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0, 1, 0),
+                pvmono =  ifelse(pfldh == 0 & pv18s == 1, 1, 0),
+                pfpv =  ifelse(pfldh == 1 & pv18s == 1, 1, 0),
   ) %>% 
   dplyr::summarise(
     "pf" = sum(pfmono),
     "pv" = sum(pvmono),
-    "po" = sum(pomono),
-    "pf/pv" = sum(pfpv),
-    "pf/po" = sum(pfpo),
-    "pv/po" = sum(pvpo),
-    "pf/pv/po" = sum(pfpvpo)
+    "pf/pv" = sum(pfpv)
   )
 
 knitr::kable(coinfxn)
@@ -271,26 +306,23 @@ knitr::kable(coinfxn)
 ```{r, results='asis'}
 # need weighed counts
 coinfxn.wi <- dtsrvy %>% 
-  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 0, 1, 0),
-                pvmono =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 0, 1, 0),
-                pomono =  ifelse(pfldh == 0 & pv18s == 0 & po18s == 1, 1, 0),
-                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0),
-                pfpo =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 1, 1, 0),
-                pvpo =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 1, 1, 0),
-                pfpvpo =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 1, 1, 0)
+  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0,  1, 0),
+                pvmono =  ifelse(pfldh == 0 & pv18s == 1,  1, 0),
+                pfpv =  ifelse(pfldh == 1 & pv18s == 1,  1, 0),
   ) %>% 
   dplyr::summarise(
-    "pf" = srvyr::survey_total(x=pfmono),
-    "pv" = srvyr::survey_total(x=pvmono),
-    "po" = srvyr::survey_total(x=pomono),
-    "pf/pv" = srvyr::survey_total(x=pfpv),
-    "pf/po" = srvyr::survey_total(x=pfpo),
-    "pv/po" = srvyr::survey_total(x=pvpo),
-    "pf/pv/po" = srvyr::survey_total(x=pfpvpo)
-  ) %>% 
-  dplyr::select(-c(dplyr::ends_with("_se")))
+    "pf" = srvyr::survey_total(x=pfmono, vartype = c("ci"), level = 0.95),
+    "pv" = srvyr::survey_total(x=pvmono, vartype = c("ci"), level = 0.95),
+    "pf/pv" = srvyr::survey_total(x=pfpv, vartype = c("ci"), level = 0.95),
+  )
 
-knitr::kable(coinfxn.wi)
+coinfxn.wi %>% 
+  dplyr::select(-c(dplyr::ends_with("_low"), dplyr::ends_with("_upp"))) %>% 
+  knitr::kable()
+
+coinfxn.wi %>% 
+  dplyr::select(c(dplyr::ends_with("_low"), dplyr::ends_with("_upp"))) %>% 
+  knitr::kable()
 
 ```
 
@@ -365,9 +397,7 @@ N.B. We have no scaled (i.e. mean-centered and standardized) all continous varia
   
 N.B. Parametric association test using GEE (`svyglm` is performing GEE with the sampling weights considered "repeat" observations). Given that we are not considering confounding in these estimates, they are purely assocations and should not be overly interpreted. 
 
-## _P. vivax_ Risk Bivariate **Associations**
-```{r, results='asis'}
-
+```{r}
 #-----------------------------------------------------------------------------------------
 # TABLE 2
 # Parametric, Bivariate Analysis
@@ -391,12 +421,11 @@ pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>%
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
-knitr::kable(pvivrskfctr_est)
 
 ```
 
-## _P. falciparum_ Risk Bivariate **Associations**
-```{r, results='asis'}
+
+```{r}
 #.......................
 # Pfalciparum 
 #.......................
@@ -418,13 +447,10 @@ pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>%
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
 
-knitr::kable(pfalrskfctr_est)
 
 
 ```
 
-### Pretty Table
-Combine tables 1s and 2s to make a prettier output. 
 ```{r}
 #------------------------------------------------------------------
 # Combine Table 1 and 2
@@ -494,8 +520,9 @@ casestbl1df <- dcdr %>%
 
 ```
 
-## _P. vivax_ Risk Association Table 
+## _P. vivax_ Risk Bivariate **Associations**
 ```{r, results='asis'}
+
 DT::datatable(pvivriskfactortable, 
               rownames = F,
               options = list(
@@ -510,7 +537,7 @@ DT::datatable(pvivriskfactortable,
 ```
 
 
-## _P. falciparum_ Risk Association Table 
+## _P. falciparum_ Risk Bivariate **Associations**
 ```{r, results='asis'}
 DT::datatable(pfalriskfactortable, 
               rownames = F,
@@ -695,38 +722,6 @@ readr::write_csv(x = pfalriskfactortable,
 
 ```
 
-#### N.B. Future Exclusions
-The temperatuare covariate is excluded in downstream analyses as altitude was considered an instrumental variable for temperature (as well as being so collinear that we could not untangle them). As a result, only altitude was kept in the DAG and considered for IPTWs.
-
-
-#### Appendix
-##### Cluster Level Prevalences Table (Unweighted Ns)
-```{r, results='asis'}
-
-clst %>% 
-  dplyr::mutate_if(is.numeric, round, 3) %>% 
-  DT::datatable(., extensions='Buttons',
-                options = list(
-                  searching = T,
-                  pageLength = 20,
-                  dom = 'Bfrtip', 
-                  buttons = c('csv')))
-
-```
-
-##### Cluster Level Prevalences Table (Weighted Ns)
-```{r, results='asis'}
-
-clstprev %>% 
-  dplyr::mutate_if(is.numeric, round, 3) %>% 
-  DT::datatable(., extensions='Buttons',
-                options = list(
-                  searching = T,
-                  pageLength = 20,
-                  dom = 'Bfrtip', 
-                  buttons = c('csv')))
-
-```
 
 
 

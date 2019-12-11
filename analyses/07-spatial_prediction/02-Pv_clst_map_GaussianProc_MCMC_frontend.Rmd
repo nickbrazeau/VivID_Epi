@@ -292,9 +292,9 @@ mod.framework$summresults <- purrr::map(mod.framework$mcmc, summary, hpd.coverag
 mod.framework$summdiagret <- purrr::map(mod.framework$mcmc, get_diag_summ_results.Bayes.PrevMap)
 
 
-mod.framework$paramtable <- purrr::map(mod.framework$summdiagret, "summresults")
-mod.framework$traceplots <- purrr::map(mod.framework$summdiagret, "traceplots")
-mod.framework$autocorrplot <- purrr::map(mod.framework$summdiagret, "autocorrplots")
+mod.framework$paramtable <- invisible( purrr::map(mod.framework$summdiagret, "summresults") )
+mod.framework$traceplots <- invisible( purrr::map(mod.framework$summdiagret, "traceplots") ) 
+mod.framework$autocorrplot <- invisible( purrr::map(mod.framework$summdiagret, "autocorrplots") )
 
 ```
 
@@ -362,9 +362,13 @@ long.frameworks.summresults <- long.framework %>%
 
 ```{r, results='asis'}
 long.frameworks.summresults %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) 
-
+  DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 7,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 
 
 ```

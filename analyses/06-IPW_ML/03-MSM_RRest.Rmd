@@ -416,7 +416,8 @@ dtsrvyr.app <- makecd2013survey(survey = dt)
 
 dtsrvyr.app %>% 
   dplyr::group_by(farmer_fctb, pv18s_fctb) %>% 
-  dplyr::summarise(counts = srvyr::survey_total())
+  dplyr::summarise(counts = srvyr::survey_total()) %>% 
+  knitr::kable(.)
 
 ```
 
