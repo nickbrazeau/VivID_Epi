@@ -288,8 +288,8 @@ mod.framework$mcmc <- purrr::map(mcmc.ret, function(x){return(readRDS(x)[[1]])})
 Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
 ```{r}
-mod.framework$summresults <- purrr::map(mod.framework$mcmc, summary, hpd.coverage = 0.95)
-mod.framework$summdiagret <- purrr::map(mod.framework$mcmc, get_diag_summ_results.Bayes.PrevMap)
+mod.framework$summresults <- invisible( purrr::map(mod.framework$mcmc, summary, hpd.coverage = 0.95) )
+mod.framework$summdiagret <- invisible( purrr::map(mod.framework$mcmc, get_diag_summ_results.Bayes.PrevMap) )
 
 
 mod.framework$paramtable <- invisible( purrr::map(mod.framework$summdiagret, "summresults") )
@@ -304,8 +304,13 @@ mod.framework$autocorrplot <- invisible( purrr::map(mod.framework$summdiagret, "
 mod.framework %>% 
   dplyr::select(c("name", "formula", "paramtable")) %>% 
   tidyr::unnest(cols="paramtable") %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) 
+  DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 7,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 
 
 ```
@@ -476,6 +481,7 @@ long.framework$DICg <- purrr::map(long.framework$LL, function(x){
 long.framework %>% 
   dplyr::select(c("name", "DICg")) %>% 
   tidyr::unnest(cols="DICg") %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
   magrittr::set_colnames(c("Model", "DICg")) %>% 
   kableExtra::kable(format = "html", escape = F) %>%
   kableExtra::kable_styling("striped", full_width = F) 

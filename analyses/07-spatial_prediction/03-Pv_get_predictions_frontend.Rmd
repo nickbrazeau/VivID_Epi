@@ -32,8 +32,8 @@ Fitted values are taken from the Hierarchial Bayesian Spatial Models that were p
 ```{r}
 # import data
 DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
-provmodel <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/Province_Bayes_Hierarchial_Model_longchain.rds")
-provmodel <- provmodel[provmodel$name == "ICAR_covar", ] # best model
+provmodel <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/Province_Bayes_Hierarchial_Model_longchain.rds")
+provmodel <- provmodel[provmodel$name == "CAR_covar", ] # best model
 
 ```
 
@@ -50,7 +50,7 @@ provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeanscou
 rownames(provmodel.posteriormeans) <- NULL
 
 provmodel.posteriormeans %>% 
-  dplyr::mutate_if(., is.numeric, round, 2) %>% 
+  dplyr::mutate_if(., is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
               searching = T,
@@ -66,7 +66,7 @@ provmodel.posteriormeans$posteriormeansprev <- provmodel.posteriormeans$posterio
 rownames(provmodel.posteriormeans) <- NULL
 
 provmodel.posteriormeans %>% 
-  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
               searching = T,
@@ -120,7 +120,7 @@ provmodel.posteriorse <- cbind.data.frame(adm1name = provs, posteriorses = provm
 rownames(provmodel.posteriorse) <- NULL
 
 provmodel.posteriorse %>% 
-  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(
                   searching = T,
@@ -173,7 +173,7 @@ clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
 
 clstmodel.fitted.postmeansdf <- data.frame(PrevPred = clstmodel.fitted.postmeans)
 clstmodel.fitted.postmeansdf %>% 
-  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                options = list(
               searching = T,
@@ -215,6 +215,21 @@ graphics.off()
 plot(ret.smrstr.m.plot)
 ```
 
+```{r, results='asis', fig.align = 'center', fig.width = 11, fig.height = 8}
+#..............................................................
+# figure for paper
+#..............................................................
+cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
+                   align = "h", nrow = 1)
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postMeans.jpg",
+     height = 8, width = 11, units = "in", res = 500)
+cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
+                   align = "h", nrow = 1)
+graphics.off()
+
+```
+
 
 ### Standard Errors
 
@@ -228,7 +243,7 @@ clstmodel.fitted.se <- clstmodel.fitted.se/nrow(clstmodel.fitted)
 
 clstmodel.fitted.sedf <- data.frame(PrevSE = clstmodel.fitted.se)
 clstmodel.fitted.sedf %>% 
-  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(
                   searching = T,
@@ -271,7 +286,20 @@ graphics.off()
 plot(ret.smrstr.m.plot)
 ```
 
+```{r, results='asis', fig.align = 'center', fig.width = 11, fig.height = 8}
+#..............................................................
+# figure for paper
+#..............................................................
+cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+                   align = "h", nrow = 1)
 
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postSE.jpg",
+     height = 8, width = 11, units = "in", res = 500)
+cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+                   align = "h", nrow = 1)
+graphics.off()
+
+```
 
 ## Appendix -- Same Scale as Pf
 ```{r}

@@ -53,47 +53,10 @@ sf::st_geometry(pvprov.weighted.nosf) <- NULL
 ```
 
 ```{r}
-#-------------------------------------------------------------------------
-# Aggregate Covariates
-# means within each adm1
-#-------------------------------------------------------------------------
-precip <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_precip_study_period_effsurface.rds")
-temp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_temperature_study_period_effsurface.rds")
-cropland <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_surface.rds")
-nightlights <- raster::raster("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.grd")
-
-
-extract_agg_raster_polygon <- function(rstrlyr, plygn){
-  vals <- raster::extract(x = rstrlyr, y = sf::as_Spatial(plygn),
-                          fun = mean,
-                          na.rm = T, 
-                          sp = F
-                          )
-  return(as.vector(vals))
-  
-}
-
-# split admins
-adm1 <- pvprov.weighted %>% 
-  dplyr::select(c("adm1name", "geometry"))
-adm1 <- split(adm1, 1:nrow(adm1))
-
-pvcovar <- pvprov.weighted %>% 
-  dplyr::select(c("adm1name"))
-
-
-pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
-pvcovar$temp <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = temp) )
-pvcovar$crop <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = cropland) )
-pvcovar$nightlight <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = nightlights) )
-
-
-pvcovar$precip_scale <- my.scale(pvcovar$precip)
-pvcovar$temp_scale <- my.scale(pvcovar$temp)
-pvcovar$crop_scale <- my.scale(logit(pvcovar$crop, tol = tol))
-pvcovar$nightlight_scale <- my.scale(pvcovar$nightlight)
-sf::st_geometry(pvcovar) <- NULL
-
+#..............................................................
+# Import the Covariates
+#..............................................................
+pvcovar <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_prov_covars_bayesian_fit.RDS")
 # combine
 pvprov.weighted.nosf <- dplyr::left_join(pvprov.weighted.nosf, pvcovar, by = "adm1name")
 
@@ -103,7 +66,7 @@ pvprov.weighted.nosf <- dplyr::left_join(pvprov.weighted.nosf, pvcovar, by = "ad
 
 ## Hierarchial Bayesian Spatial Models for Province Prevalence 
 ### Make Model Framework
-NB. When $\rho$ is `NULL`, it is estimated within the CAR model. As a result, we have three scenarios based on the _Leroux et al. 2000_ specifiation of the Gaussian Markov Random Field: (1) independent random effects ($\rho = 0$), (2) Intrinsic CAR (e.g. complete spatial dependence, $\rho = 1$), and (3) CAR where $\rho$ is estimated under the model.
+NB. When $\rho$ is `NULL`, it is estimated within the CAR model. based on the _Leroux et al. 2000_ specifiation of the Gaussian Markov Random Field.
 
 ```{r, results='asis'}
 
@@ -152,7 +115,7 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 #......................
 # Make a wrapper for CARBAYES
 #......................
-wrap_S.CARleroux <- function(name, formula, family, trials, W, rho, data, burnin, n.sample){
+wrap_S.CARleroux <- function(name, formula, family, trials, W, data, burnin, n.sample){
   
   formvec <- paste(formula, collapse = "")
   betacount <- stringr::str_count(formvec, "\\+") + 2 # need intercept and betas
@@ -196,29 +159,10 @@ mod.framework$summresults <- purrr::map(mod.framework$summresults, function(x){
 
 ```
 
-<!-- ```{r, results='asis'} -->
-<!-- mod.framework %>%  -->
-<!--   dplyr::select(c("name", "formula", "rho", "summresults")) %>%  -->
-<!--   tidyr::unnest(cols = "summresults") %>%  -->
-<!--   dplyr::mutate( -->
-<!--     name = kableExtra::cell_spec(name, "html",  -->
-<!--                                  color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)), -->
-<!--      formula = kableExtra::cell_spec(formula, "html",  -->
-<!--                                      color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>%  -->
-<!--   kableExtra::kable(format = "html", escape = F) %>% -->
-<!--   kableExtra::kable_styling("striped", full_width = F) %>%  -->
-<!--   kableExtra::pack_rows("Chain Set 1", 1, 16) %>% -->
-<!--   kableExtra::pack_rows("Chain Set 2", 17, 28) %>%  -->
-<!--   kableExtra::pack_rows("Chain Set 3", 29, 44) %>%  -->
-<!--   kableExtra::pack_rows("Chain Set 4", 45, 56) %>%  -->
-<!--   kableExtra::pack_rows("Chain Set 5", 57, 72) %>%  -->
-<!--   kableExtra::pack_rows("Chain Set 6", 73, 84)  -->
-<!-- ``` -->
-
 
 ```{r, results='asis'}
 mod.framework %>% 
-  dplyr::select(c("name", "formula", "rho", "summresults")) %>% 
+  dplyr::select(c("name", "formula", "summresults")) %>% 
   tidyr::unnest(cols = "summresults") %>% 
     DT::datatable(., 
                 rownames = F,
@@ -261,13 +205,13 @@ Now, we will run out one final long chain with 1e5 burnin iterations and 1e8 sam
 
 ```{r}
 
-mod.framework.long <- mod.framework[,c("name", "formula", "family", "trials", "W", "rho", "data", "burnin", "n.sample")] %>% 
+mod.framework.long <- mod.framework[,c("name", "formula", "family", "trials", "W", "data", "burnin", "n.sample")] %>% 
   dplyr::filter(!duplicated(.))
 
 mod.framework.long$burnin <- 1e3
 mod.framework.long$n.sample <- 1e5 + 1e3
 
-mod.framework.long$MCMC <- pmap(mod.framework.long, wrap_S.CARleroux)
+mod.framework.long$MCMC <- purrr::pmap(mod.framework.long, wrap_S.CARleroux)
 
 
 ```
@@ -290,21 +234,9 @@ mod.framework.long$summresultsdf <- purrr::map(mod.framework.long$summresults, f
 })
 
 mod.framework.long.res <- mod.framework.long %>% 
-  dplyr::select(c("name", "formula", "rho", "summresultsdf")) %>% 
+  dplyr::select(c("name", "formula", "summresultsdf")) %>% 
   tidyr::unnest(cols = "summresultsdf") 
 ```
-
-
-<!-- ```{r, results='asis'} -->
-<!-- mod.framework.long.res %>%  -->
-<!--   dplyr::mutate( -->
-<!--     name = kableExtra::cell_spec(name, "html",  -->
-<!--                                  color = kableExtra::spec_color(1:length(levels(factor(name))), end = 0.9)), -->
-<!--     formula = kableExtra::cell_spec(formula, "html",  -->
-<!--                                     color = kableExtra::spec_color(1:length(levels(factor(formula))), end = 0.9))) %>%  -->
-<!--   kableExtra::kable(format = "html", escape = F) %>% -->
-<!--   kableExtra::kable_styling("striped", full_width = F)  -->
-<!-- ``` -->
 
 
 ```{r, results='asis'}
@@ -316,6 +248,34 @@ mod.framework.long.res %>%
                   pageLength = 5,
                   dom = 'Bfrtip', 
                   buttons = c('csv')))
+```
+
+
+
+
+Note, still a lot of chains for visualizing here. Writing out to local directory. 
+```{r}
+
+#............................
+# Let's Look at the final chain
+#............................
+mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
+mod.framework.long$betachains <- purrr::map(mod.framework.long$samples, "beta")
+mod.framework.long$phichains <- purrr::map(mod.framework.long$samples, "phi")
+mod.framework.long$tau2chains <- purrr::map(mod.framework.long$samples, "tau2")
+mod.framework.long$rhochains <- purrr::map(mod.framework.long$samples, "rho")
+mod.framework.long$fittedchains <- purrr::map(mod.framework.long$samples, "fitted")
+
+
+chains <- mod.framework.long %>% 
+  dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains", "fittedchains")) %>% 
+  dplyr::group_by(name) %>% 
+  tidyr::nest()
+
+
+myfinalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/"
+dir.create(myfinalchain, recursive = T)
+wrap_chain_plotter.carbayes.final(final.dir = myfinalchain, chains = chains)
 ```
 
 
@@ -380,44 +340,10 @@ data.frame(name = mod.framework.long$name, DICg = unlist(mod.framework.long$DICg
 
 ```
 
-
 ```{r}
 
-# write out these final models
-dir.create("~/Documents/GitHub/VivID_Epi/results/tables/", recursive = T)
-readr::write_csv(x = mod.framework.long.res, path = "~/Documents/GitHub/VivID_Epi/results/tables/Prov_Level_HierBayesSP_models.csv")
-
-
-dir.create("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/", recursive = T)
+# save out this RDS file
 saveRDS(mod.framework.long, 
-        file = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_long_chains/Province_Bayes_Hierarchial_Model_longchain.rds")
-
-
-
-```
-
-Note, still a lot of chains for visualizing here. Writing out to local directory. 
-```{r}
-
-#............................
-# Let's Look at the final chain
-#............................
-mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
-mod.framework.long$betachains <- purrr::map(mod.framework.long$samples, "beta")
-mod.framework.long$phichains <- purrr::map(mod.framework.long$samples, "phi")
-mod.framework.long$tau2chains <- purrr::map(mod.framework.long$samples, "tau2")
-mod.framework.long$rhochains <- purrr::map(mod.framework.long$samples, "rho")
-mod.framework.long$fittedchains <- purrr::map(mod.framework.long$samples, "fitted")
-
-
-chains <- mod.framework.long %>% 
-  dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains", "fittedchains")) %>% 
-  dplyr::group_by(name) %>% 
-  tidyr::nest()
-
-myfinalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/"
-dir.create(myfinalchain, recursive = T)
-wrap_chain_plotter.carbayes.final(final.dir = myfinalchain, chains = chains)
-
+        file = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/Province_Bayes_Hierarchial_Model_longchain.rds")
 
 ```

@@ -2,6 +2,8 @@ library(tidyverse)
 library(pwr)
 library(rslurm)
 source("R/00-functions_basic.R")
+set.seed(48, "L'Ecuyer")
+
 #...............................................................
 # Power Function
 #...............................................................

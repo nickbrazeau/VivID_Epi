@@ -60,7 +60,7 @@ getCI_from_logit_transfrom <- function(succeses, n, tol, alpha){
 tableone2dataframe <- function(x, columnnames){
   # not table one always sets up neg, pos and then if you have a test as
   # a p-test -- this not corner case proof for t-tests, etc
-  capture.output(x <- print(x))
+  capture.output(x <- print(x, catDigits = 2, contDigits = 2))
   covarsraw <- factor( c(rownames(x)) ) 
   out <- tibble(
     covars = covarsraw,

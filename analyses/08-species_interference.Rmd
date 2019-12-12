@@ -16,6 +16,7 @@ remotes::install_github("nickbrazeau/icer")
 library(tidyverse)
 library(icer)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+set.seed(48)
 
 #......................
 # Import Data

@@ -17,8 +17,7 @@ library(survey)
 library(srvyr) #wrap the survey package in dplyr syntax
 devtools::install_github("kaz-yos/tableone")
 library(tableone)
-options(scipen=999)
-
+set.seed(48)
 
 #......................
 # Import Data

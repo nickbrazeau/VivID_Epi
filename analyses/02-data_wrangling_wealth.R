@@ -11,7 +11,7 @@
 library(tidyverse)
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
-set.seed(42)
+set.seed(48)
 
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")  %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 

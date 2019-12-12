@@ -76,7 +76,8 @@ paramsdf <- txs[,c("learnerlib", "task")]
 paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
 
 
-
+# add seed
+paramsdf$seed <- 48
 
 # for slurm on LL
 setwd("analyses/06-IPW_ML/")

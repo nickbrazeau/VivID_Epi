@@ -4,10 +4,6 @@
 #----------------------------------------------------
 
 make_mcmc_chain_plots.carbayes.diag <- function(chaindat, filename){
-  # check if chaindat wasn't fit, i.e. rho in ICAR model
-  if(is.na(chaindat[[1]][[1]])){
-    plot(1)
-  } else {
     
     jpeg(filename, height = 8, width = 11, units = "in", res=200)
     par(mfrow=c(2,2))
@@ -16,7 +12,7 @@ make_mcmc_chain_plots.carbayes.diag <- function(chaindat, filename){
     plot(chaindat[[1]][[3]])
     plot(chaindat[[1]][[4]])
     graphics.off()
-  }
+  
 }
 
 wrap_chain_plotter.carbayes.diag <- function(diag.dir, chains){
@@ -35,16 +31,14 @@ wrap_chain_plotter.carbayes.diag <- function(diag.dir, chains){
 }
 
 make_mcmc_chain_plots.carbayes.final<- function(chaindat, filename){
-  # check if chaindat wasn't fit, i.e. rho in ICAR model
-  if(is.na(chaindat[[1]][[1]])){
-    plot(1)
-  } else {
+  
+    plot(chaindat[[1]][[1]])
     
     jpeg(filename, height = 8, width = 11, units = "in", res=200)
     par(mfrow=c(2,2))
     plot(chaindat[[1]][[1]])
     graphics.off()
-  }
+  
 }
 
 wrap_chain_plotter.carbayes.final <- function(final.dir, chains){

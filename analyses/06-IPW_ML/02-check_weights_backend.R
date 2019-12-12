@@ -5,6 +5,7 @@
 library(tidyverse)
 library(energy)
 source("R/00-IPTW_functions.R")
+set.seed(48, "L'Ecuyer")
 
 #............................................................
 # Import Data

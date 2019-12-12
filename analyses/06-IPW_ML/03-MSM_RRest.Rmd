@@ -68,7 +68,6 @@ iptw <- params %>%
 
 
 ```{r}
-# TODO check that this and glm all match up
 
 makeiptwsrvy <- function(x){ # not good function practice
   if(is.null(x)){
