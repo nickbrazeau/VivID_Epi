@@ -7,17 +7,24 @@ library(raster)
 library(sp)
 library(sf)
 
+# create bounding box of Central Africa for Speed
+# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+
+
+
 #..............................
 # Housekeeping
 #..............................
-readRasterBB.precip <- function(rstfile, sp = sp){
+readRasterBB.precip <- function(rstfile, sp = sp, caf = caf){
   ret <- raster::raster(rstfile)
-  ret <- raster::mask(x = ret, y = sp)
+  ret <- raster::crop(x = ret, y = caf)
+  ret <- raster::mask(x = ret, mask = sp)
   
   vals <- raster::values(ret) 
   vals <- ifelse(vals == -9999, NA, vals) # improper values
   raster::values(ret) <- vals
-  
   
   ret <- raster::projectRaster(from = ret, to = ret,
                                crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
@@ -26,20 +33,19 @@ readRasterBB.precip <- function(rstfile, sp = sp){
   
 }
 
-readRasterBB.temp <- function(rstfile, sp = sp){
+readRasterBB.temp <- function(rstfile, sp = sp, caf = caf){
   ret <- raster::raster(rstfile)
+  ret <- raster::crop(x = ret, y = caf)
+  ret <- raster::mask(x = ret, mask = sp)
   
   vals <- raster::values(ret) 
   vals <- ifelse(vals <= 7500, NA, vals) # improper values
   vals <- (vals * 0.02) - 273.15
   raster::values(ret) <- vals
   
-  ret <- raster::crop(x = ret, y = sp)
   ret <- raster::projectRaster(from = ret, to = ret,
                                crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
-  
   return(ret)
-  
 }
 
 
@@ -52,7 +58,7 @@ DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T, 
                      pattern = ".tif")
-precipfrst <- lapply(precip, readRasterBB.precip, sp = DRCprov)
+precipfrst <- lapply(precip, readRasterBB.precip, sp = DRCprov, caf = caf)
 
 precipdf <- tibble::tibble(names = basename(precip)) %>% 
   dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
@@ -70,7 +76,7 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 # NOTE, reading in masked temperature files
 tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS_NASA/", full.names = T, 
                        pattern = "LST_Day_CMG.tif")
-tempfrst <- lapply(tempfiles, readRasterBB.temp, sp = DRCprov)
+tempfrst <- lapply(tempfiles, readRasterBB.temp, sp = DRCprov, caf = caf)
 
 tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 
   dplyr::mutate(namestemp = stringr::str_extract(string = namestemp, pattern = "A[0-9][0-9][0-9][0-9][0-9][0-9][0-9]"),
@@ -89,10 +95,10 @@ tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>%
 
 
 
-
 #......................................................................................................
-# Precipitation and Temperature Considered by Month 
+# Precipitation and Temperature Considered as Means
 #......................................................................................................
+# Get study months
 dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 # drop observations with missing geospatial data 
 dt <- dt %>% 
@@ -102,19 +108,9 @@ dt <- dt %>%
 wthrnd.mnth <- dt %>% 
   dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")),
                 hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
-  dplyr::select(c("hv001", "hvyrmnth_dtmnth", "geometry", "urban_rura"))
+  dplyr::select(c("hv001", "hvyrmnth_dtmnth"))
 
 
-wthrnd.mnth <- wthrnd.mnth[!duplicated(wthrnd.mnth$hv001),]
-
-wthrnd.mnth <- wthrnd.mnth %>% 
-  dplyr::left_join(., tempdf) %>% 
-  dplyr::left_join(., precipdf)
-
-
-#......................................................................................................
-# Precipitation and Temperature Considered as Means
-#......................................................................................................
 # months of study period
 studyperiod <- levels(factor(wthrnd.mnth$hvyrmnth_dtmnth))
 
@@ -164,6 +160,57 @@ for(i in 1:nrow(wthrnd.mean)){
     )
   
 }
+
+
+#..............................................................
+# Interpolate missing boundaries
+#..............................................................
+# sanity check for missing
+missingclst <- wthrnd.mean %>% 
+  dplyr::filter(c( is.na(precip_mean_cont_clst) | is.na(temp_mean_cont_clst) )) %>% 
+  dplyr::mutate(long = sf::st_coordinates(.)[,1],
+                lat = sf::st_coordinates(.)[,2])
+
+ggplot() +
+  geom_sf(data = wthrnd.mean) +
+  geom_point(data = missing, aes(x=long, y=lat), color = "red") +
+  ggrepel::geom_label_repel(data = missing, aes(x=long, y=lat, label = hv001)) 
+
+# all boundaries and small buffer (2km is barely outside raster cell often), will increase to 6km
+precipmissing <- which(is.na(wthrnd.mean$precip_mean_cont_clst))
+for (i in precipmissing) {
+  # precip
+  wthrnd.mean$precip_mean_cont_clst[i] <- 
+    raster::extract(x = precipstack.mean, # this doesn't change this time 
+                    y = sf::as_Spatial(wthrnd.mean$geometry[i]),
+                    buffer = 6000,
+                    fun = mean,
+                    na.rm = T, 
+                    sp = F
+    )
+}
+
+tempmissing <- which(is.na(wthrnd.mean$temp_mean_cont_clst))
+for (i in tempmissing) {
+  # temp
+  wthrnd.mean$temp_mean_cont_clst[i] <- 
+    raster::extract(x = tempstack.mean, # this doesn't change this time 
+                    y = sf::as_Spatial(wthrnd.mean$geometry[i]),
+                    buffer = 6000,
+                    fun = mean,
+                    na.rm = T, 
+                    sp = F
+    )
+}
+
+
+
+
+
+
+
+
+
 
 wthrnd.mean <- wthrnd.mean %>% 
   dplyr::select(c("hv001", "precip_mean_cont_clst", "temp_mean_cont_clst"))

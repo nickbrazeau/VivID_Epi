@@ -72,13 +72,11 @@ wtrdist <- sf::st_distance(x = ge,
                            y = wtr,
                            which = "Great Circle")
 
+
 wtrdist_out <- data.frame(
   hv001 = ge$dhsclust,
   wtrdist_cont_clst = apply(wtrdist, 1, min)
 )
-
-
-
 
 
 #----------------------------------------------------------------------------------------------------

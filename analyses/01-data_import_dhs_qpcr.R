@@ -108,12 +108,6 @@ mrwr <- mrwr %>%
 
 wrmrprar <- dplyr::left_join(arpr, mrwr)
 
-# left join because
-# IR and MR recodes only contain "de facto" individuals
-# will need to subset to just "de facto" per DHS suggestion for this type of data
-# https://dhsprogram.com/data/Guide-to-DHS-Statistics/Organization_of_DHS_Data.htm
-# https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
-
 
 #---------------------------------------------------------------------------------
 # DHS spatial shapes/data

@@ -34,10 +34,10 @@ nightlights.rstrs <- list(N0E60, N0W60, N0W180,
 
 nightlights.merge <- Reduce(function(...) merge(...), nightlights.rstrs)
 nightlights.drc <- raster::crop(x = nightlights.merge, y = caf)
-nightlights.drc <- raster::projectRaster(from = nightlights.drc, to = nightlights.drc,
-                                         crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
 # mask out non DRC 
 nightlights.drc <- raster::mask(nightlights.drc, DRCprov)
+nightlights.drc <- raster::projectRaster(from = nightlights.drc, to = nightlights.drc,
+                                         crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
 
 
 # need to write out merge object because it is not saving correctly as .RDS potentially due to layering

@@ -3,7 +3,7 @@
 # need to recode the wealth variable to avoid controlling for part of our
 # effect when considering the covar housing materials (as they did above)
 # https://dhsprogram.com/programming/wealth%20index/Steps_to_constructing_the_new_DHS_Wealth_Index.pdf
-# note, I have a mix of de jure and de facto but my de facto get subsetted later
+# note, I have a mix of de jure and de facto but my de jure get subsetted later
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to wrangle and recode wealth
 #----------------------------------------------------------------------------------------------------
@@ -13,10 +13,16 @@ source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 tol <- 1e-3
 set.seed(48)
 
+# subset to my study population but include those individuals with missing covariates
+# am assuming that the de jure, no geo-located individuals, and hiv weights are a 
+# the "true" study population and that the 17 missing covariates are MCAR
 dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")  %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+  dplyr::filter(latnum != 0 & longnum != 0) %>%  # drop observations with missing geospatial data 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
+  dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(hiv05 != 0) # drop observations with samplings weights set to 0
 sf::st_geometry(dt) <- NULL
+
 #.............
 # weights
 #.............

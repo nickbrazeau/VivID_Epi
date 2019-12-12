@@ -23,10 +23,10 @@ DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 #.............................................................................. 
 landcov2013 <- raster::raster("data/raw_data/land_coverage/dataset-satellite-land-cover-902f410c-4e52-4fae-badd-2fc35ec86c62/ESACCI-LC-L4-LCCS-Map-300m-P1Y-2013-v2.0.7cds.nc")
 landcov2013.drc <- raster::crop(x = landcov2013, y = caf)
-landcov2013.drc <- raster::projectRaster(from = landcov2013.drc, to = landcov2013.drc,
-                                         crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
 # mask out non DRC 
 landcov2013.drc <- raster::mask(landcov2013.drc, DRCprov)
+landcov2013.drc <- raster::projectRaster(from = landcov2013.drc, to = landcov2013.drc,
+                                         crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
 
 #.............................................................................. 
 # Lift Over to Binary Cropland yes or no

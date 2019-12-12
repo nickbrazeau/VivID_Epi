@@ -7,10 +7,13 @@
 #..................................
 # import data
 #..................................
-ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>% 
-  magrittr::set_colnames(tolower(colnames(.))) %>% 
+# Get cluster locations
+dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
+# drop observations with missing geospatial data 
+ge <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum))
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
+  dplyr::select(c("hv001", "longnum", "latnum"))
 
 hlthsites.harvard.drc <- readxl::read_excel("data/raw_data/harvard_dataverse/Ouma_Okiro_Snow_Africa_Hospitals_Data.xlsx") %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
@@ -67,7 +70,6 @@ osrm_distances_by_bcircle <- function(x, y, long.distancematrix, crs,
     centroid <- sf::as_Spatial(centroid) 
     # making bounding circle
     bcircle <- rgeos::gBuffer(centroid, width = searchwidth*1e3)
-
     
     # interset query
     hlthsites.catchment <- sf::st_intersection(y, sf::st_as_sf(bcircle))
@@ -128,18 +130,36 @@ knownclust <- data.frame(dhsclust = hlthdist$hv001[ which(! is.na(hlthdist$mean_
   sf::st_as_sf(.)
 
 
-dist <- raster::pointDistance(p1 = sf::as_Spatial(missclust),
-                              p2 = sf::as_Spatial(knownclust),
-                              lonlat = T)
+dist <- sf::st_distance(x = missclust,
+                        y = knownclust,
+                        which = "Great Circle")
 
 # find 5 nearby clusters
 dist.sorted.5 <- sort(dist)[1:5]
-nrbyclstrs <- which(dist %in% dist.sorted.5)
+nrbyclstrs <- hlthdist$hv001[ which(dist %in% dist.sorted.5) ]
+
+#.................
+# sanity check
+#.................
+sanityplotdf <- ge %>% 
+  dplyr::mutate(
+    lvl = ifelse(dhsclust == 469, "miss", ifelse(
+      dhsclust %in% nrbyclstrs, "nrby", "clst"
+    ))
+  )
+
+sanitylabeldf <- sanityplotdf %>% 
+  dplyr::filter(lvl == "nrby")
+
+ggplot() + 
+  geom_jitter(data = sanityplotdf, 
+              aes(x=longnum, y = latnum, color = factor(lvl))) + 
+  ggrepel::geom_label_repel(data = sanitylabeldf, 
+                            aes(x=longnum, y = latnum, label = dhsclust))
+
 
 # get their averages
 hlthdist$mean_duration[hlthdist$hv001 == 469] <- mean(hlthdist$mean_duration[hlthdist$hv001 %in% nrbyclstrs])
-
-
 
 
 
