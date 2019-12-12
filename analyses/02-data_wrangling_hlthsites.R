@@ -13,7 +13,9 @@ dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 ge <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::select(c("hv001", "longnum", "latnum"))
+  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
+  dplyr::filter(!duplicated(.)) %>% 
+  dplyr::rename(dhsclust = hv001) # legacy
 
 hlthsites.harvard.drc <- readxl::read_excel("data/raw_data/harvard_dataverse/Ouma_Okiro_Snow_Africa_Hospitals_Data.xlsx") %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 

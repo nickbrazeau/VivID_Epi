@@ -10,5 +10,5 @@ rsync -avr nfb@longleaf.unc.edu:/proj/ideel/meshnick/users/NickB/Projects/VivID_
 rsync -avr nfb@longleaf.unc.edu:/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pv /Users/nickbrazeau/Documents/GitHub/VivID_Epi/analyses/09-Power/
 
 # local to remote
-rsync -avr /Users/nickbrazeau/Documents/GitHub/VivID_Epi/data/ nfb@longleaf.unc.edu:/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/data/
 rsync -avr /Users/nickbrazeau/Documents/GitHub/VivID_Epi/model_datamaps/ nfb@longleaf.unc.edu:/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/model_datamaps/
+rsync -avr /Users/nickbrazeau/Documents/GitHub/VivID_Epi/data/derived_data nfb@longleaf.unc.edu:/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/data/
