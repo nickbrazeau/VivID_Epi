@@ -305,10 +305,13 @@ gcdist <- ge.clst %>%
   sf::st_distance(x = .,
                   which = "Great Circle")
 
+gcdist  <- apply(gcdist, 2, as.numeric) # drop units
 gcdist.inv <- 1/gcdist
 diag(gcdist.inv) <- 0
 
-mp.clst$moranIclust <- purrr::map(mp.clst$data, moran_mc_wrapper, listw = gcdist.inv)
+mp.clst$moranIclust <- purrr::map(mp.clst$data, 
+                                  moran_mc_wrapper, 
+                                  listw = gcdist.inv)
 
 moranIclst <- mp.clst %>% 
   dplyr::select(c("plsmdmspec", "moranIclust")) 

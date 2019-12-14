@@ -14,7 +14,6 @@ ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 # means within each adm1
 #-------------------------------------------------------------------------
 precip <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_precip_study_period_effsurface.rds")
-temp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_temperature_study_period_effsurface.rds")
 cropland <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_surface.rds")
 nightlights <- raster::raster("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.grd")
 
@@ -44,13 +43,11 @@ adm1 <- split(adm1, 1:nrow(adm1))
 
 
 pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
-pvcovar$temp <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = temp) )
 pvcovar$crop <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = cropland) )
 pvcovar$nightlight <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = nightlights) )
 
 
 pvcovar$precip_scale <- my.scale(pvcovar$precip)
-pvcovar$temp_scale <- my.scale(pvcovar$temp)
 pvcovar$crop_scale <- my.scale(logit(pvcovar$crop, tol = 1e-3))
 pvcovar$nightlight_scale <- my.scale(pvcovar$nightlight)
 sf::st_geometry(pvcovar) <- NULL
