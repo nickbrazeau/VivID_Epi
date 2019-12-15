@@ -91,10 +91,10 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              log.normal.sigma = c(0,50))
 
 # NB covar matrix
-covarsmat <- matrix(0, ncol = 5, nrow=5) # four risk factors, 5 betas
+covarsmat <- matrix(0, ncol = 4, nrow=4) # three risk factors, 4 betas
 diag(covarsmat) <- 1 # identity matrix
 
-mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0, 0),
+mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(0,25), # this is tau2
                                        uniform.phi = c(0,50),
@@ -118,7 +118,7 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 0.05,
                                                   start.sigma2 = 1, 
-                                                  start.beta = c(-4, -0.2, -0.2, 0, -0.02),
+                                                  start.beta = c(-4, -0.2, 0, -0.02),
                                                   start.phi = 25,
                                                   start.S = predict(fit.glm))
 
@@ -207,7 +207,7 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 0.05,
                                                   start.sigma2 = 1, 
-                                                  start.beta = c(-4, -0.2, -0.2, 0, -0.02),
+                                                  start.beta = c(-4, -0.2, 0, -0.02),
                                                   start.phi = 25,
                                                   start.S = predict(fit.glm))
 
