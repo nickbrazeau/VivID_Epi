@@ -412,9 +412,6 @@ PrevMap::trace.plot(long.covar, param = "beta", component.beta = 4)
 PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 4)
 
 
-PrevMap::trace.plot(long.covar, param = "beta", component.beta = 5)
-PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 5)
-
 PrevMap::trace.plot(long.covar, param = "tau2")
 PrevMap::autocor.plot(long.covar, param = "tau2")
 

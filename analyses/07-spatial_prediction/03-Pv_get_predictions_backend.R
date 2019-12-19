@@ -26,79 +26,59 @@ gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
 grid.pred.coords <- splancs::gridpts(poly, xs=0.05, ys=0.05)
 colnames(grid.pred.coords) <- c("longnum","latnum")
-
-#...............................
-# downsample for computational burden
-#...............................
-coords_smpl <- sample(1:nrow(grid.pred.coords), 
-                      size = 32000, replace = F)
-coords_smpl <- sort(coords_smpl)
-grid.pred.coords <- grid.pred.coords[coords_smpl, ]
 grid.pred.coords.df <- as.data.frame(grid.pred.coords)
+
 #...............................
 # extract covariate information for prediction surface 
 #...............................
 # Raster surfaces for risk factors
-riskvars = c("precip_mean_cont_scale_clst", "temp_mean_cont_scale_clst", 
+riskvars = c("precip_mean_cont_scale_clst", 
              "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
 precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
-tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds")
+
+# take mean here since we converted to binary
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
+cropraster <- raster::aggregate(cropraster, fact = 18, fun = mean)
+
+
+# sum here under the assumption that night lights are additive (population density is additive)
 nightligthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
+nightligthraster <- raster::aggregate(nightligthraster, fact = 12, fun = sum)
 
-extract_rstr_values <- function(rstr, coords){
-  coords <- sf::st_as_sf(coords, coords = c("longnum", "latnum"), 
-                                        crs = 4326)
-  ret <- raster::extract(
-    x = rstr,
-    y = sf::as_Spatial(coords),
-    buffer = 6000,
-    fun = mean,
-    na.rm = T,
-    sp = F
-  ) 
-  return(ret)
-}
+# stack 
+predcovars <- raster::stack(precipraster, cropraster, nightligthraster)
+names(predcovars) <- riskvars
 
-rstrdf <- tibble::tibble(name = riskvars,
-                         rstr = list(precipraster, tempraster, cropraster, nightligthraster))
-rstrdf$coords <- lapply(1:nrow(rstrdf), function(x){return(grid.pred.coords.df)})
 
-rstrmeans <- purrr::pmap(rstrdf[,c("rstr", "coords")], extract_rstr_values)
 
-names(rstrmeans) <- riskvars
-rstrmeans[["precip_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["precip_mean_cont_scale_clst"]])
-rstrmeans[["temp_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["temp_mean_cont_scale_clst"]])
-rstrmeans[["cropprop_cont_scale_clst"]] <- my.scale(logit(rstrmeans[["cropprop_cont_scale_clst"]], tol = 1e-3))
-rstrmeans[["nightlightsmean_cont_scale_clst"]] <- my.scale(rstrmeans[["nightlightsmean_cont_scale_clst"]])
+pred.df <- raster::extract(
+  x = predcovars,
+  y = sf::as_Spatial(
+    sf::st_as_sf(grid.pred.coords.df, coords = c("longnum", "latnum"), 
+                 crs = 4326)),
+  buffer = 6000,
+  fun = mean,
+  na.rm = T,
+  sp = F)
+
+pred.df <- apply(pred.df, 2, my.scale) 
+
+# rstrdf <- tibble::tibble(name = riskvars,
+#                          rstr = list(precipraster, cropraster, nightligthraster))
+# rstrdf$coords <- lapply(1:nrow(rstrdf), function(x){return(grid.pred.coords.df)})
+# rstrmeans <- purrr::pmap(rstrdf[,c("rstr", "coords")], extract_rstr_values)
+# names(rstrmeans) <- riskvars
+# rstrmeans[["precip_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["precip_mean_cont_scale_clst"]])
+# rstrmeans[["cropprop_cont_scale_clst"]] <- my.scale(logit(rstrmeans[["cropprop_cont_scale_clst"]], tol = 1e-3))
+# rstrmeans[["nightlightsmean_cont_scale_clst"]] <- my.scale(rstrmeans[["nightlightsmean_cont_scale_clst"]])
 
 
 # get predictive df
-pred.df <- data.frame(longnum = grid.pred.coords.df[,"longnum"],
-                      latnum = grid.pred.coords.df[, "latnum"],
-                      precip_mean_cont_scale_clst = rstrmeans[["precip_mean_cont_scale_clst"]],
-                      temp_mean_cont_scale_clst = rstrmeans[["temp_mean_cont_scale_clst"]],
-                      cropprop_cont_scale_clst = rstrmeans[["cropprop_cont_scale_clst"]],
-                      nightlightsmean_cont_scale_clst = rstrmeans[["nightlightsmean_cont_scale_clst"]]
-) %>% 
+pred.df <- cbind.data.frame(grid.pred.coords.df,
+                            pred.df) %>% 
   dplyr::filter(!is.na(precip_mean_cont_scale_clst),
-                !is.na(temp_mean_cont_scale_clst),
                 !is.na(cropprop_cont_scale_clst),
                 !is.na(nightlightsmean_cont_scale_clst)) 
-
-
-#...............................
-# downsample for computational burden and
-# now accounting for missingness  
-#...............................
-coords_smpl <- sample(1:nrow(pred.df), 
-                      size = 16000, replace = F)
-coords_smpl <- sort(coords_smpl)
-# extract pred.df
-pred.df <- pred.df[coords_smpl, ]
-# extract coords
-grid.pred.coords <- pred.df[coords_smpl, c("longnum", "latnum")]
-grid.pred.coords.df <- as.data.frame(grid.pred.coords)
 
 
 #...............................
@@ -134,11 +114,11 @@ setwd("analyses/07-spatial_prediction")
 ntry <- nrow(gp.mod.framework)
 sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper, 
                             params = paramsdf, 
-                            jobname = 'Prevmap_predictions_smaller',
+                            jobname = 'Prevmap_predictions',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
-                            slurm_options = list(mem = "500g",
+                            slurm_options = list(mem = "750g",
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",

@@ -33,7 +33,8 @@ landcov2013.drc <- raster::projectRaster(from = landcov2013.drc, to = landcov201
 #.............................................................................. 
 # using data dictionary from here: https://maps.elie.ucl.ac.be/CCI/viewer/download/ESACCI-LC-QuickUserGuide-LC-Maps_v2-0-7.pdf
 origvals <- raster::values(landcov2013.drc)
-newvals <- ifelse(origvals %in% c(10, 20, 30, 40), 1, 0)
+newvals <- ifelse(origvals %in% c(10, 20, 30, 40), 1, 
+                  ifelse(is.na(origvals), NA, 0))
 raster::values(landcov2013.drc) <- newvals
 
 saveRDS(object = landcov2013.drc, file = "data/derived_data/vividepi_cropland_surface.rds")
