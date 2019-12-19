@@ -40,7 +40,6 @@ precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurfa
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
 cropraster <- raster::aggregate(cropraster, fact = 18, fun = mean)
 
-
 # sum here under the assumption that night lights are additive (population density is additive)
 nightligthraster <- raster::raster("data/derived_data/vividepi_nightlights_surface.grd")
 nightligthraster <- raster::aggregate(nightligthraster, fact = 12, fun = sum)
@@ -48,8 +47,6 @@ nightligthraster <- raster::aggregate(nightligthraster, fact = 12, fun = sum)
 # stack 
 predcovars <- raster::stack(precipraster, cropraster, nightligthraster)
 names(predcovars) <- riskvars
-
-
 
 pred.df <- raster::extract(
   x = predcovars,
@@ -85,10 +82,13 @@ pred.df <- cbind.data.frame(grid.pred.coords.df,
 # Setup Map Dataframe  
 #...............................
 # set up grid.pred
-gp.mod.framework$grid.pred <- list(grid.pred.coords, grid.pred.coords)
+gp.mod.framework$grid.pred <- list(pred.df[,c("longnum", "latnum")],
+                                   pred.df[,c("longnum", "latnum")])
 
 # set up predictors
-gp.mod.framework$predictors <- list(NULL, pred.df)
+gp.mod.framework$predictors <- list(NULL, pred.df[,c("precip_mean_cont_scale_clst", 
+                                                     "cropprop_cont_scale_clst",
+                                                     "nightlightsmean_cont_scale_clst")])
 
 
 
