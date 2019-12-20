@@ -60,15 +60,6 @@ pred.df <- raster::extract(
 
 pred.df <- apply(pred.df, 2, my.scale) 
 
-# rstrdf <- tibble::tibble(name = riskvars,
-#                          rstr = list(precipraster, cropraster, nightligthraster))
-# rstrdf$coords <- lapply(1:nrow(rstrdf), function(x){return(grid.pred.coords.df)})
-# rstrmeans <- purrr::pmap(rstrdf[,c("rstr", "coords")], extract_rstr_values)
-# names(rstrmeans) <- riskvars
-# rstrmeans[["precip_mean_cont_scale_clst"]] <- my.scale(rstrmeans[["precip_mean_cont_scale_clst"]])
-# rstrmeans[["cropprop_cont_scale_clst"]] <- my.scale(logit(rstrmeans[["cropprop_cont_scale_clst"]], tol = 1e-3))
-# rstrmeans[["nightlightsmean_cont_scale_clst"]] <- my.scale(rstrmeans[["nightlightsmean_cont_scale_clst"]])
-
 
 # get predictive df
 pred.df <- cbind.data.frame(grid.pred.coords.df,
@@ -78,6 +69,10 @@ pred.df <- cbind.data.frame(grid.pred.coords.df,
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
 
+#...............................
+# Downsample pred df to reasonable size for fitting 
+#...............................
+pred.df <- pred.df[sample(1:nrow(pred.df), size = 1e4), ]
 #...............................
 # Setup Map Dataframe  
 #...............................
