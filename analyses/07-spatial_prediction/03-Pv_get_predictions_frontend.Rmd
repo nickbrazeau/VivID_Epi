@@ -193,7 +193,8 @@ clstmodel.fitted.postmeans.raster <-
 
 
 ret.smrstr.m.plot <- ggplot() + 
- ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+ ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1)),
+                          interpolate = TRUE) +
   scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
@@ -263,7 +264,8 @@ clstmodel.fitted.se.raster <-
 
 
 ret.smrstr.m.plot <- ggplot() + 
-  ggspatial::layer_spatial(data = clstmodel.fitted.se.raster, aes(fill = stat(band1))) +
+  ggspatial::layer_spatial(data = clstmodel.fitted.se.raster, aes(fill = stat(band1)),
+                           interpolate = TRUE) +
   scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu") +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 

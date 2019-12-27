@@ -68,7 +68,7 @@ pred.df <- cbind.data.frame(grid.pred.coords.df,
                 !is.na(cropprop_cont_scale_clst),
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
-pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 25e3), ]
+pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
 
 #...............................
 # Setup Map Dataframe  

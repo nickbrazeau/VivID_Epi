@@ -47,8 +47,10 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```{r, child = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'}
 ```
 
+
 ```{r, child = 'analyses/07-spatial_prediction/03-Pv_get_predictions_frontend.Rmd'}
 ```
+
 
 ```{r, child = 'analyses/08-species_interference.Rmd'}
 ```
