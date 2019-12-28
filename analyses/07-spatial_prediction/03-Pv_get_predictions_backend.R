@@ -58,6 +58,7 @@ pred.df <- raster::extract(
   na.rm = T,
   sp = F)
 
+pred.df <- as.data.frame(pred.df)
 
 #...............................
 # Bounds so we only do interpolation
@@ -104,7 +105,7 @@ pred.df <- cbind.data.frame(grid.pred.coords.df,
                 !is.na(cropprop_cont_scale_clst),
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
-#pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
+pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
 
 #...............................
 # Setup Map Dataframe  
