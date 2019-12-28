@@ -58,6 +58,42 @@ pred.df <- raster::extract(
   na.rm = T,
   sp = F)
 
+
+#...............................
+# Bounds so we only do interpolation
+# (i.e. coerce extrapolation values)
+#...............................
+# precip
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+precip <- dt %>% 
+  dplyr::select("hv001", "precip_mean_cont_clst") %>% 
+  dplyr::filter(!duplicated(.))
+max.precip <- max(precip$precip_mean_cont_clst)
+min.precip <- min(precip$precip_mean_cont_clst)
+
+pred.df$precip_mean_cont_scale_clst[pred.df$precip_mean_cont_scale_clst > max.precip] <- max.precip
+pred.df$precip_mean_cont_scale_clst[pred.df$precip_mean_cont_scale_clst < min.precip] <- min.precip
+
+
+# bring in cropland
+crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") 
+max.crop <- max(crop$cropprop)
+min.crop <- min(crop$cropprop)
+pred.df$cropprop_cont_scale_clst[pred.df$cropprop_cont_scale_clst > max.crop] <- max.crop
+pred.df$cropprop_cont_scale_clst[pred.df$cropprop_cont_scale_clst < min.crop] <- min.crop
+
+
+# bring in nightlights
+nightlists <- readRDS("data/derived_data/vividepi_night_clstmeans.rds") 
+max.night <- max(nightlists$nightlightsmean)
+min.night <- min(nightlists$nightlightsmean)
+pred.df$nightlightsmean_cont_scale_clst[pred.df$nightlightsmean_cont_scale_clst > max.night] <- max.night
+pred.df$nightlightsmean_cont_scale_clst[pred.df$nightlightsmean_cont_scale_clst < min.night] <- min.night
+
+
+#...............................
+# Scale
+#...............................
 pred.df <- apply(pred.df, 2, my.scale) 
 
 
@@ -68,7 +104,7 @@ pred.df <- cbind.data.frame(grid.pred.coords.df,
                 !is.na(cropprop_cont_scale_clst),
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
-pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
+#pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
 
 #...............................
 # Setup Map Dataframe  
@@ -115,3 +151,12 @@ sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",
                                                  time = "11-00:00:00"))
+
+
+
+
+start <- Sys.time()
+nick = purrr::pmap(paramsdf, pred_PrevMap_bayes_wrapper)
+Sys.time() - start
+
+

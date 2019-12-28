@@ -161,8 +161,7 @@ plot(provmodel.posteriorselotObj)
 # A "pred.PrevMap" object list with the following components: logit; prevalence; odds; probit;exceedance.prob, corresponding to a matrix of the exceedance probabilities where each column corresponds to a specified value in thresholds; samples, corresponding to a matrix of the posterior samples at each prediction locations for the linear predictor; grid.pred prediction locations. Each of the three components logit, prevalence, odds and probit is also a list with the following components:
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 # read rds
-# TODO fix this path
-clstmodel <- readRDS("~/Desktop/VivID_Epi_old/analyses/07-spatial_prediction/_rslurm_Prevmap_predictions/results_0.RDS")
+clstmodel <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_predictions/results_1.RDS")
 clstmodel.fitted <- expit(clstmodel[[1]]$samples)
 clstmodel.coords <- clstmodel[[1]]$grid.pred
 clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
