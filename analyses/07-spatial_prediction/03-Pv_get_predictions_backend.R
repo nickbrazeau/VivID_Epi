@@ -105,7 +105,7 @@ pred.df <- cbind.data.frame(grid.pred.coords.df,
                 !is.na(cropprop_cont_scale_clst),
                 !is.na(nightlightsmean_cont_scale_clst)) 
 
-pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
+pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e3), ]
 
 #...............................
 # Setup Map Dataframe  
@@ -143,7 +143,7 @@ setwd("analyses/07-spatial_prediction")
 ntry <- nrow(gp.mod.framework)
 sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper, 
                             params = paramsdf, 
-                            jobname = 'Prevmap_predictions_large',
+                            jobname = 'Prevmap_predictions_small',
                             nodes = ntry, 
                             cpus_per_node = 1, 
                             submit = T,
