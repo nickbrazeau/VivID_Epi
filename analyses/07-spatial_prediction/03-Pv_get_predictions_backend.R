@@ -156,8 +156,3 @@ sjob <- rslurm::slurm_apply(f = pred_PrevMap_bayes_wrapper,
 
 
 
-start <- Sys.time()
-nick = purrr::pmap(paramsdf, pred_PrevMap_bayes_wrapper)
-Sys.time() - start
-
-
