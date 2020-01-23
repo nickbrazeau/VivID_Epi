@@ -3,6 +3,7 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
 # Bayesian Hierarchial Spatial Model Predictions 
 
 ```{r, include=FALSE}
@@ -16,6 +17,8 @@ library(tidyverse)
 library(CARBayes)
 library(PrevMap)
 library(ggspatial)
+set.seed(48)
+
 load("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
 drccites <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/map_bases/DRC_city_coordinates.xlsx") %>% 
   dplyr::mutate(latnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,1] ),
@@ -41,7 +44,6 @@ provmodel <- provmodel[provmodel$name == "CAR_covar", ] # best model
 ```{r}
 provs <- provmodel$data[[1]]$adm1name
 provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
-
 provmodel.posteriormeans <- apply(provmodel.samples.fittedvalues, 2, mean)
 ```
 
@@ -74,8 +76,6 @@ provmodel.posteriormeans %>%
               dom = 'Bfrtip', 
               buttons = c('csv')))
 ```
-
-
 
 
 ```{r}
@@ -161,10 +161,24 @@ plot(provmodel.posteriorselotObj)
 # A "pred.PrevMap" object list with the following components: logit; prevalence; odds; probit;exceedance.prob, corresponding to a matrix of the exceedance probabilities where each column corresponds to a specified value in thresholds; samples, corresponding to a matrix of the posterior samples at each prediction locations for the linear predictor; grid.pred prediction locations. Each of the three components logit, prevalence, odds and probit is also a list with the following components:
 source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
 # read rds
-clstmodel <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_predictions/results_1.RDS")
+clstmodel <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_Prevmap_predictions_large/results_1.RDS")
 clstmodel.fitted <- expit(clstmodel[[1]]$samples)
 clstmodel.coords <- clstmodel[[1]]$grid.pred
 clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
+clstmodel.coords.means <- cbind.data.frame(clstmodel.coords, 
+                                           fitted.postmean = clstmodel.fitted.postmeans)
+
+
+#..............................................................
+#..............................................................
+# Make Raster from PrevMap 
+#..............................................................
+clstmodel.fitted.postmeans.raster <- 
+  raster::rasterFromXYZ(cbind(clstmodel.coords.means[, "longnum"],
+                              clstmodel.coords.means[, "latnum"],
+                              clstmodel.coords.means[, "fitted.postmean"]),
+                        crs="+proj=longlat +datum=WGS84 +no_defs")
+  
 
 ```
 
@@ -181,30 +195,21 @@ clstmodel.fitted.postmeansdf %>%
               buttons = c('csv')))
 ```
 
-
 ```{r}
-clstmodel.fitted.postmeans.raster <- 
-  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
-                              clstmodel.coords[, "latnum"],
-                              clstmodel.fitted.postmeans),
-                        crs="+proj=longlat +datum=WGS84 +no_defs")
-  
-
 
 ret.smrstr.m.plot <- ggplot() + 
- ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1)),
-                          interpolate = TRUE) +
+ ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
   scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") +
   prettybasemap_nodrc +
-  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
+  geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans.jpg",
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans_raw.jpg",
      height = 11, width = 8, units = "in", res = 500)
 plot(ret.smrstr.m.plot)
 graphics.off()
@@ -215,18 +220,84 @@ graphics.off()
 plot(ret.smrstr.m.plot)
 ```
 
+#### Fitted Values Interpolate
+```{r}
+#..............................................................
+# Get raster object at 0.05 x 0.05 resolution 
+# and then set up raster and masking
+#..............................................................
+# boundaries for prediction
+poly <- cbind(c(17,32,32,12,12), c(-14,-14,6,6,-14)) 
+grid.pred.coords <- splancs::gridpts(poly, xs=0.05, ys=0.05)
+
+# need this for bounding box
+DRC <- sf::as_Spatial(osmdata::getbb("Democratic Republic of the Congo",
+                                     featuretype = "country",
+                                     format_out = 'sf_polygon'))
+drcrstr <- raster::rasterFromXYZ(cbind(grid.pred.coords[,1],
+                                       grid.pred.coords[,2],
+                                       NA),
+                                 crs="+proj=longlat +datum=WGS84 +no_defs")
+
+#..............................................................
+# interpolate
+#..............................................................
+colnames(clstmodel.coords.means) <- c("x", "y", "fitted.postmean")
+idwmod <- gstat::gstat(id = "postmeans", formula = fitted.postmean ~ 1, 
+                       locations = ~x + y, 
+                       data = clstmodel.coords.means, 
+                       set=list(idp = 2))
+
+drcrstr.postmenas.idw <- raster::interpolate(drcrstr, idwmod)
+drcrstr.postmenas.idw <- raster::mask(drcrstr.postmenas.idw, DRC)
+
+#..............................................................
+# plot
+#..............................................................
+
+
+ret.smrstr.m.plot <- ggplot() + 
+ ggspatial::layer_spatial(data = drcrstr.postmenas.idw, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") +
+  prettybasemap_nodrc +
+  geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans_interpolate.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(ret.smrstr.m.plot)
+graphics.off()
+
+
+```
+
+
+
 ```{r, results='asis', fig.align = 'center', fig.width = 11, fig.height = 8}
 #..............................................................
 # figure for paper
 #..............................................................
-cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
+cowplot::plot_grid(provmodelplotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1)
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postMeans.jpg",
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postMeans_interpolate.jpg",
      height = 8, width = 11, units = "in", res = 500)
 cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
-                   align = "h", nrow = 1)
+                   align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
+
+
+svglite::svglite(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postMeans_interpolate.svg",
+     height = 8, width = 11)
+cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
+                   align = "h", nrow = 1, labels = c("(A)", "(B)"))
+graphics.off()
+
 
 ```
 
@@ -267,16 +338,16 @@ ret.smrstr.m.plot <- ggplot() +
                            interpolate = TRUE) +
   scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu") +
   prettybasemap_nodrc +
-  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
+  geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 
 
-jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postSE.jpg",
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postSE_raw.jpg",
      height = 11, width = 8, units = "in", res = 500)
 plot(ret.smrstr.m.plot)
 graphics.off()
@@ -287,22 +358,184 @@ graphics.off()
 plot(ret.smrstr.m.plot)
 ```
 
+#### SE Values Interpolate
+```{r}
+
+#..............................................................
+# interpolate
+#..............................................................
+clstmodel.coords.se <- cbind.data.frame(clstmodel.coords,
+                                        seFit = clstmodel.fitted.se)
+
+colnames(clstmodel.coords.se) <- c("x", "y", "seFit")
+idwmod <- gstat::gstat(id = "postmeans", formula = seFit ~ 1, 
+                       locations = ~x + y, 
+                       data = clstmodel.coords.se, 
+                       set=list(idp = 2))
+
+drcrstr.postSE.idw <- raster::interpolate(drcrstr, idwmod)
+drcrstr.postmSE.idw <- raster::mask(drcrstr.postSE.idw, DRC)
+
+#..............................................................
+# plot
+#..............................................................
+
+
+ret.smrstr.m.plot <- ggplot() + 
+ ggspatial::layer_spatial(data = drcrstr.postmSE.idw, aes(fill = stat(band1))) +
+  scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu") +
+  prettybasemap_nodrc +
+  geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_SE_interpolate.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(ret.smrstr.m.plot)
+graphics.off()
+
+
+```
+
+
+
+
 ```{r, results='asis', fig.align = 'center', fig.width = 11, fig.height = 8}
 #..............................................................
 # figure for paper
 #..............................................................
-cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+cowplot::plot_grid(provmodel.posteriorselotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1)
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postSE.jpg",
      height = 8, width = 11, units = "in", res = 500)
 cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+                   align = "h", nrow = 1, labels = c("(A)", "(B)"))
+graphics.off()
+
+
+svglite::svglite(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postSE.svg",
+     height = 8, width = 11)
+cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+                   align = "h", nrow = 1, labels = c("(A)", "(B)"))
+graphics.off()
+
+
+
+```
+
+### Cluster Model Covariates
+```{r}
+#..............................................................
+# Read in Rasters that I used for covariates
+#..............................................................
+precipraster <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_precip_study_period_effsurface.rds") 
+
+# take mean here since we converted to binary
+cropraster <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_surface.rds")
+cropraster <- raster::aggregate(cropraster, fact = 18, fun = mean)
+
+# sum here under the assumption that night lights are additive (population density is additive)
+nightligthraster <- raster::raster("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.grd")
+nightligthraster <- raster::aggregate(nightligthraster, fact = 12, fun = sum)
+
+#..............................................................
+# Set bounds for interpolation only again
+#..............................................................
+# precip
+dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+precip <- dt %>% 
+  dplyr::select("hv001", "precip_mean_cont_clst") %>% 
+  dplyr::filter(!duplicated(.))
+max.precip <- max(precip$precip_mean_cont_clst)
+min.precip <- min(precip$precip_mean_cont_clst)
+values(precipraster)[values(precipraster) >  max.precip] <- max.precip
+values(precipraster)[values(precipraster) < min.precip] <- min.precip
+
+# bring in cropland
+crop <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_propmeans.rds") 
+max.crop <- max(crop$cropprop)
+min.crop <- min(crop$cropprop)
+values(cropraster)[values(cropraster) >  max.crop] <- max.crop
+values(cropraster)[values(cropraster) < min.crop] <- min.crop
+
+
+# bring in nightlights
+nightlists <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_night_clstmeans.rds") 
+max.night <- max(nightlists$nightlightsmean)
+min.night <- min(nightlists$nightlightsmean)
+values(nightligthraster)[values(nightligthraster) >  max.night] <- max.night
+values(nightligthraster)[values(nightligthraster) < min.night] <- min.night
+
+```
+
+##### Precip
+```{r, results='asis', fig.width=11, fig.height=8}
+
+precip.plot <- ggplot() + 
+ ggspatial::layer_spatial(data = precipraster, aes(fill = stat(band1))) +
+  scale_fill_viridis_c("Precipiation") +
+  smpl_base_map +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+```
+
+
+##### Crops
+```{r, results='asis'}
+
+crop.plot <- ggplot() + 
+ ggspatial::layer_spatial(data = cropraster, aes(fill = stat(band1))) +
+  scale_fill_viridis_c("Crop Proportion") +
+  smpl_base_map +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+```
+
+
+##### Night Lights
+```{r, results='asis'}
+
+night.plot <- ggplot() + 
+ ggspatial::layer_spatial(data = nightligthraster, aes(fill = stat(band1))) +
+  scale_fill_viridis_c("Night Lights") +
+  smpl_base_map +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+```
+
+```{r}
+#..............................................................
+# figure for paper
+#..............................................................
+cowplot::plot_grid(precip.plot, crop.plot, night.plot,
+                   align = "h", nrow = 1)
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Clst_Covariates.jpg",
+     height = 8, width = 11, units = "in", res = 500)
+cowplot::plot_grid(precip.plot, crop.plot, night.plot,
                    align = "h", nrow = 1)
 graphics.off()
 
 ```
 
-## Appendix -- Same Scale as Pf
+
+
+## Appendix 
+### Same Scale as Pf
 ```{r}
 clstmodel.fitted.postmeans.raster <- 
   raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
@@ -334,4 +567,35 @@ graphics.off()
 ```{r, results='asis'}
 plot(ret.smrstr.m.plot)
 ```
+
+
+#### With Cluster Prev Points
+```{r}
+mp <- readRDS( "~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
+pvclst <- mp[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001", ]
+pvclst <- pvclst$data[[1]]
+
+clst.points <- ggplot() + 
+ ggspatial::layer_spatial(data = drcrstr.postmenas.idw, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu") +
+  prettybasemap_nodrc +
+  geom_point(data = pvclst, aes(x=longnum, y=latnum, color = plsmdprev), 
+             alpha = 0.5, shape = 16) + 
+  scale_color_viridis_c() + 
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/ClstMap_postMeans_interpolate_clst.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(clst.points)
+graphics.off()
+
+
+```
+```{r, results='asis'}
+plot(clst.points)
+```
+
 

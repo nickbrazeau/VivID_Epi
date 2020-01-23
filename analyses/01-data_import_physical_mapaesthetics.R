@@ -231,6 +231,19 @@ prettybasemap_nodrc_dark <- list(
 )
 
 
+#..............................................................
+# simple background
+#..............................................................
+smpl_base_map <- list(
+coord_sf(xlim = c(st_bbox(DRCprov)['xmin'], st_bbox(DRCprov)['xmax']), 
+         ylim = c(st_bbox(DRCprov)['ymin'], st_bbox(DRCprov)['ymax']), 
+         datum = NA),
+vivid_theme,
+theme(panel.background = element_rect(colour="#ffffff"),
+      panel.grid = element_line(colour="transparent"),
+      axis.text = element_blank(),
+      axis.title = element_blank()) # overwrite vivid theme
+)
 #----------------------------------------------------------------------------------------------------
 # Save Objects & Write out
 #----------------------------------------------------------------------------------------------------
@@ -239,5 +252,6 @@ save(prettybasemap_terraincolors,
      prettybasemap_nodrc,
      prettybasemap_nodrc_nonorth,
      prettybasemap_nodrc_dark,
+     smpl_base_map,
      file = "data/map_bases/vivid_maps_bases.rda")
 saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")

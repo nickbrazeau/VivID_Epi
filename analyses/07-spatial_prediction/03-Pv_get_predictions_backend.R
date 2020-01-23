@@ -59,6 +59,7 @@ pred.df <- raster::extract(
   sp = F)
 
 pred.df <- as.data.frame(pred.df)
+pred.df <- cbind.data.frame(grid.pred.coords.df, pred.df)
 
 #...............................
 # Bounds so we only do interpolation
@@ -97,27 +98,36 @@ pred.df$nightlightsmean_cont_scale_clst[pred.df$nightlightsmean_cont_scale_clst 
 #...............................
 pred.df <- apply(pred.df, 2, my.scale) 
 
+#..............................................................
+# Convert to raster for sampling
+#..............................................................
+covar.rstr.pred <- raster::rasterFromXYZ(pred.df, 
+                                         res = c(0.05, 0.05),
+                                         crs = "+init=epsg:4326")
 
-# get predictive df
-pred.df <- cbind.data.frame(grid.pred.coords.df,
-                            pred.df) %>% 
-  dplyr::filter(!is.na(precip_mean_cont_scale_clst),
-                !is.na(cropprop_cont_scale_clst),
-                !is.na(nightlightsmean_cont_scale_clst)) 
+# save this out for later
+saveRDS(covar.rstr.pred, file = "data/derived_data/vividepi_spatial_covar_feature_engineer.rds")
 
-pred.df <- pred.df[sample(x=1:nrow(pred.df), size = 2e4), ]
+# down sample
+covar.rstr.pred.downsmpl <- raster::sampleRandom(covar.rstr.pred, 
+                                                 size = 1e3,
+                                                 na.rm = T,
+                                                 xy = T,
+                                                 sp = F)
+
+colnames(covar.rstr.pred.downsmpl)[1:2] <- c("longnum", "latnum")
 
 #...............................
 # Setup Map Dataframe  
 #...............................
 # set up grid.pred
-gp.mod.framework$grid.pred <- list(pred.df[,c("longnum", "latnum")],
-                                   pred.df[,c("longnum", "latnum")])
+gp.mod.framework$grid.pred <- list(covar.rstr.pred.downsmpl[,c("longnum", "latnum")],
+                                   covar.rstr.pred.downsmpl[,c("longnum", "latnum")])
 
 # set up predictors
-gp.mod.framework$predictors <- list(NULL, pred.df[,c("precip_mean_cont_scale_clst", 
-                                                     "cropprop_cont_scale_clst",
-                                                     "nightlightsmean_cont_scale_clst")])
+gp.mod.framework$predictors <- list(NULL, covar.rstr.pred.downsmpl[,c("precip_mean_cont_scale_clst", 
+                                                                      "cropprop_cont_scale_clst",
+                                                                      "nightlightsmean_cont_scale_clst")])
 
 
 

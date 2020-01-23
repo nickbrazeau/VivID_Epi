@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # IPTW Risk Ratios
 
 ```{r, include=FALSE}
@@ -33,9 +38,8 @@ dagplot <- tidy_dag %>%
   ggplot(aes(x = x, y = y, xend = xend, yend = yend, color = name)) +
   geom_dag_point() +
   geom_dag_edges() +
-  geom_dag_text(color = "#ef3b2c", size = 2) +
+  geom_dag_text(color = "#000000", size = 2, fontface = "bold") +
   theme_dag() +
-  scale_color_viridis_d() + 
   theme(legend.position = "none")
 
 
@@ -268,10 +272,27 @@ finalMSMplot <- ggplot() +
             aes(xmin = xmin, xmax = xmax,  ymin = ymin, ymax = ymax), 
             fill = "#d9d9d9",
             color = "#d9d9d9") +
+  # por lines
   geom_hline(yintercept = 1, color = "#e41a1c", linetype = "dashed", size = 1) +
   geom_hline(yintercept = 0, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
   geom_hline(yintercept = 2, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
   geom_hline(yintercept = 3, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # label lines
+  # geom_vline(xintercept = 1, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 2, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 3, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 4, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 5, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 6, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 7, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 8, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 9, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 10, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 11, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 12, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 13, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # geom_vline(xintercept = 14, color = "#bdbdbd", linetype = "dashed", size = 0.5) +
+  # text
   geom_text(data = text,
             aes(x = x, y = y, label = label), 
             fontface = "bold",
@@ -280,7 +301,8 @@ finalMSMplot <- ggplot() +
   geom_pointrange(data = malriskest,
                   aes(x = labelnum, y = estimate, 
                       ymin = conf.low, ymax = conf.high,
-                      color = factor(species)), alpha = 0.8, size = 1.25) + 
+                      color = factor(species)), alpha = 0.8, size = 1.25,
+                  position = position_dodge(width = 0.5)) + 
   scale_color_viridis_d("Species") +
   coord_flip() +
   scale_x_continuous(breaks = c(1:nrow(liftover)), 

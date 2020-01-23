@@ -192,10 +192,19 @@ fit_pred_spMLE <- function(outcome, covar,
 
 prevmaprasterplotter <- function(prevrasters, smoothfct = 5, alpha = 0.8){
   
+  # need this for bounding box
+  DRC <- sf::as_Spatial(osmdata::getbb("Democratic Republic of the Congo",
+                                       featuretype = "country",
+                                       format_out = 'sf_polygon'))
+  
+  # make raster
   ret.rstr <- raster::rasterFromXYZ(cbind(prevrasters$grid.pred[,1],
                                           prevrasters$grid.pred[,2],
                                           prevrasters$prevalence$predictions),
                                     crs="+proj=longlat +datum=WGS84")
+  
+  # mask raster
+  ret.rstr <- raster::mask(x = ret.rstr, mask = DRC)
   
   ret.smrstr.m.plot <- ggplot() + 
     ggspatial::layer_spatial(data = ret.rstr, aes(fill = stat(band1)), alpha = alpha) +

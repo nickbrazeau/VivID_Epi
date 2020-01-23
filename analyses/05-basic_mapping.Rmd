@@ -375,7 +375,7 @@ pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
 #..............................
 prevmaprasterplots <- lapply(pr$prevrasterspred,
                              prevmaprasterplotter, smoothfct = rep(7,3))
-prevmaprasterplots.north <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc)})
+prevmaprasterplots.north <- map(prevmaprasterplots, function(x){return(x + smpl_base_map)})
 
 
 
@@ -555,10 +555,10 @@ aperange_nhapv + prettybasemap_nodrc
 ############################################################
 #########               MORE MAPS                  ######### 
 ############################################################
-provmaps_lrg <- map(provmaps, function(x){return(x + prettybasemap_nodrc_nonorth)})
-caseprevmaps_lrg <- map(caseprevmaps, function(x){return(x + prettybasemap_nodrc_nonorth)})
-case_n_maps_lrg <- map(case_n_maps, function(x){return(x + prettybasemap_nodrc_nonorth)})
-prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + prettybasemap_nodrc_nonorth)})
+provmaps_lrg <- map(provmaps, function(x){return(x + smpl_base_map)})
+caseprevmaps_lrg <- map(caseprevmaps, function(x){return(x + smpl_base_map)})
+case_n_maps_lrg <- map(case_n_maps, function(x){return(x + smpl_base_map)})
+prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + smpl_base_map)})
 
 
 ##############################
@@ -653,7 +653,7 @@ caseprevmaps_lrg[[2]] + ggrepel::geom_label_repel(data = pvclst.dat,
 ##############################
 pfprevmap <-  prevmaprasterplots_lrg[[1]] +
   ggtitle(expression(bolditalic("P. falciparum"))) +
-  prettybasemap_nodrc + 
+  smpl_base_map + 
   theme(
     legend.position = "right",
     legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
@@ -661,7 +661,7 @@ pfprevmap <-  prevmaprasterplots_lrg[[1]] +
 
 pvprevmap <-  prevmaprasterplots_lrg[[2]] +
   ggtitle(expression(bolditalic("P. vivax"))) +
-  prettybasemap_nodrc + 
+  smpl_base_map + 
   theme(
     legend.position = "right",
     legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
