@@ -92,7 +92,7 @@ provmodelplotObj <- ggplot() +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold") +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -138,6 +138,7 @@ provmodel.posteriorselotObj <- ggplot() +
           aes(fill = posteriorses), color = "#737373") +
        scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu") +
   coord_sf(datum=NA) +
+  prettybasemap_nodrc +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -203,7 +204,7 @@ ret.smrstr.m.plot <- ggplot() +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -262,7 +263,7 @@ ret.smrstr.m.plot <- ggplot() +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -340,7 +341,7 @@ ret.smrstr.m.plot <- ggplot() +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -387,7 +388,7 @@ ret.smrstr.m.plot <- ggplot() +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold", alpha = 0.5) +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -530,6 +531,16 @@ cowplot::plot_grid(precip.plot, crop.plot, night.plot,
                    align = "h", nrow = 1)
 graphics.off()
 
+
+svglite::svglite(file = "~/Documents/GitHub/VivID_Epi/results/figures/Clst_Covariates.svg",
+     height = 8, width = 11)
+cowplot::plot_grid(precip.plot, crop.plot, night.plot,
+                   align = "h", nrow = 1, labels = c("(A)", "(B)", "(C)"))
+graphics.off()
+
+
+
+
 ```
 
 
@@ -551,7 +562,7 @@ ret.smrstr.m.plot <- ggplot() +
   prettybasemap_nodrc +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
   geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.3, fontface = "bold") +
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold") +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
