@@ -178,9 +178,53 @@ graphics.off()
 
 plot(covarbalanceplot)
 
-
 ```
 **Very nice!** 
+
+#### Covar Balance Long Comparison
+Looking at mean reductions (for the "fold" statement). 
+```{r}
+
+bal_sum_long <- covarbalparams %>% 
+  dplyr::select(-c("data")) %>% 
+  dplyr::group_by(covar1, lvl) %>% 
+  dplyr::summarise(
+    n = n(),
+    mean_dist = mean(dist),
+    se_dist = sd(dist)/n
+  ) 
+
+
+```
+```{r, results='asis'}
+DT::datatable(bal_sum_long, extensions='Buttons',
+              options = list(
+                searching = T,
+                pageLength = 20,
+                dom = 'Bfrtip', 
+                buttons = c('csv')))
+```
+
+```{r}
+bal_sum_wide <- bal_sum_long %>% 
+  dplyr::select(-c("n", "se_dist")) %>% 
+  tidyr::spread(., key = "lvl", value = "mean_dist") %>% 
+  dplyr::mutate(base_vs_IPTW_reduction = base/IPTW)
+```
+```{r, results='asis'}
+DT::datatable(bal_sum_wide, extensions='Buttons',
+              options = list(
+                searching = T,
+                pageLength = 20,
+                dom = 'Bfrtip', 
+                buttons = c('csv')))
+
+knitr::kable(cbind(nm = "base_vs_IPTW_reduction", summary(bal_sum_wide$base_vs_IPTW_reduction)))
+```
+
+
+
+
 
 ### Appendix: Cross-Validated Risk Contributions
 ```{r checkwiappendix1}

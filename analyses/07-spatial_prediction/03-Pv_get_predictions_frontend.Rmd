@@ -156,7 +156,7 @@ plot(provmodel.posteriorselotObj)
 
 ### Cluster Models 
 
-### Fitted Values (Posterior Means)
+#### Fitted Values (Posterior Means)
 
 ```{r}
 # A "pred.PrevMap" object list with the following components: logit; prevalence; odds; probit;exceedance.prob, corresponding to a matrix of the exceedance probabilities where each column corresponds to a specified value in thresholds; samples, corresponding to a matrix of the posterior samples at each prediction locations for the linear predictor; grid.pred prediction locations. Each of the three components logit, prevalence, odds and probit is also a list with the following components:
@@ -221,7 +221,7 @@ graphics.off()
 plot(ret.smrstr.m.plot)
 ```
 
-#### Fitted Values Interpolate
+##### Fitted Values Interpolate
 ```{r}
 #..............................................................
 # Get raster object at 0.05 x 0.05 resolution 
@@ -303,7 +303,7 @@ graphics.off()
 ```
 
 
-### Standard Errors
+#### Standard Errors
 
 ```{r}
 clstmodel.fitted.se <- apply(clstmodel.fitted, 2, sd)
@@ -315,7 +315,7 @@ clstmodel.fitted.se <- clstmodel.fitted.se/nrow(clstmodel.fitted)
 
 clstmodel.fitted.sedf <- data.frame(PrevSE = clstmodel.fitted.se)
 clstmodel.fitted.sedf %>% 
-  dplyr::mutate_if(is.numeric, round, 4) %>% 
+  #dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(
                   searching = T,
@@ -359,7 +359,7 @@ graphics.off()
 plot(ret.smrstr.m.plot)
 ```
 
-#### SE Values Interpolate
+##### SE Values Interpolate
 ```{r}
 
 #..............................................................

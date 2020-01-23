@@ -7,7 +7,7 @@ source("R/00-functions_basic.R")
 library(tidyverse)
 library(raster)
 library(PrevMap)
-set.seed(48)
+set.seed(48, "L'Ecuyer")
 
 #......................
 # Import Data
@@ -52,7 +52,7 @@ pred.df <- raster::extract(
   x = predcovars,
   y = sf::as_Spatial(
     sf::st_as_sf(grid.pred.coords.df, coords = c("longnum", "latnum"), 
-                 crs = 4326)),
+                 crs = "+proj=utm +zone=34 +datum=WGS84 +units=m")),
   buffer = 6000,
   fun = mean,
   na.rm = T,
@@ -103,7 +103,7 @@ pred.df <- apply(pred.df, 2, my.scale)
 #..............................................................
 covar.rstr.pred <- raster::rasterFromXYZ(pred.df, 
                                          res = c(0.05, 0.05),
-                                         crs = "+init=epsg:4326")
+                                         crs = "+proj=utm +zone=34 +datum=WGS84 +units=m")
 
 # save this out for later
 saveRDS(covar.rstr.pred, file = "data/derived_data/vividepi_spatial_covar_feature_engineer.rds")

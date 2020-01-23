@@ -9,7 +9,7 @@ library(sf)
 library(srvyr) 
 library(raster)
 library(PrevMap)
-set.seed(48)
+set.seed(48, "L'Ecuyer")
 tol <- 1e-3
 #......................
 # Import Data

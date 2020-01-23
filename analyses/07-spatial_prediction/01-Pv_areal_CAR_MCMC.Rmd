@@ -20,7 +20,7 @@ library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
 library(raster)
-set.seed(48)
+set.seed(48, "L'Ecuyer")
 tol <- 1e-3
 
 #......................
@@ -151,6 +151,7 @@ Note, our goal is to have the effective sample sizes (`n.effective`) to be at le
 #-------------------------------------------------------------------------
 mod.framework$mcmc.modsum <- purrr::map(mod.framework$MCMC, print) # note, print is overloaded here
 mod.framework$summresults <- purrr::map(mod.framework$mcmc.modsum, "summary.results")
+
 mod.framework$summresults <- purrr::map(mod.framework$summresults, function(x){
   pars <- rownames(x)
   ret <- cbind.data.frame(pars = pars, as.data.frame(x))
@@ -159,7 +160,7 @@ mod.framework$summresults <- purrr::map(mod.framework$summresults, function(x){
 
 ```
 
-
+###### Summary Stats
 ```{r, results='asis'}
 mod.framework %>% 
   dplyr::select(c("name", "formula", "summresults")) %>% 
@@ -172,6 +173,7 @@ mod.framework %>%
                   dom = 'Bfrtip', 
                   buttons = c('csv')))
 ```
+
 
 ##### Diagnostic Chains
 Note, there are too many chains for visualizing here. Writing out to local directory. 
@@ -233,12 +235,55 @@ mod.framework.long$summresultsdf <- purrr::map(mod.framework.long$summresults, f
   return(ret)
 })
 
+#..............................................................
+# Means for comparison to median
+#..............................................................
+mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
+mod.framework.long$posteriormeans <- purrr::pmap(mod.framework.long[,c("samples", "summresults")], 
+                                            function(samples, summresults){
+  betas <- apply(samples$beta, 2, mean)
+  names(betas) <- row.names(summresults)[!row.names(summresults) %in% c("tau2", "rho")]
+  tau2 <-  apply(samples$tau2, 2, mean)
+  names(tau2) <- "tau2"
+  rho <- apply(samples$rho, 2, mean)
+  names(rho) <- "rho"
+  
+  params <- matrix(NA, nrow = 1, ncol = length(c(betas, tau2, rho)))
+  params <- c(betas, tau2, rho)
+  params <- data.frame(covar = names(params), postmean = params)
+  return(params)
+})
+
+#..............................................................
+# also want to get phis here for each province
+#..............................................................
+mod.framework.long$posteriorphis <- purrr::map(mod.framework.long$samples, 
+                                            function(smpl){
+                                              
+  phimean <- apply(smpl$phi, 2, mean)
+  phimedian <- apply(smpl$phi, 2, median)
+  phiperc025 <- apply(smpl$phi, 2, quantile, 0.025)
+  phiperc975 <- apply(smpl$phi, 2, quantile, 0.975)
+  phineff <- apply(smpl$phi, 2, coda::effectiveSize)
+  phis <- list(phimean, phimedian, phiperc025, phiperc975, phineff)
+  phis <- do.call("rbind.data.frame", phis)
+  # bind together
+  phis <- cbind.data.frame(statistic = c("Mean", "Median", "Perc0.025", "Perc97.5", "Neff"),
+                   phis)
+                   
+  # put names in 
+  colnames(phis)[2:ncol(phis)] <- pvprov.weighted$adm1name
+  return(phis)
+  
+})
+
+
 mod.framework.long.res <- mod.framework.long %>% 
   dplyr::select(c("name", "formula", "summresultsdf")) %>% 
   tidyr::unnest(cols = "summresultsdf") 
 ```
 
-
+###### Summary Stats, Percentiles
 ```{r, results='asis'}
 mod.framework.long.res %>% 
     DT::datatable(., 
@@ -250,6 +295,34 @@ mod.framework.long.res %>%
                   buttons = c('csv')))
 ```
 
+###### Summary Stats, Means
+```{r, results='asis'}
+mod.framework.long %>% 
+  dplyr::select(c("name", "formula", "posteriormeans")) %>% 
+  tidyr::unnest(cols = "posteriormeans") %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 5,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+###### Summary Stats, Phis
+```{r, results='asis'}
+mod.framework.long %>% 
+  dplyr::select(c("name", "formula", "posteriorphis")) %>% 
+  dplyr::mutate(var = "phi") %>% 
+  tidyr::unnest(cols = "posteriorphis") %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 5,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
 
 
 
