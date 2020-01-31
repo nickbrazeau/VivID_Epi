@@ -477,9 +477,10 @@ long.framework$DICg <- purrr::map(long.framework$LL, function(x){
 
 long.framework %>% 
   dplyr::select(c("name", "DICg")) %>% 
-  tidyr::unnest(cols="DICg") %>% 
-  #dplyr::mutate_if(is.numeric, round, 2) %>% 
-  magrittr::set_colnames(c("Model", "DICg")) %>% 
+  tidyr::unnest(cols="DICg")  %>% 
+  dplyr::mutate(DICgchar = as.character(DICg)) %>%  # odd rounding behavior
+  dplyr::mutate(DICg = round(DICg, 2)) %>% 
+  magrittr::set_colnames(c("Model", "DICg", "DICgchar")) %>% 
   kableExtra::kable(format = "html", escape = F) %>%
   kableExtra::kable_styling("striped", full_width = F) 
 

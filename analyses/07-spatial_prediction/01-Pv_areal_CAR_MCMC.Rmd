@@ -19,8 +19,9 @@ source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
+library(HDInterval)
 library(raster)
-set.seed(48, "L'Ecuyer")
+set.seed(48)
 tol <- 1e-3
 
 #......................
@@ -150,13 +151,30 @@ Note, our goal is to have the effective sample sizes (`n.effective`) to be at le
 # MCMC Diagnostics
 #-------------------------------------------------------------------------
 mod.framework$mcmc.modsum <- purrr::map(mod.framework$MCMC, print) # note, print is overloaded here
+# CI mean, mode, median
 mod.framework$summresults <- purrr::map(mod.framework$mcmc.modsum, "summary.results")
+# get samples for HPD
+mod.framework$samples <- purrr::map(mod.framework$MCMC, "samples")
+# get HPD
+mod.framework$HPD <- purrr::map(mod.framework$samples, HDInterval::hdi, credMass = 0.95)
+# subset HPD to relevant params
+mod.framework$HPD.summ <- purrr::map(mod.framework$HPD, 
+                                     function(x){
+                                       ret <- x[ names(x) %in% c("beta", "rho", "tau2") ]
+                                       ret <- lapply(ret, function(y){
+                                         ret <- t(y)
+                                         colnames(ret) <- c("HPD 0.025", "HPD 0.975")
+                                         return(ret) }) %>% 
+                                         do.call("rbind.data.frame", .)
+                                     })
 
-mod.framework$summresults <- purrr::map(mod.framework$summresults, function(x){
-  pars <- rownames(x)
-  ret <- cbind.data.frame(pars = pars, as.data.frame(x))
-  return(ret)
-  })
+mod.framework$summresults <- purrr::pmap(mod.framework[,c("summresults", "HPD.summ")], 
+                                         function(summresults, HPD.summ){
+                                           pars <- rownames(summresults)
+                                           ret <- cbind.data.frame(pars = pars,
+                                                                   cbind( summresults, HPD.summ))
+                                           return(ret)
+                                         })
 
 ```
 
@@ -182,7 +200,6 @@ Note, there are too many chains for visualizing here. Writing out to local direc
 #............................
 # Let's Look at the Chains
 #............................
-mod.framework$samples <- purrr::map(mod.framework$MCMC, "samples")
 mod.framework$betachains <- purrr::map(mod.framework$samples, "beta")
 mod.framework$phichains <- purrr::map(mod.framework$samples, "phi")
 mod.framework$tau2chains <- purrr::map(mod.framework$samples, "tau2")
@@ -229,16 +246,33 @@ Note, our goal is still to have the effective sample sizes (`n.effective`) to be
 #-------------------------------------------------------------------------
 mod.framework.long$mcmc.modsum <- purrr::map(mod.framework.long$MCMC, print) # note, print is overloaded here
 mod.framework.long$summresults <- purrr::map(mod.framework.long$mcmc.modsum, "summary.results")
-mod.framework.long$summresultsdf <- purrr::map(mod.framework.long$summresults, function(x){
-  pars <- rownames(x)
-  ret <- cbind.data.frame(pars = pars, as.data.frame(x))
-  return(ret)
-})
+# get samples for HPD
+mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
+# get HPD
+mod.framework.long$HPD <- purrr::map(mod.framework.long$samples, HDInterval::hdi, credMass = 0.95)
+# subset HPD to relevant params
+mod.framework.long$HPD.summ <- purrr::map(mod.framework.long$HPD, 
+                                     function(x){
+                                       ret <- x[ names(x) %in% c("beta", "rho", "tau2") ]
+                                       ret <- lapply(ret, function(y){
+                                         ret <- t(y)
+                                         colnames(ret) <- c("HPD 0.025", "HPD 0.975")
+                                         return(ret) }) %>% 
+                                         do.call("rbind.data.frame", .)
+                                     })
+
+mod.framework.long$summresultsdf <- purrr::pmap(mod.framework.long[,c("summresults", "HPD.summ")], 
+                                         function(summresults, HPD.summ){
+                                           pars <- rownames(summresults)
+                                           ret <- cbind.data.frame(pars = pars,
+                                                                   cbind( summresults, HPD.summ))
+                                           return(ret)
+                                         })
+
 
 #..............................................................
 # Means for comparison to median
 #..............................................................
-mod.framework.long$samples <- purrr::map(mod.framework.long$MCMC, "samples")
 mod.framework.long$posteriormeans <- purrr::pmap(mod.framework.long[,c("samples", "summresults")], 
                                             function(samples, summresults){
   betas <- apply(samples$beta, 2, mean)
@@ -264,11 +298,15 @@ mod.framework.long$posteriorphis <- purrr::map(mod.framework.long$samples,
   phimedian <- apply(smpl$phi, 2, median)
   phiperc025 <- apply(smpl$phi, 2, quantile, 0.025)
   phiperc975 <- apply(smpl$phi, 2, quantile, 0.975)
+  
+  phihpd <- HDInterval::hdi(smpl$phi, credMass = 0.95)
+  
   phineff <- apply(smpl$phi, 2, coda::effectiveSize)
-  phis <- list(phimean, phimedian, phiperc025, phiperc975, phineff)
+  phis <- list(phimean, phimedian, phiperc025, phiperc975, phihpd, phineff)
   phis <- do.call("rbind.data.frame", phis)
   # bind together
-  phis <- cbind.data.frame(statistic = c("Mean", "Median", "Perc0.025", "Perc97.5", "Neff"),
+  phis <- cbind.data.frame(statistic = c("Mean", "Median", "Perc0.025", "Perc97.5",
+                                         "HPD 0.025", "HPD 0.975", "Neff"),
                    phis)
                    
   # put names in 
@@ -290,7 +328,7 @@ mod.framework.long.res %>%
                 rownames = F,
                 options = list(
                   searching = F,
-                  pageLength = 5,
+                  pageLength = 20,
                   dom = 'Bfrtip', 
                   buttons = c('csv')))
 ```
@@ -304,7 +342,7 @@ mod.framework.long %>%
                 rownames = F,
                 options = list(
                   searching = F,
-                  pageLength = 5,
+                  pageLength = 20,
                   dom = 'Bfrtip', 
                   buttons = c('csv')))
 ```
@@ -319,7 +357,7 @@ mod.framework.long %>%
                 rownames = F,
                 options = list(
                   searching = F,
-                  pageLength = 5,
+                  pageLength = 20,
                   dom = 'Bfrtip', 
                   buttons = c('csv')))
 ```
