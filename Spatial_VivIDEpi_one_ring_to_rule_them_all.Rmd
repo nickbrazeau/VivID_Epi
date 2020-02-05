@@ -1,5 +1,5 @@
 ---
-title: "_P. vivax_ Among Asymptomatic Adults in the DRC, Epidemiological Analyses"
+title: "_P. vivax_ Among Asymptomatic Adults in the DRC, Spatial Analyses"
 author: "Nicholas F. Brazeau"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 
 ```
 
-```{r, child = 'analyses/07-spatial_prediction/01-Pv_areal_CAR_MCMC.Rmd'}
+```{r, child = 'analyses/07-spatial_prediction/01-Pv_areal_CAR_MCMC_frontend.Rmd'}
 ```
 
 ```{r, child = 'analyses/07-spatial_prediction/02-Pv_clst_map_GaussianProc_MCMC_frontend.Rmd'}

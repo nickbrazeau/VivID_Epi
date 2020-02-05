@@ -288,14 +288,14 @@ cowplot::plot_grid(provmodelplotObj, ret.smrstr.m.plot,
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postMeans_interpolate.jpg",
      height = 8, width = 11, units = "in", res = 500)
-cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
+cowplot::plot_grid(provmodelplotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
 
 
 svglite::svglite(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postMeans_interpolate.svg",
      height = 8, width = 11)
-cowplot::plot_grid(ret.smrstr.m.plot, provmodelplotObj,
+cowplot::plot_grid(provmodelplotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
 
@@ -414,14 +414,14 @@ cowplot::plot_grid(provmodel.posteriorselotObj, ret.smrstr.m.plot,
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postSE.jpg",
      height = 8, width = 11, units = "in", res = 500)
-cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+cowplot::plot_grid(provmodel.posteriorselotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
 
 
 svglite::svglite(file = "~/Documents/GitHub/VivID_Epi/results/figures/Prov_and_ClstMap_postSE.svg",
      height = 8, width = 11)
-cowplot::plot_grid(ret.smrstr.m.plot, provmodel.posteriorselotObj,
+cowplot::plot_grid(provmodel.posteriorselotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
 
@@ -526,16 +526,16 @@ cowplot::plot_grid(precip.plot, crop.plot, night.plot,
                    align = "h", nrow = 1)
 
 jpeg(file = "~/Documents/GitHub/VivID_Epi/results/figures/Clst_Covariates.jpg",
-     height = 8, width = 11, units = "in", res = 500)
+     height = 11, width = 8, units = "in", res = 800)
 cowplot::plot_grid(precip.plot, crop.plot, night.plot,
-                   align = "h", nrow = 1)
+                   align = "v", ncol = 1)
 graphics.off()
 
 
 svglite::svglite(file = "~/Documents/GitHub/VivID_Epi/results/figures/Clst_Covariates.svg",
-     height = 8, width = 11)
+     height = 11, width = 8)
 cowplot::plot_grid(precip.plot, crop.plot, night.plot,
-                   align = "h", nrow = 1, labels = c("(A)", "(B)", "(C)"))
+                   align = "v", ncol = 1, labels = c("(A)", "(B)", "(C)"))
 graphics.off()
 
 
