@@ -178,37 +178,37 @@ I.e. nugget effect, sill, and range. Will test a Matern and Exponential Covarian
 #..........................
 # Maximum Likelihood
 #..........................
-ml.exp <- likfit(pvclust.weighted.geodata, 
-                 ini = c(1, 0.5),
-                 cov.model = "exp",
-                 fix.nugget = F, 
-                 nugget = 0,
-                 fix.kappa = F)
+ml.exp <- geoR::likfit(pvclust.weighted.geodata, 
+                       ini = c(1, 0.5),
+                       cov.model = "exp",
+                       fix.nugget = F, 
+                       nugget = 0,
+                       fix.kappa = F)
 
-ml.matern <- likfit(pvclust.weighted.geodata, 
-                    ini = c(1, 0.5),
-                    cov.model = "matern",
-                    fix.nugget = F, 
-                    nugget = 0,
-                    fix.kappa = F)
+ml.matern <- geoR::likfit(pvclust.weighted.geodata, 
+                          ini = c(1, 0.5),
+                          cov.model = "matern",
+                          fix.nugget = F, 
+                          nugget = 0,
+                          fix.kappa = F)
 
 #..........................
 # OLS
 #..........................
 
-ols.exp <- variofit(pv.vario.prev, 
-                    ini = c(1, 0.5),
-                    cov.model = "exp",
-                    fix.nugget = F, 
-                    nugget = 0,
-                    fix.kappa = F) 
+ols.exp <- geoR::variofit(pv.vario.prev, 
+                          ini = c(1, 0.5),
+                          cov.model = "exp",
+                          fix.nugget = F, 
+                          nugget = 0,
+                          fix.kappa = F) 
 
-ols.matern <- variofit(pv.vario.prev, 
-                       ini = c(1, 0.5),
-                       cov.model = "matern",
-                       fix.nugget = F, 
-                       nugget = 0,
-                       fix.kappa = F)
+ols.matern <- geoR::variofit(pv.vario.prev, 
+                             ini = c(1, 0.5),
+                             cov.model = "matern",
+                             fix.nugget = F, 
+                             nugget = 0,
+                             fix.kappa = F)
 
 
 
@@ -229,6 +229,28 @@ graphics.off()
 
 ```
 Truly impressive lack of spatial structure. From models above, an appropriate _kappa_ value fro the Matern covariance matrix appeared to be 0.5 or 1. Let's explore that specifically below.
+
+We can also use the information from the empirical variogram fits for choosing starting values in our Bayesian model. 
+
+##### MLE Exponential to the GRF 
+```{r, results='asis'}
+summary(mle.exp)
+```
+
+##### MLE Matern to the GRF 
+```{r, results='asis'}
+summary(mle.matern)
+```
+
+##### OLS Exponential Empirical Variogram fit
+```{r, results='asis'}
+summary(ols.exp)
+```
+
+##### OLS Matern Empirical Variogram fit
+```{r, results='asis'}
+summary(ols.matern)
+```
 
 #### Matern Shape
 ```{r}

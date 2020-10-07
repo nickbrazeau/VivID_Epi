@@ -110,7 +110,7 @@ saveRDS(covar.rstr.pred, file = "data/derived_data/vividepi_spatial_covar_featur
 
 # down sample
 covar.rstr.pred.downsmpl <- raster::sampleRandom(covar.rstr.pred, 
-                                                 size = 1e3,
+                                                 size = 2e4,
                                                  na.rm = T,
                                                  xy = T,
                                                  sp = F)
