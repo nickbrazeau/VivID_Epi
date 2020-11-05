@@ -27,7 +27,7 @@ readRasterBB.precip <- function(rstfile, sp = sp, caf = caf){
   raster::values(ret) <- vals
   
   ret <- raster::projectRaster(from = ret, to = ret,
-                               crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+                               crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs +units=m")) # want units to be m
   
   return(ret)
   
@@ -44,7 +44,7 @@ readRasterBB.temp <- function(rstfile, sp = sp, caf = caf){
   raster::values(ret) <- vals
   
   ret <- raster::projectRaster(from = ret, to = ret,
-                               crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+                               crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs +units=m")) # want units to be m
   return(ret)
 }
 
@@ -135,6 +135,11 @@ wthrnd.mean <- wthrnd.mean[!duplicated(wthrnd.mean$hv001),]
 # note the 0.05 degree resolution is approximately 6km, so the buffer
 # for urbanicity shouldn't be doing anything... but to be consistent with 
 # DHS "The Geospatial Covariate Datasets Manual", we will do it
+sf::st_crs(precipstack.mean)
+sf::st_crs(tempstack.mean)
+sf::st_crs(dt)
+
+
 wthrnd.mean$precip_mean_cont_clst <- NA
 wthrnd.mean$temp_mean_cont_clst <- NA
 
@@ -173,8 +178,8 @@ missingclst <- wthrnd.mean %>%
 
 ggplot() +
   geom_sf(data = wthrnd.mean) +
-  geom_point(data = missing, aes(x=long, y=lat), color = "red") +
-  ggrepel::geom_label_repel(data = missing, aes(x=long, y=lat, label = hv001)) 
+  geom_point(data = missingclst, aes(x=long, y=lat), color = "red") +
+  ggrepel::geom_label_repel(data = missingclst, aes(x=long, y=lat, label = hv001)) 
 
 # all boundaries and small buffer (2km is barely outside raster cell often), will increase to 6km
 precipmissing <- which(is.na(wthrnd.mean$precip_mean_cont_clst))
@@ -204,14 +209,6 @@ for (i in tempmissing) {
 }
 
 
-
-
-
-
-
-
-
-
 wthrnd.mean <- wthrnd.mean %>% 
   dplyr::select(c("hv001", "precip_mean_cont_clst", "temp_mean_cont_clst"))
 sf::st_geometry(wthrnd.mean) <- NULL
@@ -224,7 +221,6 @@ saveRDS(object = precipstack.mean,
 
 saveRDS(object = tempstack.mean, 
         file = "data/derived_data/vividepi_temperature_study_period_effsurface.rds")
-
 
 saveRDS(object = wthrnd.mean, 
         file = "data/derived_data/vividep_weather_recoded_mean.rds")

@@ -16,7 +16,7 @@ set.seed(48)
 # subset to my study population but include those individuals with missing covariates
 # am assuming that the de jure, no geo-located individuals, and hiv weights are a 
 # the "true" study population and that the 17 missing covariates are MCAR
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")  %>% 
+dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")  %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>%  # drop observations with missing geospatial data 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
   dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm

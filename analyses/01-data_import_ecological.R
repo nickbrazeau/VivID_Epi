@@ -14,6 +14,7 @@ sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
 # Pull Down Great Ape Territories from IUC (minus Pongo)
 #---------------------------------------------------------------------------------
 ape <- sf::read_sf("data/raw_data/redlist_species_data_primate/data_0.shp")
+sf::st_crs(ape)
 ape <- ape[grepl("pan paniscus|pan troglodytes|gorilla", tolower(ape$BINOMIAL)), ] %>%  # pan trog, pan panisus, gorilla sp
   dplyr::rename(species = BINOMIAL)
 drc_ape <- sf::st_crop(x = ape, y = sf::st_as_sf(caf))
@@ -49,7 +50,7 @@ ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>%
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
-
+sf::st_crs(ge)
 
 
 #----------------------------------------------------------------------------------------------------
@@ -67,7 +68,19 @@ wtrply <- sf::read_sf("data/raw_data/hotosm_data/hotosm_cod_waterways_polygons_s
 
 wtr <- sf::st_combine(rbind(wtrlns, wtrply))
 wtr <-  sf::st_union( wtr )
+#......................
+# quick look
+#......................
+sf::st_crs(wtr)
+# plot
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+ggplot() + 
+  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  geom_sf(data = wtr, color = "blue")
 
+#......................
+# GC dist
+#......................
 wtrdist <- sf::st_distance(x = ge,
                            y = wtr,
                            which = "Great Circle")
@@ -77,6 +90,19 @@ wtrdist_out <- data.frame(
   hv001 = ge$dhsclust,
   wtrdist_cont_clst = apply(wtrdist, 1, min)
 )
+
+# check the results
+wtrdist_ge <- wtrdist_out %>% 
+  dplyr::rename(dhsclust = hv001) %>% 
+  dplyr::left_join(., ge, by = "dhsclust")
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+ggplot() + 
+  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  geom_sf(data = wtr, color = "blue") +
+  geom_point(data = wtrdist_ge, aes(x = longnum, y = latnum, color = wtrdist_cont_clst)) +
+  scale_color_viridis_c("Wtr Dist")
+
+
 
 
 #----------------------------------------------------------------------------------------------------
