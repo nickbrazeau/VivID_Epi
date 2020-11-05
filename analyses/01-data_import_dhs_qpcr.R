@@ -38,11 +38,11 @@ downloads <- rdhs::get_datasets(datasets$FileName)
 # read in data
 pfpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pf_alladults_v4.csv", 
                          col_names = T) %>% 
-         magrittr::set_colnames(tolower(colnames(.))) %>% 
-         dplyr::select(c("hivrecode_barcode", "pfldh", "fcq_mean")) %>% 
-         dplyr::rename(pfctmean = fcq_mean)
-  
-  
+  magrittr::set_colnames(tolower(colnames(.))) %>% 
+  dplyr::select(c("hivrecode_barcode", "pfldh", "fcq_mean")) %>% 
+  dplyr::rename(pfctmean = fcq_mean)
+
+
 pvpcr <- readr::read_csv(file="/Volumes/share/1. Data/2. Data Set Processing/CD2013DHS_Adults_Construction/Pv_alladults_v2.csv", 
                          col_names = T) %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
@@ -74,7 +74,9 @@ if(nrow(panplasmpcrres) != nrow(pfpcr) & nrow(pfpcr) != nrow(popcr) & nrow(popcr
 # Read in and match PR barcode to qpcr data
 #---------------------------------------------------------------------------------
 pr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDPR61FL.rds")
-ar <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDAR61FL.rds") %>% 
+ar <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDAR61FL.rds") 
+class(ar) <- "data.frame" # drop this custom dhs class so it doesn't interfere w/ tidy
+ar <- ar %>% 
   dplyr::rename(hv001 = hivclust,
                 hv002 = hivnumb,
                 hvidx = hivline,
@@ -89,14 +91,18 @@ arpr <- arpr %>%
 #---------------------------------------------------------------------------------
 # Read in MR and IR 
 #---------------------------------------------------------------------------------
-mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds") %>%
+mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds")
+class(mr) <- "data.frame"
+mr <- mr %>% 
   dplyr::rename(hv001 = mv001,
                 hv002 = mv002,
                 hvidx = mv003,
                 caseid = mcaseid) %>% 
   dplyr::select(c("hv001", "hv002", "hvidx", "caseid", "mv717"))
 
-wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") %>%
+wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") 
+class(wr) <- "data.frame"
+wr <- wr %>% 
   dplyr::rename(hv001 = v001,
                 hv002 = v002,
                 hvidx = v003)  %>% 
