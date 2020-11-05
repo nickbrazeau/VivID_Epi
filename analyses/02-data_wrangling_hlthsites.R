@@ -3,7 +3,7 @@
 # in the DRC as a proxy to healthcare accessibility
 # Using OSRM to calculate road duration/distances
 #----------------------------------------------------------------------------------------------------
-
+library(tidyverse)
 #..................................
 # import data
 #..................................
@@ -49,75 +49,49 @@ rownames(hlthsites.harvard.drc.osrm) <- hlthsites.harvard.drc.osrm$id
 
 #-----------------------------------------------------------------
 # Going to consider healthcare access as a function
-# of how mean duration to hospital 
+# of  mean duration to hospital 
 #-----------------------------------------------------------------
-#' @param x sf object; query
-#' @param y sf objest; target
-#' @param long.distancematrix distance matrix, long format; distances between target and query
-#' @param crs coordinate string
-#' @param urbanwidth km for gbuffer
-#' @param searchwidth km for gbuffer
+durations <- osrm::osrmTable(src = ge.osrm,
+                             dst = hlthsites.harvard.drc.osrm,
+                             measure = "duration") # in minutes
 
+#......................
+# viz out
+#......................
+DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
+mindur <- apply(durations$durations, 1, min)
+mindur_df <- tibble::tibble(dhsclust = ge.osrm$dhsclust,
+                            mindur = mindur)
+mindur_df <- ge %>% 
+  dplyr::left_join(., mindur_df, by = "dhsclust")
 
-osrm_distances_by_bcircle <- function(x, y, long.distancematrix, crs,
-                                   searchwidth = 50){
-  
-  ret <- matrix(NA, nrow = nrow(x), ncol = 3)
-  x <- sf::st_transform(x, crs)
-  y <- sf::st_transform(y, crs)
-  
-  for(i in 1:nrow(x)){
-    # get centroid
-    centroid <- x[i,]
-    centroid <- sf::as_Spatial(centroid) 
-    # making bounding circle
-    bcircle <- rgeos::gBuffer(centroid, width = searchwidth*1e3)
-    
-    # interset query
-    hlthsites.catchment <- sf::st_intersection(y, sf::st_as_sf(bcircle))
-    
-    # ERROR CATCH clusters without catchment area
-    # just find the min distance 
-    if(nrow(hlthsites.catchment) == 0){
-      
-      durations <- osrm::osrmTable(src = centroid,
-                                   dst = y,
-                                   measure = "duration") # in minutes
-      
-      # fill in matrix
-      hv001 <- x[i, "dhsclust"]
-      sf::st_geometry(hv001) <- NULL 
-      ret[i,1] <- unlist( hv001 ) # all this work to get a vector of 1
-      ret[i, 2] <- min(durations$durations)
-      ret[i, 3] <- NA
-      
-    } else {
-      # get OSRM durations as planned
-      durations <- osrm::osrmTable(src = centroid,
-                                   dst = hlthsites.catchment,
-                                   measure = "duration") # in minutes
-      
-      # fill in matrix
-      hv001 <- x[i, "dhsclust"]
-      sf::st_geometry(hv001) <- NULL 
-      ret[i,1] <- unlist( hv001 ) # all this work to get a vector of 1
-      ret[i, 2] <- mean(durations$durations)
-      ret[i, 3] <- sd(durations$durations)
-    }
-    
-  }
-  
-  colnames(ret) <- c("hv001", "mean_duration", "sd_duration")
-  return(as.data.frame(ret))
-  
-}
+mindur_df %>% 
+  ggplot() + 
+  #geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
+  geom_point(aes(x = longnum, y = latnum, color = mindur)) + 
+  scale_color_viridis_c("Duration in Minutes \n to Nearest Hospital")
 
+mindur_df %>% 
+  dplyr::mutate(twohrbin = ifelse(mindur >= 120, 1, 0)) %>% 
+  ggplot() + 
+  #geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
+  geom_point(aes(x = longnum, y = latnum, color = twohrbin)) + 
+  scale_color_viridis_c("Duration in Minutes \n to Nearest Hospital")
 
+# look at urban rural
+dt.nosf <- dt
+sf::st_geometry(dt.nosf) <- NULL
+urban_rura <- dt.nosf %>% 
+  dplyr::select(c("hv001", "urban_rura")) %>% 
+  dplyr::filter(!duplicated(.)) %>% 
+  dplyr::rename(dhsclust = hv001)
 
-hlthdist <- osrm_distances_by_bcircle(x = ge.osrm,
-                                      y = hlthsites.harvard.drc.osrm,
-                                      crs = "+proj=utm +zone=34 +datum=WGS84 +units=m",
-                                      searchwidth = 100)
+mindur_df %>% 
+  dplyr::mutate(twohrbin = ifelse(mindur >= 120, 1, 0)) %>% 
+  dplyr::left_join(., urban_rura, by = "dhsclust") %>% 
+  ggplot() + 
+  #geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
+  geom_point(aes(x = longnum, y = latnum, color = twohrbin, shape = urban_rura)) 
 
 
 #..........
@@ -168,5 +142,6 @@ hlthdist$mean_duration[hlthdist$hv001 == 469] <- mean(hlthdist$mean_duration[hlt
 #..........
 # Now write out
 #..........
+dir.create("data/derived_data/", recursive = TRUE)
 saveRDS(object = hlthdist, file = "data/derived_data/hlthdist_out_minduration.rds")
 saveRDS(object = hlthsites.harvard.drc, file = "data/derived_data/hlthsites_harvard_drc.rds")
