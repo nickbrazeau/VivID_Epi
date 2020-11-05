@@ -1,9 +1,20 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to wrangle distance to public Health Sites
 # in the DRC as a proxy to healthcare accessibility
-# Using OSRM to calculate road duration/distances
+# recent work has made this available at an even higher resolution: 
+#  https://malariaatlas.org/research-project/accessibility_to_healthcare/
 #----------------------------------------------------------------------------------------------------
 library(tidyverse)
+library(raster)
+library(sp)
+library(sf)
+
+# create bounding box of Central Africa for Speed
+# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+
+
 #..................................
 # import data
 #..................................
@@ -13,129 +24,64 @@ dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 ge <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
-  dplyr::filter(!duplicated(.)) %>% 
-  dplyr::rename(dhsclust = hv001) # legacy
+  dplyr::select(c("hv001", "longnum", "latnum", "urban_rura")) %>% 
+  dplyr::mutate(urban_rura = as.character(urban_rura)) %>% # coerce to char so attr list doesn't mess with dplyr
+  dplyr::filter(!duplicated(.))
 
-hlthsites.harvard.drc <- readxl::read_excel("data/raw_data/harvard_dataverse/Ouma_Okiro_Snow_Africa_Hospitals_Data.xlsx") %>% 
-  magrittr::set_colnames(tolower(colnames(.))) %>% 
-  magrittr::set_colnames(gsub(pattern = " ", "_", colnames(.))) %>% 
-  dplyr::filter(country == "Democratic Republic of Congo") %>%
-  sf::st_as_sf(coords = c("long", "lat"), 
-               crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs"))
-
-
-#..................................
-# SPIN up Docker and start server
-# then add these options
-#..................................
-# https://github.com/rCarto/osrm
-remotes::install_github("rCarto/osrm")
-library(osrm)
-options(osrm.server = "http://0.0.0.0:5000/", osrm.profile = "driving")
-
-ge.osrm <- ge %>% 
-  dplyr::select("dhsclust") 
-rownames(ge.osrm) <- ge.osrm$dhsclust
+#............................................................
+# get health care calculated distances
+#...........................................................
+hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+hlthdist <- raster::crop(x = hlthdist, y = caf)
+# create mask 
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
+# check simple crs
+sf::st_crs(hlthdist)
 
 
-hlthsites.harvard.drc.osrm <- hlthsites.harvard.drc %>% 
-  dplyr::mutate(id = paste0("hlth", seq(1:nrow(.))),
-                id = factor(id)) %>%
-  dplyr::select(id)
+#............................................................
+# new get buffer around urban versus rural cluster
+#...........................................................
+hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>% 
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
+hlthdist.mean <- hlthdist.mean[!duplicated(hlthdist.mean$hv001),]
 
-rownames(hlthsites.harvard.drc.osrm) <- hlthsites.harvard.drc.osrm$id
+# Drop in a for loop again to account for DHS buffering
+# note the 0.05 degree resolution is approximately 6km, so the buffer
+# for urbanicity shouldn't be doing anything... but to be consistent with 
+# DHS "The Geospatial Covariate Datasets Manual", we will do it
+hlthdist.mean$hlthdist_cont_clst <- NA
 
+for(i in 1:nrow(hlthdist.mean)){
+  hlthdist.mean$hlthdist_cont_clst[i] <- 
+    raster::extract(x = hlthdist, 
+                    y = sf::as_Spatial(hlthdist.mean$geometry[i]),
+                    buffer = hlthdist.mean$buffer[i],
+                    fun = mean,
+                    na.rm = T, 
+                    sp = F
+    )
+}
 
-#-----------------------------------------------------------------
-# Going to consider healthcare access as a function
-# of  mean duration to hospital 
-#-----------------------------------------------------------------
-durations <- osrm::osrmTable(src = ge.osrm,
-                             dst = hlthsites.harvard.drc.osrm,
-                             measure = "duration") # in minutes
 
 #......................
-# viz out
+# inspect results
 #......................
-DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
-mindur <- apply(durations$durations, 1, min)
-mindur_df <- tibble::tibble(dhsclust = ge.osrm$dhsclust,
-                            mindur = mindur)
-mindur_df <- ge %>% 
-  dplyr::left_join(., mindur_df, by = "dhsclust")
+hlthdist.agg <- raster::aggregate(hlthdist, fact = 10, fun = mean)
 
-mindur_df %>% 
+hlthdist.mean %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
   ggplot() + 
-  #geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
-  geom_point(aes(x = longnum, y = latnum, color = mindur)) + 
-  scale_color_viridis_c("Duration in Minutes \n to Nearest Hospital")
-
-mindur_df %>% 
-  dplyr::mutate(twohrbin = ifelse(mindur >= 120, 1, 0)) %>% 
-  ggplot() + 
-  #geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
-  geom_point(aes(x = longnum, y = latnum, color = twohrbin)) + 
-  scale_color_viridis_c("Duration in Minutes \n to Nearest Hospital")
-
-# look at urban rural
-dt.nosf <- dt
-sf::st_geometry(dt.nosf) <- NULL
-urban_rura <- dt.nosf %>% 
-  dplyr::select(c("hv001", "urban_rura")) %>% 
-  dplyr::filter(!duplicated(.)) %>% 
-  dplyr::rename(dhsclust = hv001)
-
-mindur_df %>% 
-  dplyr::mutate(twohrbin = ifelse(mindur >= 120, 1, 0)) %>% 
-  dplyr::left_join(., urban_rura, by = "dhsclust") %>% 
-  ggplot() + 
-  #geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
-  geom_point(aes(x = longnum, y = latnum, color = twohrbin, shape = urban_rura)) 
-
-
-#..........
-# Note, cluter 469 cannot be resolved with osrm
-# do 5 knn again average
-#..........
-missclust <- data.frame(dhsclust = hlthdist$hv001[ which(is.na(hlthdist$mean_duration)) ] ) %>% 
-  dplyr::left_join(., y=ge, by = "dhsclust") %>% 
-  sf::st_as_sf(.)
-knownclust <- data.frame(dhsclust = hlthdist$hv001[ which(! is.na(hlthdist$mean_duration)) ] ) %>% 
-  dplyr::left_join(., y=ge, by = "dhsclust") %>% 
-  sf::st_as_sf(.)
-
-
-dist <- sf::st_distance(x = missclust,
-                        y = knownclust,
-                        which = "Great Circle")
-
-# find 5 nearby clusters
-dist.sorted.5 <- sort(dist)[1:5]
-nrbyclstrs <- hlthdist$hv001[ which(dist %in% dist.sorted.5) ]
-
-#.................
-# sanity check
-#.................
-sanityplotdf <- ge %>% 
-  dplyr::mutate(
-    lvl = ifelse(dhsclust == 469, "miss", ifelse(
-      dhsclust %in% nrbyclstrs, "nrby", "clst"
-    ))
-  )
-
-sanitylabeldf <- sanityplotdf %>% 
-  dplyr::filter(lvl == "nrby")
-
-ggplot() + 
-  geom_jitter(data = sanityplotdf, 
-              aes(x=longnum, y = latnum, color = factor(lvl))) + 
-  ggrepel::geom_label_repel(data = sanitylabeldf, 
-                            aes(x=longnum, y = latnum, label = dhsclust))
-
-
-# get their averages
-hlthdist$mean_duration[hlthdist$hv001 == 469] <- mean(hlthdist$mean_duration[hlthdist$hv001 %in% nrbyclstrs])
+  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  ggspatial::layer_spatial(data = hlthdist.agg,
+                           aes(fill = stat(band1)),
+                           alpha = 0.9,
+                           na.rm = T) +
+  geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst)) +
+  scale_fill_viridis_c(option="plasma", direction = 1) +
+  scale_color_viridis_c(option="viridis")
 
 
 
@@ -143,5 +89,4 @@ hlthdist$mean_duration[hlthdist$hv001 == 469] <- mean(hlthdist$mean_duration[hlt
 # Now write out
 #..........
 dir.create("data/derived_data/", recursive = TRUE)
-saveRDS(object = hlthdist, file = "data/derived_data/hlthdist_out_minduration.rds")
-saveRDS(object = hlthsites.harvard.drc, file = "data/derived_data/hlthsites_harvard_drc.rds")
+saveRDS(object = hlthdist, file = "data/derived_data/hlthdist_out_wlk_trvltime.rds")
