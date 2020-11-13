@@ -41,11 +41,16 @@ ge <- sf::st_as_sf(ge)
 #............................................................
 # get health care calculated distances
 #...........................................................
-hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+hlthdist_walk <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+hlthdist_road <- raster::raster("data/raw_data/hlthdist/2020_motorized_travel_time_to_healthcare.geotiff")
+
+hlthdist_stack <- raster::stack(hlthdist_walk, hlthdist_road)
+hlthdist_stack <- raster::crop(x = hlthdist_stack, y = caf)
+hlthdist <- raster::calc(hlthdist_stack, mean, na.rm = T)
+
 # sanity check
 sf::st_crs(hlthdist)
 # crop for speed
-hlthdist <- raster::crop(x = hlthdist, y = caf)
 
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
@@ -102,4 +107,4 @@ hlthdist.mean %>%
 # Now write out
 #..........
 dir.create("data/derived_data/", recursive = TRUE)
-saveRDS(object = hlthdist, file = "data/derived_data/hlthdist_out_wlk_trvltime.rds")
+saveRDS(object = hlthdist.mean, file = "data/derived_data/hlthdist_out_wlk_trvltime.rds")

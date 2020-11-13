@@ -27,8 +27,7 @@ sf::st_geometry(dt) <- NULL
 # weights
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hiv05_wi = hiv05/1e6
-  )
+  dplyr::mutate(hiv05_wi = hiv05/1e6)
 
 # As desrcibed in this manuscript (PMID: 28222094)
 # housing materials are  taken into consideration for wealth
@@ -69,7 +68,7 @@ for(i in 1:ncol(wlth_fct)){
 # This is based on Rutstein point 3b.3
 wlth_fct_binary <- wlth_fct[, c("hv206", "hv207", "hv208",  "hv225", "hv210", "hv243a", "hv243b")]
 wlth_fct_multi <- wlth_fct[, c("hv201", "hv205", "hv226")]
-# note, hv225 has NAs in it that aren't "missing" going to recode thme to missing
+# note, hv225 has NAs in it that aren't "missing" going to recode them to missing
 wlth_fct_binary$hv225[is.na(wlth_fct_binary$hv225)] <- factor("missing")
 
 # binary recode
@@ -135,6 +134,7 @@ impute_missingness <- function(fct){
 
 wlth_fct <- apply(wlth_fct, 2, impute_missingness)
 sum(is.na(wlth_fct)) # good to go
+table(wlth_fct)
 
 # expand factors
 wlth_fct_exp <- fastDummies::dummy_columns(wlth_fct)
@@ -170,8 +170,24 @@ com1 <- wlth_fct_exp %>%
   prcomp(.)
 # compute variance explained
 com1$var <- (com1$sdev ^ 2) / sum(com1$sdev ^ 2) * 100
+com1$loadings <- abs(com1$rotation)
+com1$loadings <- sweep(com1$loadings, 2, colSums(com1$loadings), "/")
+# look at var explained
 # ~28% in PC1 -- not bad
+com1$var
 
+#......................
+# look at results
+#......................
+library(ggfortify)
+ggplot2::autoplot(com1,
+                  loadings = TRUE,
+                  loadings.label = TRUE,
+                  loadings.label.size  = 3)
+
+#......................
+# tidy into df
+#......................
 com1df <- data.frame(
   hivrecode_barcode = dt$hivrecode_barcode,
   hv025 = haven::as_factor(dt$hv025),
@@ -249,11 +265,13 @@ quants <- survey::svyquantile(x = ~combscor, design = dtsrvy,
 
 dtsub <- dtsub %>% 
   dplyr::mutate(wlthrcde_fctm = base::cut(x = .$combscor, breaks = quants, 
-                                           labels = c("poorest", "poor", 
-                                                      "middle", "rich", "richest"),
+                                           labels = rev(c("poorest", "poor", 
+                                                      "middle", "rich", "richest")),
                                           include.lowest = T)
   ) %>% 
-  dplyr::mutate(wlthrcde_fctb = ifelse(wlthrcde_fctm == "poorest", "poor", ifelse(wlthrcde_fctm == "poor", "poor", "not poor")),
+  dplyr::mutate(wlthrcde_fctm = factor(wlthrcde_fctm, levels = c("poorest", "poor", 
+                                                                 "middle", "rich", "richest")),
+                wlthrcde_fctb = ifelse(wlthrcde_fctm == "poorest", "poor", ifelse(wlthrcde_fctm == "poor", "poor", "not poor")),
                 wlthrcde_fctb = factor(wlthrcde_fctb, levels = c("not poor", "poor"))) %>% 
   dplyr::select(c("hivrecode_barcode", "combscor", "wlthrcde_fctm", "wlthrcde_fctb")) %>% 
   dplyr::rename(wlthrcde_combscor_cont = combscor)
@@ -264,5 +282,4 @@ summary(dtsub$wlthrcde_fctm)
 xtabs(~dtsub$wlthrcde_fctm + dtsub$wlthrcde_fctb)
 
 saveRDS(file = "data/derived_data/vividepi_wealth_recoded.rds", object = dtsub)
-
 

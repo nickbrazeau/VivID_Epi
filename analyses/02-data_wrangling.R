@@ -27,7 +27,7 @@ sp::proj4string(caf) <- "+init=epsg:4326"
 # https://dhsprogram.com/data/Guide-to-DHS-Statistics/ -- note this is version 7
 # recode map https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
 # https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
+dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 
 # subset
 dt <- dt %>% 
@@ -38,10 +38,9 @@ dt <- dt %>%
 
 # sanity check
 sf::st_crs(dt)
-identicalCRS(sf::as_Spatial(dt), caf)
 # liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
 dt <- sp::spTransform(sf::as_Spatial(dt), CRSobj = sp::CRS("+init=epsg:4326"))
-identicalCRS(dt, caf)
+sp::identicalCRS(dt, caf)
 # back to tidy 
 dt <- sf::st_as_sf(dt)
 
@@ -92,8 +91,7 @@ dt <- sf::st_as_sf(dt)
 # weights
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hiv05_wi = hiv05/1e6
-  )
+  dplyr::mutate(hiv05_wi = hiv05/1e6)
 
 
 #.............
@@ -283,7 +281,9 @@ dt <- dplyr::left_join(dt, wlth, by = "hivrecode_barcode")
 tab <- xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks just OK. 
 tab 
 sum(diag(tab))/sum(tab) # 56% concordance. Presumambly, household type was a big driver given the 0 cells in the lower corner
-
+# look at binary
+xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270))
+xtabs(~dt$wlthrcde_fctb + dt$wlthrcde_fctm)
 
 #.............
 # years of education (continuous)
@@ -295,7 +295,7 @@ dt <- dt %>%
 #.............
 # years of education (categorical)
 #.............
-edu <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_education_liftover.csv")
+edu <- readr::read_csv("internal_datamap_files/pr_education_liftover.csv")
 xtabs(~haven::as_factor(dt$hv106))
 dt <- dt %>% 
   dplyr::mutate(hv106 = haven::as_factor(hv106), 
@@ -320,7 +320,7 @@ dt <- dt %>%
   dplyr::mutate(farmer_fctb = ifelse(occupation %in% c(4,5), "farmer", "not farmer"),
                 farmer_fctb = factor(farmer_fctb, levels = c("not farmer", "farmer"))) # not being a farmer protective
 # note, we have coded missing as not a farmer
-
+table(factor(haven::as_factor(dt$farmer_fctb)), useNA = "always")
 
 #------------------------------------------
 # children under 5 number
@@ -459,19 +459,23 @@ dt <- dt %>%
 #.............
 # Health Care Access (Mean Distance to Health Site)
 #.............
-hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") %>% 
-  magrittr::set_colnames(c("hv001", "hlthdist_mean_duration", "hlthdist_sd_duration"))
+hlthdist_out <- readRDS("data/derived_data/hlthdist_out_wlk_trvltime.rds") 
+# drop geom
+sf::st_geometry(hlthdist_out) <- NULL 
+# drop extra columns
+hlthdist_out <- hlthdist_out %>% 
+  dplyr::select(c("hv001", "hlthdist_cont_clst"))
 
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
-    hlthst_duration_cont_scale_clst = my.scale(hlthdist_mean_duration, center = T, scale = T),
-    hlthst_duration_fctb_clst = ifelse(hlthdist_mean_duration > 120, "far", "near"),
-    hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far"))
-    
-  )
+    hlthst_duration_cont_scale_clst = my.scale(hlthdist_cont_clst, center = T, scale = T),
+    hlthst_duration_fctb_clst = ifelse(hlthdist_cont_clst > 60, "far", "near"),
+    hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far")))
 
-
+# look at output
+xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$hv270))
+xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
 
 #..........................................................................................
 #                               Final Write Out
