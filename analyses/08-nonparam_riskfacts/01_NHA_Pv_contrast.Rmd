@@ -1,0 +1,192 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Non-Human Apes vs. _P. vivax_ Cases in DRC
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center')
+knitr::opts_knit$set(root.dir = here::here())
+
+
+```
+```{r}
+source("R/00-functions_basic.R")
+source("R/00-functions_maps.R") 
+library(tidyverse)
+library(sf)
+library(geosphere)
+library(spdep)
+library(raster)
+library(srvyr) #wrap the survey package in dplyr syntax
+library(RColorBrewer)
+set.seed(48)
+
+#......................
+# Import Data
+#......................
+load("data/map_bases/vivid_maps_bases.rda")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+
+# need to add back in geometry to dt
+gegeoms <- ge %>% 
+  dplyr::select(c("hv001", "geometry"))
+dt <- dplyr::left_join(dt, gegeoms, by = "hv001")
+
+dtsrvy <- makecd2013survey(survey = dt)
+
+```
+
+## _P. vivax_ vs. Ape Distribution 
+```{r, results='asis'}
+
+ape <- readRDS("data/derived_data/drc_ape.rds")
+
+aperange_nhapv <- 
+  caseprevmaps[[2]] +
+  scale_color_viridis_c("Prevalence") + 
+  geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
+  scale_fill_manual("Non-Human \n Ape Range", 
+                    values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
+
+```
+
+### Permutation Test for _P. vivax_ vs. Ape Distribution 
+```{r}
+# how many clusters do apes overlap?
+ape.range <- sf::st_union(ape$geometry)
+ape.clusters <- sf::st_intersection(ge, ape.range)
+
+# how many clusters do chimp and gorillas overlap?
+chimpgor.range <- ape %>% 
+  dplyr::filter(species != "Pan paniscus") %>% 
+  dplyr::select(geometry) %>% 
+  sf::st_union(.)
+chimpgor.clusters <- sf::st_intersection(ge, chimpgor.range)
+
+```
+
+
+Data will be simulated by randomly assigning clusters as ape or not territories and then calculating the prevalence of Pv within ape and non-ape regions. 
+  
+```{r}
+
+run_ape_permutations <- function(dtsrvy18s, n.apeclsts){
+  
+  clsts <- dtsrvy18s %>% 
+    tibble::as_tibble(.) %>% 
+    dplyr::select("hv001") %>% 
+    dplyr::filter(!duplicated(.)) %>% 
+    unlist(.)
+  
+  apeclsts <- sample(clsts, size = n.apeclsts, replace = F)
+
+  ape.ovrlp.pos <- dtsrvy18s %>% 
+    dplyr::filter(hv001 %in% apeclsts) %>% 
+    dplyr::summarise(pv18s = srvyr::survey_mean(pv18s)) %>% 
+    dplyr::select(-c(dplyr::ends_with("_se")))
+  
+  ret <- unname(as.vector(ape.ovrlp.pos))
+  
+  return(ret)
+
+}
+
+sims <- 1e4
+
+```
+     
+There are `r length(ape.clusters)` clusters that overlap with apes and `r length(chimpgor.clusters)` clusters that overlap with chimpanzee and gorillas.
+
+#### All Apes 
+
+```{r, results='asis'}
+
+ape.range.iters <- data.frame(iter = 1:sims)
+
+ape.range.iters$ape_overlap_prev <- purrr::map(ape.range.iters$iter, function(x){
+  return( run_ape_permutations(dtsrvy18s = dtsrvy, n.apeclsts = length(ape.clusters)) )
+  }) 
+  
+ape.range.iters$ape_overlap_prev <- unlist(ape.range.iters$ape_overlap_prev )
+
+
+real.ape.clstrprev <- dt %>% 
+  dplyr::filter(hv001 %in% ape.clusters$hv001)
+
+real.ape.clstrprev <- mean(real.ape.clstrprev$pv18s)
+
+hist(ape.range.iters$ape_overlap_prev, breaks = 50, 
+     main = "Simulated Pvivax Prevelance \n within Ape Clusters")
+abline(v = real.ape.clstrprev, col = "red")
+
+
+
+```
+
+Assuming a one-sided test that ape clusters should have more _P. vivax_, we can get a monte-carlo P-value of approximately `r round(mean(ape.range.iters$ape_overlap_prev > real.ape.clstrprev), 2)`. Obviously not significant from plot and maps.
+
+
+#### Chimpanzee & Gorillas
+Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains but mostly at a concentrated field site, Tshuapa–Lomami–Lualaba (TL2), near the Lomami River [Liu et al. 2018](https://www.nature.com/articles/s41467-017-01798-5)
+
+```{r, results='asis'}
+
+chimpgor.range.iters <- data.frame(iter = 1:sims)
+
+chimpgor.range.iters$chimpgor_overlap_prev <- purrr::map(chimpgor.range.iters$iter, function(x){
+  return( run_ape_permutations(dtsrvy18s = dtsrvy, n.apeclsts = length(chimpgor.clusters)) )
+}) 
+
+chimpgor.range.iters$chimpgor_overlap_prev <- unlist(chimpgor.range.iters$chimpgor_overlap_prev )
+
+
+real.chimpgor.clstrprev <- dt %>% 
+  dplyr::filter(hv001 %in% chimpgor.clusters$hv001)
+
+real.chimpgor.clstrprev <- mean(real.chimpgor.clstrprev$pv18s)
+
+hist(chimpgor.range.iters$chimpgor_overlap_prev, breaks = 50, 
+     main = "Simulated Pvivax Prevelance \n within Chimp & Gor Clusters")
+abline(v = real.chimpgor.clstrprev, col = "red")
+
+
+```
+
+As above, assuming a one-sided test that chimpanzee and gorilla clusters should have more _P. vivax_, we can get a monte-carlo P-value of approximately `r round(mean(chimpgor.range.iters$chimpgor_overlap_prev > real.chimpgor.clstrprev), 2)`. Obviously not significant from plot and maps.
+
+
+```{r}
+#---------------------------------------------- 
+# Housekeeping -- save out and write out
+#----------------------------------------------- 
+ 
+saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
+
+
+provmaps <- mp$plots[1:3]
+
+save(provmaps, caseprevmaps, case_n_maps, aperange_nhapv,
+      file = "results/basic_maps_results.rda")
+
+```
+
+```{r}
+
+##############################
+# Ape Overlap
+##############################
+jpeg("results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
+aperange_nhapv + prettybasemap_nodrc
+graphics.off()
+
+```
+
+```{r, results = 'asis', fig.width= 12, fig.height=12}
+aperange_nhapv + prettybasemap_nodrc
+```
+
