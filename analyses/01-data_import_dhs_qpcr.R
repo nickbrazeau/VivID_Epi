@@ -18,7 +18,7 @@ rdhs::set_rdhs_config(email = "nbrazeau@med.unc.edu",
                       project = "Malaria Spatiotemporal Analysis",
                       config_path = "rdhs.json",
                       global = FALSE,
-                      cache_path = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/")
+                      cache_path = "data/raw_data/dhsdata/")
 
 survs <- rdhs::dhs_surveys(countryIds = c("CD"),
                            surveyYearStart = 2013)
@@ -73,8 +73,8 @@ if(nrow(panplasmpcrres) != nrow(pfpcr) & nrow(pfpcr) != nrow(popcr) & nrow(popcr
 #---------------------------------------------------------------------------------
 # Read in and match PR barcode to qpcr data
 #---------------------------------------------------------------------------------
-pr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDPR61FL.rds")
-ar <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDAR61FL.rds") 
+pr <- readRDS(file = "data/raw_data/dhsdata/datasets/CDPR61FL.rds")
+ar <- readRDS(file = "data/raw_data/dhsdata/datasets/CDAR61FL.rds") 
 class(ar) <- "data.frame" # drop this custom dhs class so it doesn't interfere w/ tidy
 ar <- ar %>% 
   dplyr::rename(hv001 = hivclust,
@@ -91,7 +91,7 @@ arpr <- arpr %>%
 #---------------------------------------------------------------------------------
 # Read in MR and IR 
 #---------------------------------------------------------------------------------
-mr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDMR61FL.rds")
+mr <- readRDS(file = "data/raw_data/dhsdata/datasets/CDMR61FL.rds")
 class(mr) <- "data.frame"
 mr <- mr %>% 
   dplyr::rename(hv001 = mv001,
@@ -100,7 +100,7 @@ mr <- mr %>%
                 caseid = mcaseid) %>% 
   dplyr::select(c("hv001", "hv002", "hvidx", "caseid", "mv717"))
 
-wr <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDIR61FL.rds") 
+wr <- readRDS(file = "data/raw_data/dhsdata/datasets/CDIR61FL.rds") 
 class(wr) <- "data.frame"
 wr <- wr %>% 
   dplyr::rename(hv001 = v001,
@@ -120,7 +120,7 @@ wrmrprar <- dplyr::left_join(arpr, mrwr)
 #---------------------------------------------------------------------------------
 
 #spatial from the DHS -- these are cluster level vars
-ge <- sf::st_as_sf(readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
+ge <- sf::st_as_sf(readRDS(file = "data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
 colnames(ge) <- tolower(colnames(ge))
 ge$adm1name <- gsub(" ", "-", ge$adm1name) # for some reason some of the char (like Kongo Central, lack a -), need this to match GADM
 ge$adm1name <- gsub("Tanganyka", "Tanganyika", ge$adm1name) # DHS misspelled this province
@@ -138,7 +138,7 @@ gewrmrprar <- dplyr::left_join(x=wrmrprar, y=ge, by = "hv001")
 #---------------------------------------------------------------------------------
 # DHS Geospatial Covariates
 #---------------------------------------------------------------------------------
-gc <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGC62FL.rds") %>% 
+gc <- readRDS("data/raw_data/dhsdata/datasets/CDGC62FL.rds") %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::rename(hv001 = dhsclust) # for easier merge with PR
 
@@ -161,7 +161,7 @@ panplasmpcrres_gcgeprar <- dplyr::inner_join(panplasmpcrres, gcgegewrmrprar, by 
 # write out joined HIV recode to PR, IR, MR, GE, and GC with our plasmodium PCR results 
 # in order to perserve sf features, covert to sf (and dataframe)
 panplasmpcrres_gcgeprar <- sf::st_as_sf(panplasmpcrres_gcgeprar)
-saveRDS(panplasmpcrres_gcgeprar, file = "~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
+saveRDS(panplasmpcrres_gcgeprar, file = "data/raw_data/vividpcr_dhs_raw.rds")
 
 
 
