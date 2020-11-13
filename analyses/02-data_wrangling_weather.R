@@ -10,7 +10,7 @@ library(sf)
 # create bounding box of Central Africa for Speed
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
-sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+sp::proj4string(caf) <- "+init=epsg:4326"
 
 
 
@@ -27,7 +27,7 @@ readRasterBB.precip <- function(rstfile, sp = sp, caf = caf){
   raster::values(ret) <- vals
   
   ret <- raster::projectRaster(from = ret, to = ret,
-                               crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs +units=m")) # want units to be m
+                               crs = sf::st_crs("+init=epsg:4326")) 
   
   return(ret)
   
@@ -44,13 +44,14 @@ readRasterBB.temp <- function(rstfile, sp = sp, caf = caf){
   raster::values(ret) <- vals
   
   ret <- raster::projectRaster(from = ret, to = ret,
-                               crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs +units=m")) # want units to be m
+                               crs = sf::st_crs("+init=epsg:4326")) 
   return(ret)
 }
 
 
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+sf::st_crs(DRCprov)
 
 #......................................................................................................
 # Precipitation (CHRIPS) and Temperature (MODIS/LAADS) Read In Data
@@ -98,6 +99,9 @@ tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>%
 #......................................................................................................
 # Precipitation and Temperature Considered as Means
 #......................................................................................................
+#......................
+# tidy
+#......................
 # Get study months
 dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 # drop observations with missing geospatial data 
@@ -105,6 +109,19 @@ dt <- dt %>%
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
 
+# sanity check
+sf::st_crs(dt)
+identicalCRS(sf::as_Spatial(dt), caf)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+dt <- sp::spTransform(sf::as_Spatial(dt), CRSobj = sp::CRS("+init=epsg:4326"))
+identicalCRS(dt, caf)
+# back to tidy 
+dt <- sf::st_as_sf(dt)
+
+
+#......................
+# extract out means
+#......................
 wthrnd.mnth <- dt %>% 
   dplyr::mutate(hvdate_dtdmy = lubridate::dmy(paste(hv016, hv006, hv007, sep = "/")),
                 hvyrmnth_dtmnth = paste(lubridate::year(hvdate_dtdmy), lubridate::month(hvdate_dtdmy), sep = "-")) %>% 
@@ -209,13 +226,47 @@ for (i in tempmissing) {
 }
 
 
-wthrnd.mean <- wthrnd.mean %>% 
-  dplyr::select(c("hv001", "precip_mean_cont_clst", "temp_mean_cont_clst"))
-sf::st_geometry(wthrnd.mean) <- NULL
+#......................
+# check outputs
+#......................
+wthrnd.mean %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
+  ggplot() + 
+  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  ggspatial::layer_spatial(data = precipstack.mean,
+                           aes(fill = stat(band1)),
+                           alpha = 0.9,
+                           na.rm = T) +
+  geom_point(aes(x = longnum, y = latnum, color = precip_mean_cont_clst)) +
+  scale_fill_viridis_c(option="plasma", direction = 1) +
+  scale_color_viridis_c(option="viridis") + 
+  ggtitle("Precip")
+
+
+wthrnd.mean %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
+  ggplot() + 
+  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  ggspatial::layer_spatial(data = tempstack.mean,
+                           aes(fill = stat(band1)),
+                           alpha = 0.9,
+                           na.rm = T) +
+  geom_point(aes(x = longnum, y = latnum, color = temp_mean_cont_clst)) +
+  scale_fill_viridis_c(option="plasma", direction = 1) +
+  scale_color_viridis_c(option="viridis") + 
+  ggtitle("Temp")
+
 
 #............................................................................
 # OUT
 #............................................................................
+wthrnd.mean <- wthrnd.mean %>% 
+  dplyr::select(c("hv001", "precip_mean_cont_clst", "temp_mean_cont_clst"))
+sf::st_geometry(wthrnd.mean) <- NULL
+
+
 saveRDS(object = precipstack.mean, 
         file = "data/derived_data/vividepi_precip_study_period_effsurface.rds")
 

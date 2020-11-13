@@ -12,7 +12,7 @@ library(sf)
 # create bounding box of Central Africa for Speed
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
-sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+sp::proj4string(caf) <- "+init=epsg:4326"
 
 
 #..................................
@@ -27,17 +27,29 @@ ge <- dt %>%
   dplyr::select(c("hv001", "longnum", "latnum", "urban_rura")) %>% 
   dplyr::mutate(urban_rura = as.character(urban_rura)) %>% # coerce to char so attr list doesn't mess with dplyr
   dplyr::filter(!duplicated(.))
+# sanity check
+sf::st_crs(ge)
+identicalCRS(sf::as_Spatial(ge), caf)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+ge <- sp::spTransform(sf::as_Spatial(ge), CRSobj = sp::CRS("+init=epsg:4326"))
+identicalCRS(ge, caf)
+# back to tidy 
+ge <- sf::st_as_sf(ge)
+
+
 
 #............................................................
 # get health care calculated distances
 #...........................................................
 hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+# sanity check
+sf::st_crs(hlthdist)
+# crop for speed
 hlthdist <- raster::crop(x = hlthdist, y = caf)
+
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
-# check simple crs
-sf::st_crs(hlthdist)
 
 
 #............................................................
@@ -68,6 +80,7 @@ for(i in 1:nrow(hlthdist.mean)){
 #......................
 # inspect results
 #......................
+# aggregate quickly so we don't overwhelm ggplot
 hlthdist.agg <- raster::aggregate(hlthdist, fact = 10, fun = mean)
 
 hlthdist.mean %>% 

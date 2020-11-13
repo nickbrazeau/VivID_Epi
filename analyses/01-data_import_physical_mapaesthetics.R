@@ -10,7 +10,7 @@ library(sf)
 library(raster)
 library(ggspatial)
 library(elevatr)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("R/00-functions_basic.R")
 
 
 #---------------------------------------------------------------------------------
@@ -47,6 +47,27 @@ brdrcnt <- lapply(c("UGA", "SSD", "CAF", "COG", "AGO", "ZMB", "TZA", "RWA", "BDI
                   })
 
 drcadm0 <- raster::getData(name = "GADM", country = "COD", level = 0, path = "data/map_bases/gadm/")
+
+
+#......................
+# liftover DRC prov to match our consistent epsg:4326
+# http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+# and save out
+#......................
+# prov adm1
+DRCprov <- sf::st_transform(DRCprov, crs = sf::st_crs("+init=epsg:4326"))
+
+# prov adm0
+drcadm0 <- sf::st_as_sf(readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds"))
+sf::st_crs(drcadm0)
+drcadm0 <- sp::spTransform(sf::as_Spatial(drcadm0), CRSobj = sp::CRS("+init=epsg:4326"))
+drcadm0 <- sf::st_as_sf(drcadm0)
+sf::st_crs(drcadm0)
+sp::identicalCRS(sf::as_Spatial(drcadm0), sf::as_Spatial(DRCprov))
+# save out
+saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")
+saveRDS(drcadm0, "data/map_bases/gadm/gadm36_COD_0_sp.rds")
+
 
 #..............................
 # Pull down terrain and hill shading
@@ -243,4 +264,3 @@ save(prettybasemap_terraincolors,
      prettybasemap_nodrc_dark,
      smpl_base_map,
      file = "data/map_bases/vivid_maps_bases.rda")
-saveRDS(DRCprov, file = "data/map_bases/vivid_DRCprov.rds")

@@ -1,20 +1,25 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to import ECOLOGICAL Variables from the web that has to do with geospatial and climate data
-# Will then merge to dhs scrape in the 01-data_import_epi file
+# Will then merge to dhs wrangling script
 #----------------------------------------------------------------------------------------------------
 # libraries
 library(tidyverse)
 library(sf)
+library(sp)
 
 # set boundaries
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
-sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+# http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+sp::proj4string(caf) <- "+init=epsg:4326"
 
 #---------------------------------------------------------------------------------
 # Pull Down Great Ape Territories from IUC (minus Pongo)
 #---------------------------------------------------------------------------------
 ape <- sf::read_sf("data/raw_data/redlist_species_data_primate/data_0.shp")
+# for sanity
 sf::st_crs(ape)
+identicalCRS(caf, sf::as_Spatial(ape))
+# subset to greater apes 
 ape <- ape[grepl("pan paniscus|pan troglodytes|gorilla", tolower(ape$BINOMIAL)), ] %>%  # pan trog, pan panisus, gorilla sp
   dplyr::rename(species = BINOMIAL)
 drc_ape <- sf::st_crop(x = ape, y = sf::st_as_sf(caf))
@@ -50,8 +55,14 @@ ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>%
   magrittr::set_colnames(tolower(colnames(.))) %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
+# sanity check
 sf::st_crs(ge)
-
+identicalCRS(sf::as_Spatial(ge), caf)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+ge <- sp::spTransform(sf::as_Spatial(ge), CRSobj = sp::CRS("+init=epsg:4326"))
+identicalCRS(ge, caf)
+# back to tidy 
+ge <- sf::st_as_sf(ge)
 
 #----------------------------------------------------------------------------------------------------
 # Waterways
@@ -71,6 +82,7 @@ wtr <-  sf::st_union( wtr )
 #......................
 # quick look
 #......................
+# sanity check
 sf::st_crs(wtr)
 # plot
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")

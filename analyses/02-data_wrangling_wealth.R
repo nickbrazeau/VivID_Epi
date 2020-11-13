@@ -9,7 +9,7 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("R/00-functions_basic.R")
 tol <- 1e-3
 set.seed(48)
 
