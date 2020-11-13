@@ -332,7 +332,7 @@ knitr::kable(moranIclst)
 ```
 
 
-## Krigged Prevalence Maps
+## Krigged MLE Prevalence Maps
 **N.B. Here I have employed an empirical logit transformation and used a "trans-Gaussian" approximation under a MLE framework**. This means that I now assume a model framework of:    
 $$\hat{Y}|S(x_i) \sim N(X_i^\intercal \space \beta \space + \space S(x_i), \space \tau^2)$$    
 Under this formulation, nugget effects are being absorbed by the conditional normal. 
