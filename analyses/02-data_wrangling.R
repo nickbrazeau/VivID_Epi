@@ -14,6 +14,11 @@ library(tidyverse)
 source("R/00-functions_basic.R")
 tol <- 1e-3
 
+# create bounding box of Central Africa for Speed/sanity checks
+# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+init=epsg:4326"
+
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
 #-------------------------------------------------------------- 
@@ -31,10 +36,19 @@ dt <- dt %>%
   dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
   dplyr::filter(hiv05 != 0) # drop observations with samplings weights set to 0
 
+# sanity check
+sf::st_crs(dt)
+identicalCRS(sf::as_Spatial(dt), caf)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+dt <- sp::spTransform(sf::as_Spatial(dt), CRSobj = sp::CRS("+init=epsg:4326"))
+identicalCRS(dt, caf)
+# back to tidy 
+dt <- sf::st_as_sf(dt)
+
+
 #--------------------------------------------------------------
 # Section 2: Looking at recodes, manual data wrangle
 #-------------------------------------------------------------- 
-
 #..........................
 # Exposure of Interests
 #..........................
@@ -95,7 +109,6 @@ summary(hs$housemax) # looks reasonable by cluster
 
 dt <- dt %>% 
   dplyr::mutate(houseid = factor(paste0(hv001, "_", hv002)))
-
 
 #.............
 # dates
@@ -195,7 +208,7 @@ plot(dt$hb1, dt$hab1_cont)
 # https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
 
 # floor
-floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_floor_liftover.csv")
+floor <- readr::read_csv("internal_datamap_files/pr_floor_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv213 = haven::as_factor(hv213), 
                 hv213 =  forcats::fct_drop(hv213))
