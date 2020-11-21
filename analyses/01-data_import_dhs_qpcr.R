@@ -130,9 +130,17 @@ ge <- ge %>%
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
   dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
 
+# sanity check
+sf::st_crs(ge)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+ge <- sp::spTransform(sf::as_Spatial(ge), CRSobj = sp::CRS("+init=epsg:4326"))
+# back to tidy 
+ge <- sf::st_as_sf(ge)
 saveRDS(object = ge, file = "data/raw_data/dhsdata/VivIDge.RDS")
 
-
+#......................
+# add in space
+#......................
 gewrmrprar <- dplyr::left_join(x=wrmrprar, y=ge, by = "hv001") 
 
 #---------------------------------------------------------------------------------

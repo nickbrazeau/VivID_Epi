@@ -483,16 +483,16 @@ xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
 #...........................
 # All Observations
 #...........................
-saveRDS(dt, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+saveRDS(dt, file = "data/derived_data/vividepi_recode.rds")
 
 #...........................
 # Complete Observations
 #...........................
 # get final covariates
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::pull(c("column_name"))
 
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
 sf::st_geometry(dt) <- NULL
 dt.cc <- dt  %>% 
   dplyr::select(c("pv18s", "pfldh", "po18s", dcdr)) %>% 

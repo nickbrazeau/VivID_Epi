@@ -9,6 +9,7 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
@@ -16,15 +17,15 @@ library(tidyverse)
 library(sf)
 library(mice)
 library(srvyr)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("R/00-functions_basic.R")
 
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-dt.cc <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dt.cc <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
 
@@ -46,7 +47,7 @@ rskfctr <- dcdr %>%
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
 
 ```{r}
-covar.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
+covar.files <- list.files("analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
 covar.files <- covar.files[!grepl("params.RDS|f.RDS", covar.files)]
 
 # need to sort properly
@@ -66,7 +67,7 @@ covar.results.vals <- lapply(covar.files$covar.files, read_covar_files) %>%
   do.call("rbind", .)
 
 
-paramsdf <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
+paramsdf <- readRDS("analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
   dplyr::select(-c(data))
 
 covar.results <- paramsdf
