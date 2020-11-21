@@ -9,8 +9,6 @@ editor_options:
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
 knitr::opts_knit$set(root.dir = here::here())
-
-
 ```
 ```{r}
 source("R/00-functions_basic.R")
@@ -161,32 +159,20 @@ As above, assuming a one-sided test that chimpanzee and gorilla clusters should 
 
 
 ```{r}
-#---------------------------------------------- 
-# Housekeeping -- save out and write out
-#----------------------------------------------- 
- 
-saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
-
-
-provmaps <- mp$plots[1:3]
-
-save(provmaps, caseprevmaps, case_n_maps, aperange_nhapv,
-      file = "results/basic_maps_results.rda")
-
-```
-
-```{r}
 
 ##############################
 # Ape Overlap
 ##############################
 jpeg("results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
-aperange_nhapv + prettybasemap_nodrc
+aperange_nhapv + smpl_base_map
 graphics.off()
+
+# save out
+saveRDS(aperange_nhapv, "results/ape_overlap_map.rds")
 
 ```
 
 ```{r, results = 'asis', fig.width= 12, fig.height=12}
-aperange_nhapv + prettybasemap_nodrc
+aperange_nhapv + smpl_base_map
 ```
 

@@ -9,8 +9,6 @@ editor_options:
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
 knitr::opts_knit$set(root.dir = here::here())
-
-
 ```
 ```{r}
 source("R/00-functions_basic.R")
@@ -184,7 +182,7 @@ pvret <- ggplot() +
   scale_size(guide = 'none') +
   coord_sf(datum=NA) + # to get rid of gridlines
   vivid_theme +
-  prettybasemap_nodrc_dark +
+  smpl_base_map +
   theme(axis.text = element_blank(),
         axis.line = element_blank(), 
         axis.title = element_blank(),
@@ -243,91 +241,31 @@ cowplot::ggdraw() +
 
 ### Moran's I by Province
 ```{r, results='asis'}
-
 #......................
-# Make Adjacency Matrix for Pvf
+# read in prov Moran's I
 #......................
-drcprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-# https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
-W.nb <- spdep::poly2nb(sf::as_Spatial(drcprov), row.names = drcprov$adm1name)
-W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
-
-
-moran_mc_wrapper <- function(data, listw){
-  prev <- data$plsmdprev
-  ret <- spdep::moran.mc(x = prev,
-                         listw = spdep::mat2listw(listw),
-                         alternative = "greater",
-                         nsim = 1e5)
-  return(ret)
-}
-
-#........................
-# Moran's I for Prov
-#........................
-mp.prov <- mp %>% 
-  dplyr::filter(maplvl == "adm1name") %>% 
-  dplyr::ungroup()
-
-mp.prov$moranIprov <- purrr::map(mp.prov$data, moran_mc_wrapper, listw = W)
-
-moranIprov <- mp.prov %>% 
-  dplyr::select(c("plsmdmspec", "moranIprov")) 
-
-moranIprov$Istatistic <- purrr::map(moranIprov$moranIprov, "statistic")
-moranIprov$pvalue <- purrr::map(moranIprov$moranIprov, "p.value")
-
+moranIprov <- readRDS("results/MoranI_prov.RDS")
 moranIprov <- moranIprov %>% 
   dplyr::select(-c("moranIprov")) %>% 
   tidyr::unnest(cols = c("Istatistic", "pvalue"))
 
 knitr::kable(moranIprov)
 
+
 ```
 
 ### Moran's I by Cluster
 ```{r, results='asis'}
 
-#........................
-# Moran's I for Cluster Level
-#........................
-ge.nosf <- ge
-sf::st_geometry(ge.nosf) <- NULL
-
-# note, need to remove three clusters that were not screened for malaria
-# one cluster due to no HIV testing in it(? DHS internal) and 
-# two clusters lost due to contamination
-maldhsclustlist <- unique( dt$hv001 )
-ge.clst <- ge %>% 
-  dplyr::filter(hv001 %in% maldhsclustlist)
-
-# get GC Weight Matrix
-gcdist <- ge.clst %>% 
-   dplyr::select(c("longnum", "latnum")) %>% 
-  sf::st_distance(x = .,
-                  which = "Great Circle")
-
-gcdist  <- apply(gcdist, 2, as.numeric) # drop units
-gcdist.inv <- 1/gcdist
-diag(gcdist.inv) <- 0
-
-mp.clst$moranIclust <- purrr::map(mp.clst$data, 
-                                  moran_mc_wrapper, 
-                                  listw = gcdist.inv)
-
-moranIclst <- mp.clst %>% 
-  dplyr::select(c("plsmdmspec", "moranIclust")) 
-
-
-moranIclst$Istatistic <- purrr::map(moranIclst$moranIclust, "statistic")
-moranIclst$pvalue <- purrr::map(moranIclst$moranIclust, "p.value")
-
+#......................
+# read in cluster Moran's I
+#......................
+moranIclst <- readRDS("results/MoranI_clust.RDS")
 moranIclst <- moranIclst %>% 
   dplyr::select(-c("moranIclust")) %>% 
   tidyr::unnest(cols = c("Istatistic", "pvalue"))
 
 knitr::kable(moranIclst)
-
 
 ```
 
@@ -402,6 +340,13 @@ graphics.off()
 #### More Maps
 
 ```{r}
+#---------------------------------------------- 
+# Housekeeping -- save out and write out
+#----------------------------------------------- 
+saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
+provmaps <- mp$plots[1:3]
+save(provmaps, caseprevmaps, case_n_maps,
+      file = "results/basic_maps_results.rda")
 
 ############################################################
 #########               MORE MAPS                  ######### 
@@ -541,10 +486,7 @@ cowplot::plot_grid(pfprevmap,
 ##############################
 # Pf nice
 ##############################
-drccites <- readxl::read_excel("data/map_bases/DRC_city_coordinates.xlsx") %>% 
-  dplyr::mutate(latnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,1] ),
-                longnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,2] ) 
-                )
+drccites <- readr::read_csv("data/map_bases/DRC_city_coordinates.csv")
 
 pfprevmap <- pfprevmap  +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
@@ -579,7 +521,7 @@ clstcounts <- dplyr::left_join(clstcounts, ge, by = "hv001")
 clstcountsplot <- ggplot() + 
   geom_sf(data = DRCprov, fill = "#e5f5e0", color = "#969696") +
   geom_point(data = clstcounts, aes(x = longnum, y = latnum, size = n), fill = "#252525", shape = 4, alpha = 0.5, show.legend = F) +
-  prettybasemap_nodrc
+  smpl_base_map
 
 
 jpeg("results/figures/Africa_Inset_clsts.jpg", width = 11, height = 8, units = "in", res = 500)
