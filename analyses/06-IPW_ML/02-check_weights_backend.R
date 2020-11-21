@@ -2,36 +2,18 @@
 # Purpose of this script is to check for 
 # covariate balance after applying the weights
 #----------------------------------------------------------------------------------------------------
+library(rslurm)
 library(tidyverse)
 library(energy)
 source("R/00-IPTW_functions.R")
 set.seed(48, "L'Ecuyer")
 
 #............................................................
-# Import Data
+# Import Data and superlearner results
 #............................................................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 
-params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
-SLpaths <- list.files("analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
-                      pattern = ".RDS", full.names = T)
-
-SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
-
-# sort properly to match rows in df
-SLpaths <- tibble::tibble(SLpaths = SLpaths) %>% 
-  mutate(order = stringr::str_extract(basename(SLpaths), "[0-9]+"),
-         order = as.numeric(order)) %>% 
-  dplyr::arrange(order) %>% 
-  dplyr::select(-c(order)) %>% 
-  unlist(.)
-params$ensembl_cvRisk <- purrr::map(  SLpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
-
-#............................................................
-# Get IPTW Estimates
-#............................................................
-params$SLpreds <-purrr::map(params$ensembl_cvRisk, "SL.predictions")
-params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
+params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
 
 #............................................................
 # Make Model Map
@@ -53,9 +35,7 @@ select_samples_by_iptw_and_feattarget <- function(target, feat, iptw, data){
 # in the energy function 
 #............................................................
 modelmap.ml <- params %>% 
-  dplyr::mutate(target = purrr::map(.$task, mlr::getTaskTargetNames)) %>% 
-  dplyr::select(c("task", "iptw", "target")) %>% 
-  tidyr::unnest(col = target)
+  dplyr::select(c("task", "iptw", "target"))
 
 modelmap.ml <- replicate(n = 100, modelmap.ml,
                          simplify = F) %>% 
@@ -82,9 +62,7 @@ modelmap.ml <- modelmap.ml %>%
 
 # get base target-feats too
 modelmap.nowi <- params %>% 
-  dplyr::mutate(target = purrr::map(.$task, mlr::getTaskTargetNames)) %>% 
-  dplyr::select(c("task", "target")) %>% 
-  tidyr::unnest(col = target)
+  dplyr::select(c("task", "target")) 
 
 modelmap.nowi$feat <- map(modelmap.nowi$task, mlr::getTaskFeatureNames)
 modelmap.nowi$data <- lapply(1:nrow(modelmap.nowi), function(x) return(dt))

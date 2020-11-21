@@ -14,12 +14,12 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```{r}
 library(mlr)
 library(tidyverse)
-source("~/Documents/GitHub/VivID_Epi/R/00-IPTW_functions.R")
+source("R/00-IPTW_functions.R")
 
 ```
 
 ```{r checkwidcdr}
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   rename(target = column_name)
 
 

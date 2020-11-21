@@ -10,7 +10,7 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
-
+knitr::opts_knit$set(root.dir = here::here())
 ```
 ```{r}
 #--------------------------------------------
@@ -22,8 +22,8 @@ library(tidyverse)
 library(sf)
 set.seed(48)
 
-DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
-ge <- sf::st_as_sf(readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
 
 coords <- ge %>% 
   magrittr::set_colnames(tolower(colnames(.))) %>% 
@@ -46,10 +46,10 @@ keda$totalwss <- map(keda$wss, function(x){return(sum(x))})
 
 keda.df <- keda %>% 
   dplyr::select(c("k", "totalwss")) %>% 
-  tidyr::unnest()
+  tidyr::unnest(cols = c("totalwss"))
 
 kesteda.plotObj <- keda.df %>% 
-  tibble::as.tibble(.) %>% 
+  tibble::as_tibble(.) %>% 
   ggplot() +
   geom_line(aes(x=k, y=totalwss)) + 
   geom_point(aes(x=k, y=totalwss)) +
@@ -100,7 +100,7 @@ drcpart <- drcpart %>%
   dplyr::select(c("hv001", "k")) %>% 
   dplyr::rename(kmeansk = k)
 
-saveRDS(drcpart, "~/Documents/GitHub/VivID_Epi/data/derived_data/kmean_drcpartitioned.rds")
+saveRDS(drcpart, "data/derived_data/kmean_drcpartitioned.rds")
 
 ```
 

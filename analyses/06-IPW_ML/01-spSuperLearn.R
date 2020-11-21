@@ -5,7 +5,7 @@
 remotes::install_github("nickbrazeau/mlrwrapSL"); library(mlrwrapSL)
 library(tidyverse)
 library(mlr)
-library(rslurm)
+library(energy)
 source("R/00-functions_basic.R")
 source("R/00-IPTW_functions.R")
 source("analyses/06-IPW_ML/00-import_learners.R")
@@ -32,7 +32,7 @@ spcrossvalset <- split(1:nrow(dt.ml.cc), factor(dt.ml.cc$kmeansk))
 
 
 #........................
-# Subset and Store Dataframes for Tasks for prediciton on full dataset
+# Subset and Store Dataframes for Tasks for prediction on full dataset
 #........................
 txs$data <- purrr::map2(.x = txs$target, .y = txs$adj_set, 
                         .f = function(x, y){
@@ -64,6 +64,8 @@ txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classi
 txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "hv106_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
+txs$learnerlib[txs$target == "farmer_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
+txs$learnerlib[txs$target == "hlthst_duration_fctb_clst"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 
 
 
@@ -75,50 +77,26 @@ txs$learnerlib[txs$target == "hv106_fctb"] <- list(list(mlr::makeLearner("classi
 paramsdf <- txs[,c("learnerlib", "task")]
 paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
 
-
-# add seed
-paramsdf$seed <- 48
-
-# for slurm on LL
-setwd("analyses/06-IPW_ML/")
-ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = mlrwrapSL::SL_crossval_risk_pred, 
-                            params = paramsdf, 
-                            jobname = 'vivid_spSL',
-                            nodes = ntry, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 32000,
-                                                 array = sprintf("0-%d%%%d", 
-                                                                 ntry, 
-                                                                 17),
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "5-00:00:00"))
-
-cat("*************************** \n Submitted SL models \n *************************** ")
+#......................
+# run
+#......................
+paramsdf$ensembl_cvRisk <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, seed = 48)
 
 
+#............................................................
+# Look at distribution and effects of iptweights
+#...........................................................
+# tidy up
+paramsdf <- paramsdf %>% 
+  dplyr::mutate(target = purrr::map_chr(task, mlr::getTaskTargetNames)) %>% 
+  dplyr::select(c("target", "ensembl_cvRisk"))
 
+#......................
+# Get IPTW Estimates
+#......................
+txs <- dplyr::left_join(txs, paramsdf, by = "target")
+txs$SLpreds <- purrr::map(txs$ensembl_cvRisk, "SL.predictions")
+txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# saveout
+saveRDS(txs, "results/ensembl_cvRisk_paramdf.RDS")
