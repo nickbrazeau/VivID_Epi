@@ -8,7 +8,7 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
-
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
@@ -18,59 +18,29 @@ source("R/00-IPTW_functions.R")
 
 ```
 
-```{r checkwidcdr}
-dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
-  rename(target = column_name)
-
-
-params <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
-SLpaths <- list.files("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
-                      pattern = ".RDS", full.names = T)
-
-SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
-
-# sort properly to match rows in df
-SLpaths <- tibble::tibble(ELpaths = SLpaths) %>% 
-  mutate(order = stringr::str_extract(basename(SLpaths), "[0-9]+"),
-         order = as.numeric(order)) %>% 
-  dplyr::arrange(order) %>% 
-  dplyr::select(-c(order)) %>% 
-  unlist(.)
-params$ensembl_cvRisk <- purrr::map(  SLpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
-
-#................................................................. 
-# Get IPTW Estimates
-#.................................................................
-params$SLpreds <-purrr::map(params$ensembl_cvRisk, "SL.predictions")
-params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
-
-
-```
 
 
 ### Distribution of IPTW for each Risk Factor
 
 #### Table 
 ```{r checkwidist}
+#................................................................. 
+# read in IPTW Estimates
+#.................................................................
+params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
 
+#......................
+# look at weight
+#......................
 widist <- purrr::map(params$iptw, summary) %>% 
   do.call("rbind.data.frame", .) %>% 
   dplyr::mutate_if(is.numeric, round, 2) %>% 
   magrittr::set_colnames(c("min", "1stquart", "median", "mean", "3rdqart", "max"))
 
-params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
-
-# get normal var name
-varnames <- dcdr %>% 
-  dplyr::select(c("target", "abridged_var_label"))
-params <- dplyr::left_join(params, varnames, by = "target")
-
-
-widist <- cbind.data.frame(params$abridged_var_label, widist)
 ```
 
 ```{r, results='asis'}
-widist %>% 
+cbind.data.frame(params$abridged_var_label, widist) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(
@@ -113,7 +83,7 @@ plot(iptw.dist.plotObj)
 
 ```
   
-**N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. 
+**N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. IIn addition, hospital distance is extremely associated with urbanicity (as expected).
 
 
 ### Covariate Balance
@@ -121,9 +91,9 @@ A classic definition of confounding in a cross-sectional survey is an unequal di
   
 Given that this fancy statistic doesn't take into account weights, I made 100 pseudopopulations (by sampling from the base population with respect to the calculated IPTW) and calculated the energy correlation for each iteration. Plotted is the distribution of the correlations for each covariate (e.g. Precipitation-Temperature, Precipitation-Wealth, etc. etc.) given that we focused on canonical sets when possible. 
 ```{r checkwicovarbalparams}
-covarbalparams <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
+covarbalparams <- readRDS("analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
 
-covarretfiles <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/",
+covarretfiles <- list.files(path = "analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/",
                             pattern = ".RDS", full.names = T)
 covarretfiles <- covarretfiles[!grepl("f.RDS|params", covarretfiles)]
 
@@ -166,7 +136,7 @@ covarbalanceplot <- covarbalparams %>%
         axis.line.x = element_line(size = 0.5, linetype = "solid", colour = "#000000"),
         axis.line.y = element_line(size = 0.5, linetype = "solid", colour = "#000000"))
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/IPTWcovar_bal.jpg",
+jpeg("results/figures/IPTWcovar_bal.jpg",
      width = 11, height = 8, units = "in", res = 500)
 plot(covarbalanceplot)
 graphics.off()
@@ -233,9 +203,6 @@ knitr::kable(cbind(nm = "base_vs_IPTW_reduction", summary(bal_sum_wide$base_vs_I
 # Pull out some relevant features
 # from our fitted IPTW
 #.......................................
-
-params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) ) 
-
 stbmdldf <- params %>% 
   dplyr::select(c("target", "ensembl_cvRisk"))
 
@@ -255,7 +222,7 @@ stbmdldf$learners <- purrr::map(stbmdldf$alg.cvrisk.validationset,
 
 ```{r checkwiappendix2, results='asis'}
 
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
+dcdr <- readxl::read_excel(path = "internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
 
 out <- dplyr::left_join(dcdr, stbmdldf, by = "target") %>% 
   dplyr::select(-c("group")) %>% 
@@ -274,13 +241,4 @@ out %>%
 
 ```
 
-
-```{r checkwihousekeep}
-#.............................
-# House keeping
-#.............................
-saveRDS(object = params, 
-        file = "~/Documents/GitHub/VivID_Epi/results/IPTWmodels.RDS")
-
-```
 

@@ -8,6 +8,7 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
+knitr::opts_knit$set(root.dir = here::here())
 
 ```
 
@@ -16,8 +17,8 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 library(srvyr)
 library(tidyverse)
 remotes::install_github("malcolmbarrett/ggdag"); library(ggdag)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("R/00-functions_epi.R")
+source("R/00-functions_basic.R")
 
 ```
 
@@ -46,13 +47,13 @@ dagplot <- tidy_dag %>%
 
 plot(dagplot)
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/dag.jpg",
+jpeg(filename = "results/figures/dag.jpg",
      width = 11, height = 8, units = "in", res=500)
 plot(dagplot)
 graphics.off()
 
 
-svglite::svglite("~/Documents/GitHub/VivID_Epi/results/figures/dag.svg",
+svglite::svglite("results/figures/dag.svg",
      width = 11, height = 8)
 plot(dagplot)
 graphics.off()
@@ -61,9 +62,9 @@ graphics.off()
 
 ```{r}
 # import data
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
-params <- readRDS("~/Documents/GitHub/VivID_Epi/results/IPTWmodels.RDS")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+dcdr <- readxl::read_excel(path = "internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
+params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
 
 iptw <- params %>% 
   dplyr::select(c("target", "iptw"))
