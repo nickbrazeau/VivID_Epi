@@ -1,9 +1,9 @@
 #..............................................................
 # Purpose of this script is to have a backend for the CarBayes models
 #..............................................................
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
+source("R/00-functions_basic.R") 
+source("R/00-functions_epi.R") 
+source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
@@ -15,10 +15,10 @@ tol <- 1e-3
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
+mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 
 
 #------------------------------------------------------------------------
@@ -39,7 +39,7 @@ sf::st_geometry(pvprov.weighted.nosf) <- NULL
 #..............................................................
 # Import the Covariates
 #..............................................................
-pvcovar <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_prov_covars_bayesian_fit.RDS")
+pvcovar <- readRDS("data/derived_data/vividepi_prov_covars_bayesian_fit.RDS")
 # combine
 pvprov.weighted.nosf <- dplyr::left_join(pvprov.weighted.nosf, pvcovar, by = "adm1name")
 
@@ -113,7 +113,7 @@ mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
 # save out diagnostic chains
 #..............................................................
 dir.create("analyses/07-spatial_prediction/ProvModels/", recursive = T)
-saveRDS(mod.framework, "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/ProvModels/ProvModel_diag_chains.RDS")
+saveRDS(mod.framework, "analyses/07-spatial_prediction/ProvModels/ProvModel_diag_chains.RDS")
 
 
 ############################################################################################################
@@ -130,7 +130,7 @@ mod.framework.long$MCMC <- purrr::pmap(mod.framework.long, wrap_S.CARleroux)
 #..............................................................
 # save out long chains
 #..............................................................
-saveRDS(mod.framework.long, "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
+saveRDS(mod.framework.long, "analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
 
 
 

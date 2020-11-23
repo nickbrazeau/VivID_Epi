@@ -13,9 +13,9 @@ ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 # Aggregate Covariates
 # means within each adm1
 #-------------------------------------------------------------------------
-precip <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_precip_study_period_effsurface.rds")
-cropland <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_surface.rds")
-nightlights <- raster::raster("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_nightlights_surface.grd")
+precip <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds")
+cropland <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
+fricurban <- readRDS("data/derived_data/vividepi_frictionurban_surface.rds")
 
 
 extract_agg_raster_polygon <- function(rstrlyr, plygn){
@@ -34,6 +34,9 @@ adm1 <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"][[1]] %>% # d
   dplyr::select(c("adm1name", "geometry")) %>% 
   dplyr::filter(!duplicated(.))
 
+# sanity
+adm1 <- sf::st_transform(adm1, crs = "+init=epsg:4326")
+
 pvcovar <- adm1 %>% 
   dplyr::select(c("adm1name"))
 
@@ -44,12 +47,12 @@ adm1 <- split(adm1, 1:nrow(adm1))
 
 pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
 pvcovar$crop <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = cropland) )
-pvcovar$nightlight <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = nightlights) )
+pvcovar$fricurban <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = fricurban) )
 
 
 pvcovar$precip_scale <- my.scale(pvcovar$precip)
 pvcovar$crop_scale <- my.scale(logit(pvcovar$crop, tol = 1e-3))
-pvcovar$nightlight_scale <- my.scale(pvcovar$nightlight)
+pvcovar$fricurban_scale <- my.scale(log(pvcovar$fricurban + 1e-3))
 sf::st_geometry(pvcovar) <- NULL
 
 

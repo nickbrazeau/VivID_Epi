@@ -8,13 +8,14 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
+source("R/00-functions_basic.R")
+source("R/00-functions_maps.R") 
+source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(sf)
 library(srvyr) 
@@ -27,11 +28,11 @@ set.seed(48)
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
-DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
+mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 
 ```
 
@@ -63,14 +64,14 @@ pvclst.covar <- dt %>%
   dplyr::filter(!duplicated(.))
 
 # bring in cropland
-crop <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_propmeans.rds") %>% 
+crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
   dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in nightlights
-nightlists <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_night_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
+# bring in urban fric
+urbanfric <- readRDS("data/derived_data/vividepi_fricurban_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "frctmean_cont_scale_clst"))
 
 pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = nightlists, by = "hv001")
+  dplyr::left_join(x = ., y = urbanfric, by = "hv001")
 
 # join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
@@ -78,7 +79,7 @@ pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
 riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+             "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
 
 
 ```
@@ -169,7 +170,33 @@ mtext("Empirical Variogram for P.vivax Prevelance", side = 3,  line = -6, outer 
 graphics.off()
 
 ```
-A remarkable lack of spatial structure...
+A remarkable lack of spatial structure...?
+
+
+#### Matern Shape
+```{r}
+#......................
+# Matern Shape, K
+#......................
+
+# look at kappa smooth parameter for matern covariance
+profile.kappa <- invisible( PrevMap::shape.matern(plsmdlogit ~ 1,
+                                                  coords = ~ longnum + latnum,
+                                                  data = pvclust.weighted.nosf,
+                                                  set.kappa = seq(0.1, 10, length = 30),
+                                                  start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
+                                                  coverage = NULL # CI coverage
+) )
+
+
+
+```
+
+```{r, results='asis'}
+plot(profile.kappa)
+abline(v = 0.76, col = "blue", lty = 2)
+```
+The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 0.75 (fixed now in subsequent analyses).
 
 #### Estimation of Variogram Parameters
 I.e. nugget effect, sill, and range. Will test a Matern and Exponential Covariance and compare. 
@@ -183,19 +210,19 @@ ml.exp <- geoR::likfit(pvclust.weighted.geodata,
                        cov.model = "exp",
                        fix.nugget = F, 
                        nugget = 0,
-                       fix.kappa = F)
+                       fix.kappa = T) # matern of kappa of 1 reduces to exp
 
 ml.matern <- geoR::likfit(pvclust.weighted.geodata, 
                           ini = c(1, 0.5),
                           cov.model = "matern",
                           fix.nugget = F, 
                           nugget = 0,
-                          fix.kappa = F)
+                          fix.kappa = T,
+                          kappa = 0.75)
 
 #..........................
 # OLS
 #..........................
-
 ols.exp <- geoR::variofit(pv.vario.prev, 
                           ini = c(1, 0.5),
                           cov.model = "exp",
@@ -226,57 +253,59 @@ legend(2, 4, legend = c("Exp", "Matern"),
        lty = c(1, 2), col = c("black", "red"), cex = 0.7)
 
 graphics.off()
-
 ```
+
 Truly impressive lack of spatial structure. From models above, an appropriate _kappa_ value fro the Matern covariance matrix appeared to be 0.5 or 1. Let's explore that specifically below.
 
 We can also use the information from the empirical variogram fits for choosing starting values in our Bayesian model. 
 
 ##### MLE Exponential to the GRF 
 ```{r, results='asis'}
-summary(mle.exp)
+ml.exp
 ```
 
 ##### MLE Matern to the GRF 
 ```{r, results='asis'}
-summary(mle.matern)
+ml.matern
 ```
 
 ##### OLS Exponential Empirical Variogram fit
 ```{r, results='asis'}
-summary(ols.exp)
+ols.exp
 ```
 
 ##### OLS Matern Empirical Variogram fit
 ```{r, results='asis'}
-summary(ols.matern)
+ols.matern
 ```
 
-#### Matern Shape
-```{r}
-#......................
-# Matern Shape, K
-#......................
-
-# look at kappa smooth parameter for matern covariance
-profile.kappa <- invisible( PrevMap::shape.matern(plsmdlogit ~ 1,
-                                                  coords = ~ longnum + latnum,
-                                                  data = pvclust.weighted.nosf,
-                                                  set.kappa = seq(0.1, 10, length = 16),
-                                                  start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
-                                                  coverage = NULL # CI coverage
-) )
-
-
-
-```
+### MLE Estimates w/ PrevMap
+#### Intercept Only Model 
 
 ```{r, results='asis'}
-
-plot(profile.kappa)
-abline(v = 1, col = "blue", lty = 2)
+prevmap.linear.mleintercept <- PrevMap::linear.model.MLE(
+  formula=as.formula("plsmdn~1"), 
+  coords=as.formula("~longnum+latnum"),
+  data=pvclust.weighted.nosf, 
+  start.cov.pars=c(1,1),
+  kappa=0.75)
 ```
-The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 1 (fixed now in subsequent analyses).
+```{r, results='asis'}
+summary(prevmap.linear.mleintercept)
+```
+
+#### Covar Model 
+```{r, results='asis'}
+prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
+  formula=as.formula("plsmdn~precip_mean_cont_scale_clst+cropprop_cont_scale_clst+frctmean_cont_scale_clst"), 
+  coords=as.formula("~longnum+latnum"),
+  data=pvclust.weighted.nosf, 
+  start.cov.pars=c(1,1),
+  kappa=0.75)
+```
+```{r, results='asis'}
+summary(prevmap.linear.mlecovar)
+```
 
 
 
@@ -294,9 +323,9 @@ NB, here it is not quite the same to "turn off space". Instead, we will let the 
 Run out four diagnostic chains to check convergence. 
 ```{r}
 
-mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/params.RDS")
+mod.framework <- readRDS("analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/params.RDS")
 
-mcmc.ret <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/", full.names = T, pattern = ".RDS")
+mcmc.ret <- list.files(path = "analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/", full.names = T, pattern = ".RDS")
 mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
 
 # 0-7 index here so don't have to worry about char 10 and 1 being next to eachother
@@ -342,7 +371,7 @@ mod.framework %>%
 ##### MCMC Trace Plots for Diagnostic Runs
 Too many plots again to visualize here, so will send out locally.
 ```{r}
-diagchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
+diagchain <- "analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
 dir.create(diagchain, recursive = T)
 
 for(i in 1:nrow(mod.framework)){
@@ -366,8 +395,8 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-long.intercept <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
-long.covar <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+long.intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
+long.covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
 long.framework <- tibble::tibble(name = c("intercept", "covars"),
                                  mcmc = list(long.intercept, long.covar))
 

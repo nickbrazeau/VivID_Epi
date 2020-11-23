@@ -26,7 +26,8 @@ DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 pvclust.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001"][[1]]
 # vectors have destroyed spatial class, need to remake
 pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
-sf::st_crs(pvclust.weighted) <-  sf::st_crs(ge)
+# sanity
+pvclust.weighted <- sf::st_transform(pvclust.weighted, "+init=epsg:4326")
 
 # need to keep integers, so will round
 pvclust.weighted <- pvclust.weighted %>% 
@@ -45,12 +46,12 @@ pvclst.covar <- dt %>%
 # bring in cropland
 crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
   dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in nightlights
-nightlists <- readRDS("data/derived_data/vividepi_night_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
+# bring in urban friction
+urbanfric <- readRDS("data/derived_data/vividepi_fricurban_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "frctmean_cont_scale_clst"))
 
 pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = nightlists, by = "hv001")
+  dplyr::left_join(x = ., y = urbanfric, by = "hv001")
 
 # join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
@@ -58,7 +59,7 @@ pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
 riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+             "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
 
 
 
@@ -86,9 +87,9 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
-                                             log.normal.nugget = c(0,25), # this is tau2
-                                             uniform.phi = c(0,50),
-                                             log.normal.sigma = c(0,50))
+                                             log.normal.nugget = c(0, 2.5), # this is tau2
+                                             uniform.phi = c(0,10),
+                                             log.normal.sigma = c(0, 2.5))
 
 # NB covar matrix
 covarsmat <- matrix(0, ncol = 4, nrow=4) # three risk factors, 4 betas
@@ -96,30 +97,30 @@ diag(covarsmat) <- 1 # identity matrix
 
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
                                        beta.covar = covarsmat,
-                                       log.normal.nugget = c(0,25), # this is tau2
-                                       uniform.phi = c(0,50),
-                                       log.normal.sigma = c(0,50))
+                                       log.normal.nugget = c(0, 2.5), # this is tau2
+                                       uniform.phi = c(0,10),
+                                       log.normal.sigma = c(0, 2.5))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
                                                         n.sim = 1e4+1e3,
-                                                        thin = 1, # don't thin
+                                                        thin = 10, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
-                                                        start.nugget = 0.05,
-                                                        start.sigma2 = 1,
+                                                        start.nugget = 1,
+                                                        start.sigma2 = 0.2,
                                                         start.beta = -5,
-                                                        start.phi = 25,
+                                                        start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
 mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
                                                   n.sim = 1e4+1e3,
-                                                  thin = 1, # don't thin
+                                                  thin = 10, 
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
-                                                  start.nugget = 0.05,
-                                                  start.sigma2 = 1, 
+                                                  start.nugget = 1,
+                                                  start.sigma2 = 0.2, 
                                                   start.beta = c(-4, -0.2, 0, -0.02),
-                                                  start.phi = 25,
+                                                  start.phi = 0.5,
                                                   start.S = predict(fit.glm))
 
 
@@ -143,7 +144,7 @@ fit_bayesmap_wrapper <- function(name,
                                  coords, 
                                  data, 
                                  mypriors, mcmcdirections, 
-                                 kappa = 1){
+                                 kappa = 0.75){
   
   ret <- PrevMap::binomial.logistic.Bayes(
     formula = as.formula(formula),
@@ -191,24 +192,24 @@ sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper,
 # Directions LONG RUN                      
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
                                                         n.sim = 1e5 + 1e4,
-                                                        thin = 1, # don't thin
+                                                        thin = 100, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
-                                                        start.nugget = 0.05,
-                                                        start.sigma2 = 1,
+                                                        start.nugget = 1,
+                                                        start.sigma2 = 0.2,
                                                         start.beta = -5,
-                                                        start.phi = 25,
+                                                        start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
 mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
                                                   n.sim = 1e5 + 1e4,
-                                                  thin = 1, # don't thin
+                                                  thin = 100, # don't thin
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
-                                                  start.nugget = 0.05,
-                                                  start.sigma2 = 1, 
+                                                  start.nugget = 1,
+                                                  start.sigma2 = 0.2, 
                                                   start.beta = c(-4, -0.2, 0, -0.02),
-                                                  start.phi = 25,
+                                                  start.phi = 0.5,
                                                   start.S = predict(fit.glm))
 
 
@@ -220,19 +221,19 @@ longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
   data = pvclust.weighted.nosf,
   control.prior = mypriors.intercept,
   control.mcmc = mcmcdirections.intercept,
-  kappa = 1
+  kappa = 0.75
 )
 
 
 longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
   formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
-                       cropprop_cont_scale_clst + nightlightsmean_cont_scale_clst"),
+                       cropprop_cont_scale_clst + frctmean_cont_scale_clst"),
   units.m = as.formula("~ n"),
   coords = as.formula("~ longnum + latnum"),
   data = pvclust.weighted.nosf,
   control.prior = mypriors.mod,
   control.mcmc = mcmcdirections.mod,
-  kappa = 1
+  kappa = 0.75
 )
 
 
