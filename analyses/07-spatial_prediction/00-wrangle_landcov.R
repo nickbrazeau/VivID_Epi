@@ -67,6 +67,10 @@ for(i in 1:nrow(ge.croopland)){
 # liftover
 ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.croopland$cropprop, tol = tol))
 
+# drop extraneous geometry
+sf::st_geometry(ge.croopland) <- NULL
+
+
 # save out
 saveRDS(object = ge.croopland, 
         file = "data/derived_data/vividepi_cropland_propmeans.rds")

@@ -79,6 +79,9 @@ hist(ge.fricurban$fricmean)
 ge.fricurban$frctmean_cont_scale_clst <- my.scale(log(ge.fricurban$fricmean + tol))
 hist(ge.fricurban$frctmean_cont_scale_clst)
 
+# drop extraneous geometry
+sf::st_geometry(ge.fricurban) <- NULL
+
 # save out
 saveRDS(object = ge.fricurban, 
         file = "data/derived_data/vividepi_fricurban_clstmeans.rds")

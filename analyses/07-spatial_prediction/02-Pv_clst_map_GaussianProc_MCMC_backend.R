@@ -16,28 +16,26 @@ tol <- 1e-3
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-
 #......................
 # Subset to Pv
 #......................
-pvclust.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001"][[1]]
-# vectors have destroyed spatial class, need to remake
-pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
-# sanity
-pvclust.weighted <- sf::st_transform(pvclust.weighted, "+init=epsg:4326")
+pvclust.weighted.nosf <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count), 
+                   plsmdn = srvyr::survey_total(pv18s, na.rm = T), 
+                   plsmdprev = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95))
 
 # need to keep integers, so will round
-pvclust.weighted <- pvclust.weighted %>% 
+pvclust.weighted.nosf <- pvclust.weighted.nosf %>% 
   dplyr::mutate(plsmdn = round(plsmdn, 0),
                 n = round(n, 0))
 
 #-------------------------------------------------------------------------
 # Aggregate Covariates
 #-------------------------------------------------------------------------
-
 # precipitation already in dataset 
 pvclst.covar <- dt %>% 
   dplyr::select("hv001", "precip_mean_cont_scale_clst") %>% 
@@ -54,9 +52,7 @@ pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>%
   dplyr::left_join(x = ., y = urbanfric, by = "hv001")
 
 # join together
-pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
-pvclust.weighted.nosf <- pvclust.weighted
-sf::st_geometry(pvclust.weighted.nosf) <- NULL
+pvclust.weighted.nosf <- dplyr::left_join(pvclust.weighted.nosf, pvclst.covar, by = "hv001")
 
 riskvars = c("precip_mean_cont_scale_clst", 
              "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")

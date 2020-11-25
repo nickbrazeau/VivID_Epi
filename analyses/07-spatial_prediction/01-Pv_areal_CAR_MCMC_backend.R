@@ -5,6 +5,7 @@ source("R/00-functions_basic.R")
 source("R/00-functions_epi.R") 
 source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
+library(furrr)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
 library(HDInterval)
@@ -17,24 +18,25 @@ tol <- 1e-3
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
-
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 
 #------------------------------------------------------------------------
 # Subset to Pv
 #------------------------------------------------------------------------
-pvprov.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"][[1]]
-# vectors have destroyed spatial class, need to remake
-pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
-sf::st_crs(pvprov.weighted) <-  sf::st_crs(ge)
-# need ints (binomail prob), so will round
-pvprov.weighted <- pvprov.weighted %>% 
+pvprov.weighted.nosf <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(adm1name) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count), 
+                   plsmdn = srvyr::survey_total(pv18s, na.rm = T), 
+                   plsmdprev = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95))
+
+# need to keep integers, so will round
+pvprov.weighted.nosf <- pvprov.weighted.nosf %>% 
   dplyr::mutate(plsmdn = round(plsmdn, 0),
                 n = round(n, 0))
 
-pvprov.weighted.nosf <- pvprov.weighted
-sf::st_geometry(pvprov.weighted.nosf) <- NULL
+
 
 #..............................................................
 # Import the Covariates
@@ -55,13 +57,17 @@ pvprov.weighted.nosf <- dplyr::left_join(pvprov.weighted.nosf, pvcovar, by = "ad
 #......................
 # Make Adjacency Matrix for Pv 
 #......................
-W.nb <- spdep::poly2nb(sf::as_Spatial(pvprov.weighted), row.names = pvprov.weighted$adm1name)
+DRCprovsp <- dplyr::left_join(pvprov.weighted.nosf, DRCprov)
+DRCprovsp <- sf::st_as_sf(DRCprovsp)
+# sanity
+DRCprovsp <- sf::st_transform(DRCprovsp, crs = "+init=epsg:4326")
+W.nb <- spdep::poly2nb(sf::as_Spatial(DRCprovsp), row.names = DRCprovsp$adm1name)
 W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
 
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("precip_scale", "crop_scale", "nightlight_scale")
+prov.covar.names <- c("precip_scale", "crop_scale", "fricurban_scale")
 mod.framework <- tibble(name = c("CAR_intercept", "CAR_covar"),
                         formula = c("plsmdn ~ 1", 
                                     paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + "))),
@@ -107,7 +113,7 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, data, burnin, n.s
 }
 
 
-mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
+mod.framework$MCMC <- furrr::future_pmap(mod.framework, wrap_S.CARleroux)
 
 #..............................................................
 # save out diagnostic chains
@@ -125,7 +131,7 @@ mod.framework.long <- mod.framework[,c("name", "formula", "family", "trials", "W
 mod.framework.long$burnin <- 1e3
 mod.framework.long$n.sample <- 1e5 + 1e3
 
-mod.framework.long$MCMC <- purrr::pmap(mod.framework.long, wrap_S.CARleroux)
+mod.framework.long$MCMC <- furrr::future_pmap(mod.framework.long, wrap_S.CARleroux)
 
 #..............................................................
 # save out long chains
