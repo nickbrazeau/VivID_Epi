@@ -16,11 +16,14 @@ tol <- 1e-3
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 #......................
 # Subset to Pv
 #......................
+longlat <- dt %>% 
+  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
+  dplyr::filter(duplicated(.))
+
 pvclust.weighted.nosf <- dtsrvy %>% 
   dplyr::mutate(count = 1) %>% 
   dplyr::group_by(hv001) %>% 
@@ -31,7 +34,8 @@ pvclust.weighted.nosf <- dtsrvy %>%
 # need to keep integers, so will round
 pvclust.weighted.nosf <- pvclust.weighted.nosf %>% 
   dplyr::mutate(plsmdn = round(plsmdn, 0),
-                n = round(n, 0))
+                n = round(n, 0)) %>% 
+  dplyr::left_join(., longlat, by = "hv001") # add back in longlat
 
 #-------------------------------------------------------------------------
 # Aggregate Covariates
