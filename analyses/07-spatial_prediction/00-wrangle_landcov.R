@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to wrangle 
-# the night light composite data from MCD12Q1 2013
+# landcoverage data for crops for farmer variable
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)

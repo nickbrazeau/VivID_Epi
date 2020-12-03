@@ -323,14 +323,13 @@ NB, here it is not quite the same to "turn off space". Instead, we will let the 
 Run out four diagnostic chains to check convergence. 
 ```{r}
 
-mod.framework <- readRDS("analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/params.RDS")
+mod.framework <- tibble::tibble(name = sub("_run_ret.RDS", "", list.files("analyses/07-spatial_prediction/prevmap_diagn_runs/")),
+                                path = list.files("analyses/07-spatial_prediction/prevmap_diagn_runs/",
+                                                   full.names = TRUE)) %>%   
+  dplyr::mutate(mcmc = purrr::map(path, readRDS)) %>% 
+  dplyr::select(-c("path"))
 
-mcmc.ret <- list.files(path = "analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/", full.names = T, pattern = ".RDS")
-mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
 
-# 0-7 index here so don't have to worry about char 10 and 1 being next to eachother
-
-mod.framework$mcmc <- purrr::map(mcmc.ret, function(x){return(readRDS(x)[[1]])})
 
 ```
 
@@ -353,8 +352,9 @@ mod.framework$autocorrplot <- invisible( purrr::map(mod.framework$summdiagret, "
 ```{r, results='asis'}
 
 mod.framework %>% 
-  dplyr::select(c("name", "formula", "paramtable")) %>% 
+  dplyr::select(c("name", "paramtable")) %>% 
   tidyr::unnest(cols="paramtable") %>% 
+  dplyr::mutate_if(is.numeric, round, 3) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(
@@ -395,15 +395,15 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-long.intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
-long.covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+long.intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_runs/intercept_model.RDS")
+long.covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_runs/covariate_model.RDS")
 long.framework <- tibble::tibble(name = c("intercept", "covars"),
                                  mcmc = list(long.intercept, long.covar))
 
 ```
 
 ### Final Params
-```{r}
+```{r, results='hide'}
 
 long.framework$summresults <- purrr::map(long.framework$mcmc, summary, hpd.coverage = 0.95)
 long.framework$summdiagret <- invisible( purrr::map(long.framework$mcmc, get_diag_summ_results.Bayes.PrevMap) )
@@ -418,6 +418,7 @@ long.frameworks.summresults <- long.framework %>%
 
 ```{r, results='asis'}
 long.frameworks.summresults %>% 
+  dplyr::mutate_if(is.numeric, round, 2) 
   DT::datatable(., 
                 rownames = F,
                 options = list(

@@ -59,8 +59,8 @@ pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>%
 # join together
 pvclust.weighted.nosf <- dplyr::left_join(pvclust.weighted.nosf, pvclst.covar, by = "hv001")
 
-riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
+riskvars <- c("precip_mean_cont_scale_clst", 
+              "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
 
 
 
@@ -89,7 +89,7 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
                                              log.normal.nugget = c(0, 2.5), # this is tau2
-                                             uniform.phi = c(0,10),
+                                             log.normal.phi = c(0, 1.5),
                                              log.normal.sigma = c(0, 2.5))
 
 # NB covar matrix
@@ -99,7 +99,7 @@ diag(covarsmat) <- 1 # identity matrix
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(0, 2.5), # this is tau2
-                                       uniform.phi = c(0,10),
+                                       log.normal.phi = c(0, 1.5),
                                        log.normal.sigma = c(0, 2.5))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
@@ -266,7 +266,7 @@ plan_long_intercept <- drake::drake_plan(
 
 
 #......................
-# drake plan for long intercept
+# drake plan for long covar
 #......................
 plan_long_covarmad <- drake::drake_plan(
   longrun_covarmod = target(
