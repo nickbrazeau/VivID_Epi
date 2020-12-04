@@ -282,7 +282,7 @@ ols.matern
 ### MLE Estimates w/ PrevMap
 #### Intercept Only Model 
 
-```{r, results='asis'}
+```{r}
 prevmap.linear.mleintercept <- PrevMap::linear.model.MLE(
   formula=as.formula("plsmdn~1"), 
   coords=as.formula("~longnum+latnum"),
@@ -295,7 +295,7 @@ summary(prevmap.linear.mleintercept)
 ```
 
 #### Covar Model 
-```{r, results='asis'}
+```{r}
 prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
   formula=as.formula("plsmdn~precip_mean_cont_scale_clst+cropprop_cont_scale_clst+frctmean_cont_scale_clst"), 
   coords=as.formula("~longnum+latnum"),
@@ -418,7 +418,7 @@ long.frameworks.summresults <- long.framework %>%
 
 ```{r, results='asis'}
 long.frameworks.summresults %>% 
-  dplyr::mutate_if(is.numeric, round, 2) 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(

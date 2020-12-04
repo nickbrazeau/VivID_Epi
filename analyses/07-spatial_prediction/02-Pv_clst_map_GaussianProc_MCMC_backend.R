@@ -89,7 +89,7 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
                                              log.normal.nugget = c(0, 2.5), # this is tau2
-                                             log.normal.phi = c(0, 1.5),
+                                             uniform.phi = c(0, 10),
                                              log.normal.sigma = c(0, 2.5))
 
 # NB covar matrix
@@ -99,11 +99,11 @@ diag(covarsmat) <- 1 # identity matrix
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(0, 2.5), # this is tau2
-                                       log.normal.phi = c(0, 1.5),
+                                       uniform.phi = c(0, 10),
                                        log.normal.sigma = c(0, 2.5))
 
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                        n.sim = 1e4+1e3,
+mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 5e3, 
+                                                        n.sim = 5e4+5e3,
                                                         thin = 10, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
@@ -113,8 +113,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                  n.sim = 1e4+1e3,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 5e3, 
+                                                  n.sim = 5e4+5e3,
                                                   thin = 10, 
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
@@ -219,8 +219,8 @@ plan_diag <- drake::drake_plan(
 dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_runs/", 
            recursive = TRUE)
 # Directions LONG RUN                      
-mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                             n.sim = 1e5 + 1e4,
+mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4, 
+                                                             n.sim = 5e5 + 5e4,
                                                              thin = 100, 
                                                              L.S.lim = c(5,50),
                                                              epsilon.S.lim = c(0.01, 0.1),
@@ -230,8 +230,8 @@ mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                              start.phi = 0.5,
                                                              start.S = predict(fit.glm))
 
-mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                       n.sim = 1e5 + 1e4,
+mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4, 
+                                                       n.sim = 5e5 + 5e4,
                                                        thin = 100, 
                                                        L.S.lim = c(5,50),
                                                        epsilon.S.lim = c(0.01, 0.1),
