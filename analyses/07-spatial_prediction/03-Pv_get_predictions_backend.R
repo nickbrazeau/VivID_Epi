@@ -38,7 +38,7 @@ grid.pred.coords <- sf::st_as_sf(grid.pred.coords.df, coords = c("longnum", "lat
 #...............................
 # Raster surfaces for risk factors
 riskvars <- c("precip_mean_cont_scale_clst", 
-              "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
+              "cropprop_cont_scale_clst", "accmean_cont_scale_clst")
 
 precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
 # transform like fitting
@@ -51,13 +51,13 @@ cropraster <- raster::aggregate(cropraster, fact = 18, fun = mean)
 values(cropraster) <- my.scale(logit(values(cropraster), tol = tol))
 
 
-# mean here under the assumption that friction is measured continuously across space
-fricraster <- readRDS("data/derived_data/vividepi_frictionurban_surface.rds")
-fricraster <- raster::aggregate(fricraster, fact = 6, fun = mean)
-values(fricraster) <- my.scale(log(values(fricraster) + tol))
+# mean here under the assumption that acess is measured continuously across space
+accraster <- readRDS("data/derived_data/vividepi_accessurban_surface.rds")
+accraster <- raster::aggregate(accraster, fact = 6, fun = mean)
+values(accraster) <- my.scale(log(values(accraster) + tol))
 
 # stack 
-predcovars <- raster::stack(precipraster, cropraster, fricraster)
+predcovars <- raster::stack(precipraster, cropraster, accraster)
 names(predcovars) <- riskvars
 
 pred.df <- raster::extract(
@@ -95,12 +95,12 @@ pred.df$cropprop_cont_scale_clst[pred.df$cropprop_cont_scale_clst > max.crop] <-
 pred.df$cropprop_cont_scale_clst[pred.df$cropprop_cont_scale_clst < min.crop] <- min.crop
 
 
-# bring in friction surface
-fric <- readRDS("data/derived_data/vividepi_fricurban_clstmeans.rds") 
-max.fric <- max(fric$frctmean_cont_scale_clst)
-min.fric <- min(fric$frctmean_cont_scale_cls)
-pred.df$frctmean_cont_scale_clst[pred.df$frctmean_cont_scale_clst > max.fric] <- max.fric
-pred.df$frctmean_cont_scale_clst[pred.df$frctmean_cont_scale_clst < min.fric] <- min.fric
+# bring in acction surface
+acc <- readRDS("data/derived_data/vividepi_accurban_clstmeans.rds") 
+max.acc <- max(acc$accmean_cont_scale_clst)
+min.acc <- min(acc$accmean_cont_scale_cls)
+pred.df$accmean_cont_scale_clst[pred.df$accmean_cont_scale_clst > max.acc] <- max.acc
+pred.df$accmean_cont_scale_clst[pred.df$accmean_cont_scale_clst < min.acc] <- min.acc
 
 
 #..............................................................
@@ -132,7 +132,7 @@ gp.mod.framework$grid.pred <- list(covar.rstr.pred.downsmpl[,c("longnum", "latnu
 # set up predictors
 gp.mod.framework$predictors <- list(NULL, covar.rstr.pred.downsmpl[,c("precip_mean_cont_scale_clst", 
                                                                       "cropprop_cont_scale_clst",
-                                                                      "frctmean_cont_scale_clst")])
+                                                                      "accmean_cont_scale_clst")])
 
 
 

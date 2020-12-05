@@ -66,12 +66,12 @@ pvclst.covar <- dt %>%
 # bring in cropland
 crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
   dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in urban fric
-urbanfric <- readRDS("data/derived_data/vividepi_fricurban_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "frctmean_cont_scale_clst"))
+# bring in urban acc
+urbanacc <- readRDS("data/derived_data/vividepi_accurban_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "accmean_cont_scale_clst"))
 
 pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = urbanfric, by = "hv001")
+  dplyr::left_join(x = ., y = urbanacc, by = "hv001")
 
 # join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
@@ -79,7 +79,7 @@ pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
 riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
+             "cropprop_cont_scale_clst", "accmean_cont_scale_clst")
 
 
 ```
@@ -297,7 +297,7 @@ summary(prevmap.linear.mleintercept)
 #### Covar Model 
 ```{r}
 prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
-  formula=as.formula("plsmdn~precip_mean_cont_scale_clst+cropprop_cont_scale_clst+frctmean_cont_scale_clst"), 
+  formula=as.formula("plsmdn~precip_mean_cont_scale_clst+cropprop_cont_scale_clst+accmean_cont_scale_clst"), 
   coords=as.formula("~longnum+latnum"),
   data=pvclust.weighted.nosf, 
   start.cov.pars=c(1,1),

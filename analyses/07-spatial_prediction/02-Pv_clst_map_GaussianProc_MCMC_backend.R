@@ -49,18 +49,18 @@ pvclst.covar <- dt %>%
 # bring in cropland
 crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
   dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in urban friction
-urbanfric <- readRDS("data/derived_data/vividepi_fricurban_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "frctmean_cont_scale_clst"))
+# bring in urban acess
+urbanacc <- readRDS("data/derived_data/vividepi_accurban_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "accmean_cont_scale_clst"))
 
 pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = urbanfric, by = "hv001")
+  dplyr::left_join(x = ., y = urbanacc, by = "hv001")
 
 # join together
 pvclust.weighted.nosf <- dplyr::left_join(pvclust.weighted.nosf, pvclst.covar, by = "hv001")
 
 riskvars <- c("precip_mean_cont_scale_clst", 
-              "cropprop_cont_scale_clst", "frctmean_cont_scale_clst")
+              "cropprop_cont_scale_clst", "accmean_cont_scale_clst")
 
 
 
@@ -219,8 +219,8 @@ plan_diag <- drake::drake_plan(
 dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_runs/", 
            recursive = TRUE)
 # Directions LONG RUN                      
-mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4, 
-                                                             n.sim = 5e5 + 5e4,
+mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
+                                                             n.sim = 5e5 + 1e5,
                                                              thin = 100, 
                                                              L.S.lim = c(5,50),
                                                              epsilon.S.lim = c(0.01, 0.1),
@@ -230,8 +230,8 @@ mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4,
                                                              start.phi = 0.5,
                                                              start.S = predict(fit.glm))
 
-mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4, 
-                                                       n.sim = 5e5 + 5e4,
+mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
+                                                       n.sim = 5e5 + 1e5,
                                                        thin = 100, 
                                                        L.S.lim = c(5,50),
                                                        epsilon.S.lim = c(0.01, 0.1),
@@ -272,7 +272,7 @@ plan_long_covarmad <- drake::drake_plan(
   longrun_covarmod = target(
     PrevMap::binomial.logistic.Bayes(
       formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
-                       cropprop_cont_scale_clst + frctmean_cont_scale_clst"),
+                       cropprop_cont_scale_clst + accmean_cont_scale_clst"),
       units.m = as.formula("~ n"),
       coords = as.formula("~ longnum + latnum"),
       data = pvclust.weighted.nosf,
