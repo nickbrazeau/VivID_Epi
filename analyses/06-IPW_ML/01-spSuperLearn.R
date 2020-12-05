@@ -65,7 +65,7 @@ txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("clas
 txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "hv106_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "farmer_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "hlthst_duration_fctb_clst"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
+txs$learnerlib[txs$target == "hlthst_duration_cont_log_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
 
 
 
@@ -80,7 +80,8 @@ paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalse
 #......................
 # run
 #......................
-paramsdf$ensembl_cvRisk <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, seed = 48)
+paramsdf$ensembl_cvRisk <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, 
+                                              seed = 123)
 
 
 #............................................................
