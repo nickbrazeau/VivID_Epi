@@ -60,9 +60,14 @@ hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
 #............................................................
 # new get buffer around urban versus rural cluster
 #...........................................................
-hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>% 
-  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
+# hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>% 
+#   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
+# hlthdist.mean <- hlthdist.mean[!duplicated(hlthdist.mean$hv001),]
+
+hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] 
 hlthdist.mean <- hlthdist.mean[!duplicated(hlthdist.mean$hv001),]
+
+
 
 # Drop in a for loop again to account for DHS buffering
 # note the 0.05 degree resolution is approximately 6km, so the buffer
@@ -74,7 +79,7 @@ for(i in 1:nrow(hlthdist.mean)){
   hlthdist.mean$hlthdist_cont_clst[i] <- 
     raster::extract(x = hlthdist, 
                     y = sf::as_Spatial(hlthdist.mean$geometry[i]),
-                    buffer = hlthdist.mean$buffer[i],
+                    buffer = 100e3, # 100 km regardless of urban/rural
                     fun = mean,
                     na.rm = T, 
                     sp = F
