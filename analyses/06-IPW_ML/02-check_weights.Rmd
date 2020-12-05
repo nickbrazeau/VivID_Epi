@@ -83,7 +83,7 @@ plot(iptw.dist.plotObj)
 
 ```
   
-**N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. IIn addition, hospital distance is extremely associated with urbanicity (as expected).
+**N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. In addition, hospital distance is extremely associated with urbanicity (as expected).
 
 
 ### Covariate Balance
