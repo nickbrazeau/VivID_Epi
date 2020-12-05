@@ -285,6 +285,21 @@ sum(diag(tab))/sum(tab) # 56% concordance. Presumambly, household type was a big
 xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270))
 xtabs(~dt$wlthrcde_fctb + dt$wlthrcde_fctm)
 
+# look at direction of wealth for continuous
+dt %>% 
+  ggplot() + 
+  geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont))
+  
+# shift directionality so riches has highest continuous number
+dt <- dt %>% 
+  dplyr::mutate(wlthrcde_combscor_cont = wlthrcde_combscor_cont * -1)
+
+dt %>% 
+  ggplot() + # look good 
+  geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont))
+
+
+
 #.............
 # years of education (continuous)
 #.............
@@ -470,12 +485,17 @@ dt <- dt %>%
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
     hlthst_duration_cont_scale_clst = my.scale(hlthdist_cont_clst, center = T, scale = T),
-    hlthst_duration_fctb_clst = ifelse(hlthdist_cont_clst > 60, "far", "near"),
+    hlthst_duration_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T),
+    hlthst_duration_fctb_clst = ifelse(hlthdist_cont_clst > 120, "far", "near"),
     hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far")))
 
 # look at output
 xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$hv270))
 xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
+summary(dt$hlthst_duration_cont_log_scale_clst)
+hist(dt$hlthst_duration_cont_log_scale_clst)
+summary(dt$hlthst_duration_cont_scale_clst)
+hist(dt$hlthst_duration_cont_scale_clst)
 
 #..........................................................................................
 #                               Final Write Out
