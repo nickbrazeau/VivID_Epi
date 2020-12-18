@@ -11,7 +11,6 @@ library(raster)
 library(PrevMap)
 library(drake)
 set.seed(48, "L'Ecuyer")
-tol <- 1e-3
 #......................
 # Import Data
 #......................
@@ -102,8 +101,8 @@ mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
                                        uniform.phi = c(0, 10),
                                        log.normal.sigma = c(0, 2.5))
 
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 5e3, 
-                                                        n.sim = 5e4+5e3,
+mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
+                                                        n.sim = 1e4+1e3,
                                                         thin = 10, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
@@ -113,8 +112,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 5e3,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 5e3, 
-                                                  n.sim = 5e4+5e3,
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
+                                                  n.sim = 1e4+1e3,
                                                   thin = 10, 
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
@@ -219,8 +218,8 @@ plan_diag <- drake::drake_plan(
 dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_runs/", 
            recursive = TRUE)
 # Directions LONG RUN                      
-mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
-                                                             n.sim = 5e5 + 1e5,
+mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4, 
+                                                             n.sim = 1e5 + 5e4,
                                                              thin = 100, 
                                                              L.S.lim = c(5,50),
                                                              epsilon.S.lim = c(0.01, 0.1),
@@ -230,8 +229,8 @@ mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5,
                                                              start.phi = 0.5,
                                                              start.S = predict(fit.glm))
 
-mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
-                                                       n.sim = 5e5 + 1e5,
+mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 5e4, 
+                                                       n.sim = 1e5 + 5e4,
                                                        thin = 100, 
                                                        L.S.lim = c(5,50),
                                                        epsilon.S.lim = c(0.01, 0.1),
