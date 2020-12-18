@@ -16,8 +16,11 @@ tol <- 1e-3
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 sf::st_crs(DRCprov)
+#.............................................................................................. 
+##### Access to City ######
+#.............................................................................................. 
 #.............................................................................. 
-# access Surface from malaria atlas project
+# access surface of accessibility to cities from malaria atlas project
 #.............................................................................. 
 # find access raster
 available_rasters <- malariaAtlas::listRaster()
@@ -37,6 +40,10 @@ raster::crs(accraw)
 # sanity
 accraw <- raster::projectRaster(from = accraw, to = accraw,
                                crs = sf::st_crs("+init=epsg:4326")) 
+
+# crop for speed
+accraw <- raster::crop(x = accraw, y = caf)
+# mask
 access.drc <- raster::mask(accraw, DRCprov)
 
 # tidy up 
@@ -48,6 +55,7 @@ hist( values(access.drc) )
 
 # save out this surface
 saveRDS(object = access.drc, file = "data/derived_data/vividepi_accessurban_surface.rds")
+
 
 
 #.............................................................................. 
@@ -87,4 +95,59 @@ saveRDS(object = ge.accurban,
 
 
 
+
+#.............................................................................................. 
+##### Health Distance ######
+#.............................................................................................. 
+#............................................................
+# get health care calculated distances
+# just looking at walking distance
+#...........................................................
+hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+
+# sanity check
+sf::st_crs(hlthdist)
+# crop for speed
+hlthdist <- raster::crop(x = hlthdist, y = caf)
+# create mask 
+DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
+
+
+
+#.............................................................................. 
+# Extract health distance By Cluster
+#.............................................................................. 
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+ge.hlthdisturban <- ge %>% 
+  dplyr::select(c("hv001", "urban_rura", "geometry")) %>% 
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
+
+# loop through and find means
+ge.hlthdisturban$hlthdist <- NA
+
+for(i in 1:nrow(ge.hlthdisturban)){
+  
+  ge.hlthdisturban$hlthdist[i] <- 
+    raster::extract(x = hlthdist, # raster doesn't change 
+                    y = sf::as_Spatial(ge.hlthdisturban$geometry[i]),
+                    buffer = ge.hlthdisturban$buffer[i],
+                    fun = mean,
+                    na.rm = T, 
+                    sp = F
+    )
+}
+
+# distribution looks approximately logged, which is expected since it is a distance time
+summary(ge.hlthdisturban$hlthdist)
+hist(ge.hlthdisturban$hlthdist)
+ge.hlthdisturban$hlthdist_cont_scale_clst <- my.scale(log(ge.hlthdisturban$hlthdist + tol))
+hist(ge.hlthdisturban$hlthdist_cont_scale_clst)
+
+# drop extraneous geometry
+sf::st_geometry(ge.accurban) <- NULL
+
+# save out
+saveRDS(object = ge.accurban, 
+        file = "data/derived_data/vividepi_accurban_clstmeans.rds")
 
