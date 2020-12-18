@@ -40,18 +40,14 @@ ge <- sf::st_as_sf(ge)
 
 #............................................................
 # get health care calculated distances
+# just looking at walking distance
 #...........................................................
-hlthdist_walk <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
-hlthdist_road <- raster::raster("data/raw_data/hlthdist/2020_motorized_travel_time_to_healthcare.geotiff")
-
-hlthdist_stack <- raster::stack(hlthdist_walk, hlthdist_road)
-hlthdist_stack <- raster::crop(x = hlthdist_stack, y = caf)
-hlthdist <- raster::calc(hlthdist_stack, mean, na.rm = T)
+hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
 
 # sanity check
 sf::st_crs(hlthdist)
 # crop for speed
-
+hlthdist <- raster::crop(x = hlthdist, y = caf)
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
@@ -60,11 +56,8 @@ hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
 #............................................................
 # new get buffer around urban versus rural cluster
 #...........................................................
-# hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>% 
-#   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
-# hlthdist.mean <- hlthdist.mean[!duplicated(hlthdist.mean$hv001),]
-
-hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] 
+hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>%
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
 hlthdist.mean <- hlthdist.mean[!duplicated(hlthdist.mean$hv001),]
 
 
@@ -79,12 +72,32 @@ for(i in 1:nrow(hlthdist.mean)){
   hlthdist.mean$hlthdist_cont_clst[i] <- 
     raster::extract(x = hlthdist, 
                     y = sf::as_Spatial(hlthdist.mean$geometry[i]),
-                    buffer = 100e3, # 100 km regardless of urban/rural
+                    buffer = hlthdist.mean$buffer[[i]],
                     fun = mean,
                     na.rm = T, 
                     sp = F
     )
 }
+
+
+#............................................................
+# categorize as near of far based on hour mark (seems to be
+# standard used by MAP)
+#...........................................................
+
+hlthdist.mean <- hlthdist.mean %>% 
+  dplyr::mutate(
+    hlthdist_fctb_clst = dplyr::case_when(
+      hlthdist_cont_clst >= 60 & urban_rura == "R" ~ "far", 
+      hlthdist_cont_clst < 60 & urban_rura == "R" ~ "near", 
+      hlthdist_cont_clst >= 30 & urban_rura == "U" ~ "far", 
+      hlthdist_cont_clst < 30 & urban_rura == "U" ~ "near", 
+    ),
+    hlthdist_fctb_clst = factor(hlthdist_fctb_clst, levels = c("far", "near"))
+  )
+
+xtabs(~ hlthdist.mean$hlthdist_fctb_clst + hlthdist.mean$urban_rura)
+xtabs(~ hlthdist.mean$hlthdist_fctb_clst)
 
 
 #......................
@@ -102,7 +115,7 @@ hlthdist.mean %>%
                            aes(fill = stat(band1)),
                            alpha = 0.9,
                            na.rm = T) +
-  geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst)) +
+  geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst, shape = hlthdist_fctb_clst)) +
   scale_fill_viridis_c(option="plasma", direction = 1) +
   scale_color_viridis_c(option="viridis")
 

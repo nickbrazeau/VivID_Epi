@@ -457,7 +457,7 @@ dt <- dt %>%
 wtrdist_out <- readRDS("data/derived_data/hotosm_waterways_dist.rds")
 dt <- dt %>% 
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
-  dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst + tol),
+  dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst),
                 wtrdist_cont_log_scale_clst = my.scale(wtrdist_cont_log_clst, center = T, scale = T)
                 )
 
@@ -479,23 +479,25 @@ hlthdist_out <- readRDS("data/derived_data/hlthdist_out_wlk_trvltime.rds")
 sf::st_geometry(hlthdist_out) <- NULL 
 # drop extra columns
 hlthdist_out <- hlthdist_out %>% 
-  dplyr::select(c("hv001", "hlthdist_cont_clst"))
+  dplyr::select(c("hv001", "hlthdist_cont_clst", "hlthdist_fctb_clst"))
 
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
-    hlthst_duration_cont_scale_clst = my.scale(hlthdist_cont_clst, center = T, scale = T),
-    hlthst_duration_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + tol), center = T, scale = T),
-    hlthst_duration_fctb_clst = ifelse(hlthdist_cont_clst > 120, "far", "near"),
-    hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far")))
+    hlthdist_cont_scale_clst = my.scale(hlthdist_cont_clst, center = T, scale = T),
+    hlthdist_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + 0.5), center = T, scale = T))
 
 # look at output
-xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$hv270))
-xtabs(~dt$hlthst_duration_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
-summary(dt$hlthst_duration_cont_log_scale_clst)
-hist(dt$hlthst_duration_cont_log_scale_clst)
-summary(dt$hlthst_duration_cont_scale_clst)
-hist(dt$hlthst_duration_cont_scale_clst)
+summary(dt$hlthdist_cont_scale_clst)
+hist(dt$hlthdist_cont_scale_clst)
+summary(dt$hlthdist_cont_log_scale_clst)
+hist(dt$hlthdist_cont_log_scale_clst)
+
+# look at factor
+xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$hv270))
+xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
+xtabs(~ dt$hlthdist_fctb_clst)
+
 
 #..........................................................................................
 #                               Final Write Out
