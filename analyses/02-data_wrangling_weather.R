@@ -37,9 +37,9 @@ readRasterBB.temp <- function(rstfile, sp = sp, caf = caf){
   ret <- raster::raster(rstfile)
   ret <- raster::crop(x = ret, y = caf)
   ret <- raster::mask(x = ret, mask = sp)
-  
+  # https://ladsweb.modaps.eosdis.nasa.gov/filespec/MODIS/6/MOD11C3
   vals <- raster::values(ret) 
-  vals <- ifelse(vals <= 7500, NA, vals) # improper values
+  vals <- ifelse(vals < 7500, NA, vals) # improper values
   vals <- (vals * 0.02) - 273.15
   raster::values(ret) <- vals
   
@@ -76,7 +76,7 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 
 # NOTE, reading in masked temperature files
 tempfiles <- list.files(path = "data/raw_data/weather_data/LAADS_NASA/", full.names = T, 
-                       pattern = "LST_Day_CMG.tif")
+                       pattern = "LST_Night_CMG.tif")
 tempfrst <- lapply(tempfiles, readRasterBB.temp, sp = DRCprov, caf = caf)
 
 tempdf <- tibble::tibble(namestemp = basename(tempfiles)) %>% 

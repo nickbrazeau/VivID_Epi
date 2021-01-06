@@ -116,8 +116,8 @@ hlthdist.mean %>%
                            alpha = 0.9,
                            na.rm = T) +
   geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst, shape = hlthdist_fctb_clst)) +
-  scale_fill_viridis_c(option="plasma", direction = 1) +
-  scale_color_viridis_c(option="viridis")
+  scale_fill_distiller("hlthdist", type = "div", palette = "RdYlBu", na.value = NA) + 
+  scale_color_viridis_c(option="plasma")
 
 
 
