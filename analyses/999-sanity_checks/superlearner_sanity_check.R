@@ -68,7 +68,9 @@ baselearners <- lapply(baselearners.names, mlr::makeLearner)
 baselearners[[2]] <- mlr::setHyperPars(baselearners[[2]] , alpha = 1) # make like SL above
 
 task <- mlr::makeRegrTask(data = dat[valset, ], target = "treatment")
-mySL <- mlrwrapSL::SL_crossval_risk_pred(learnerlib = baselearners, task = task, valset.list = list(c(1:250), c(250:500)))
+mySL <- mlrwrapSL::SL_crossval_risk_pred(learnerlib = baselearners, task = task, 
+                                         valset.list = list(c(1:250), c(250:500)),
+                                         seed = 48)
 
 mysl.results.Z <- mySL$Z
 mysl.results.Zprime <- mySL$Zprime
@@ -105,21 +107,48 @@ mysl.results.Zprime <- mysl.results.Zprime %>%
 
 
 SLresults <- rbind.data.frame(sl.results.Z, sl.results.Zprime, mysl.results.Z, mysl.results.Zprime)
+
+#......................
+# plot out
+#......................
+# barplot for overall
 SLresults %>% 
   dplyr::select(c("algorithm", "level", dplyr::everything())) %>% 
   tidyr::gather(., key = "baselearner", value = "pred", 3:ncol(.)) %>% 
   ggplot() + 
   geom_boxplot(aes(x=baselearner, y=pred, fill=algorithm)) + 
   facet_wrap(~level) + 
-  ylab("Predictions") + ("Base Learner")
+  ylab("Predictions") + xlab("Base Learner")
 
 
 
+#......................
+# indivdiual zprime
+#......................
+colnames(sl.results.Zprime) <- paste0("sl", colnames(sl.results.Zprime))
+colnames(mysl.results.Zprime) <- paste0("my", colnames(mysl.results.Zprime))
 
+# exactly right
+dplyr::bind_cols(sl.results.Zprime, mysl.results.Zprime) %>% 
+  ggplot() + 
+  geom_point(aes(x = sllm, y = mylm))
 
+# exactly right
+dplyr::bind_cols(sl.results.Zprime, mysl.results.Zprime) %>% 
+  ggplot() + 
+  geom_point(aes(x = slglmnet, y = myglmnet))
 
+# some slight variation in the kernel but still very heavily correlated 
+dplyr::bind_cols(sl.results.Zprime, mysl.results.Zprime) %>% 
+  ggplot() + 
+  geom_point(aes(x = slksvm, y = myksvm))
 
+# some slight variation in the RF but still very heavily correlated 
+dplyr::bind_cols(sl.results.Zprime, mysl.results.Zprime) %>% 
+  ggplot() + 
+  geom_point(aes(x = slranger, y = myranger))
 
-
+# assuming this is some effect of the stocahasticity in the kernel and ranger
+# since the lm and elasticnet deterministic worked perfectly
 
 
