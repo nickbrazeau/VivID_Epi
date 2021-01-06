@@ -442,6 +442,16 @@ dt <- dt %>%
     temp_mean_cont_scale_clst = my.scale(temp_mean_cont_clst, center = T, scale = T)
   )
 
+# sanity
+plot(dt$mean_temperature_2015[dt$mean_temperature_2015 > 0], 
+     dt$temp_mean_cont_clst[dt$mean_temperature_2015 > 0])
+
+
+# sanity
+plot(dt$rainfall_2015[dt$rainfall_2015 > 0], 
+     dt$precip_mean_cont_clst[dt$rainfall_2015 > 0])
+
+
 #.............
 # Cluster-Level Altitude
 #.............
