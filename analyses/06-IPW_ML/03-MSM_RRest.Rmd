@@ -16,7 +16,7 @@ knitr::opts_knit$set(root.dir = here::here())
 
 library(srvyr)
 library(tidyverse)
-remotes::install_github("malcolmbarrett/ggdag"); library(ggdag)
+library(ggdag)
 source("R/00-functions_epi.R")
 source("R/00-functions_basic.R")
 
