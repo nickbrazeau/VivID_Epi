@@ -8,7 +8,7 @@ library(tidyverse)
 # DHS wrangling
 remotes::install_github("OJWatson/rdhs", ref="master")
 library(rdhs)
-
+library(sf)
 
 #---------------------------------------------------------------------------------
 # Using rDHS to pull down CD2013
