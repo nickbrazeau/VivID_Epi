@@ -296,7 +296,13 @@ dt <- dt %>%
 
 dt %>% 
   ggplot() + # look good 
-  geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont))
+  geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont)) +
+  geom_hline(yintercept = -1.1723, color = "red") + 
+  geom_hline(yintercept = -1.0273, color = "red") + 
+  geom_hline(yintercept = -0.4405624, color = "red") + 
+  geom_hline(yintercept = 0.2055109, color = "red") + 
+  geom_hline(yintercept = 1.244034, color = "red") +
+  geom_hline(yintercept = 2.57571, color = "red")
 
 
 
@@ -508,6 +514,17 @@ xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$hv270))
 xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
 xtabs(~ dt$hlthdist_fctb_clst)
 
+# look at continous
+dt %>% 
+  ggplot() + 
+  geom_boxplot(aes(x = hlthdist_fctb_clst)) +
+  facet_wrap(~ urban_rura_fctb)
+boxplot(dt$hlthdist_cont_log_scale_clst ~ haven::as_factor(dt$urban_rura_fctb))
+t.test(dt$hlthdist_cont_log_scale_clst[ haven::as_factor(dt$urban_rura_fctb) == "R"],
+       dt$hlthdist_cont_log_scale_clst[ haven::as_factor(dt$urban_rura_fctb) == "U"])
+energy::dcor(dt$hlthdist_cont_log_scale_clst,
+             as.numeric(dt$urban_rura_fctb))
+# very correlated in continuous sense, because some urban cluster right on top of a hospital
 
 #..........................................................................................
 #                               Final Write Out
