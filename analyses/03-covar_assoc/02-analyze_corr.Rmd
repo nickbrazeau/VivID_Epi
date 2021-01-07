@@ -47,31 +47,8 @@ rskfctr <- dcdr %>%
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
 
 ```{r}
-covar.files <- list.files("analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
-covar.files <- covar.files[!grepl("params.RDS|f.RDS", covar.files)]
-
-# need to sort properly
-covar.files <- tibble::tibble(covar.files = covar.files, 
-                              iteration = stringr::str_extract(basename(covar.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
-  dplyr::arrange(iteration)
-
-read_covar_files <- function(path){
-  ret <- readRDS(path)
-  ret <- unname(ret)
-  return(ret)
-}
-
-
-
-covar.results.vals <- lapply(covar.files$covar.files, read_covar_files) %>% 
-  do.call("rbind", .)
-
-
-paramsdf <- readRDS("analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
+covar.results <- readRDS("results/covars_collinearity.RDS") %>% 
   dplyr::select(-c(data))
-
-covar.results <- paramsdf
-covar.results$dist <- unlist(covar.results.vals)
 
 
 nameliftover <- dcdr %>% 

@@ -51,9 +51,10 @@ dt.ml.cc <- dt  %>%
 paramsdf$data <- lapply(1:nrow(paramsdf), function(x) return(dt.ml.cc))
 
 
-
-# slurm function
-slurm_calc_corr <- function(covar1, covar2, data){
+#......................
+# wrapper function
+#......................
+energy_calc_corr <- function(covar1, covar2, data){
   x1 <- unlist( data[,covar1] )
   x2 <- unlist( data[,covar2] )
   if(is.factor(x1)){
@@ -70,24 +71,14 @@ slurm_calc_corr <- function(covar1, covar2, data){
 
 
 #................................
-# send it out with rSLURM
+# run w/ furrr
 #................................
+no_cores <- availableCores() - 1
+plan(multicore, workers = no_cores)
+paramsdf <- paramsdf %>% 
+  dplyr::mutate(dcor = furrr::future_pmap_dbl(., energy_calc_corr))
 
-
-# for slurm on LL
-setwd("analyses/03-covar_assoc/")
-ntry <- nrow(paramsdf)
-sjob <- rslurm::slurm_apply(f = slurm_calc_corr, 
-                            params = paramsdf, 
-                            jobname = 'covar_corr',
-                            nodes = ntry, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 32000,
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "5-00:00:00"))
-
+# save out 
+saveRDS(paramsdf, file = "results/covars_collinearity.RDS")
 
 
