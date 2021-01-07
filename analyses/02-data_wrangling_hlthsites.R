@@ -46,10 +46,12 @@ hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time
 
 # sanity check
 sf::st_crs(hlthdist)
+identicalCRS(hlthdist, caf)
 # crop for speed
 hlthdist <- raster::crop(x = hlthdist, y = caf)
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+identicalCRS(hlthdist, sf::as_Spatial(DRCprov))
 hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
 
 
@@ -84,7 +86,6 @@ for(i in 1:nrow(hlthdist.mean)){
 # categorize as near of far based on hour mark (seems to be
 # standard used by MAP)
 #...........................................................
-
 hlthdist.mean <- hlthdist.mean %>% 
   dplyr::mutate(
     hlthdist_fctb_clst = dplyr::case_when(
