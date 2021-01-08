@@ -145,34 +145,25 @@ clstprev <- dtsrvy %>%
                    ) %>% 
   dplyr::select(c("n", "pvn", "pfn", "pvprev", "pfprev"))
 
-
-
-# extra items for making a pretty plot
-ge_nosf <- ge
-sf::st_geometry(ge_nosf) <- NULL
-dhsreg <- dt %>% 
-  dplyr::left_join(., ge_nosf, by = "hv001") %>% 
-  dplyr::select(c("hv001", "adm1fipsna")) %>% 
-  dplyr::mutate(prov = as.character( haven::as_factor(adm1fipsna) ),
-                prov = tools::toTitleCase(prov)) %>% 
-  dplyr::filter(!duplicated(.)) %>% 
-  dplyr::select(-c("adm1fipsna"))
-
-
+genosf <- ge
+sf::st_geometry(genosf) <- NULL
+#......................
+# make cluster plot
+#......................
 clst.prev.plotObj <- clst %>% 
-  dplyr::left_join(., y = dhsreg, by = "hv001") %>% 
-  dplyr::select(c("prov", "hv001", "pv18sprev", "pv18sL95", "pv18sU95",
+  dplyr::left_join(., y = genosf, by = "hv001") %>% 
+  dplyr::select(c("adm1name", "hv001", "pv18sprev", "pv18sL95", "pv18sU95",
                   "pfldhprev", "pfldhL95", "pfldhU95")) %>% 
   tidyr::gather(., key = "estlevel", value = "est", 3:ncol(.)) %>% 
   dplyr::mutate(species = ifelse(grepl("pv", estlevel), "Pv", "Pf")) %>% 
-  dplyr::select(c("prov", "hv001", "species", dplyr::everything())) %>% 
+  dplyr::select(c("adm1name", "hv001", "species", dplyr::everything())) %>% 
   dplyr::mutate(estlevel = gsub("pv18s", "", estlevel),
                 estlevel= gsub("pfldh", "", estlevel)) %>% 
   tidyr::spread(., key = "estlevel", value = "est", 4:5) %>% 
   ggplot() + 
   geom_pointrange(aes(x = factor(hv001), y=prev, ymin=L95, ymax=U95, color = factor(species)), size =0.5, alpha = 0.5) +
   coord_flip() + 
-  facet_wrap(~prov, scales = "free", ncol = 4) +
+  facet_wrap(~adm1name, scales = "free", ncol = 4) +
   scale_color_viridis_d("Species") + 
   ggtitle("Cluster-Level Prevelance of Pv and Pf Malaria") +
   vivid_theme + 
@@ -196,6 +187,55 @@ jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/cluster_prevalence
 plot(clst.prev.plotObj)
 graphics.off()
 
+
+```
+
+#### Positive Cluster Level Prevalence 
+```{r, results='asis', fig.align='center', fig.width=11, fig.height=8}
+
+# prov centroid for color
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+cntr <- sf::st_centroid(DRCprov) %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1])
+
+# get plot
+clst.prev.plotObj <- clst %>% 
+  dplyr::left_join(., y = ge, by = "hv001") %>% 
+  dplyr::left_join(., cntr, by = "adm1name") %>% 
+  dplyr::select(c("adm1name", "hv001", "longnum", "pv18sprev", "pv18sL95", "pv18sU95")) %>%
+  dplyr::filter(pv18sprev != 0) %>% 
+  tidyr::gather(., key = "estlevel", value = "est", 4:ncol(.)) %>% 
+  dplyr::mutate(estlevel = gsub("pv18s", "", estlevel)) %>% 
+  tidyr::spread(., key = "estlevel", value = "est", 5:6) %>%
+  dplyr::mutate(hv001 = factor(hv001),
+                adm1name = forcats::fct_reorder(adm1name, longnum, min),
+                adm1namenum = as.numeric(adm1name),
+                hv001 = forcats::fct_reorder(hv001, adm1namenum, min)) %>% 
+  ggplot() + 
+  geom_pointrange(aes(x = hv001, y=prev, ymin=L95, ymax=U95,
+                      color = adm1name), 
+                  size =0.5, alpha = 0.5) +
+  scale_color_viridis_d("Province") + 
+  ggtitle("Cluster-Level Prevelance of Pv Malaria") +
+  vivid_theme + 
+  theme(plot.title = element_text(family = "Helvetica", face = "bold", hjust = 0.5, size = 12),
+        legend.position = "bottom",
+        legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, size = 8),
+        legend.text = element_text(family = "Helvetica", hjust = 0.5, vjust = 0.5, size = 7, angle = 0),
+        axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(family = "Helvetica", hjust = 0.5, size = 6, angle = 90),
+        axis.ticks.x = element_blank()
+  )
+
+
+plot(clst.prev.plotObj)
+
+dir.create(path = "~/Documents/GitHub/VivID_Epi/results/figures/", recursive = T)
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pos_cluster_prevalence_pointranges_E-W_colorgrad.jpg",
+     width = 11, height = 8, units = "in", res=500)
+plot(clst.prev.plotObj)
+graphics.off()
 
 ```
 
