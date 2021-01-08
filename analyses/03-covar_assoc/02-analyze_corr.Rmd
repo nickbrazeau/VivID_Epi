@@ -41,7 +41,6 @@ rskfctr <- dcdr %>%
 
 
 
-
 ### Covariate Collinearity
 #### Nonparametric Approach - Distance
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
@@ -72,7 +71,7 @@ covar.plotObj <- covar.results %>%
     dplyr::mutate(varlab.x = forcats::fct_rev(forcats::fct_reorder(.f = varlab.x, .x = varlab.x, .fun = length)),
                 varlab.y = forcats::fct_rev(forcats::fct_reorder(.f = varlab.y, .x = varlab.y, .fun = length))) %>% 
   ggplot() + 
-  geom_tile(aes(x=varlab.x, y=varlab.y, fill = dist)) + 
+  geom_tile(aes(x=varlab.x, y=varlab.y, fill = dcor)) + 
   ggtitle("Covariate Collinearity") +
   scale_fill_viridis_c("Distance Correlation") + 
   theme_minimal() + 

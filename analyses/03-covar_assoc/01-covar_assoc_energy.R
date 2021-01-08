@@ -73,8 +73,7 @@ energy_calc_corr <- function(covar1, covar2, data){
 #................................
 # run w/ furrr
 #................................
-no_cores <- availableCores() - 1
-plan(multicore, workers = no_cores)
+future::plan("multicore")
 paramsdf <- paramsdf %>% 
   dplyr::mutate(dcor = furrr::future_pmap_dbl(., energy_calc_corr))
 
