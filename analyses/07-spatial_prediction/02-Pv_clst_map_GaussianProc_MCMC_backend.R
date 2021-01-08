@@ -15,14 +15,17 @@ set.seed(48, "L'Ecuyer")
 # Import Data
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 dtsrvy <- makecd2013survey(survey = dt)
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 #......................
 # Subset to Pv
 #......................
-longlat <- dt %>% 
-  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
-  dplyr::filter(!duplicated(.))
+longlat <- ge %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
+  dplyr::select(c("hv001", "longnum", "latnum")) 
+sf::st_geometry(longlat) <- NULL
 
 pvclust.weighted.nosf <- dtsrvy %>% 
   dplyr::mutate(count = 1) %>% 
@@ -48,18 +51,18 @@ pvclst.covar <- dt %>%
 # bring in cropland
 crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
   dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in urban acess
-urbanacc <- readRDS("data/derived_data/vividepi_accurban_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "accmean_cont_scale_clst"))
+# bring in health distance
+hlthdist <- readRDS("data/derived_data/vividepi_hlthdist_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "hlthdist_cont_scale_clst"))
 
 pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = urbanacc, by = "hv001")
+  dplyr::left_join(x = ., y = hlthdist, by = "hv001")
 
 # join together
 pvclust.weighted.nosf <- dplyr::left_join(pvclust.weighted.nosf, pvclst.covar, by = "hv001")
 
 riskvars <- c("precip_mean_cont_scale_clst", 
-              "cropprop_cont_scale_clst", "accmean_cont_scale_clst")
+              "cropprop_cont_scale_clst", "hlthdist_cont_scale_clst")
 
 
 

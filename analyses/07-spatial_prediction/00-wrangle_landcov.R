@@ -8,7 +8,6 @@ library(raster)
 library(sp)
 library(sf)
 source("R/00-functions_basic.R")
-tol <- 1e-3
 
 # create bounding box of Central Africa for mrm
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
@@ -65,7 +64,7 @@ for(i in 1:nrow(ge.croopland)){
 }
 
 # liftover
-ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.croopland$cropprop, tol = tol))
+ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.croopland$cropprop, tol = 1e-3))
 
 # drop extraneous geometry
 sf::st_geometry(ge.croopland) <- NULL

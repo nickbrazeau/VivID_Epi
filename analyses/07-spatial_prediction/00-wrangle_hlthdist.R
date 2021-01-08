@@ -4,13 +4,11 @@
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
-remotes::install_github("malaria-atlas-project/malariaAtlas")
 library(malariaAtlas)
 library(raster)
 library(sp)
 library(sf)
 source("R/00-functions_basic.R")
-tol <- 1e-3
 
 
 # create mask 
@@ -29,17 +27,20 @@ dir.create("data/raw_data/MAPrasters/", recursive = TRUE)
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+init=epsg:4326"
 
-# download from MAP
-malariaAtlas::getRaster(surface = "A global map of travel time to cities to assess inequalities in accessibility in 2015",
-                        shp = caf,
-                        file_path = "data/raw_data/MAPrasters/") 
+# note, file is time stamped on my computer (would be different from a new user)
+if(!file.exists("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2020_11_22.tiff")) {
+  # download from MAP
+  malariaAtlas::getRaster(surface = "A global map of travel time to cities to assess inequalities in accessibility in 2015",
+                          shp = caf,
+                          file_path = "data/raw_data/MAPrasters/") 
+}
+
 
 # read in 
 accraw <- raster::raster("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2020_11_22.tiff")
 raster::crs(accraw)
-# sanity
-accraw <- raster::projectRaster(from = accraw, to = accraw,
-                               crs = sf::st_crs("+init=epsg:4326")) 
+identicalCRS(accraw, caf)
+identicalCRS(accraw, sf::as_Spatial(DRCprov))
 
 # crop for speed
 accraw <- raster::crop(x = accraw, y = caf)
@@ -83,7 +84,7 @@ for(i in 1:nrow(ge.accurban)){
 
 # distribution looks approximately logged, which is expected 
 hist(ge.accurban$accmean)
-ge.accurban$accmean_cont_scale_clst <- my.scale(log(ge.accurban$accmean + tol))
+ge.accurban$accmean_cont_scale_clst <- my.scale(log(ge.accurban$accmean + 0.5)) # offset for zeroes
 hist(ge.accurban$accmean_cont_scale_clst)
 
 # drop extraneous geometry
@@ -107,11 +108,14 @@ hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time
 
 # sanity check
 sf::st_crs(hlthdist)
+identicalCRS(hlthdist, caf)
+identicalCRS(hlthdist, sf::as_Spatial(DRCprov))
+
 # crop for speed
 hlthdist <- raster::crop(x = hlthdist, y = caf)
 # create mask 
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
-hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
+hlthdist.drc <- raster::mask(x = hlthdist, mask = DRCprov)
 
 
 
@@ -129,7 +133,7 @@ ge.hlthdisturban$hlthdist <- NA
 for(i in 1:nrow(ge.hlthdisturban)){
   
   ge.hlthdisturban$hlthdist[i] <- 
-    raster::extract(x = hlthdist, # raster doesn't change 
+    raster::extract(x = hlthdist.drc, # raster doesn't change 
                     y = sf::as_Spatial(ge.hlthdisturban$geometry[i]),
                     buffer = ge.hlthdisturban$buffer[i],
                     fun = mean,
@@ -141,13 +145,20 @@ for(i in 1:nrow(ge.hlthdisturban)){
 # distribution looks approximately logged, which is expected since it is a distance time
 summary(ge.hlthdisturban$hlthdist)
 hist(ge.hlthdisturban$hlthdist)
-ge.hlthdisturban$hlthdist_cont_scale_clst <- my.scale(log(ge.hlthdisturban$hlthdist + tol))
+ge.hlthdisturban$hlthdist_cont_scale_clst <- my.scale(log(ge.hlthdisturban$hlthdist + 0.5)) # offset for zeroes
 hist(ge.hlthdisturban$hlthdist_cont_scale_clst)
 
 # drop extraneous geometry
-sf::st_geometry(ge.accurban) <- NULL
+sf::st_geometry(ge.hlthdisturban) <- NULL
 
 # save out
-saveRDS(object = ge.accurban, 
-        file = "data/derived_data/vividepi_accurban_clstmeans.rds")
+saveRDS(object = ge.hlthdisturban, 
+        file = "data/derived_data/vividepi_hlthdist_clstmeans.rds")
 
+
+#............................................................
+# Access to Citie and Heaalth Distance Correlations
+#...........................................................
+cor(values(access.drc),
+    values(hlthdist.drc),
+    use = "na.or.complete")

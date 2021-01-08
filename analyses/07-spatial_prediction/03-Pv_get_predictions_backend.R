@@ -8,7 +8,7 @@ library(tidyverse)
 library(drake)
 library(raster)
 library(PrevMap)
-tol <- 1e-3
+tol <- 0.5
 set.seed(48, "L'Ecuyer")
 
 #......................
