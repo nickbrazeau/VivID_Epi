@@ -28,7 +28,9 @@ set.seed(48)
 load("data/map_bases/vivid_maps_bases.rda")
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS") %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
 
 # need to add back in geometry to dt
 gegeoms <- ge %>% 

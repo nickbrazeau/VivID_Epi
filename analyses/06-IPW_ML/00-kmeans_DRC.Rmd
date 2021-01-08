@@ -23,15 +23,11 @@ library(sf)
 set.seed(48)
 
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds"))
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 
 coords <- ge %>% 
-  magrittr::set_colnames(tolower(colnames(.))) %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::select(c("dhsclust", "longnum", "latnum")) %>% 
-  dplyr::filter(!duplicated(.)) %>% 
-  dplyr::rename(hv001 = dhsclust)
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
 sf::st_geometry(coords) <- NULL
 
 
@@ -39,7 +35,8 @@ sf::st_geometry(coords) <- NULL
 # K-means Clustering of DRC
 #.............
 keda <- data.frame(k = seq(2, 200, by = 1))
-keda$kmeans <- map(keda$k, function(k){return(kmeans(x = coords[,2:3], centers = k))})
+keda$kmeans <- map(keda$k, function(k){return(kmeans(x = coords[,c("longnum", "latnum")], 
+                                                     centers = k))})
 keda$wss <- map(keda$kmeans, "withinss")
 keda$totalwss <- map(keda$wss, function(x){return(sum(x))})
 
@@ -73,7 +70,7 @@ plot(kesteda.plotObj)
 
 
 ```{r}
-k <- kmeans(coords[,2:3], 15)
+k <- kmeans(coords[,c("longnum", "latnum")], 15)
 drcpart <- cbind.data.frame(coords, k = k$cluster) 
 
 drcpart.plotObj <- drcpart %>% 

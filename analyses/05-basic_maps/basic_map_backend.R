@@ -115,6 +115,8 @@ ge.clst <- ge %>%
 
 # get GC Weight Matrix
 gcdist <- ge.clst %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
   dplyr::select(c("longnum", "latnum")) %>% 
   sf::st_distance(x = .,
                   which = "Great Circle")
