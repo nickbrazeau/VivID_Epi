@@ -81,6 +81,7 @@ paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalse
 #......................
 # run
 #......................
+future::plan("multicore")
 paramsdf$ensembl_cvRisk <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, 
                                               seed = 123)
 

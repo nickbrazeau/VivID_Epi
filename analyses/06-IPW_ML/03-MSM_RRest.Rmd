@@ -348,9 +348,9 @@ plot(finalMSMplot)
 dtsrvyr.app <- makecd2013survey(survey = dt)
 
 pvsrvyr <- dtsrvyr.app %>% 
-  dplyr::group_by(hv001) %>% 
   dplyr::mutate(count = 1) %>% 
-  srvyr::summarise(n = srvyr::survey_total(count), 
+  dplyr::group_by(hv001) %>% 
+  srvyr::summarise(n = srvyr::survey_total(count, vartype = "se"), # same sampling weight to whole cluster
                    pv = srvyr::survey_mean(pv18s, vartype = "se"),
                    pf = srvyr::survey_mean(pfldh, vartype = "se"))
 
@@ -370,7 +370,7 @@ pvprecipplot <- pvprecip %>%
   ggplot() +
   geom_point(aes(x=precip, y = prev, size = n)) +
   facet_wrap(~species) + 
-  xlab("Lagged Precipitation (cm)") + 
+  xlab("Precipitation (cm)") + 
   ylab("Prevalence") +
   theme_classic() + 
   theme(legend.position = "none",
@@ -385,6 +385,44 @@ graphics.off()
 ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
 plot(pvprecipplot)
 ```
+
+
+### Appendix: Raster Digging into _Pv_-Precipitation 
+```{r}
+# load spatial coordinates
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS") %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
+genosf <- ge
+sf::st_geometry(genosf) <- NULL
+
+# load precip raster
+precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
+
+# bring in spatial and plot
+pvprecipplot <- pvsrvyr %>% 
+  dplyr::left_join(., genosf, by = "hv001")  %>% 
+  ggplot() +
+  ggspatial::layer_spatial(data = precipraster, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
+             alpha = 0.6) +
+  scale_fill_viridis_c("Precip.", na.value = NA) +
+  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvprecip_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvprecipplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvprecipplot)
+```
+
 
 
 
@@ -415,7 +453,7 @@ pvtempplot <- tempprecip %>%
   ggplot() +
   geom_point(aes(x=temp, y = prev, size = n)) +
   facet_wrap(~species) + 
-  xlab("Lagged Temperature (C)") + 
+  xlab("Temperature (C)") + 
   ylab("Prevalence") +
   theme_classic() + 
   theme(legend.position = "none",
@@ -431,6 +469,41 @@ graphics.off()
 plot(pvtempplot)
 ```
 
+
+### Appendix: Raster Digging into _Pv_-Temperature 
+```{r}
+# load spatial coordinates
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+
+# load temp raster
+tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds") 
+
+# bring in spatial and plot
+pvtempplot <- pvsrvyr %>% 
+  dplyr::left_join(., genosf, by = "hv001") %>% 
+  ggplot() +
+  ggspatial::layer_spatial(data = tempraster, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
+             alpha = 0.6) +
+  scale_fill_viridis_c("Temp", na.value = NA) +
+  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvtempplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvtempplot)
+```
+
+
+
 ### Appendix: Digging into _Pv_-Farming
 ```{r, results='asis'}
 
@@ -442,6 +515,87 @@ dtsrvyr.app %>%
   knitr::kable(.)
 
 ```
+
+
+### Appendix: Raster Digging into _Pv_-Farming/Crop-Land 
+```{r}
+# load spatial coordinates
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+
+# load crop raster
+cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds") 
+cropraster <- raster::aggregate(cropraster, fact = 20) # agg for easier plotting 
+
+# bring in spatial and plot
+pvcropplot <- pvsrvyr %>% 
+  dplyr::left_join(., genosf, by = "hv001") %>% 
+  ggplot() +
+  ggspatial::layer_spatial(data = cropraster, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
+             alpha = 0.6) +
+  scale_fill_viridis_c("crop", na.value = NA) +
+  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvcrop_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvcropplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvcropplot)
+```
+
+### Appendix: Digging into _Pv_-Health Distance
+```{r, results='asis'}
+
+dtsrvyr.app %>% 
+  dplyr::group_by(hlthdist_fctb_clst, pv18s_fctb) %>% 
+  dplyr::summarise(counts = srvyr::survey_total()) %>% 
+  knitr::kable(.)
+
+```
+
+
+### Appendix: Raster Digging into _Pv_-Health Distance
+```{r}
+# load spatial coordinates
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+
+# load hlthdist raster
+hlthdistraster <- readRDS("data/derived_data/vividep_hlthdist_wlktime_raster.rds")
+hlthdistraster <- raster::aggregate(hlthdistraster, fact = 10) # agg for easier plotting 
+
+# bring in spatial and plot
+pvhlthdistplot <- pvsrvyr %>% 
+  dplyr::left_join(., genosf, by = "hv001") %>% 
+  ggplot() +
+  ggspatial::layer_spatial(data = hlthdistraster, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
+             alpha = 0.6) +
+  scale_fill_viridis_c("Health Dist.", na.value = NA) +
+  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvhlthdist_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvhlthdistplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvhlthdistplot)
+```
+
+
+
 
 ### Appendix: Unadjusted vs. Adjusted RR Estimates
 ```{r}
