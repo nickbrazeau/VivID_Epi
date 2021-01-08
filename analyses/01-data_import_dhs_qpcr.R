@@ -136,7 +136,6 @@ sf::st_crs(ge)
 ge <- sp::spTransform(sf::as_Spatial(ge), CRSobj = sp::CRS("+init=epsg:4326"))
 # back to tidy 
 ge <- sf::st_as_sf(ge)
-saveRDS(object = ge, file = "data/raw_data/dhsdata/VivIDge.RDS")
 
 #......................
 # add in space
@@ -171,6 +170,27 @@ panplasmpcrres_gcgeprar <- dplyr::inner_join(panplasmpcrres, gcgegewrmrprar, by 
 panplasmpcrres_gcgeprar <- sf::st_as_sf(panplasmpcrres_gcgeprar)
 saveRDS(panplasmpcrres_gcgeprar, file = "data/raw_data/vividpcr_dhs_raw.rds")
 
+#......................
+# get spatial cluster (489)
+#   when we account for de jure and zero weighted obs
+#       note, need to remove three clusters that were not screened for malaria
+#       one cluster due to no HIV testing in it(? DHS internal) and 
+#       two clusters lost due to contamination
+#......................
+geupd <- panplasmpcrres_gcgeprar %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>%  # drop observations with missing geospatial data 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
+  dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(hiv05 != 0) %>%  # drop observations with samplings weights set to 0
+  dplyr::select(c("hv001", "adm1name", "longnum", "latnum", "urban_rura")) 
+# drop geom so I can deduplicate
+holdcrs <- sf::st_crs(geupd)
+sf::st_geometry(geupd) <- NULL
+geupd <- geupd[!duplicated(geupd),]
+geupd <- sf::st_as_sf(geupd, coords = c("longnum", "latnum"),
+                      crs = holdcrs) 
+# now save out space
+saveRDS(object = geupd, file = "data/raw_data/dhsdata/VivIDge.RDS")
 
 
 

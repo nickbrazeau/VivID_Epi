@@ -51,10 +51,7 @@ system('gunzip data/raw_data/weather_data/CHIRPS/*')
 ##########                      HOTOSM DATA                       ################
 ##################################################################################
 # read in GE as import
-ge <- sf::st_as_sf(readRDS("data/raw_data/dhsdata/datasets/CDGE61FL.rds")) %>% 
-  magrittr::set_colnames(tolower(colnames(.))) %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 # sanity check
 sf::st_crs(ge)
 identicalCRS(sf::as_Spatial(ge), caf)
@@ -105,7 +102,7 @@ lakedist <- sf::st_distance(x = ge,
 
 
 wtrdist_out <- data.frame(
-  hv001 = ge$dhsclust,
+  hv001 = ge$hv001,
   river = apply(riverdist, 1, min),
   lake = apply(lakedist, 1, min)) %>% 
   dplyr::group_by(hv001) %>% 
@@ -115,8 +112,9 @@ wtrdist_out <- data.frame(
 
 # check the results
 wtrdist_ge <- wtrdist_out %>% 
-  dplyr::rename(dhsclust = hv001) %>% 
-  dplyr::left_join(., ge, by = "dhsclust")
+  dplyr::left_join(., ge, by = "hv001") %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
 DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 ggplot() + 
   geom_sf(data = sf::st_as_sf(DRCprov)) +

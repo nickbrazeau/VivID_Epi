@@ -12,7 +12,6 @@
 # libraries and imports
 library(tidyverse)
 source("R/00-functions_basic.R")
-tol <- 1e-3
 
 # create bounding box of Central Africa for Speed/sanity checks
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
@@ -131,11 +130,11 @@ summary(dt$pv18s)
 dt <- dt %>% 
   dplyr::mutate(
     pfldhct_cont = pfctmean,
-    pfldhct_cont_log = log(pfctmean + tol),
+    pfldhct_cont_log = log(pfctmean + 1e-3),
     pv18sct_cont = pvctcrrct,
-    pv18sct_cont_log = log(pvctcrrct + tol),
+    pv18sct_cont_log = log(pvctcrrct + 1e-3),
     po18sct_cont = poctcrrct,
-    po18sct_cont_log = log(poctcrrct + tol),
+    po18sct_cont_log = log(poctcrrct + 1e-3),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos"))
@@ -500,8 +499,9 @@ hlthdist_out <- hlthdist_out %>%
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
+    hlthdist_fctb_clst = factor(hlthdist_fctb_clst, levels = c("near", "far")),
     hlthdist_cont_scale_clst = my.scale(hlthdist_cont_clst, center = T, scale = T),
-    hlthdist_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + 0.5), center = T, scale = T))
+    hlthdist_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + 0.5), center = T, scale = T)) # offset for zeroes
 
 # look at output
 summary(dt$hlthdist_cont_scale_clst)
@@ -515,10 +515,6 @@ xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
 xtabs(~ dt$hlthdist_fctb_clst)
 
 # look at continous
-dt %>% 
-  ggplot() + 
-  geom_boxplot(aes(x = hlthdist_fctb_clst)) +
-  facet_wrap(~ urban_rura_fctb)
 boxplot(dt$hlthdist_cont_log_scale_clst ~ haven::as_factor(dt$urban_rura_fctb))
 t.test(dt$hlthdist_cont_log_scale_clst[ haven::as_factor(dt$urban_rura_fctb) == "R"],
        dt$hlthdist_cont_log_scale_clst[ haven::as_factor(dt$urban_rura_fctb) == "U"])

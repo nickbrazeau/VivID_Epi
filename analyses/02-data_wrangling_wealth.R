@@ -10,7 +10,6 @@
 # libraries and imports
 library(tidyverse)
 source("R/00-functions_basic.R")
-tol <- 1e-3
 set.seed(48)
 
 # subset to my study population but include those individuals with missing covariates

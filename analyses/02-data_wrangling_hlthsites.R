@@ -20,13 +20,8 @@ sp::proj4string(caf) <- "+init=epsg:4326"
 #..................................
 # Get cluster locations
 dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
-# drop observations with missing geospatial data 
-ge <- dt %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::select(c("hv001", "longnum", "latnum", "urban_rura")) %>% 
-  dplyr::mutate(urban_rura = as.character(urban_rura)) %>% # coerce to char so attr list doesn't mess with dplyr
-  dplyr::filter(!duplicated(.))
+# read in GE as import
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 # sanity check
 sf::st_crs(ge)
 identicalCRS(sf::as_Spatial(ge), caf)
@@ -127,3 +122,6 @@ hlthdist.mean %>%
 #..........
 dir.create("data/derived_data/", recursive = TRUE)
 saveRDS(object = hlthdist.mean, file = "data/derived_data/hlthdist_out_wlk_trvltime.rds")
+saveRDS(object = hlthdist, 
+        file = "data/derived_data/vividep_hlthdist_wlktime_raster.rds")
+

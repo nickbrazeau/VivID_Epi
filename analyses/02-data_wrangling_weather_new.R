@@ -105,13 +105,16 @@ precipdf <- tibble::tibble(names = basename(precip)) %>%
 #   and tidy up for means later
 #......................
 dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
-# drop observations with missing geospatial data 
+# read in GE as import
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+# drop observations with missing or excluded geospatial data 
 dt <- dt %>% 
   dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) 
-
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
+  dplyr::filter(hv001 %in% ge$hv001)
 # sanity check
 sf::st_crs(dt)
+identicalCRS(sf::as_Spatial(dt), ge)
 identicalCRS(sf::as_Spatial(dt), caf)
 # liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
 dt <- sp::spTransform(sf::as_Spatial(dt), CRSobj = sp::CRS("+init=epsg:4326"))
@@ -153,9 +156,8 @@ daytemprstr_stack.mean <- raster::calc(daytemprstr_stack, mean, na.rm = T)
 #......................
 # now lets get cluster level means
 #......................
-wthrnd.mean <- dt[,c("hv001", "geometry", "urban_rura")] %>% 
+wthrnd.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>% 
   dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
-wthrnd.mean <- wthrnd.mean[!duplicated(wthrnd.mean$hv001),]
 
 
 # Drop in a for loop again to account for DHS buffering
@@ -165,10 +167,10 @@ wthrnd.mean <- wthrnd.mean[!duplicated(wthrnd.mean$hv001),]
 # DHS "The Geospatial Covariate Datasets Manual", we will do it
 sf::st_crs(precipstack.mean)
 sf::st_crs(daytemprstr_stack.mean)
-sf::st_crs(dt)
+sf::st_crs(wthrnd.mean)
 identicalCRS(daytemprstr_stack.mean, caf)
 identicalCRS(daytemprstr_stack.mean, precipstack.mean)
-identicalCRS(daytemprstr_stack.mean, sf::as_Spatial(dt))
+identicalCRS(daytemprstr_stack.mean, sf::as_Spatial(wthrnd.mean))
 
 # now run for loop
 wthrnd.mean$precip_mean_cont_clst <- NA
@@ -232,7 +234,7 @@ for (i in tempmissing) {
   wthrnd.mean$temp_mean_cont_clst[i] <- 
     raster::extract(x = daytemprstr_stack.mean, # this doesn't change this time 
                     y = sf::as_Spatial(wthrnd.mean$geometry[i]),
-                    buffer = 6000,
+                    buffer = 12000,
                     fun = mean,
                     na.rm = T, 
                     sp = F
