@@ -271,7 +271,7 @@ plan_long_covarmad <- drake::drake_plan(
   longrun_covarmod = target(
     PrevMap::binomial.logistic.Bayes(
       formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
-                       cropprop_cont_scale_clst + accmean_cont_scale_clst"),
+                       cropprop_cont_scale_clst + hlthdist_cont_scale_clst"),
       units.m = as.formula("~ n"),
       coords = as.formula("~ longnum + latnum"),
       data = pvclust.weighted.nosf,
