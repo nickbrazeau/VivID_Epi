@@ -15,17 +15,14 @@ set.seed(48, "L'Ecuyer")
 # Import Data
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
-ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 dtsrvy <- makecd2013survey(survey = dt)
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 #......................
 # Subset to Pv
 #......................
-longlat <- ge %>% 
-  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
-                latnum = sf::st_coordinates(geometry)[,2]) %>% 
-  dplyr::select(c("hv001", "longnum", "latnum")) 
-sf::st_geometry(longlat) <- NULL
+longlat <- dt %>% 
+  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
+  dplyr::filter(!duplicated(.))
 
 pvclust.weighted.nosf <- dtsrvy %>% 
   dplyr::mutate(count = 1) %>% 
