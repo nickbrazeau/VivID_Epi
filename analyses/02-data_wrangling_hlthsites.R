@@ -122,6 +122,3 @@ hlthdist.mean %>%
 #..........
 dir.create("data/derived_data/", recursive = TRUE)
 saveRDS(object = hlthdist.mean, file = "data/derived_data/hlthdist_out_wlk_trvltime.rds")
-saveRDS(object = hlthdist, 
-        file = "data/derived_data/vividep_hlthdist_wlktime_raster.rds")
-
