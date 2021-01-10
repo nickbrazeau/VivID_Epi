@@ -87,9 +87,9 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
-                                             log.normal.nugget = c(0, 2.5), # this is tau2
-                                             log.normal.phi = c(2, 0.25),
-                                             log.normal.sigma = c(0, 2.5))
+                                             log.normal.nugget = c(2, 1), # this is tau2
+                                             log.normal.phi = c(1, 1),
+                                             log.normal.sigma = c(-1, 1.5))
 
 # NB covar matrix
 covarsmat <- matrix(0, ncol = 4, nrow=4) # three risk factors, 4 betas
@@ -97,13 +97,13 @@ diag(covarsmat) <- 1 # identity matrix
 
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
                                        beta.covar = covarsmat,
-                                       log.normal.nugget = c(0, 2.5), # this is tau2
-                                       log.normal.phi = c(2, 0.25),
-                                       log.normal.sigma = c(0, 2.5))
+                                       log.normal.nugget = c(2, 1), # this is tau2
+                                       log.normal.phi = c(1, 1),
+                                       log.normal.sigma = c(-1, 1.5))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
                                                         n.sim = 1e4+5e3,
-                                                        thin = 10, 
+                                                        thin = 1, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
                                                         start.nugget = 1,
@@ -114,7 +114,7 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
 
 mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
                                                   n.sim = 1e4+5e3,
-                                                  thin = 10, 
+                                                  thin = 1, 
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 1,
@@ -220,7 +220,7 @@ dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spat
 # Directions LONG RUN                      
 mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
                                                              n.sim = 1e5 + 5e4,
-                                                             thin = 100, 
+                                                             thin = 5, 
                                                              L.S.lim = c(5,50),
                                                              epsilon.S.lim = c(0.01, 0.1),
                                                              start.nugget = 1,
@@ -231,7 +231,7 @@ mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5,
 
 mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
                                                        n.sim = 1e5 + 5e4,
-                                                       thin = 100, 
+                                                       thin = 5, 
                                                        L.S.lim = c(5,50),
                                                        epsilon.S.lim = c(0.01, 0.1),
                                                        start.nugget = 1,
