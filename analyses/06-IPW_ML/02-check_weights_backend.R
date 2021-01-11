@@ -83,7 +83,7 @@ modelmap <- rbind.data.frame(modelmap.nowi, modelmap.ml)
 # Energy function for slurm
 #............................................................
 
-slurm_calc_corr <- function(covar1, covar2, data, lvl){
+slurm_calc_corr <- function(covar1, covar2, data, lvl, id){
   x1 <- unlist( data[,covar1] )
   x2 <- unlist( data[,covar2] )
   if(is.factor(x1)){
@@ -99,23 +99,81 @@ slurm_calc_corr <- function(covar1, covar2, data, lvl){
 }
 
 
-#................................
-# send it out with rSLURM
-#................................
+#............................................................
+# parallelize with drake
+#...........................................................
+workers <- 512 # nodes to ask for, fewer nodes, less expensive for reading in data and not placing burden on scheduler
+library(drake)
 
-# for slurm on LL
-setwd("analyses/06-IPW_ML/")
-sjob <- rslurm::slurm_apply(f = slurm_calc_corr, 
-                            params = modelmap, 
-                            jobname = 'covar_IPTW_balance',
-                            nodes = 1028, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 32000,
-                                                 array = sprintf("0-%d%%%d", 
-                                                                 1028, 
-                                                                 128),
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "5:00:00"))
+#......................
+# functions for drake
+#......................
+drake_wrapper <- function(batchset_df) {
+  
+  # call future
+  no_cores <- future::availableCores() - 1
+  if (no_cores > 1) {
+    future::plan(future::multicore, workers = no_cores)
+  } else {
+    future::plan("sequential")
+  }
+  
+  
+  #......................
+  # run batches to not overload scheduler
+  #......................
+  batchset_df$energcorr <- furrr::future_pmap(batchset_df, slurm_calc_corr)
+  
+  # now write out
+  dir.create("/pine/scr/n/f/nfb/Projects/VivID_Epi/06-IPW_ML/wi_covar_corr/", recursive = T)
+  saveRDS(batchset_df,
+          file = paste0("/pine/scr/n/f/nfb/Projects/VivID_Epi/06-IPW_ML/wi_covar_corr/",
+                        "batchset_", unique(batchset_df$id), ".RDS"))
+  
+}
+
+#......................
+# make batches
+#......................
+batchnum <- sort( rep(1:workers, ceiling(nrow(modelmap) / workers)) )
+batchnum <- batchnum[1 :nrow(modelmap)]
+
+modelmap_nested <- modelmap %>%
+  dplyr::mutate(id = batchnum,
+                batchset = batchnum) %>%
+  dplyr::group_by(batchset) %>%
+  tidyr::nest() %>%
+  dplyr::ungroup()
+
+
+#......................
+# make drake plan
+#......................
+batch_names <- paste0("batch", modelmap_nested$batchset)
+plan <- drake::drake_plan(
+  runs = target(
+    drake_wrapper(data),
+    transform = map(
+      .data = !!modelmap_nested,
+      .names = !!batch_names
+    )
+  )
+)
+
+#......................
+# call drake to send out to slurm
+#......................
+options(clustermq.scheduler = "slurm",
+        clustermq.template = "drake_clst/slurm_clustermq_LL_short.tmpl")
+make(plan,
+     parallelism = "clustermq",
+     jobs = nrow(modelmap_nested),
+     log_make = "wi_covar_ipw_drake.log", verbose = 4,
+     log_progress = TRUE,
+     log_build_times = FALSE,
+     recoverable = FALSE,
+     history = FALSE,
+     session_info = FALSE,
+     garbage_collection = TRUE,
+     lock_envir = FALSE,
+     lock_cache = FALSE)
