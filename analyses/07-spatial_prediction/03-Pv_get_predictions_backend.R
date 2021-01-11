@@ -129,7 +129,7 @@ plan <- drake::bind_plans(plan_pred_intercept,
 # call drake to send out to slurm
 #......................
 options(clustermq.scheduler = "slurm",
-        clustermq.template = "drake_clst/slurm_clustermq_LL_pred.tmpl")
+        clustermq.template = "/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/drake_clst/slurm_clustermq_LL_pred.tmpl")
 make(plan,
      parallelism = "clustermq",
      jobs = 2,
