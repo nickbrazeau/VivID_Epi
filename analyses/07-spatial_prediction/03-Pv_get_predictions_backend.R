@@ -29,15 +29,9 @@ gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 #......................
 # read in spatial raster preds
 covar.rstr.pred <- readRDS("data/derived_data/vividepi_spatial_covar_feature_engineer.rds")
-
-# down sample
-covar.rstr.pred.downsmpl <- raster::sampleRandom(covar.rstr.pred, 
-                                                 size = 2e4,
-                                                 na.rm = T,
-                                                 xy = T,
-                                                 sp = F)
-
 colnames(covar.rstr.pred.downsmpl)[1:2] <- c("longnum", "latnum")
+# prevamp needs this as a dataframe
+covar.rstr.pred.downsmpl <- as.data.frame(covar.rstr.pred.downsmpl)
 
 #...............................
 # bring together Map Dataframe  
@@ -52,22 +46,7 @@ gp.mod.framework$predictors <- list(NULL, covar.rstr.pred.downsmpl[,c("precip_me
                                                                       "hlthdist_cont_scale_clst")])
 
 
-#............................................................
-# Running Spatial Model
-#...........................................................
-# make wrapper
-pred_PrevMap_bayes_wrapper <- function(mcmc, grid.pred, predictors){
-  ret <- PrevMap::spatial.pred.binomial.Bayes(object = mcmc, 
-                                              grid.pred = grid.pred,
-                                              predictors = predictors, 
-                                              type = "marginal", 
-                                              scale.predictions = "prevalence",
-                                              quantiles = NULL, 
-                                              standard.error = TRUE, 
-                                              thresholds = NULL)
-  return(ret)
-  
-}
+
 
 ####################################################################################
 ###########                 Preds with Drake                               #########
