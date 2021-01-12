@@ -29,19 +29,19 @@ gp.mod.framework <- tibble::tibble(name = c("intercept", "covars"),
 #......................
 # read in spatial raster preds
 covar.rstr.pred <- readRDS("data/derived_data/vividepi_spatial_covar_feature_engineer.rds")
-colnames(covar.rstr.pred.downsmpl)[1:2] <- c("longnum", "latnum")
+colnames(covar.rstr.pred)[1:2] <- c("longnum", "latnum")
 # prevamp needs this as a dataframe
-covar.rstr.pred.downsmpl <- as.data.frame(covar.rstr.pred.downsmpl)
+covar.rstr.pred <- as.data.frame(covar.rstr.pred)
 
 #...............................
 # bring together Map Dataframe  
 #...............................
 # bring in grid.pred
-gp.mod.framework$grid.pred <- list(covar.rstr.pred.downsmpl[,c("longnum", "latnum")],
-                                   covar.rstr.pred.downsmpl[,c("longnum", "latnum")])
+gp.mod.framework$grid.pred <- list(covar.rstr.pred[,c("longnum", "latnum")],
+                                   covar.rstr.pred[,c("longnum", "latnum")])
 
 # bring in predictors
-gp.mod.framework$predictors <- list(NULL, covar.rstr.pred.downsmpl[,c("precip_mean_cont_scale_clst", 
+gp.mod.framework$predictors <- list(NULL, covar.rstr.pred[,c("precip_mean_cont_scale_clst", 
                                                                       "cropprop_cont_scale_clst",
                                                                       "hlthdist_cont_scale_clst")])
 
