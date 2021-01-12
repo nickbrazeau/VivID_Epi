@@ -92,19 +92,19 @@ drcpf <- broom::tidy(drcpf, conf.int = T)
 
 rbind.data.frame( cbind.data.frame(species = "Pv", drcpv),
                   cbind.data.frame(species = "Pf", drcpf)
-                  ) %>% 
+) %>% 
   dplyr::select(-c("term")) %>% 
   dplyr::rename(Prevalence = estimate) %>% 
   knitr::kable()
-  
+
 
 ```
 
 ### Cluster Level Prevalence 
 **N.B. Everyone is weighted the same in the cluster, which results in the same cluster level prevalences whether you consider weights or not**. However, this will results in  slightly different numerator (e.g. $n_numerator$) and denominators between the weighted and unweighted approach. Caution is warranted when reporting weighted versus unweighted Ns and Standard Errors at the cluster-level for this reason. 
-  
+
 NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used a logit transformation and the t-distribution to estimate these CIs.    
-    
+
 
 ```{r, results='asis', fig.align='center', fig.width=11, fig.height=8}
 
@@ -116,18 +116,22 @@ clst <- dt %>%
   dplyr::group_by(hv001) %>%
   dplyr::summarise(n = n(),
                    pv18sn = sum(pv18s),
-                   pv18sprev = mean(pv18s),
-                   pv18sse = sqrt(pv18sn * pv18sprev * (1 - pv18sprev)) / sqrt(pv18sn),
-                   pv18sL95 = getCI_from_logit_transfrom(succeses = pv18sn, n = n, tol = 0, alpha = 0.05)[1],
-                   pv18sU95 = getCI_from_logit_transfrom(succeses = pv18sn, n = n, tol = 0, alpha = 0.05)[2],
-
-                   pfldhn = sum(pfldh),
-                   pfldhprev = mean(pfldh),
-                   pfldhse = sqrt(pfldhn * pfldhprev * (1 - pfldhprev)) / sqrt(pfldhn),
-                   pfldhL95 = getCI_from_logit_transfrom(succeses = pfldhn, n = n, tol = 0, alpha = 0.05)[1],
-                   pfldhU95 = getCI_from_logit_transfrom(succeses = pfldhn, n = n, tol = 0, alpha = 0.05)[2],
-
-                   )
+                   pfldhn = sum(pfldh)) %>% 
+  dplyr::mutate(
+    pv18sbinomtest = purrr::map2(pv18sn, n, function(x,y)
+    {binom.test(x = x, n = y)}),
+    pv18sprev = pv18sn/n,
+    pvconfint = purrr::map(pv18sbinomtest, "conf.int"),
+    pv18sL95 = purrr::map_dbl(pvconfint, 1),
+    pv18sU95 =purrr::map_dbl(pvconfint, 2),
+    
+    pfldhbinomtest = purrr::map2(pfldhn, n, function(x,y)
+    {binom.test(x = x, n = y)}),
+    pfldhprev = pfldhn/n,
+    pfldhconfint = purrr::map(pfldhbinomtest, "conf.int"),
+    pfldhL95 = purrr::map_dbl(pfldhconfint, 1),
+    pfldhU95 =purrr::map_dbl(pfldhconfint, 2)
+  )
 
 
 
@@ -137,14 +141,25 @@ clstprev <- dtsrvy %>%
   dplyr::mutate(count = 1) %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
-                   pvn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
-                   pfn = srvyr::survey_total(pfldh, vartype = c("se", "ci")),
-                   
-                   pvprev = srvyr::survey_mean(pv18s, vartype = c("se", "ci")),
-                   pfprev = srvyr::survey_mean(pfldh, vartype = c("se", "ci"))
-                   ) %>% 
-  dplyr::select(c("n", "pvn", "pfn", "pvprev", "pfprev"))
+                   pv18sn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
+                   pfldhn = srvyr::survey_total(pfldh, vartype = c("se", "ci"))) %>% 
+  dplyr::mutate(
+    pv18sbinomtest = purrr::map2(pv18sn, n, function(x,y)
+    {binom.test(x = round(x), n = round(y))}),
+    pv18sprev = pv18sn/n,
+    pvconfint = purrr::map(pv18sbinomtest, "conf.int"),
+    pv18sL95 = purrr::map_dbl(pvconfint, 1),
+    pv18sU95 =purrr::map_dbl(pvconfint, 2),
+    
+    pfldhbinomtest = purrr::map2(pfldhn, n, function(x,y)
+    {binom.test(x = round(x), n = round(y))}),
+    pfldhprev = pfldhn/n,
+    pfldhconfint = purrr::map(pfldhbinomtest, "conf.int"),
+    pfldhL95 = purrr::map_dbl(pfldhconfint, 1),
+    pfldhU95 =purrr::map_dbl(pfldhconfint, 2)
+  )
 
+# aesthetics for plot
 genosf <- ge
 sf::st_geometry(genosf) <- NULL
 #......................
@@ -243,6 +258,9 @@ graphics.off()
 ```{r, results='asis'}
 
 clst %>% 
+  dplyr::select(c("hv001", "n", "pv18sn", "pfldhn",
+                  "pv18sprev", "pv18sL95", "pv18sU95",
+                  "pfldhprev", "pfldhL95", "pfldhU95")) %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(
@@ -257,6 +275,9 @@ clst %>%
 ```{r, results='asis'}
 
 clstprev %>% 
+  dplyr::select(c("hv001", "n", "pv18sn", "pfldhn",
+                  "pv18sprev", "pv18sL95", "pv18sU95",
+                  "pfldhprev", "pfldhL95", "pfldhU95")) %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(
@@ -266,6 +287,8 @@ clstprev %>%
                   buttons = c('csv')))
 
 ```
+
+Not considering weights, among the `r nrow(clst)` clusters considered, `r sum(clst$pv18sn >= 1)` clusters had at least one infection and `r sum(clst$pv18sn == 1)` had exactly one infection. 
 
 
 ## Duffy Negativity
@@ -315,11 +338,11 @@ Note, prevalences below are in percentages.
 
 duff %>% 
   dplyr::mutate_if(is.numeric, round, 2) %>% 
-knitr::kable(.)
+  knitr::kable(.)
 
 duff_wi %>% 
   dplyr::mutate_if(is.numeric, round, 2) %>% 
-knitr::kable(.)
+  knitr::kable(.)
 
 ```
 
@@ -438,7 +461,7 @@ tableone::kableone(casestbl1)
 
 # Table Two(s)
 N.B. We have no scaled (i.e. mean-centered and standardized) all continous variables with the exception of the wlth variable, as it was already a factor score. Dichotomized variables have the presumed protective level as the reference level.   
-  
+
 N.B. Parametric association test using GEE (`svyglm` is performing GEE with the sampling weights considered "repeat" observations). Given that we are not considering confounding in these estimates, they are purely assocations and should not be overly interpreted. 
 
 ```{r}
@@ -454,13 +477,13 @@ N.B. Parametric association test using GEE (`svyglm` is performing GEE with the 
 #.......................
 pvivrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y"]
 pvivrskfctr_models <- data.frame(outcome = rep("pv18s", length(pvivrskfctr)), 
-                               covar = pvivrskfctr, stringsAsFactors=FALSE)
+                                 covar = pvivrskfctr, stringsAsFactors=FALSE)
 
 pvivrskfctr_models$glmlogit <- purrr::pmap(pvivrskfctr_models, .f=fitsvyglmlogit)
 pvivrskfctr_models$glmlogit_tidy <- purrr::map(pvivrskfctr_models$glmlogit,
-                                             .f=function(x){
-                                             broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
-                                             )
+                                               .f=function(x){
+                                                 broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)}
+)
 pvivrskfctr_est <- pvivrskfctr_models$glmlogit_tidy %>% 
   bind_rows() %>% filter(term != "(Intercept)") %>% 
   mutate_if(is.numeric, round, 2)
@@ -477,14 +500,14 @@ pfalrskfctr <- dcdr$column_name[dcdr$risk_factor_model == "y" & dcdr$column_name
 pfalrskfctr <- c("pv18s_fctb", pfalrskfctr)
 
 pfalrskfctr_models <- data.frame(outcome = rep("pfldh", length(pfalrskfctr)), 
-                               covar = pfalrskfctr, stringsAsFactors=FALSE)
+                                 covar = pfalrskfctr, stringsAsFactors=FALSE)
 
 pfalrskfctr_models$glmlogit <- purrr::pmap(pfalrskfctr_models, .f=fitsvyglmlogit)
 
 
 pfalrskfctr_models$glmlogit_tidy <- purrr::map(pfalrskfctr_models$glmlogit,
-                                             .f=function(x){
-                                             broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
+                                               .f=function(x){
+                                                 broom::tidy(x, exponentiate=TRUE, conf.int=TRUE)})
 
 
 pfalrskfctr_est <- pfalrskfctr_models$glmlogit_tidy %>% 
@@ -512,7 +535,7 @@ pvivtbl1df <- dcdr %>%
   dplyr::rename(matchcol = column_name) %>% 
   dplyr::left_join(pvivtbl1df, ., by = "matchcol") %>% 
   dplyr::select(c("var_label", dplyr::everything()))
- 
+
 
 
 pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
@@ -549,9 +572,9 @@ pfalriskfactortable <- pfalriskfactortable %>%
 # Cases to DF 
 #.......................
 casestbl1df <- tableone2dataframe(casestbl1, columnnames = c("Covariates",
-                                                           "Case-Negative",
-                                                           "Case-Positive",
-                                                           "matchcol"))
+                                                             "Case-Negative",
+                                                             "Case-Positive",
+                                                             "matchcol"))
 
 casestbl1df <- dcdr %>% 
   dplyr::select(c("column_name", "var_label")) %>% 
@@ -608,7 +631,7 @@ pvriskest <- pvivrskfctr_models$glmlogit_tidy %>%
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(column_name = term) %>% 
   dplyr::mutate(
-     column_name = ifelse(grepl("_fctb_clst", column_name),
+    column_name = ifelse(grepl("_fctb_clst", column_name),
                          stringr::str_extract(column_name, "[ -~]+_fctb_clst"),
                          column_name),
     column_name = ifelse(!grepl("_fctb_clst", column_name) & grepl("_fctb", column_name),
@@ -628,7 +651,7 @@ pfriskest <- pfalrskfctr_models$glmlogit_tidy %>%
   mutate_if(is.numeric, round, 2) %>% 
   dplyr::rename(column_name = term)  %>% 
   dplyr::mutate(
-     column_name = ifelse(grepl("_fctb_clst", column_name),
+    column_name = ifelse(grepl("_fctb_clst", column_name),
                          stringr::str_extract(column_name, "[ -~]+_fctb_clst"),
                          column_name),
     column_name = ifelse(!grepl("_fctb_clst", column_name) & grepl("_fctb", column_name),
@@ -672,7 +695,7 @@ pv_bivar_rf_plot <- pvriskest %>%
     plot.background = element_rect(fill = "transparent"),
     panel.grid = element_blank(),
     panel.border = element_blank())
-    
+
 
 pf_bivar_rf_plot <- pfriskest %>% 
   dplyr::mutate(abridged_var_label = factor(abridged_var_label, levels = orderrf, ordered = T)) %>%
@@ -761,7 +784,7 @@ readr::write_csv(x = pvivriskfactortable,
 
 readr::write_csv(x = pfalriskfactortable, 
                  path = "~/Documents/GitHub/VivID_Epi/results/tables/pfalriskfactortable_tabletwos.csv",
-                na = "")
+                 na = "")
 
 
 ```
