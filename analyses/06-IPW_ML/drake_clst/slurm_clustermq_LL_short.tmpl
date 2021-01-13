@@ -2,8 +2,8 @@
 #SBATCH --job-name={{ job_name }}           # job name
 #SBATCH --output={{ log_file | /dev/null }} # you can add .%a for array index
 #SBATCH --error={{ log_file | /dev/null }}  # log file
-#SBATCH --mem={{ memory | 8192 }}
+#SBATCH --mem={{ memory | 16384 }}
 #SBATCH --array=1-{{ n_jobs }}              # job array
 #SBATCH --time 4:00:00                     # time
-ulimit -v $(( 1024 * {{ memory | 8192 }} ))
+ulimit -v $(( 1024 * {{ memory | 16384 }} ))
 CMQ_AUTH={{ auth }} R --no-save --no-restore -e 'clustermq:::worker("{{ master }}")'
