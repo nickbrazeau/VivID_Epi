@@ -2,7 +2,7 @@
 # Purpose of this script is to check for 
 # covariate balance after applying the weights
 #----------------------------------------------------------------------------------------------------
-library(rslurm)
+library(drake)
 library(tidyverse)
 library(energy)
 source("R/00-IPTW_functions.R")
@@ -12,7 +12,6 @@ set.seed(48, "L'Ecuyer")
 # Import Data and superlearner results
 #............................................................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
-
 params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
 
 #............................................................
