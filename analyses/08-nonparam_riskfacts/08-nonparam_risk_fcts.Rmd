@@ -300,7 +300,7 @@ inset <- airports %>%
                 latnum = sf::st_coordinates(geometry)[,2]) %>% 
   ggplot() +
   geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
-  geom_point(aes(x = longnum, y = latnum), color = "#3C3B6E", 
+  geom_point(aes(x = longnum, y = latnum), color = "#ED2C31", 
              size = 2, alpha = 0.8, shape = 17) +
   theme_void()
 
