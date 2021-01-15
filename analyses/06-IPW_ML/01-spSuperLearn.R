@@ -65,7 +65,6 @@ txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classi
 txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "hv106_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "farmer_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "hlthdist_cont_log_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
 
 

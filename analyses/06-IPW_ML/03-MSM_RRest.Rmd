@@ -565,9 +565,17 @@ dtsrvyr.app %>%
 ```{r}
 # load spatial coordinates
 ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+# create bounding box of Central Africa for Speed
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+init=epsg:4326"
+
+# create mask 
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 # load hlthdist raster
-hlthdistraster <- readRDS("data/derived_data/vividep_hlthdist_wlktime_raster.rds")
+hlthdistraster <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+sp::identicalCRS(htlhdistraster, caf)
+sp::identicalCRS(htlhdistraster, sf::as_Spatial(DRC))
 hlthdistraster <- raster::aggregate(hlthdistraster, fact = 10) # agg for easier plotting 
 
 # bring in spatial and plot
