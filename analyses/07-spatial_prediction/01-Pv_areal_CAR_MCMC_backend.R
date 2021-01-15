@@ -11,7 +11,6 @@ library(CARBayes)
 library(HDInterval)
 library(raster)
 set.seed(48)
-tol <- 1e-3
 
 #......................
 # Import Data
@@ -67,12 +66,12 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("precip_scale", "crop_scale", "fricurban_scale")
+prov.covar.names <- c("precip_scale", "crop_scale", "hlthdist_scale")
 mod.framework <- tibble(name = c("CAR_intercept", "CAR_covar"),
                         formula = c("plsmdn ~ 1", 
                                     paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + "))),
-                        burnin = 1e3,
-                        n.sample = 1e4 + 1e3,
+                        burnin = 1e4,
+                        n.sample = 1e4+1e4,
                         family = "binomial"
 )
 
@@ -80,6 +79,7 @@ mod.framework <- tibble(name = c("CAR_intercept", "CAR_covar"),
 mod.framework$trials <- lapply(1:nrow(mod.framework), function(x) return(pvprov.weighted.nosf$n))
 mod.framework$data <- lapply(1:nrow(mod.framework), function(x) return(pvprov.weighted.nosf))
 mod.framework$W <- lapply(1:nrow(mod.framework), function(x) return(W))
+mod.framework$thin <- 1 # no thinning for diagnostics
 
 
 
@@ -91,12 +91,12 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 #......................
 # Make a wrapper for CARBAYES
 #......................
-wrap_S.CARleroux <- function(name, formula, family, trials, W, data, burnin, n.sample){
+wrap_S.CARleroux <- function(name, formula, family, trials, W, data, burnin, n.sample, thin){
   
   formvec <- paste(formula, collapse = "")
   betacount <- stringr::str_count(formvec, "\\+") + 2 # need intercept and betas
   betacount <- ifelse(grepl("1", formvec), 1, betacount) # corner case of just intercept
-  prior.var.betavec <- rep(5e4, betacount) # note prior setting here
+  prior.var.betavec <- rep(100, betacount) # note prior default of 1e5 setting here
   
   # rho here is NULL by default and esimtated in the model
   ret <- CARBayes::S.CARleroux(formula = as.formula(formula), 
@@ -106,7 +106,8 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, data, burnin, n.s
                                data = data,
                                burnin = burnin, 
                                prior.var.beta = prior.var.betavec,
-                               n.sample = n.sample)
+                               n.sample = n.sample,
+                               thin = thin)
   
   
   return(ret)
@@ -128,8 +129,9 @@ saveRDS(mod.framework, "analyses/07-spatial_prediction/ProvModels/ProvModel_diag
 mod.framework.long <- mod.framework[,c("name", "formula", "family", "trials", "W", "data", "burnin", "n.sample")] %>% 
   dplyr::filter(!duplicated(.))
 
-mod.framework.long$burnin <- 1e3
-mod.framework.long$n.sample <- 1e5 + 1e3
+mod.framework.long$burnin <- 1e5
+mod.framework.long$n.sample <- 1e5 + 1e5
+mod.framework.long$thin <- 10 # some thing for longer run 
 
 mod.framework.long$MCMC <- furrr::future_pmap(mod.framework.long, wrap_S.CARleroux)
 
