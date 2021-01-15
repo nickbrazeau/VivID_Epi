@@ -426,81 +426,81 @@ plot(pvprecipplot)
 
 
 
-### Appendix: Digging into _Pv_-Temperature
-```{r}
+<!-- ### Appendix: Digging into _Pv_-Temperature -->
+<!-- ```{r} -->
 
-dtsrvyr.app <- makecd2013survey(survey = dt)
+<!-- dtsrvyr.app <- makecd2013survey(survey = dt) -->
 
-pvsrvyr <- dtsrvyr.app %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::mutate(count = 1) %>% 
-  srvyr::summarise(n = srvyr::survey_total(count), 
-                   pv = srvyr::survey_mean(pv18s, vartype = "se"),
-                   pf = srvyr::survey_mean(pfldh, vartype = "se"))
+<!-- pvsrvyr <- dtsrvyr.app %>%  -->
+<!--   dplyr::group_by(hv001) %>%  -->
+<!--   dplyr::mutate(count = 1) %>%  -->
+<!--   srvyr::summarise(n = srvyr::survey_total(count),  -->
+<!--                    pv = srvyr::survey_mean(pv18s, vartype = "se"), -->
+<!--                    pf = srvyr::survey_mean(pfldh, vartype = "se")) -->
 
-temp <- dt %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(
-    temp = mean(temp_mean_cont_clst) # clst has same precip)
-  )
+<!-- temp <- dt %>%  -->
+<!--   dplyr::group_by(hv001) %>%  -->
+<!--   dplyr::summarise( -->
+<!--     temp = mean(temp_mean_cont_clst) # clst has same precip) -->
+<!--   ) -->
 
-tempprecip <- dplyr::left_join(pvsrvyr, temp, by = "hv001") %>% 
-  dplyr::select(-c(dplyr::ends_with("_se"))) %>% 
-  dplyr::select(c("hv001", "n", "temp", dplyr::everything())) %>% 
-  tidyr::gather(., key = "species", value = "prev", 4:5)
+<!-- tempprecip <- dplyr::left_join(pvsrvyr, temp, by = "hv001") %>%  -->
+<!--   dplyr::select(-c(dplyr::ends_with("_se"))) %>%  -->
+<!--   dplyr::select(c("hv001", "n", "temp", dplyr::everything())) %>%  -->
+<!--   tidyr::gather(., key = "species", value = "prev", 4:5) -->
 
-pvtempplot <- tempprecip %>% 
-  ggplot() +
-  geom_point(aes(x=temp, y = prev, size = n)) +
-  facet_wrap(~species) + 
-  xlab("Temperature (C)") + 
-  ylab("Prevalence") +
-  theme_classic() + 
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 90))
+<!-- pvtempplot <- tempprecip %>%  -->
+<!--   ggplot() + -->
+<!--   geom_point(aes(x=temp, y = prev, size = n)) + -->
+<!--   facet_wrap(~species) +  -->
+<!--   xlab("Temperature (C)") +  -->
+<!--   ylab("Prevalence") + -->
+<!--   theme_classic() +  -->
+<!--   theme(legend.position = "none", -->
+<!--         axis.text.x = element_text(angle = 90)) -->
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_figure.jpg", width = 11, height = 8, units = "in", res = 600)
-plot(pvtempplot)
-graphics.off()
+<!-- jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_figure.jpg", width = 11, height = 8, units = "in", res = 600) -->
+<!-- plot(pvtempplot) -->
+<!-- graphics.off() -->
 
-```
+<!-- ``` -->
 
-```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
-plot(pvtempplot)
-```
+<!-- ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'} -->
+<!-- plot(pvtempplot) -->
+<!-- ``` -->
 
 
-### Appendix: Raster Digging into _Pv_-Temperature 
-```{r}
-# load spatial coordinates
-ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+<!-- ### Appendix: Raster Digging into _Pv_-Temperature  -->
+<!-- ```{r} -->
+<!-- # load spatial coordinates -->
+<!-- ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS") -->
 
-# load temp raster
-tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds") 
+<!-- # load temp raster -->
+<!-- tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds")  -->
 
-# bring in spatial and plot
-pvtempplot <- pvsrvyr %>% 
-  dplyr::left_join(., genosf, by = "hv001") %>% 
-  ggplot() +
-  ggspatial::layer_spatial(data = tempraster, aes(fill = stat(band1)),
-                           alpha = 0.8) +
-  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
-             alpha = 0.6) +
-  scale_fill_viridis_c("Temp", na.value = NA) +
-  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
-                       na.value = NA) +
-  theme_void() +
-  theme(legend.position = "bottom")
+<!-- # bring in spatial and plot -->
+<!-- pvtempplot <- pvsrvyr %>%  -->
+<!--   dplyr::left_join(., genosf, by = "hv001") %>%  -->
+<!--   ggplot() + -->
+<!--   ggspatial::layer_spatial(data = tempraster, aes(fill = stat(band1)), -->
+<!--                            alpha = 0.8) + -->
+<!--   geom_point(aes(x = longnum, y = latnum, color = pv, size = n), -->
+<!--              alpha = 0.6) + -->
+<!--   scale_fill_viridis_c("Temp", na.value = NA) + -->
+<!--   scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu", -->
+<!--                        na.value = NA) + -->
+<!--   theme_void() + -->
+<!--   theme(legend.position = "bottom") -->
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
-plot(pvtempplot)
-graphics.off()
+<!-- jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600) -->
+<!-- plot(pvtempplot) -->
+<!-- graphics.off() -->
 
-```
+<!-- ``` -->
 
-```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
-plot(pvtempplot)
-```
+<!-- ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'} -->
+<!-- plot(pvtempplot) -->
+<!-- ``` -->
 
 
 
@@ -574,8 +574,8 @@ DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 # load hlthdist raster
 hlthdistraster <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
-sp::identicalCRS(htlhdistraster, caf)
-sp::identicalCRS(htlhdistraster, sf::as_Spatial(DRC))
+sp::identicalCRS(hlthdistraster, caf)
+sp::identicalCRS(hlthdistraster, sf::as_Spatial(DRC))
 hlthdistraster <- raster::aggregate(hlthdistraster, fact = 10) # agg for easier plotting 
 
 # bring in spatial and plot
