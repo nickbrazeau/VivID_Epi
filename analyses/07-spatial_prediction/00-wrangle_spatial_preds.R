@@ -19,7 +19,7 @@ caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+init=epsg:4326"
 
 # create mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 
 #...............................
@@ -58,9 +58,9 @@ values(cropraster) <- my.scale(logit(values(cropraster), tol = 1e-3))
 # aggregate up and then do log transform so it more closelymatches how we manipulate before
 htlhdistraster <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
 sp::identicalCRS(htlhdistraster, caf)
-sp::identicalCRS(htlhdistraster, sf::as_Spatial(DRCprov))
+sp::identicalCRS(htlhdistraster, sf::as_Spatial(DRC))
 htlhdistraster <- raster::crop(htlhdistraster, caf)
-htlhdistraster <- raster::mask(htlhdistraster, DRCprov)
+htlhdistraster <- raster::mask(htlhdistraster, DRC)
 htlhdistraster <- raster::aggregate(htlhdistraster, fact = 12, fun = mean)
 values(htlhdistraster) <- my.scale(log(values(htlhdistraster) + 0.5))
 

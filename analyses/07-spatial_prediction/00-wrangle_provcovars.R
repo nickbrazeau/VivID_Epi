@@ -9,14 +9,34 @@ library(sf)
 source("R/00-functions_basic.R")
 ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 
+#......................
+# get and wrangle hlthdist
+#......................
+# items for mask
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+init=epsg:4326"
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+# read in
+hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+# sanity check
+sf::st_crs(hlthdist)
+identicalCRS(hlthdist, caf)
+identicalCRS(hlthdist, sf::as_Spatial(DRCprov))
+
+# crop for speed
+hlthdist <- raster::crop(x = hlthdist, y = caf)
+# create mask 
+hlthdist.drc <- raster::mask(x = hlthdist, mask = DRCprov)
+
+
 #-------------------------------------------------------------------------
 # Aggregate Covariates
 # means within each adm1
 #-------------------------------------------------------------------------
 precip <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds")
 cropland <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
-fricurban <- readRDS("data/derived_data/vividepi_frictionurban_surface.rds")
-
+hlthdist.drc 
 
 extract_agg_raster_polygon <- function(rstrlyr, plygn){
   vals <- raster::extract(x = rstrlyr, y = sf::as_Spatial(plygn),
@@ -29,14 +49,17 @@ extract_agg_raster_polygon <- function(rstrlyr, plygn){
 }
 
 # split admins
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
-adm1 <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"][[1]] %>% # doesn't matter which prev we use
+adm1 <- DRCprov %>% 
   dplyr::select(c("adm1name", "geometry")) %>% 
   dplyr::filter(!duplicated(.))
 
 # sanity
-adm1 <- sf::st_transform(adm1, crs = "+init=epsg:4326")
+sp::identicalCRS(sf::as_Spatial(adm1), caf)
+sp::identicalCRS(sf::as_Spatial(adm1), precip)
+sp::identicalCRS(sf::as_Spatial(adm1), cropland)
+sp::identicalCRS(sf::as_Spatial(adm1), hlthdist.drc)
 
+# store names
 pvcovar <- adm1 %>% 
   dplyr::select(c("adm1name"))
 
@@ -44,15 +67,21 @@ pvcovar <- adm1 %>%
 adm1 <- split(adm1, 1:nrow(adm1))
 
 
-
+# get covars 
 pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
 pvcovar$crop <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = cropland) )
-pvcovar$fricurban <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = fricurban) )
+pvcovar$hlthdist <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = hlthdist.drc) )
+
+# quick viz
+hist(pvcovar$precip)
+hist(pvcovar$crop)
+hist(pvcovar$hlthdist)
 
 
+# scale for better model fitting
 pvcovar$precip_scale <- my.scale(pvcovar$precip)
 pvcovar$crop_scale <- my.scale(logit(pvcovar$crop, tol = 1e-3))
-pvcovar$fricurban_scale <- my.scale(log(pvcovar$fricurban + 1e-3))
+pvcovar$hlthdist_scale <- my.scale(pvcovar$hlthdist)
 sf::st_geometry(pvcovar) <- NULL
 
 
