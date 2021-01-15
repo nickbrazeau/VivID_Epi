@@ -12,8 +12,8 @@ library(sf)
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+init=epsg:4326"
 # need mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
-sf::st_crs(DRCprov)
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+sf::st_crs(DRC)
 
 #......................................................................................................
 # First make Temperature raster for air temperature from Garske's Estimating Air Temperature and Its Influence on Malaria Transmission across Africa
@@ -58,7 +58,7 @@ for(i in 3:ncol(aftemp)) {
 daytemprstr_stack <- raster::stack(dayrstr_list)
 # crop and mask
 daytemprstr_stack <- raster::crop(daytemprstr_stack, caf)
-daytemprstr_stack <- raster::mask(daytemprstr_stack, DRCprov)
+daytemprstr_stack <- raster::mask(daytemprstr_stack, DRC)
 
 
 #......................................................................................................
@@ -84,7 +84,7 @@ readRasterBB.precip <- function(rstfile, sp = sp, caf = caf){
 #......................
 precip <- list.files(path = "data/raw_data/weather_data/CHIRPS/", full.names = T, 
                      pattern = ".tif")
-precipfrst <- lapply(precip, readRasterBB.precip, sp = DRCprov, caf = caf)
+precipfrst <- lapply(precip, readRasterBB.precip, sp = DRC, caf = caf)
 
 precipdf <- tibble::tibble(names = basename(precip)) %>% 
   dplyr::mutate(names = gsub("chirps-v2.0.|.tif", "", names),
@@ -249,7 +249,7 @@ wthrnd.mean %>%
   dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
                 latnum = sf::st_coordinates(geometry)[,2]) %>% 
   ggplot() + 
-  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  geom_sf(data = sf::st_as_sf(DRC)) +
   ggspatial::layer_spatial(data = precipstack.mean,
                            aes(fill = stat(band1)),
                            alpha = 0.9,
@@ -264,7 +264,7 @@ wthrnd.mean %>%
   dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
                 latnum = sf::st_coordinates(geometry)[,2]) %>% 
   ggplot() + 
-  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  geom_sf(data = sf::st_as_sf(DRC)) +
   ggspatial::layer_spatial(data = daytemprstr_stack.mean,
                            aes(fill = stat(band1)),
                            alpha = 0.9,

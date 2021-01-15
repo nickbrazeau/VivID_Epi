@@ -12,8 +12,8 @@ source("R/00-functions_basic.R")
 
 
 # create mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
-sf::st_crs(DRCprov)
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+sf::st_crs(DRC)
 #.............................................................................................. 
 ##### Access to City ######
 #.............................................................................................. 
@@ -40,12 +40,12 @@ if(!file.exists("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities
 accraw <- raster::raster("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2020_11_22.tiff")
 raster::crs(accraw)
 identicalCRS(accraw, caf)
-identicalCRS(accraw, sf::as_Spatial(DRCprov))
+identicalCRS(accraw, sf::as_Spatial(DRC))
 
 # crop for speed
 accraw <- raster::crop(x = accraw, y = caf)
 # mask
-access.drc <- raster::mask(accraw, DRCprov)
+access.drc <- raster::mask(accraw, DRC)
 
 # tidy up 
 summary(values(access.drc))
@@ -109,13 +109,13 @@ hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time
 # sanity check
 sf::st_crs(hlthdist)
 identicalCRS(hlthdist, caf)
-identicalCRS(hlthdist, sf::as_Spatial(DRCprov))
+identicalCRS(hlthdist, sf::as_Spatial(DRC))
 
 # crop for speed
 hlthdist <- raster::crop(x = hlthdist, y = caf)
 # create mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
-hlthdist.drc <- raster::mask(x = hlthdist, mask = DRCprov)
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+hlthdist.drc <- raster::mask(x = hlthdist, mask = DRC)
 
 
 

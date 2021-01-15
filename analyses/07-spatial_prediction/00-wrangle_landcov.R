@@ -15,7 +15,7 @@ caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+init=epsg:4326"
 
 # create mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 #.............................................................................. 
 # Read in Land Coverage
@@ -27,7 +27,7 @@ raster::compareCRS(landcov2013, raster::crs("+init=epsg:4326"))
 # speed
 landcov2013.drc <- raster::crop(x = landcov2013, y = caf)
 # mask out non DRC 
-landcov2013.drc <- raster::mask(landcov2013.drc, DRCprov)
+landcov2013.drc <- raster::mask(landcov2013.drc, DRC)
 
 #.............................................................................. 
 # Lift Over to Binary Cropland yes or no

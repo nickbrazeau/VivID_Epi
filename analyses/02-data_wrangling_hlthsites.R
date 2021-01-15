@@ -45,9 +45,9 @@ identicalCRS(hlthdist, caf)
 # crop for speed
 hlthdist <- raster::crop(x = hlthdist, y = caf)
 # create mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
-identicalCRS(hlthdist, sf::as_Spatial(DRCprov))
-hlthdist <- raster::mask(x = hlthdist, mask = DRCprov)
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+identicalCRS(hlthdist, sf::as_Spatial(DRC))
+hlthdist <- raster::mask(x = hlthdist, mask = DRC)
 
 
 #............................................................
