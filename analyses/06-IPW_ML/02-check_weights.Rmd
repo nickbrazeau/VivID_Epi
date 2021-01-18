@@ -119,7 +119,8 @@ covarbalparams <- covarbalparams %>%
 
 
 # make pretty plot
-varnames <- varnames %>% 
+varnames <- params %>% 
+  dplyr::select(c("target", "abridged_var_label")) %>% 
   dplyr::rename(covar1 = target)
 
 covarbalanceplot <- covarbalparams %>% 
