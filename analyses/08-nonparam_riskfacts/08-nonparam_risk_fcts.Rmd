@@ -294,7 +294,7 @@ prev_air <- dplyr::left_join(clstprev, clst_air_dist, by = "hv001") %>%
 ```
 
 #### DRC Airports
-```{r, results='asis'}
+```{r}
 inset <- airports %>% 
   dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
                 latnum = sf::st_coordinates(geometry)[,2]) %>% 
@@ -328,7 +328,7 @@ AirportMainFig <- cowplot::ggdraw() +
                      width = 0.3, height = 0.3)
 
 
-
+plot(AirportMainFig)
 ```
 
 
