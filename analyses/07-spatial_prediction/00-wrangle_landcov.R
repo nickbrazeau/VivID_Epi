@@ -34,7 +34,7 @@ landcov2013.drc <- raster::mask(landcov2013.drc, DRC)
 #.............................................................................. 
 # using data dictionary from here: https://maps.elie.ucl.ac.be/CCI/viewer/download/ESACCI-LC-QuickUserGuide-LC-Maps_v2-0-7.pdf
 origvals <- raster::values(landcov2013.drc)
-newvals <- ifelse(origvals %in% c(10, 20, 30, 40), 1, 
+newvals <- ifelse(origvals %in% c(10, 11, 12, 20, 30), 1, 
                   ifelse(is.na(origvals), NA, 0))
 raster::values(landcov2013.drc) <- newvals
 
