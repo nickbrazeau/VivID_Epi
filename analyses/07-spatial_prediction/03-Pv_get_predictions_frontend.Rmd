@@ -168,6 +168,44 @@ saveRDS(provmodel.posteriorselotObj, "results/ProvMap_postSE_PlotObj.RDS")
 plot(provmodel.posteriorselotObj)
 ```
 
+#### Intercept Comparison
+```{r}
+
+provmodel <- provmodel[provmodel$name == "CAR_intercept", ] # compare model
+provs <- provmodel$data[[1]]$adm1name
+provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
+provmodel.posteriormeans <- apply(provmodel.samples.fittedvalues, 2, mean)
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeanscounts = provmodel.posteriormeans) 
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeansprev = provmodel.posteriormeans$posteriormeanscounts) 
+provmodel.posteriormeans$posteriormeansprev <- provmodel.posteriormeans$posteriormeansprev/provmodel$data[[1]]$n
+# Bring it home
+# adm1names
+DRCprovcentroids <- tibble::tibble(ad1name = DRCprov$adm1name,
+                                   cntr = sf::st_centroid(DRCprov$geometry)) %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(cntr)[,1],
+                latnum = sf::st_coordinates(cntr)[,2])
+# plot df
+provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans) 
+provmodelplotObj <- ggplot() + 
+  geom_sf(data = provmodelplotObjdf, 
+          aes(fill = posteriormeansprev), color = "#737373") +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  coord_sf(datum=NA) +  # to get rid of gridlines
+  prettybasemap_nodrc_dark_nonorth +
+  ggrepel::geom_text_repel(data = DRCprovcentroids,
+                           aes(x = longnum,  y = latnum, label = ad1name),
+                           fontface = "bold") +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+```
+
+```{r, results='asis'}
+plot(provmodelplotObj)
+```
+
+
 
 ### Cluster Models 
 
@@ -394,6 +432,39 @@ graphics.off()
 
 
 
+```
+
+#### Intercept Comparison
+```{r}
+# read rds
+clstmodel <- readRDS("analyses/07-spatial_prediction/prevmap_predictions/intercept_predictions.RDS")
+clstmodel.fitted <- expit(clstmodel$samples)
+clstmodel.coords <- clstmodel$grid.pred
+clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
+clstmodel.coords.means <- cbind.data.frame(clstmodel.coords, 
+                                           fitted.postmean = clstmodel.fitted.postmeans)
+# Make Raster from PrevMap 
+clstmodel.fitted.postmeans.raster <- 
+  raster::rasterFromXYZ(cbind(clstmodel.coords.means[, "longnum"],
+                              clstmodel.coords.means[, "latnum"],
+                              clstmodel.coords.means[, "fitted.postmean"]),
+                        crs="+proj=longlat +datum=WGS84 +no_defs")
+
+clstmodel.fitted.postmeansdf <- data.frame(PrevPred = clstmodel.fitted.postmeans)
+ret.smrstr.m.plot <- ggplot() + 
+  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  prettybasemap_nodrc_dark_nonorth +
+  geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold", alpha = 0.5) +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+```
+```{r, results='asis'}
+plot(ret.smrstr.m.plot)
 ```
 
 

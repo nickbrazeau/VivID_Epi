@@ -298,8 +298,10 @@ summary(prevmap.linear.mleintercept)
 ##### Good Priors for Intercept Matern function 
 ```{r, results='asis'}
 ests <- summary(prevmap.linear.mleintercept)$cov.pars
-ests <- exp(ests)
-ests <- cbind.data.frame(covparam = c("sigma2", "phi", "tau2"), ests)
+expests <- exp(ests)
+ests <- cbind.data.frame(intparam = c("sigma2", "phi", "tau2"), 
+                         ests = ests,
+                         exp_ests = expests)
 ests %>% 
   dplyr::mutate_if(is.numeric, round, 3) %>% 
   DT::datatable(., 
@@ -308,6 +310,7 @@ ests %>%
                   searching = F,
                   pageLength = 7,
                   dom = 'Bfrtip'))
+
 
 
 ```
@@ -328,8 +331,10 @@ summary(prevmap.linear.mlecovar)
 ##### Good Priors for Covar Matern function 
 ```{r, results='asis'}
 ests <- summary(prevmap.linear.mlecovar)$cov.pars
-ests <- exp(ests)
-ests <- cbind.data.frame(covparam = c("sigma2", "phi", "tau2"), ests)
+expests <- exp(ests)
+ests <- cbind.data.frame(covparam = c("sigma2", "phi", "tau2"), 
+                         ests = ests,
+                         exp_ests = expests)
 ests %>% 
   dplyr::mutate_if(is.numeric, round, 3) %>% 
   DT::datatable(., 
