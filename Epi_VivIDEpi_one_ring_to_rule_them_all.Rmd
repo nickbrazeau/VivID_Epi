@@ -26,7 +26,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```{r, child = 'analyses/04-Univar_Bivar_Assoc.Rmd'}
 ```
 
-```{r, child = 'analyses/05-basic_mapping.Rmd'}
+```{r, child = 'analyses/05-basic_maps/05-basic_mapping.Rmd'}
 ```
 
 ```{r, child = 'analyses/06-IPW_ML/00-kmeans_DRC.Rmd'}
@@ -38,7 +38,7 @@ knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'h
 ```{r, child = 'analyses/06-IPW_ML/03-MSM_RRest.Rmd'}
 ```
 
-```{r, child = 'analyses/08-species_interference.Rmd'}
+```{r, child = 'analyses/08-nonparam_riskfacts/08-nonparam_risk_fcts.Rmd'}
 ```
 
 ```{r, child = 'analyses/09-Power/02-collect_powercalcs.Rmd'}
