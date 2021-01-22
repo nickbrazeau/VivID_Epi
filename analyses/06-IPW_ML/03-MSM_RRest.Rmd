@@ -15,6 +15,7 @@ knitr::opts_knit$set(root.dir = here::here())
 ```{r}
 
 library(srvyr)
+options(survey.lonely.psu="adjust")
 library(tidyverse)
 library(ggdag)
 source("R/00-functions_epi.R")
@@ -74,13 +75,13 @@ iptw <- params %>%
 
 ```{r}
 
-makeiptwsrvy <- function(x){ # not good function practice
-  if(is.null(x)){
+makeiptwsrvy <- function(x){ # not generalizable
+  if(is.null(x)){ # if null, we didn't do weights was unconfounded in exp
     x <- 1
   }
   dt$wi <- x*dt$hiv05_wi
   dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
-                                           #   strata = hv023, 
+                                           strata = hv023, 
                                            weights = wi)
   return(dtsrvy)
 }
@@ -343,6 +344,18 @@ graphics.off()
 plot(finalMSMplot)
 ```
 
+### Appendix: Bed Net Coding
+
+##### LLIN Definition
+
+```{r, results='asis'}
+
+llinet <- readRDS("results/llin_hml20_sens_analysis_spensemble.rds")
+broom::tidy(llinet, exponentiate=TRUE, conf.int=TRUE) %>% 
+  DT::datatable(.)
+
+```
+
 ### Appendix: Digging into _Pv_-Precipitation
 ```{r}
 dtsrvyr.app <- makecd2013survey(survey = dt)
@@ -576,6 +589,8 @@ DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 hlthdistraster <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
 sp::identicalCRS(hlthdistraster, caf)
 sp::identicalCRS(hlthdistraster, sf::as_Spatial(DRC))
+hlthdistraster <- raster::crop(hlthdistraster, caf)
+hlthdistraster <- raster::mask(hlthdistraster, DRC)
 hlthdistraster <- raster::aggregate(hlthdistraster, fact = 10) # agg for easier plotting 
 
 # bring in spatial and plot
