@@ -103,41 +103,12 @@ rbind.data.frame( cbind.data.frame(species = "Pv", drcpv),
 ### Cluster Level Prevalence 
 **N.B. Everyone is weighted the same in the cluster, which results in the same cluster level prevalences whether you consider weights or not**. However, this will results in  slightly different numerator (e.g. $n_numerator$) and denominators between the weighted and unweighted approach. Caution is warranted when reporting weighted versus unweighted Ns and Standard Errors at the cluster-level for this reason. 
 
-NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used a logit transformation and the t-distribution to estimate these CIs.    
+NB Given the small Ns (<30) in many of the clusters, we cannot approximate the binomial distribution as a normal distribution, and thus our confidence interval calculations need to be performed with exact methods to avoid boundary issues (e.g. prevalences < 0 or > 100%). I used the binomial exact approach. 
 
 
 ```{r, results='asis', fig.align='center', fig.width=11, fig.height=8}
-
-# cluster-level prevalence, because everyone is weighted the same in the cluster, don't use weights here
-# note, the numerators will be slightly different (e.g. N) but the denomminators adjust for this
-# Going to report whole numbers/unadjusted for clusters
-clst <- dt %>%
-  dplyr::mutate(count = 1) %>%
-  dplyr::group_by(hv001) %>%
-  dplyr::summarise(n = n(),
-                   pv18sn = sum(pv18s),
-                   pfldhn = sum(pfldh)) %>% 
-  dplyr::mutate(
-    pv18sbinomtest = purrr::map2(pv18sn, n, function(x,y)
-    {binom.test(x = x, n = y)}),
-    pv18sprev = pv18sn/n,
-    pvconfint = purrr::map(pv18sbinomtest, "conf.int"),
-    pv18sL95 = purrr::map_dbl(pvconfint, 1),
-    pv18sU95 =purrr::map_dbl(pvconfint, 2),
-    
-    pfldhbinomtest = purrr::map2(pfldhn, n, function(x,y)
-    {binom.test(x = x, n = y)}),
-    pfldhprev = pfldhn/n,
-    pfldhconfint = purrr::map(pfldhbinomtest, "conf.int"),
-    pfldhL95 = purrr::map_dbl(pfldhconfint, 1),
-    pfldhU95 =purrr::map_dbl(pfldhconfint, 2)
-  )
-
-
-
-
-# ignore 95% CI but want the weighted numerator and denominator for the paper 
-clstprev <- dtsrvy %>% 
+# cluster-level prevalence, because everyone is weighted the same in the cluster,round to use dhs weights
+clst <- dtsrvy %>% 
   dplyr::mutate(count = 1) %>% 
   dplyr::group_by(hv001) %>% 
   dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
@@ -149,18 +120,20 @@ clstprev <- dtsrvy %>%
     pv18sprev = pv18sn/n,
     pvconfint = purrr::map(pv18sbinomtest, "conf.int"),
     pv18sL95 = purrr::map_dbl(pvconfint, 1),
-    pv18sU95 =purrr::map_dbl(pvconfint, 2),
+    pv18sU95 = purrr::map_dbl(pvconfint, 2),
     
     pfldhbinomtest = purrr::map2(pfldhn, n, function(x,y)
     {binom.test(x = round(x), n = round(y))}),
     pfldhprev = pfldhn/n,
     pfldhconfint = purrr::map(pfldhbinomtest, "conf.int"),
     pfldhL95 = purrr::map_dbl(pfldhconfint, 1),
-    pfldhU95 =purrr::map_dbl(pfldhconfint, 2)
+    pfldhU95 = purrr::map_dbl(pfldhconfint, 2)
   )
 
 # aesthetics for plot
-genosf <- ge
+genosf <- ge %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
 sf::st_geometry(genosf) <- NULL
 #......................
 # make cluster plot
@@ -212,27 +185,27 @@ graphics.off()
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 cntr <- sf::st_centroid(DRCprov) %>% 
   dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1])
+# decoder for cluster to admin
+admn_hv001_dcdr <- genosf %>% 
+  dplyr::select(c("adm1name", "hv001"))
 
 # get plot
 clst.prev.plotObj <- clst %>% 
-  dplyr::left_join(., y = ge, by = "hv001") %>% 
+  dplyr::left_join(., y = admn_hv001_dcdr, by = "hv001") %>% 
   dplyr::left_join(., cntr, by = "adm1name") %>% 
-  dplyr::select(c("adm1name", "hv001", "longnum", "pv18sprev", "pv18sL95", "pv18sU95")) %>%
-  dplyr::filter(pv18sprev != 0) %>% 
-  tidyr::gather(., key = "estlevel", value = "est", 4:ncol(.)) %>% 
-  dplyr::mutate(estlevel = gsub("pv18s", "", estlevel)) %>% 
-  tidyr::spread(., key = "estlevel", value = "est", 5:6) %>%
+  dplyr::select(c("adm1name", "hv001", "longnum", "n", "pv18sn", "pv18sprev", "pv18sL95", "pv18sU95")) %>%
+  #dplyr::filter(pv18sprev != 0) %>% 
   dplyr::mutate(hv001 = factor(hv001),
                 adm1name = forcats::fct_reorder(adm1name, longnum, min),
                 adm1namenum = as.numeric(adm1name),
                 hv001 = forcats::fct_reorder(hv001, adm1namenum, min)) %>% 
   ggplot() + 
-  geom_pointrange(aes(x = hv001, y=prev, ymin=L95, ymax=U95,
+  geom_pointrange(aes(x = hv001, y=pv18sprev, ymin=pv18sL95, ymax=pv18sU95,
                       color = adm1name), 
                   size =0.5, alpha = 0.5) +
   scale_color_viridis_d("Province") + 
   ggtitle("Cluster-Level Prevelance of Pv Malaria") +
-  vivid_theme + 
+  theme_bw() + 
   theme(plot.title = element_text(family = "Helvetica", face = "bold", hjust = 0.5, size = 12),
         legend.position = "bottom",
         legend.title = element_text(family = "Helvetica", face = "bold", vjust = 0.5, size = 8),
@@ -274,7 +247,7 @@ clst %>%
 ### Cluster Level Prevalences Table (Weighted Ns)
 ```{r, results='asis'}
 
-clstprev %>% 
+clst %>% 
   dplyr::select(c("hv001", "n", "pv18sn", "pfldhn",
                   "pv18sprev", "pv18sL95", "pv18sU95",
                   "pfldhprev", "pfldhL95", "pfldhU95")) %>% 
@@ -603,6 +576,43 @@ DT::datatable(pvivriskfactortable,
 
 ```
 
+#### _P. vivax_ Bed Nets
+
+```{r}
+dt_sens <- readRDS("data/derived_data/vividepi_recode.rds")
+
+dcdr_sens <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  dplyr::pull(c("column_name"))
+sf::st_geometry(dt_sens) <- NULL
+dt_sens <- dt_sens  %>% 
+  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr_sens, "hml20_fctb")) %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  dplyr::mutate(hml20_fctb = relevel(hml20_fctb, ref = "yes"))
+dtsrvy_sens <- makecd2013survey(survey = dt_sens)
+
+
+basicnet <- survey::svyglm("pv18s ~ hml20_fctb",
+                           design = dtsrvy_sens,
+                           family = quasibinomial(link="logit")) 
+```
+
+##### LLIN Def
+
+```{r, results='asis'}
+knitr::kable(broom::tidy(basicnet, exponentiate=TRUE, conf.int=TRUE))
+```
+
+##### ITN Def
+
+```{r}
+longnet <- survey::svyglm("pv18s ~ ITN_fctb",
+                           design = dtsrvy_sens,
+                           family = quasibinomial(link="logit"))
+```
+
+```{r, results='asis'}
+knitr::kable(broom::tidy(longnet, exponentiate=TRUE, conf.int=TRUE))
+```
 
 ## _P. falciparum_ Risk Bivariate **Associations**
 ```{r, results='asis'}
