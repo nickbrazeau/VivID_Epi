@@ -60,6 +60,9 @@ DRCprovsp <- dplyr::left_join(pvprov.weighted.nosf, DRCprov)
 DRCprovsp <- sf::st_as_sf(DRCprovsp)
 # sanity
 DRCprovsp <- sf::st_transform(DRCprovsp, crs = "+init=epsg:4326")
+sp::identicalCRS(sf::as_Spatial(DRCprovsp), sf::as_Spatial(DRCprov))
+
+# make adj
 W.nb <- spdep::poly2nb(sf::as_Spatial(DRCprovsp), row.names = DRCprovsp$adm1name)
 W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
 
