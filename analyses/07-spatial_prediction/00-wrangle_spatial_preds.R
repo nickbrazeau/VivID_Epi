@@ -41,43 +41,59 @@ grid.pred.coords <- sf::st_as_sf(grid.pred.coords.df, coords = c("longnum", "lat
 riskvars <- c("precip_mean_cont_scale_clst", 
               "cropprop_cont_scale_clst", "hlthdist_cont_scale_clst")
 
-# take mean aggregate up and then scale like covar
+# read in precip
 precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
-precipraster <- raster::aggregate(precipraster, fact = 2, fun = mean)
-# transform like fitting
-precipraster <- raster::scale(precipraster, center = TRUE, scale = TRUE)
 
-# take mean here since we converted to binary
+# read in crops
 cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
-cropraster <- raster::aggregate(cropraster, fact = 36, fun = mean)
-# transform like fitting
-values(cropraster) <- my.scale(logit(values(cropraster), tol = 1e-3))
 
 
-# here we need to take healthcare walk distance
+# read in healthcare walk distance
 # aggregate up and then do log transform so it more closelymatches how we manipulate before
 htlhdistraster <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
 sp::identicalCRS(htlhdistraster, caf)
 sp::identicalCRS(htlhdistraster, sf::as_Spatial(DRC))
 htlhdistraster <- raster::crop(htlhdistraster, caf)
 htlhdistraster <- raster::mask(htlhdistraster, DRC)
-htlhdistraster <- raster::aggregate(htlhdistraster, fact = 12, fun = mean)
-values(htlhdistraster) <- my.scale(log(values(htlhdistraster) + 0.5))
 
-# stack 
-predcovars <- raster::stack(precipraster, cropraster, htlhdistraster)
+
+#......................
+# extract 
+#......................
+predcovars <- list(precipraster, cropraster, htlhdistraster)
 names(predcovars) <- riskvars
 
-pred.df <- raster::extract(
-  x = predcovars,
+pred.list <- lapply(predcovars, function(x)
+{raster::extract(
+  x = x,
   y = sf::as_Spatial(grid.pred.coords),
   buffer = 10000, # max dhs offset
   fun = mean,
   na.rm = T,
-  sp = F)
+  sp = F)})
 
-pred.df <- as.data.frame(pred.df)
+#......................
+# standardize as before
+#......................
+pred.list[["precip_mean_cont_scale_clst"]] <- my.scale(pred.list[["precip_mean_cont_scale_clst"]], 
+                                                            center = TRUE, scale = TRUE)
+
+pred.list[["cropprop_cont_scale_clst"]] <- my.scale(logit(pred.list[["cropprop_cont_scale_clst"]], tol = 1e-3), 
+                                                    center = TRUE, scale = TRUE)
+
+
+pred.list[["hlthdist_cont_scale_clst"]] <-  my.scale(log(pred.list[["hlthdist_cont_scale_clst"]] + 0.5),
+                                                     center = TRUE, scale = TRUE)
+
+
+#......................
+# bring together
+#......................
+pred.df <- do.call("cbind.data.frame", pred.list)
 pred.df <- cbind.data.frame(grid.pred.coords.df, pred.df)
+
+
+
 
 #......................
 # sanity checks
@@ -93,8 +109,10 @@ p2 <- ggplot() +
   theme_void()
 cowplot::plot_grid(p1, p2, nrow = 1)
 
+# agg so not to overwhelm ggplot
+cropraster_agg <- raster::aggregate(cropraster, fact = 36, fun = mean)
 p1 <- ggplot() +
-  ggspatial::layer_spatial(data = cropraster, aes(fill = stat(band1))) +
+  ggspatial::layer_spatial(data = cropraster_agg, aes(fill = stat(band1))) +
   scale_fill_viridis_c("", na.value = NA) +
   theme_void()
 p2 <- ggplot() +
@@ -104,8 +122,10 @@ p2 <- ggplot() +
   theme_void()
 cowplot::plot_grid(p1, p2, nrow = 1)
 
+# agg so not to overwhelm ggplot
+htlhdistraster_agg <- raster::aggregate(htlhdistraster, fact = 12, fun = mean)
 p1 <- ggplot() +
-  ggspatial::layer_spatial(data = htlhdistraster, aes(fill = stat(band1))) +
+  ggspatial::layer_spatial(data = htlhdistraster_agg, aes(fill = stat(band1))) +
   scale_fill_viridis_c("", na.value = NA) +
   theme_void()
 p2 <- ggplot() +
@@ -165,7 +185,7 @@ pred.df$hlthdist_cont_scale_clst[pred.df$hlthdist_cont_scale_clst < min.acc] <- 
 covar.rstr.pred <- raster::rasterFromXYZ(pred.df, 
                                          res = c(0.1, 0.1),
                                          crs = "+init=epsg:4326")
-
+summary(covar.rstr.pred) # approx same number of NAs, likely due to slightly diff res from covar extraction
 #......................
 # save out
 #......................
