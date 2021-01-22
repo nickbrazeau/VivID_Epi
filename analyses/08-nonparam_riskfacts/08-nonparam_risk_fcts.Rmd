@@ -247,7 +247,10 @@ airports <- readr::read_csv("data/raw_data/hotosm_data/hotosm_airports/hotosm_cd
 airports <- sf::st_as_sf(airports, coords = c("longitude_deg", "latitude_deg"),
                          crs = "+init=epsg:4326")
 # drc prov
-DRCprov <- sf::st_as_sf(readRDS("data/map_bases/gadm/gadm36_COD_1_sp.rds"))
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+# sanity check
+sp::identicalCRS(sf::as_Spatial(airports), sf::as_Spatial(DRCprov))
 
 # cities
 drccities <- readr::read_csv("data/map_bases/DRC_city_coordinates.csv") %>% 
@@ -310,7 +313,6 @@ inset <- airports %>%
 #### Correlation of Prev and Airports
 ```{r, results='asis'}
 pmain <- prev_air %>% 
-  dplyr::filter(pv18sprev != 0) %>% 
   ggplot() + 
   geom_pointrange(aes(x = mindist, y = pv18sprev,
                       ymin = pv18sL95, ymax = pv18sU95),
@@ -330,6 +332,12 @@ AirportMainFig <- cowplot::ggdraw() +
 
 plot(AirportMainFig)
 ```
+
+##### Energy Correlation Value
+```{r}
+dcor <- energy::dcor(prev_air$pv18sprev, prev_air$mindist)
+```
+The energy correlation value is `r round(dcor, 3)`.
 
 
 ## SatScan

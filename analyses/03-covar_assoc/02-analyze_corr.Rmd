@@ -194,7 +194,7 @@ dt.full %>%
 
 ### Final Thoughts
 #### Collinearity
-Although the VIF was reasonable, altitude and temperature are essentially truly collinear -- such that altitude is essentially latent or instrumental variable for temperature. This largely results due to our recoding of temperature, where it is an average of the study period. As a result, the most important factor influencing temperature is the altitude as we have "aggregated out" any seasonality or potentially interesting signal. Going to not include temperature as an independent covariate and will just use altitude instead.
+Although the VIF was reasonable, altitude and temperature are essentially truly collinear -- such that altitude is essentially latent or instrumental variable for temperature. This largely results due to our recoding of temperature, where it is an average of the study period. As a result, the most important factor influencing temperature is the altitude as we have "aggregated out" any seasonality or potentially interesting signal. 
 
 #### Missingingess
 N.B. This data does not appear to be MCAR, as there do appear to be some biases (more or less, poor, rural individuals with lots of household members, poor individuals have less nice houses [even after controls], etc.). However, given that this 0.44% of the unweighted data and 0.43% of the weighted data, we are well within the range of the rule of thumb that missing data less than 5-10% (even if it is MNAR) is largely inconsequential (see Bennett 2001). As a result, I feel comfortable subsetting to complete cases from here on out without worrying about the effect of any MNAR bias that may or may not be present and would affect my results.
