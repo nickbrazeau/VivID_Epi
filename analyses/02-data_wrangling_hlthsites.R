@@ -106,7 +106,7 @@ hlthdist.mean %>%
   dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
                 latnum = sf::st_coordinates(geometry)[,2]) %>% 
   ggplot() + 
-  geom_sf(data = sf::st_as_sf(DRCprov)) +
+  geom_sf(data = sf::st_as_sf(DRC)) +
   ggspatial::layer_spatial(data = hlthdist.agg,
                            aes(fill = stat(band1)),
                            alpha = 0.9,
