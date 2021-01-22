@@ -21,12 +21,12 @@ set.seed(48)
 
 load("data/map_bases/vivid_maps_bases.rda")
 drccites <- readr::read_csv("data/map_bases/DRC_city_coordinates.csv") %>% 
-  dplyr::filter(population > 5e5)
+  dplyr::filter(population > 1e6 | city %in% c("Kisangani", "Goma"))
 drccites <- drccites %>% 
   dplyr::mutate(city = stringr::str_split_fixed(city, pattern = " ", n = 2)[,1])
 
 ```
-  
+
 
 ## Spatial Predictions
 Fitted values are taken from the Hierarchial Bayesian Spatial Models that were previously fit and determined to be the best model choice by model fit (Deviance Information Criteria).
@@ -36,7 +36,6 @@ Fitted values are taken from the Hierarchial Bayesian Spatial Models that were p
 # import data
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 provmodel <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
-
 provmodel <- provmodel[provmodel$name == "CAR_covar", ] # best model
 
 ```
@@ -55,11 +54,11 @@ rownames(provmodel.posteriormeans) <- NULL
 provmodel.posteriormeans %>% 
   dplyr::mutate_if(., is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
-               options = list(
-              searching = T,
-              pageLength = 10,
-              dom = 'Bfrtip', 
-              buttons = c('csv')))
+                options = list(
+                  searching = T,
+                  pageLength = 10,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 ```
 
 
@@ -71,11 +70,11 @@ rownames(provmodel.posteriormeans) <- NULL
 provmodel.posteriormeans %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
-               options = list(
-              searching = T,
-              pageLength = 10,
-              dom = 'Bfrtip', 
-              buttons = c('csv')))
+                options = list(
+                  searching = T,
+                  pageLength = 10,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 ```
 
 
@@ -94,13 +93,13 @@ provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans)
 provmodelplotObj <- ggplot() + 
   geom_sf(data = provmodelplotObjdf, 
           aes(fill = posteriormeansprev), color = "#737373") +
-      scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
-                           na.value = NA) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
   coord_sf(datum=NA) +  # to get rid of gridlines
   prettybasemap_nodrc_dark_nonorth +
-  ggrepel::geom_text_repel(data = DRCprovcentroids,
-                           aes(x = longnum,  y = latnum, label = ad1name),
-                           fontface = "bold") +
+  # ggrepel::geom_text_repel(data = DRCprovcentroids,
+  #                          aes(x = longnum,  y = latnum, label = ad1name),
+  #                          fontface = "bold", alpha = 0.5) +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
         legend.text = element_text(size = 12, face = "bold", angle = 0))
@@ -121,8 +120,10 @@ plot(provmodelplotObj)
 
 #### Standard Errors
 ```{r}
-provmodel.sd <- apply(provmodel.samples.fittedvalues, 2, sd)
-provmodel.se <- provmodel.sd/sqrt(nrow(provmodel.samples.fittedvalues))
+# following assumption diggle and giorgi make here: https://github.com/cran/PrevMap/blob/master/R/foo.R
+provmodel.samples.fittedvalues_prevs <- apply(provmodel.samples.fittedvalues, 
+                                              2, function(x){x/provmodel$data[[1]]$n})
+provmodel.se <- apply(provmodel.samples.fittedvalues_prevs, 2, sd)
 
 ```
 
@@ -147,8 +148,8 @@ provmodel.posteriorseplotdf <- dplyr::left_join(DRCprov, provmodel.posteriorse)
 provmodel.posteriorselotObj <- ggplot() +
   geom_sf(data = provmodel.posteriorseplotdf, 
           aes(fill = posteriorses), color = "#737373") +
-       scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu",
-                            na.value = NA) +
+  scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
   coord_sf(datum=NA) +
   theme_void() +
   theme(legend.position = "right",
@@ -170,7 +171,7 @@ plot(provmodel.posteriorselotObj)
 
 #### Intercept Comparison
 ```{r}
-
+provmodel <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
 provmodel <- provmodel[provmodel$name == "CAR_intercept", ] # compare model
 provs <- provmodel$data[[1]]$adm1name
 provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
@@ -231,7 +232,7 @@ clstmodel.fitted.postmeans.raster <-
                               clstmodel.coords.means[, "latnum"],
                               clstmodel.coords.means[, "fitted.postmean"]),
                         crs="+proj=longlat +datum=WGS84 +no_defs")
-  
+
 
 ```
 
@@ -241,17 +242,17 @@ clstmodel.fitted.postmeansdf <- data.frame(PrevPred = clstmodel.fitted.postmeans
 clstmodel.fitted.postmeansdf %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
-               options = list(
-              searching = T,
-              pageLength = 10,
-              dom = 'Bfrtip', 
-              buttons = c('csv')))
+                options = list(
+                  searching = T,
+                  pageLength = 10,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 ```
 
 ```{r}
 
 ret.smrstr.m.plot <- ggplot() + 
- ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
   scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
                        na.value = NA) +
   prettybasemap_nodrc_dark_nonorth +
@@ -293,7 +294,7 @@ graphics.off()
 
 
 svglite::svglite(file = "results/figures/Prov_and_ClstMap_postMeans_interpolate.svg",
-     height = 8, width = 11)
+                 height = 8, width = 11)
 cowplot::plot_grid(provmodelplotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
@@ -305,42 +306,30 @@ graphics.off()
 #### Standard Errors
 
 ```{r}
-clstmodel.fitted.se <- apply(clstmodel.fitted, 2, sd)
-clstmodel.fitted.se <- clstmodel.fitted.se/nrow(clstmodel.fitted)
+# borrowed from plot.pred.Prevmap overload on github: https://github.com/cran/PrevMap/blob/master/R/foo.R
+clstmodel.fitted.se <- rasterFromXYZ(cbind(clstmodel$grid,
+                                           clstmodel[[1]][["standard.errors"]]))
 
 ```
 
 ```{r, results='asis'}
 
-clstmodel.fitted.sedf <- data.frame(PrevSE = clstmodel.fitted.se)
-clstmodel.fitted.sedf %>% 
-  #dplyr::mutate_if(is.numeric, round, 4) %>% 
-  DT::datatable(., extensions='Buttons',
-                options = list(
-                  searching = T,
-                  pageLength = 10,
-                  dom = 'Bfrtip', 
-                  buttons = c('csv')))
+clstmodel.fitted.sedf <- data.frame(PrevSE = values(clstmodel.fitted.se))
+summprevpe <- summary(clstmodel.fitted.sedf$PrevSE)
+knitr::kable(tibble::tibble(nms = names(summprevpe), ret = unname(unlist(summprevpe))))
+
 ```
 
 
 ```{r}
-clstmodel.fitted.se.raster <- 
-  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
-                              clstmodel.coords[, "latnum"],
-                              clstmodel.fitted.se),
-                        crs="+proj=longlat +datum=WGS84 +no_defs")
-
-
+clstmodel.fitted.se.raster <- clstmodel.fitted.se
+crs(clstmodel.fitted.se.raster) <- "+init=epsg:4326"
 
 ret.smrstr.m.plot <- ggplot() + 
   ggspatial::layer_spatial(data = clstmodel.fitted.se.raster, aes(fill = stat(band1)),
                            interpolate = TRUE) +
   scale_fill_distiller("Standard Error", type = "div", palette = "RdYlBu", 
                        na.value = NA) +
-  geom_point(data = drccites, aes(x = longnum, y=latnum), alpha = 0.5) + 
-  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold", alpha = 0.5) +
   theme_void() +
   theme(legend.position = "right",
         legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
@@ -379,7 +368,7 @@ graphics.off()
 
 
 svglite::svglite(file = "results/figures/Prov_and_ClstMap_postSE.svg",
-     height = 8, width = 11)
+                 height = 8, width = 11)
 cowplot::plot_grid(provmodel.posteriorselotObj, ret.smrstr.m.plot,
                    align = "h", nrow = 1, labels = c("(A)", "(B)"))
 graphics.off()
@@ -392,18 +381,21 @@ graphics.off()
 ```{r}
 covar.rstr.pred <- readRDS("data/derived_data/vividepi_spatial_covar_feature_engineer.rds")
 
-precip.plot <- ggspatial::layer_spatial(data = covar.rstr.pred[["precip_mean_cont_scale_clst"]], 
+precip.plot <- ggplot() + 
+  ggspatial::layer_spatial(data = covar.rstr.pred[["precip_mean_cont_scale_clst"]], 
                                         aes(fill = stat(band1))) +
   scale_fill_viridis_c("Precip", na.value = NA) +
   theme_void()
 
-crop.plot <- ggspatial::layer_spatial(data = covar.rstr.pred[["cropprop_cont_scale_clst"]], 
-                                        aes(fill = stat(band1))) +
+crop.plot <- ggplot() + 
+  ggspatial::layer_spatial(data = covar.rstr.pred[["cropprop_cont_scale_clst"]], 
+                                      aes(fill = stat(band1))) +
   scale_fill_viridis_c("Crop Prop.", na.value = NA) +
   theme_void()
 
-hlthdist.plot <- ggspatial::layer_spatial(data = covar.rstr.pred[["hlthdist_cont_scale_clst"]], 
-                                        aes(fill = stat(band1))) +
+hlthdist.plot <- ggplot() + 
+  ggspatial::layer_spatial(data = covar.rstr.pred[["hlthdist_cont_scale_clst"]], 
+                                          aes(fill = stat(band1))) +
   scale_fill_viridis_c("Health Dist.", na.value = NA) +
   theme_void()
 
@@ -413,9 +405,6 @@ hlthdist.plot <- ggspatial::layer_spatial(data = covar.rstr.pred[["hlthdist_cont
 #..............................................................
 # figure for paper
 #..............................................................
-cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
-                   align = "h", nrow = 1)
-
 jpeg(file = "results/figures/Clst_Covariates.jpg",
      height = 11, width = 8, units = "in", res = 800)
 cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
@@ -424,17 +413,122 @@ graphics.off()
 
 
 svglite::svglite(file = "results/figures/Clst_Covariates.svg",
-     height = 11, width = 8)
+                 height = 11, width = 8)
 cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
                    align = "v", ncol = 1, labels = c("(A)", "(B)", "(C)"))
 graphics.off()
 
 
+```
+```{r, results='asis'}
+cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
+                   align = "h", nrow = 1)
+```
 
+
+
+## Appendix 
+### Same Scale as Pf
+```{r}
+clstmodel.fitted.postmeans.raster <- 
+  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
+                              clstmodel.coords[, "latnum"],
+                              clstmodel.fitted.postmeans),
+                        crs="+proj=longlat +datum=WGS84 +no_defs")
+
+
+
+ret.smrstr.m.plot <- ggplot() + 
+  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu", 
+                       na.value = NA,
+                       limits = c(0, 0.6)) +
+  smpl_base_map +
+  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
+  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
+            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold") +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "results/figures/ClstMap_postMeans_samescale_pf.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(ret.smrstr.m.plot)
+graphics.off()
 
 ```
 
-#### Intercept Comparison
+```{r, results='asis'}
+plot(ret.smrstr.m.plot)
+```
+
+
+### Reasonable Scale 
+```{r}
+clstmodel.fitted.postmeans.raster <- 
+  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
+                              clstmodel.coords[, "latnum"],
+                              clstmodel.fitted.postmeans),
+                        crs="+proj=longlat +datum=WGS84 +no_defs")
+
+
+
+ret.smrstr.m.plot <- ggplot() + 
+  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu", 
+                       na.value = NA,
+                       limits = c(0, 0.05)) +
+  smpl_base_map +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "results/figures/ClstMap_postMeans_reasonable_scale.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(ret.smrstr.m.plot)
+graphics.off()
+
+```
+
+```{r, results='asis'}
+plot(ret.smrstr.m.plot)
+```
+
+
+#### With Cluster Prev Points
+```{r}
+mp <- readRDS( "data/derived_data/basic_cluster_mapping_data.rds")
+pvclst <- mp[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001", ]
+pvclst <- pvclst$data[[1]]
+
+clst.points <- ggplot() + 
+  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  smpl_base_map +
+  geom_point(data = pvclst, aes(x=longnum, y=latnum, color = plsmdprev), 
+             alpha = 0.5, shape = 16) + 
+  scale_color_viridis_c() + 
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "results/figures/ClstMap_postMeans_interpolate_with_clst.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(clst.points)
+graphics.off()
+
+
+```
+```{r, results='asis'}
+plot(clst.points)
+```
+
+
+### Intercept Comparison
 ```{r}
 # read rds
 clstmodel <- readRDS("analyses/07-spatial_prediction/prevmap_predictions/intercept_predictions.RDS")
@@ -466,74 +560,3 @@ ret.smrstr.m.plot <- ggplot() +
 ```{r, results='asis'}
 plot(ret.smrstr.m.plot)
 ```
-
-
-
-## Appendix 
-### Same Scale as Pf
-```{r}
-clstmodel.fitted.postmeans.raster <- 
-  raster::rasterFromXYZ(cbind(clstmodel.coords[, "longnum"],
-                              clstmodel.coords[, "latnum"],
-                              clstmodel.fitted.postmeans),
-                        crs="+proj=longlat +datum=WGS84 +no_defs")
-  
-
-
-ret.smrstr.m.plot <- ggplot() + 
-  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
-  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu", 
-                       na.value = NA,
-                       limits = c(0, 0.6)) +
-  smpl_base_map +
-  geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
-  geom_text(data = drccites, aes(label = city, x = longnum, y=latnum), 
-            hjust = 0.5, vjust = 0.5, nudge_y = 0.5, fontface = "bold") +
-  theme(legend.position = "right",
-        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
-        legend.text = element_text(size = 12, face = "bold", angle = 0))
-
-
-jpeg(file = "results/figures/ClstMap_postMeans_samescale_pf.jpg",
-     height = 11, width = 8, units = "in", res = 500)
-plot(ret.smrstr.m.plot)
-graphics.off()
-
-```
-
-```{r, results='asis'}
-plot(ret.smrstr.m.plot)
-```
-
-
-#### With Cluster Prev Points
-```{r}
-mp <- readRDS( "data/derived_data/basic_cluster_mapping_data.rds")
-pvclst <- mp[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001", ]
-pvclst <- pvclst$data[[1]]
-
-clst.points <- ggplot() + 
- ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
-  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
-                       na.value = NA) +
-  smpl_base_map +
-  geom_point(data = pvclst, aes(x=longnum, y=latnum, color = plsmdprev), 
-             alpha = 0.5, shape = 16) + 
-  scale_color_viridis_c() + 
-  theme(legend.position = "right",
-        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
-        legend.text = element_text(size = 12, face = "bold", angle = 0))
-
-
-jpeg(file = "results/figures/ClstMap_postMeans_interpolate_with_clst.jpg",
-     height = 11, width = 8, units = "in", res = 500)
-plot(clst.points)
-graphics.off()
-
-
-```
-```{r, results='asis'}
-plot(clst.points)
-```
-
-
