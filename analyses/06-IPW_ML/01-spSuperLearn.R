@@ -65,7 +65,7 @@ txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classi
 txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 txs$learnerlib[txs$target == "hv106_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "hlthdist_cont_log_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+txs$learnerlib[txs$target == "hlthdist_fctb_clst"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 
 
 
@@ -81,8 +81,8 @@ paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalse
 # run
 #......................
 future::plan("multicore")
-paramsdf$ensembl_cvRisk <- furrr::future_pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, 
-                                              seed = 123)
+paramsdf$ensembl_cvRisk <- purrr::pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, 
+                                       seed = 123)
 
 
 #............................................................
