@@ -44,8 +44,7 @@ system('gunzip data/raw_data/weather_data/CHIRPS/*')
 #---------------------------------------------------------------------------------
 # Temperature Data
 #---------------------------------------------------------------------------------
-# Manually downloaded from LAADS by requesting on their server and using `wget`
-
+# Using Garkse temps
 
 ##################################################################################
 ##########                      HOTOSM DATA                       ################
