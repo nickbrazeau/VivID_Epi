@@ -5,5 +5,8 @@
 #SBATCH --mem={{ memory | 65536 }}
 #SBATCH --array=1-{{ n_jobs }}              # job array
 #SBATCH --time 11-00:00:00                     # time
+#SBATCH --mail-user=nbrazeau@med.unc.edu
+#SBATCH --mail-type=all
+
 ulimit -v $(( 1024 * {{ memory | 32768 }} ))
 CMQ_AUTH={{ auth }} R --no-save --no-restore -e 'clustermq:::worker("{{ master }}")'
