@@ -51,3 +51,5 @@ sandbox/
 .DS_Store
 ~$*
 _rslurm
+
+data_thesis_copy/derived_data/vividepi_nightlights_surface.grd
