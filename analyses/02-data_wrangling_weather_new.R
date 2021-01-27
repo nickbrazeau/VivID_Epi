@@ -114,7 +114,7 @@ dt <- dt %>%
   dplyr::filter(hv001 %in% ge$hv001)
 # sanity check
 sf::st_crs(dt)
-identicalCRS(sf::as_Spatial(dt), ge)
+identicalCRS(sf::as_Spatial(dt), sf::as_Spatial(ge))
 identicalCRS(sf::as_Spatial(dt), caf)
 # liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
 dt <- sp::spTransform(sf::as_Spatial(dt), CRSobj = sp::CRS("+init=epsg:4326"))
