@@ -28,7 +28,7 @@ caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
 sp::proj4string(caf) <- "+init=epsg:4326"
 
 # note, file is time stamped on my computer (would be different from a new user)
-if(!file.exists("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2020_11_22.tiff")) {
+if(!file.exists("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2021_01_26.tiff")) {
   # download from MAP
   malariaAtlas::getRaster(surface = "A global map of travel time to cities to assess inequalities in accessibility in 2015",
                           shp = caf,
@@ -37,7 +37,7 @@ if(!file.exists("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities
 
 
 # read in 
-accraw <- raster::raster("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2020_11_22.tiff")
+accraw <- raster::raster("data/raw_data/MAPrasters/getRaster/2015_accessibility_to_cities_v1.0_latest_10_.18_40_8_2021_01_26.tiff")
 raster::crs(accraw)
 identicalCRS(accraw, caf)
 identicalCRS(accraw, sf::as_Spatial(DRC))
@@ -157,7 +157,7 @@ saveRDS(object = ge.hlthdisturban,
 
 
 #............................................................
-# Access to Citie and Heaalth Distance Correlations
+# Access to Citie and Health Distance Correlations
 #...........................................................
 cor(values(access.drc),
     values(hlthdist.drc),

@@ -117,7 +117,7 @@ wrap_S.CARleroux <- function(name, formula, family, trials, W, data, burnin, n.s
 }
 
 
-mod.framework$MCMC <- furrr::future_pmap(mod.framework, wrap_S.CARleroux)
+mod.framework$MCMC <- purrr::pmap(mod.framework, wrap_S.CARleroux)
 
 #..............................................................
 # save out diagnostic chains
@@ -136,7 +136,7 @@ mod.framework.long$burnin <- 1e5
 mod.framework.long$n.sample <- 1e5 + 1e5
 mod.framework.long$thin <- 10 # some thing for longer run 
 
-mod.framework.long$MCMC <- furrr::future_pmap(mod.framework.long, wrap_S.CARleroux)
+mod.framework.long$MCMC <- purrr::pmap(mod.framework.long, wrap_S.CARleroux)
 
 #..............................................................
 # save out long chains

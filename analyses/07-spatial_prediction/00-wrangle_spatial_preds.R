@@ -135,17 +135,6 @@ p2 <- ggplot() +
   theme_void()
 cowplot::plot_grid(p1, p2, nrow = 1)
 
-# look at hlth dist which from MAP was very pointed
-p1 <- ggplot() +
-  ggspatial::layer_spatial(data = htlhdistraster_raw, aes(fill = stat(band1))) +
-  scale_fill_viridis_c("", na.value = NA) +
-  theme_void()
-p2 <- ggplot() +
-  ggspatial::layer_spatial(data = htlhdistraster, aes(fill = stat(band1))) +
-  scale_fill_viridis_c("", na.value = NA) +
-  theme_void()
-cowplot::plot_grid(p1, p2, nrow = 1)
-
 
 #...............................
 # Bounds so we only do interpolation
