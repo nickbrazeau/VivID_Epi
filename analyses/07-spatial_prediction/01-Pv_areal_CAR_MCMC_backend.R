@@ -5,7 +5,6 @@ source("R/00-functions_basic.R")
 source("R/00-functions_epi.R") 
 source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
-library(furrr)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
 library(HDInterval)
@@ -27,8 +26,8 @@ pvprov.weighted.nosf <- dtsrvy %>%
   dplyr::mutate(count = 1) %>% 
   dplyr::group_by(adm1name) %>% 
   dplyr::summarise(n = srvyr::survey_total(count), 
-                   plsmdn = srvyr::survey_total(pv18s, na.rm = T), 
-                   plsmdprev = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95))
+                   plsmdn = srvyr::survey_total(pv18s), 
+                   plsmdprev = srvyr::survey_mean(pv18s, vartype = c("se", "ci"), level = 0.95))
 
 # need to keep integers, so will round
 pvprov.weighted.nosf <- pvprov.weighted.nosf %>% 

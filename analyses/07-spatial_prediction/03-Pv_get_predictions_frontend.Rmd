@@ -349,11 +349,6 @@ precip.plot <- ggplot() +
   scale_fill_viridis_c("Precip", na.value = NA) +
   theme_void()
 
-crop.plot <- ggplot() + 
-  ggspatial::layer_spatial(data = covar.rstr.pred[["cropprop_cont_scale_clst"]], 
-                                      aes(fill = stat(band1))) +
-  scale_fill_viridis_c("Crop Prop.", na.value = NA) +
-  theme_void()
 
 hlthdist.plot <- ggplot() + 
   ggspatial::layer_spatial(data = covar.rstr.pred[["hlthdist_cont_scale_clst"]], 
@@ -361,25 +356,14 @@ hlthdist.plot <- ggplot() +
   scale_fill_viridis_c("Health Dist.", na.value = NA) +
   theme_void()
 
-```
-
-```{r}
-#..............................................................
+#......................
 # figure for paper
-#..............................................................
+#......................
 jpeg(file = "results/figures/Clst_Covariates.jpg",
      height = 11, width = 8, units = "in", res = 800)
-cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
-                   align = "v", ncol = 1)
+cowplot::plot_grid(precip.plot, hlthdist.plot,
+                   align = "h", nrow = 1)
 graphics.off()
-
-
-svglite::svglite(file = "results/figures/Clst_Covariates.svg",
-                 height = 11, width = 8)
-cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
-                   align = "v", ncol = 1, labels = c("(A)", "(B)", "(C)"))
-graphics.off()
-
 
 ```
 ```{r, results='asis'}

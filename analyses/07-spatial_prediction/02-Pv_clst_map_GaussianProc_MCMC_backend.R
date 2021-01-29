@@ -86,8 +86,8 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              log.normal.sigma = c(-1.5, 1))
 
 # NB covar matrix
-covarsmat <- matrix(0, ncol = 4, nrow=4) # two risk factors, 3 betas
-diag(covarsmat) <- 1 # identity matrix
+covarsmat <- matrix(0, ncol = 3, nrow = 3) # two risk factors, 3 betas
+diag(covarsmat) <- 1 # identity matrix 
 
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0),
                                        beta.covar = covarsmat,
