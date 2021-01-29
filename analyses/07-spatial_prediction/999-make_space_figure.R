@@ -33,6 +33,7 @@ DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 # point
 point_prev <- readRDS("results/Pointest_map_prev_PlotObj.RDS")  + 
   theme(legend.position = "bottom",
+        legend.title = element_text(face = "bold"),
         legend.text = element_text(angle = 45, hjust = 0.5, vjust = 0.5),
         plot.margin = margin(0, 0, 1, 0.1, "cm"))
 # prov
@@ -89,12 +90,13 @@ point_se <- dplyr::left_join(clst, genosf, by = "hv001") %>%
         legend.text = element_text(angle = 45, hjust = 0.5, vjust = 0.5, face = "bold"),
         plot.margin = margin(0, 0, 1, 0.1, "cm"))
 
-jpeg("~/Desktop/temp2.jpg", width = 11, height = 8, res = 500, units = "in")
+jpeg("results/figures/collected_spatial_models_point_prevalences.jpg", width = 11, height = 8, res = 500, units = "in")
 cowplot::plot_grid(point_prev, prov_prev, clust_prev,
                    labels = c("(A)", "(B)", "(C)"), nrow = 1)
 graphics.off()
 
-jpeg("~/Desktop/temp3.jpg", width = 11, height = 8, res = 500, units = "in")
+jpeg("results/figures/collected_spatial_models_standard_errors.jpg", 
+     width = 11, height = 8, res = 800, units = "in")
 cowplot::plot_grid(point_se, prov_se, clust_se,
                    labels = c("(A)", "(B)", "(C)"), nrow = 1,
                    rel_heights = c(0.1, 0.45, 0.45))
