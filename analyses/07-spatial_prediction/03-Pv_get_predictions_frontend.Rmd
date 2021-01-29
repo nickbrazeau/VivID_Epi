@@ -21,7 +21,7 @@ set.seed(48)
 
 load("data/map_bases/vivid_maps_bases.rda")
 drccites <- readr::read_csv("data/map_bases/DRC_city_coordinates.csv") %>% 
-  dplyr::filter(population > 1e6 | city %in% c("Kisangani", "Goma"))
+  dplyr::filter(population > 1e6 | city %in% c("Kisangani"))
 drccites <- drccites %>% 
   dplyr::mutate(city = stringr::str_split_fixed(city, pattern = " ", n = 2)[,1])
 
@@ -168,44 +168,6 @@ saveRDS(provmodel.posteriorselotObj, "results/ProvMap_postSE_PlotObj.RDS")
 ```{r, results='asis'}
 plot(provmodel.posteriorselotObj)
 ```
-
-#### Intercept Comparison
-```{r}
-provmodel <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
-provmodel <- provmodel[provmodel$name == "CAR_intercept", ] # compare model
-provs <- provmodel$data[[1]]$adm1name
-provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
-provmodel.posteriormeans <- apply(provmodel.samples.fittedvalues, 2, mean)
-provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeanscounts = provmodel.posteriormeans) 
-provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeansprev = provmodel.posteriormeans$posteriormeanscounts) 
-provmodel.posteriormeans$posteriormeansprev <- provmodel.posteriormeans$posteriormeansprev/provmodel$data[[1]]$n
-# Bring it home
-# adm1names
-DRCprovcentroids <- tibble::tibble(ad1name = DRCprov$adm1name,
-                                   cntr = sf::st_centroid(DRCprov$geometry)) %>% 
-  dplyr::mutate(longnum = sf::st_coordinates(cntr)[,1],
-                latnum = sf::st_coordinates(cntr)[,2])
-# plot df
-provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans) 
-provmodelplotObj <- ggplot() + 
-  geom_sf(data = provmodelplotObjdf, 
-          aes(fill = posteriormeansprev), color = "#737373") +
-  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
-                       na.value = NA) +
-  coord_sf(datum=NA) +  # to get rid of gridlines
-  prettybasemap_nodrc_dark_nonorth +
-  ggrepel::geom_text_repel(data = DRCprovcentroids,
-                           aes(x = longnum,  y = latnum, label = ad1name),
-                           fontface = "bold") +
-  theme(legend.position = "right",
-        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
-        legend.text = element_text(size = 12, face = "bold", angle = 0))
-```
-
-```{r, results='asis'}
-plot(provmodelplotObj)
-```
-
 
 
 ### Cluster Models 
@@ -529,6 +491,38 @@ plot(clst.points)
 
 
 ### Intercept Comparison
+#### Province
+
+```{r}
+provmodel <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
+provmodel <- provmodel[provmodel$name == "CAR_intercept", ] # compare model
+provs <- provmodel$data[[1]]$adm1name
+provmodel.samples.fittedvalues <- provmodel$MCMC[[1]]$samples$fitted
+provmodel.posteriormeans <- apply(provmodel.samples.fittedvalues, 2, mean)
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeanscounts = provmodel.posteriormeans) 
+provmodel.posteriormeans <- cbind.data.frame(adm1name = provs, posteriormeansprev = provmodel.posteriormeans$posteriormeanscounts) 
+provmodel.posteriormeans$posteriormeansprev <- provmodel.posteriormeans$posteriormeansprev/provmodel$data[[1]]$n
+
+# plot df
+provmodelplotObjdf <- dplyr::left_join(DRCprov, provmodel.posteriormeans) 
+provmodelplotObj <- ggplot() + 
+  geom_sf(data = provmodelplotObjdf, 
+          aes(fill = posteriormeansprev), color = "#737373") +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  coord_sf(datum=NA) +  # to get rid of gridlines
+  prettybasemap_nodrc_dark_nonorth +
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+```
+
+```{r, results='asis'}
+plot(provmodelplotObj)
+```
+
+
+#### Cluster
 ```{r}
 # read rds
 clstmodel <- readRDS("analyses/07-spatial_prediction/prevmap_predictions/intercept_predictions.RDS")

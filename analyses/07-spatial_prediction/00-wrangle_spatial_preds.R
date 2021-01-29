@@ -38,15 +38,10 @@ grid.pred.coords <- sf::st_as_sf(grid.pred.coords.df, coords = c("longnum", "lat
 # extract covariate information for prediction surface 
 #...............................
 # Raster surfaces for risk factors
-riskvars <- c("precip_mean_cont_scale_clst", 
-              "cropprop_cont_scale_clst", "hlthdist_cont_scale_clst")
+riskvars <- c("precip_mean_cont_scale_clst", "hlthdist_cont_scale_clst")
 
 # read in precip
 precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
-
-# read in crops
-cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
-
 
 # read in healthcare walk distance
 # aggregate up and then do log transform so it more closelymatches how we manipulate before
@@ -60,7 +55,7 @@ htlhdistraster <- raster::mask(htlhdistraster, DRC)
 #......................
 # extract 
 #......................
-predcovars <- list(precipraster, cropraster, htlhdistraster)
+predcovars <- list(precipraster, htlhdistraster)
 names(predcovars) <- riskvars
 
 pred.list <- lapply(predcovars, function(x)
@@ -77,10 +72,6 @@ pred.list <- lapply(predcovars, function(x)
 #......................
 pred.list[["precip_mean_cont_scale_clst"]] <- my.scale(pred.list[["precip_mean_cont_scale_clst"]], 
                                                             center = TRUE, scale = TRUE)
-
-pred.list[["cropprop_cont_scale_clst"]] <- my.scale(logit(pred.list[["cropprop_cont_scale_clst"]], tol = 1e-3), 
-                                                    center = TRUE, scale = TRUE)
-
 
 pred.list[["hlthdist_cont_scale_clst"]] <-  my.scale(log(pred.list[["hlthdist_cont_scale_clst"]] + 0.5),
                                                      center = TRUE, scale = TRUE)
@@ -105,19 +96,6 @@ p1 <- ggplot() +
 p2 <- ggplot() +
   geom_point(data = pred.df, aes(x = longnum, y = latnum,
                                  color = precip_mean_cont_scale_clst))  +
-  scale_color_distiller("", type = "div", palette = "RdYlBu", na.value = NA) +
-  theme_void()
-cowplot::plot_grid(p1, p2, nrow = 1)
-
-# agg so not to overwhelm ggplot
-cropraster_agg <- raster::aggregate(cropraster, fact = 36, fun = mean)
-p1 <- ggplot() +
-  ggspatial::layer_spatial(data = cropraster_agg, aes(fill = stat(band1))) +
-  scale_fill_viridis_c("", na.value = NA) +
-  theme_void()
-p2 <- ggplot() +
-  geom_point(data = pred.df, aes(x = longnum, y = latnum,
-                                 color = cropprop_cont_scale_clst))  +
   scale_color_distiller("", type = "div", palette = "RdYlBu", na.value = NA) +
   theme_void()
 cowplot::plot_grid(p1, p2, nrow = 1)
@@ -150,14 +128,6 @@ min.precip <- min(precip$precip_mean_cont_scale_clst)
 
 pred.df$precip_mean_cont_scale_clst[pred.df$precip_mean_cont_scale_clst > max.precip] <- max.precip
 pred.df$precip_mean_cont_scale_clst[pred.df$precip_mean_cont_scale_clst < min.precip] <- min.precip
-
-
-# bring in cropland
-crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") 
-max.crop <- max(crop$cropprop_cont_scale_clst)
-min.crop <- min(crop$cropprop_cont_scale_clst)
-pred.df$cropprop_cont_scale_clst[pred.df$cropprop_cont_scale_clst > max.crop] <- max.crop
-pred.df$cropprop_cont_scale_clst[pred.df$cropprop_cont_scale_clst < min.crop] <- min.crop
 
 
 # bring in health care distance/access clst means

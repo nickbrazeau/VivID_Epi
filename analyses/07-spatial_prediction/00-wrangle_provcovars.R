@@ -35,7 +35,6 @@ hlthdist.drc <- raster::mask(x = hlthdist, mask = DRCprov)
 # means within each adm1
 #-------------------------------------------------------------------------
 precip <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds")
-cropland <- readRDS("data/derived_data/vividepi_cropland_surface.rds")
 hlthdist.drc 
 
 extract_agg_raster_polygon <- function(rstrlyr, plygn){
@@ -56,7 +55,6 @@ adm1 <- DRCprov %>%
 # sanity
 sp::identicalCRS(sf::as_Spatial(adm1), caf)
 sp::identicalCRS(sf::as_Spatial(adm1), precip)
-sp::identicalCRS(sf::as_Spatial(adm1), cropland)
 sp::identicalCRS(sf::as_Spatial(adm1), hlthdist.drc)
 
 # store names
@@ -69,18 +67,15 @@ adm1 <- split(adm1, 1:nrow(adm1))
 
 # get covars 
 pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
-pvcovar$crop <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = cropland) )
 pvcovar$hlthdist <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = hlthdist.drc) )
 
 # quick viz
 hist(pvcovar$precip)
-hist(pvcovar$crop)
 hist(pvcovar$hlthdist)
 
 
 # scale for better model fitting
 pvcovar$precip_scale <- my.scale(pvcovar$precip)
-pvcovar$crop_scale <- my.scale(logit(pvcovar$crop, tol = 1e-3))
 pvcovar$hlthdist_scale <- my.scale(pvcovar$hlthdist)
 sf::st_geometry(pvcovar) <- NULL
 

@@ -333,11 +333,11 @@ xtabs(~dt$hv106 + dt$hv106_fctb, addNA = T)
 table(factor(haven::as_factor(dt$hv104)), useNA = "always") # no missing m/f but still missing factor from haven
 dt <- dt %>% 
   dplyr::mutate(occupation = ifelse(haven::as_factor(hv104) == "female",
-                                    haven::as_factor(v717), 
-                                    haven::as_factor(mv717)))
+                                    as.character(haven::as_factor(v717)), 
+                                    as.character(haven::as_factor(mv717))))
 
 dt <- dt %>% 
-  dplyr::mutate(farmer_fctb = ifelse(occupation %in% c(4,5), "farmer", "not farmer"),
+  dplyr::mutate(farmer_fctb = ifelse(grepl("agricultural", occupation), "farmer", "not farmer"),
                 farmer_fctb = factor(farmer_fctb, levels = c("not farmer", "farmer"))) # not being a farmer protective
 # note, we have coded missing as not a farmer
 table(factor(haven::as_factor(dt$farmer_fctb)), useNA = "always")
