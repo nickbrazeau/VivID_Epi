@@ -55,7 +55,6 @@ gp.mod.framework$grid.pred <- list(covar.rstr.pred.downsmpl[,c("longnum", "latnu
 
 # bring in predictors
 gp.mod.framework$predictors <- list(NULL, covar.rstr.pred.downsmpl[,c("precip_mean_cont_scale_clst", 
-                                                                      "cropprop_cont_scale_clst",
                                                                       "hlthdist_cont_scale_clst")])
 
 

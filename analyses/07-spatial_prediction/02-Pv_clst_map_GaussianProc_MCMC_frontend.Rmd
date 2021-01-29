@@ -63,24 +63,18 @@ pvclst.covar <- dt %>%
   dplyr::select("hv001", "precip_mean_cont_scale_clst") %>% 
   dplyr::filter(!duplicated(.))
 
-# bring in cropland
-crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
-  dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-
 # bring in health distance
 hlthdist <- readRDS("data/derived_data/vividepi_hlthdist_clstmeans.rds") %>% 
   dplyr::select(c("hv001", "hlthdist_cont_scale_clst"))
 
-pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = hlthdist, by = "hv001")
+pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = hlthdist, by = "hv001")
 
 # join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
-riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "hlthdist_cont_scale_clst")
+riskvars = c("precip_mean_cont_scale_clst", "hlthdist_cont_scale_clst")
 
 
 ```
@@ -318,7 +312,7 @@ ests %>%
 #### Covar Model 
 ```{r}
 prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
-  formula=as.formula("plsmdn~precip_mean_cont_scale_clst+cropprop_cont_scale_clst+hlthdist_cont_scale_clst"), 
+  formula=as.formula("plsmdn~precip_mean_cont_scale_clst+hlthdist_cont_scale_clst"), 
   coords=as.formula("~longnum+latnum"),
   data=pvclust.weighted.nosf, 
   start.cov.pars=c(1,1),

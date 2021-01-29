@@ -44,21 +44,16 @@ pvclst.covar <- dt %>%
   dplyr::select("hv001", "precip_mean_cont_scale_clst") %>% 
   dplyr::filter(!duplicated(.))
 
-# bring in cropland
-crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
-  dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
 # bring in health distance
 hlthdist <- readRDS("data/derived_data/vividepi_hlthdist_clstmeans.rds") %>% 
   dplyr::select(c("hv001", "hlthdist_cont_scale_clst"))
 
-pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = hlthdist, by = "hv001")
+pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = hlthdist, by = "hv001")
 
 # join together
 pvclust.weighted.nosf <- dplyr::left_join(pvclust.weighted.nosf, pvclst.covar, by = "hv001")
 
-riskvars <- c("precip_mean_cont_scale_clst", 
-              "cropprop_cont_scale_clst", "hlthdist_cont_scale_clst")
+riskvars <- c("precip_mean_cont_scale_clst", "hlthdist_cont_scale_clst")
 
 
 
@@ -91,10 +86,10 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              log.normal.sigma = c(-1.5, 1))
 
 # NB covar matrix
-covarsmat <- matrix(0, ncol = 4, nrow=4) # three risk factors, 4 betas
+covarsmat <- matrix(0, ncol = 4, nrow=4) # two risk factors, 3 betas
 diag(covarsmat) <- 1 # identity matrix
 
-mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
+mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(2, 1.5), # this is tau2
                                        log.normal.phi = c(0, 1),
@@ -270,7 +265,7 @@ plan_long_covarmad <- drake::drake_plan(
   longrun_covarmod = target(
     PrevMap::binomial.logistic.Bayes(
       formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
-                       cropprop_cont_scale_clst + hlthdist_cont_scale_clst"),
+                           hlthdist_cont_scale_clst"),
       units.m = as.formula("~ n"),
       coords = as.formula("~ longnum + latnum"),
       data = pvclust.weighted.nosf,

@@ -69,7 +69,7 @@ W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one
 #......................
 # Make Model Framework
 #......................
-prov.covar.names <- c("precip_scale", "crop_scale", "hlthdist_scale")
+prov.covar.names <- c("precip_scale", "hlthdist_scale")
 mod.framework <- tibble(name = c("CAR_intercept", "CAR_covar"),
                         formula = c("plsmdn ~ 1", 
                                     paste0("plsmdn ~ ", paste(prov.covar.names, collapse = " + "))),
