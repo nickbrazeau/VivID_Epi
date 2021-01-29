@@ -341,6 +341,9 @@ dt <- dt %>%
                 farmer_fctb = factor(farmer_fctb, levels = c("not farmer", "farmer"))) # not being a farmer protective
 # note, we have coded missing as not a farmer
 table(factor(haven::as_factor(dt$farmer_fctb)), useNA = "always")
+xtabs(~dt$farmer_fctb + dt$occupation, addNA = T)
+
+
 
 #------------------------------------------
 # children under 5 number
@@ -411,7 +414,7 @@ dt <- dt %>%
 # Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
 #.............
 # read insecticide liftover table
-insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_insecticide_liftover.csv")
+insctcd <- readr::read_csv("internal_datamap_files/pr_insecticide_liftover.csv")
 
 dt <- dt %>%
   dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
