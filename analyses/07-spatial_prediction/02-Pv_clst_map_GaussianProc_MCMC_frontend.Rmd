@@ -315,7 +315,7 @@ prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
   formula=as.formula("plsmdn~precip_mean_cont_scale_clst+hlthdist_cont_scale_clst"), 
   coords=as.formula("~longnum+latnum"),
   data=pvclust.weighted.nosf, 
-  start.cov.pars=c(1,1),
+  start.cov.pars=c(1.5,1),
   kappa=0.75)
 ```
 ```{r, results='asis'}

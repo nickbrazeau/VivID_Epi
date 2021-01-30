@@ -219,7 +219,7 @@ mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5,
                                                              epsilon.S.lim = c(0.01, 0.1),
                                                              start.nugget = 1,
                                                              start.sigma2 = 0.2,
-                                                             start.beta = -5,
+                                                             start.beta = 1,
                                                              start.phi = 0.5,
                                                              start.S = predict(fit.glm))
 
@@ -230,7 +230,7 @@ mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5,
                                                        epsilon.S.lim = c(0.01, 0.1),
                                                        start.nugget = 1,
                                                        start.sigma2 = 0.2, 
-                                                       start.beta = c(-4, -0.2, 0, -0.02),
+                                                       start.beta = c(1, -0.2, -0.15),
                                                        start.phi = 0.5,
                                                        start.S = predict(fit.glm))
 
