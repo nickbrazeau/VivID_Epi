@@ -83,7 +83,7 @@ mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
                                              log.normal.nugget = c(2, 1.5), # this is tau2
                                              log.normal.phi = c(0, 1),
-                                             log.normal.sigma = c(-1.5, 1))
+                                             log.normal.sigma = c(-1.75, 1))
 
 # NB covar matrix
 covarsmat <- matrix(0, ncol = 3, nrow = 3) # two risk factors, 3 betas
@@ -93,7 +93,7 @@ mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0),
                                        beta.covar = covarsmat,
                                        log.normal.nugget = c(2, 1.5), # this is tau2
                                        log.normal.phi = c(0, 1),
-                                       log.normal.sigma = c(-1.5, 1))
+                                       log.normal.sigma = c(-1.75, 1))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
                                                         n.sim = 1e4+5e3,
@@ -102,7 +102,7 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                         epsilon.S.lim = c(0.01, 0.1),
                                                         start.nugget = 1,
                                                         start.sigma2 = 0.2,
-                                                        start.beta = -5,
+                                                        start.beta = 1,
                                                         start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
@@ -113,7 +113,7 @@ mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 1,
                                                   start.sigma2 = 0.2, 
-                                                  start.beta = c(-4, -0.2, 0, -0.02),
+                                                  start.beta = c(1, -0.2, -0.15),
                                                   start.phi = 0.5,
                                                   start.S = predict(fit.glm))
 
@@ -301,7 +301,7 @@ make(plan,
      recoverable = FALSE,
      history = FALSE,
      session_info = FALSE,
-     lock_envir = FALSE, # unlock environment so parallel::clusterApplyLB in drjacoby can work
+     lock_envir = FALSE,  
      lock_cache = FALSE)
 
 

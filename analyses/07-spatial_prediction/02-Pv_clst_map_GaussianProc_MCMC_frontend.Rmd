@@ -340,6 +340,8 @@ ests %>%
 
 ```
 
+
+
 ## Hierarchial Bayesian Spatial Models for Cluster Prevalence 
 
 ### Model Framework 
