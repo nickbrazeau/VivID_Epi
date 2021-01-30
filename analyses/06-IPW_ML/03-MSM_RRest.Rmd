@@ -517,51 +517,7 @@ plot(pvprecipplot)
 
 
 
-### Appendix: Digging into _Pv_-Farming
-```{r, results='asis'}
 
-dtsrvyr.app <- makecd2013survey(survey = dt)
-
-dtsrvyr.app %>% 
-  dplyr::group_by(farmer_fctb, pv18s_fctb) %>% 
-  dplyr::summarise(counts = srvyr::survey_total()) %>% 
-  knitr::kable(.)
-
-```
-
-
-### Appendix: Raster Digging into _Pv_-Farming/Crop-Land 
-```{r}
-# load spatial coordinates
-ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
-
-# load crop raster
-cropraster <- readRDS("data/derived_data/vividepi_cropland_surface.rds") 
-cropraster <- raster::aggregate(cropraster, fact = 20) # agg for easier plotting 
-
-# bring in spatial and plot
-pvcropplot <- pvsrvyr %>% 
-  dplyr::left_join(., genosf, by = "hv001") %>% 
-  ggplot() +
-  ggspatial::layer_spatial(data = cropraster, aes(fill = stat(band1)),
-                           alpha = 0.8) +
-  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
-             alpha = 0.6) +
-  scale_fill_viridis_c("crop", na.value = NA) +
-  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
-                       na.value = NA) +
-  theme_void() +
-  theme(legend.position = "bottom")
-
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvcrop_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
-plot(pvcropplot)
-graphics.off()
-
-```
-
-```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
-plot(pvcropplot)
-```
 
 ### Appendix: Digging into _Pv_-Health Distance
 ```{r, results='asis'}
