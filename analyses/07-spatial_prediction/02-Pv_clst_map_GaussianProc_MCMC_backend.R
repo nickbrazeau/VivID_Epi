@@ -175,20 +175,20 @@ fit_bayesmap_wrapper <- function(path){
 ####################################################################################
 ###########            Diagnostic Run Drake Plan                           #########
 #####################################################################################
-setwd("analyses/07-spatial_prediction")
 #......................
 # make diagnostic map
 #......................
 # PrevMap is having trouble with the drake nesting. resorted to reading in input files
-dir.create("prevmap_drake_inputs")
+dir.create("analyses/07-spatial_prediction/prevmap_drake_inputs", recursive = T)
 mod.framework$name <- paste0(mod.framework$name, seq(1, 4))
 mod.framework.list <- split(mod.framework, 1:nrow(mod.framework))
 names(mod.framework.list) <- purrr::map_chr(mod.framework.list, "name")
 lapply(mod.framework.list, function(x){
-  saveRDS(x, paste0("prevmap_drake_inputs/", x$name, "_prevmap_diag_input.RDS"))
+  saveRDS(x, paste0("analyses/07-spatial_prediction/prevmap_drake_inputs/", 
+                    x$name, "_prevmap_diag_input.RDS"))
 })
 
-diagruns <- list.files("prevmap_drake_inputs/",
+diagruns <- list.files("analyses/07-spatial_prediction/prevmap_drake_inputs/",
                        full.names = TRUE)
 diagruns <- tibble::tibble(path = diagruns)
 
@@ -291,11 +291,11 @@ plan <- drake::bind_plans(plan_diag,
 # call drake to send out to slurm
 #......................
 options(clustermq.scheduler = "slurm",
-        clustermq.template = "drake_clst/slurm_clustermq_LL_fit.tmpl")
+        clustermq.template = "analyses/07-spatial_prediction/drake_clst/slurm_clustermq_LL_fit.tmpl")
 make(plan,
      parallelism = "clustermq",
      jobs = 10,
-     log_make = "prevmap_fit_drake.log", verbose = 2,
+     log_make = "analyses/07-spatial_prediction/prevmap_fit_drake.log", verbose = 2,
      log_progress = TRUE,
      log_build_times = FALSE,
      recoverable = FALSE,
