@@ -184,6 +184,8 @@ dt <- dt %>%
                 hv104_fctb = forcats::fct_rev(forcats::fct_reorder(.f = hv104_fctb, .x = hv104_fctb, .fun = length))
   ) # female to default (b/c 0 and larger SE)
 
+xtabs(~hv104_fctb + haven::as_factor(hv104), data = dt, addNA = T)
+
 
 #.............
 # age
@@ -217,7 +219,7 @@ xtabs(~dt$hv213 + dt$hv213_liftover, addNA = T)
 
 
 # wall
-wall <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_wall_liftover.csv")
+wall <- readr::read_csv("internal_datamap_files/pr_wall_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv214 = haven::as_factor(hv214), 
                 hv214 =  forcats::fct_drop(hv214))
@@ -229,7 +231,7 @@ xtabs(~dt$hv214 + dt$hv214_liftover, addNA = T)
 
 
 # roof
-roof <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_roof_liftover.csv")
+roof <- readr::read_csv("internal_datamap_files/pr_roof_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv215 = haven::as_factor(hv215), 
                 hv215 =  forcats::fct_drop(hv215))
@@ -265,6 +267,8 @@ dt <- dt %>%
 
 
 # check -- seems reasonable
+xtabs(~dt$hv21345_fctb + dt$housecount, addNA = T)
+xtabs(~dt$hv21345_fctb + dt$hv215, addNA = T)
 xtabs(~dt$hv21345_fctb, addNA = T)
 
 
@@ -384,11 +388,11 @@ dt <- dt %>%
   dplyr::mutate(
     ITN_fctb = ifelse(
       # (i) long-lasting insecticidal nets that were <= 3 y old at the time of survey
-      !(haven::as_factor(hml4) %in% c("more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
+      !(as.character(haven::as_factor(hml4)) %in% c("more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
       # (ii) conventional ITNs that were 1 y old 
-      ifelse(haven::as_factor(hml4) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
+      ifelse(as.character(haven::as_factor(hml4)) %in% c(0:12) & as.character(haven::as_factor(hml12)) == "only treated (itn) nets", 1, 
              # or were retreated within the year before the survey
-             ifelse(haven::as_factor(hml9) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
+             ifelse(as.character(haven::as_factor(hml9)) %in% as.character(c(0:12)) & as.character(haven::as_factor(hml12)) == "only treated (itn) nets", 1, 
                     0))), # we know no missing net from above. they either reported yes or no at some level
     ITN_fctb = factor(ITN_fctb, levels = c(0,1), labels = c("no", "yes")),
     ITN_fctb = forcats::fct_drop(ITN_fctb),
@@ -397,6 +401,7 @@ dt <- dt %>%
 
 
 # sanity check
+xtabs(~haven::as_factor(dt$hml4) + haven::as_factor(dt$hml10)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml10)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml12)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml20)) 
@@ -488,6 +493,8 @@ dt <- dt %>%
 #.............
 dt <- dt %>% 
   dplyr::mutate(urban_rura_fctb = haven::as_factor(urban_rura))
+# sanity
+xtabs(~dt$urban_rura_fctb + haven::as_factor(dt$urban_rura), addNA=T) 
 
 #.............
 # Health Care Access (Mean Distance to Health Site)
