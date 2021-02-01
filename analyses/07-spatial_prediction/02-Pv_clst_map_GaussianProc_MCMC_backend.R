@@ -96,8 +96,8 @@ mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0),
                                        log.normal.sigma = c(-1.75, 1))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                        n.sim = 1e4+5e3,
-                                                        thin = 1, 
+                                                        n.sim = 1e4+1e4,
+                                                        thin = 5, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
                                                         start.nugget = 1,
@@ -107,8 +107,8 @@ mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4,
                                                         start.S = predict(fit.glm))
 
 mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                  n.sim = 1e4+5e3,
-                                                  thin = 1, 
+                                                  n.sim = 1e4+1e4,
+                                                  thin = 5, 
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
                                                   start.nugget = 1,
@@ -213,8 +213,8 @@ dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spat
            recursive = TRUE)
 # Directions LONG RUN                      
 mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
-                                                             n.sim = 1e5 + 5e4,
-                                                             thin = 5, 
+                                                             n.sim = 1e5 + 1e5,
+                                                             thin = 10, 
                                                              L.S.lim = c(5,50),
                                                              epsilon.S.lim = c(0.01, 0.1),
                                                              start.nugget = 1,
@@ -224,8 +224,8 @@ mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5,
                                                              start.S = predict(fit.glm))
 
 mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
-                                                       n.sim = 1e5 + 5e4,
-                                                       thin = 5, 
+                                                       n.sim = 1e5 + 1e5,
+                                                       thin = 10, 
                                                        L.S.lim = c(5,50),
                                                        epsilon.S.lim = c(0.01, 0.1),
                                                        start.nugget = 1,
