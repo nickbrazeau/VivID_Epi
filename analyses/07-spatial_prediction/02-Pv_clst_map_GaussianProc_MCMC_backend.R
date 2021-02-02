@@ -62,8 +62,7 @@ riskvars <- c("precip_mean_cont_scale_clst", "hlthdist_cont_scale_clst")
 #-------------------------------------------------------------------------
 mod.framework <- tibble::tibble(name = c("intercept", "covars"),
                                 formula = c("plsmdn ~ 1", 
-                                            paste0("plsmdn ~ ", paste(riskvars, collapse = "+")))
-)
+                                            paste0("plsmdn ~ ", paste(riskvars, collapse = "+"))))
 
 coords <- as.formula(paste0("~ longnum + latnum"))
 mod.framework$data <- lapply(1:nrow(mod.framework), function(x) return(pvclust.weighted.nosf))
