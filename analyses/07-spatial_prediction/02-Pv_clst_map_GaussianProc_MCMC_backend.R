@@ -161,9 +161,9 @@ fit_bayesmap_wrapper <- function(path){
   #......................
   # save out
   #......................
-  dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_diagn_runs/", 
+  dir.create("analyses/07-spatial_prediction/prevmap_diagn_runs/", 
              recursive = TRUE)
-  outpath = paste0("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_diagn_runs/",
+  outpath = paste0("analyses/07-spatial_prediction/prevmap_diagn_runs/",
                    name, ".diagnostic_run_ret.RDS")
   saveRDS(ret, file = outpath)
   return(0)
@@ -209,7 +209,7 @@ plan_diag <- drake::drake_plan(
 # note that PrevMap::spatial.pred.binomial.Bayes access the "formula"
 # call within the model object for prediction (with covariates). As a result,
 # we can't use a wrapper with purrr as above. 
-dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_runs/", 
+dir.create("analyses/07-spatial_prediction/prevmap_long_runs/", 
            recursive = TRUE)
 # Directions LONG RUN                      
 mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
@@ -252,7 +252,7 @@ plan_long_intercept <- drake::drake_plan(
     )),
   savelongrun_intercept = target(
     saveRDS(longrun_intercept, 
-            file = "/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_runs/intercept_model.RDS"),
+            file = "analyses/07-spatial_prediction/prevmap_long_runs/intercept_model.RDS"),
     hpc = FALSE
   )
 )
@@ -275,7 +275,7 @@ plan_long_covarmad <- drake::drake_plan(
     )),
   savelongrun_covar = target(
     saveRDS(longrun_covarmod, 
-            file = "/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_runs/covariate_model.RDS"),
+            file = "analyses/07-spatial_prediction/prevmap_long_runs/covariate_model.RDS"),
     hpc = FALSE))
 
 
