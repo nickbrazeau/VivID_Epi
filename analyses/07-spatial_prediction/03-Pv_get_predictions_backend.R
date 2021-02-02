@@ -64,7 +64,7 @@ gp.mod.framework$predictors <- list(NULL, covar.rstr.pred.downsmpl[,c("precip_me
 ###########                 Preds with Drake                               #########
 #####################################################################################
 paramsdf <- gp.mod.framework[, c("mcmc", "grid.pred", "predictors")]
-dir.create("/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_predictions/",
+dir.create("analyses/07-spatial_prediction/prevmap_predictions/",
            recursive = TRUE)
 
 #......................
@@ -83,7 +83,7 @@ plan_pred_intercept <- drake::drake_plan(
     ),
   save_pred_intercept = target(
     saveRDS(pred_intercept, 
-            file = "/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_predictions/intercept_predictions.RDS"),
+            file = "analyses/07-spatial_prediction/prevmap_predictions/intercept_predictions.RDS"),
     hpc = FALSE
   )
 )
@@ -105,7 +105,7 @@ plan_pred_covar <- drake::drake_plan(
   ),
   save_pred_covar = target(
     saveRDS(pred_covar, 
-            file = "/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/prevmap_predictions/covar_predictions.RDS"),
+            file = "analyses/07-spatial_prediction/prevmap_predictions/covar_predictions.RDS"),
     hpc = FALSE
   )
 )
@@ -120,7 +120,7 @@ plan <- drake::bind_plans(plan_pred_intercept,
 # call drake to send out to slurm
 #......................
 options(clustermq.scheduler = "slurm",
-        clustermq.template = "/proj/ideel/meshnick/users/NickB/Projects/VivID_Epi/analyses/07-spatial_prediction/drake_clst/slurm_clustermq_LL_pred.tmpl")
+        clustermq.template = "analyses/07-spatial_prediction/drake_clst/slurm_clustermq_LL_pred.tmpl")
 make(plan,
      parallelism = "clustermq",
      jobs = 2,
