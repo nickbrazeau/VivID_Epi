@@ -136,6 +136,9 @@ mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>%
 #......................
 # Make a wrapper for PrevMap diagnostic chain
 #......................
+dir.create("analyses/07-spatial_prediction/prevmap_diagn_runs/", 
+           recursive = TRUE)
+
 fit_bayesmap_wrapper <- function(path){
   input <- readRDS(path)
   name <- input$name  
@@ -160,8 +163,6 @@ fit_bayesmap_wrapper <- function(path){
   #......................
   # save out
   #......................
-  dir.create("analyses/07-spatial_prediction/prevmap_diagn_runs/", 
-             recursive = TRUE)
   outpath = paste0("analyses/07-spatial_prediction/prevmap_diagn_runs/",
                    name, ".diagnostic_run_ret.RDS")
   saveRDS(ret, file = outpath)
