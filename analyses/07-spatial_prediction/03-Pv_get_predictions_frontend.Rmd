@@ -367,7 +367,7 @@ graphics.off()
 
 ```
 ```{r, results='asis'}
-cowplot::plot_grid(precip.plot, crop.plot, hlthdist.plot,
+cowplot::plot_grid(precip.plot, hlthdist.plot,
                    align = "h", nrow = 1)
 ```
 
