@@ -46,7 +46,7 @@ powercalculator.glmOR <- function(n=15490, exp_prob=0.5, p=0.03, p0=0.02){
 # Make Data Frame for Pv params
 #...............................................................
 ### run lots of these at different levels of p0
-p0sim <- seq(0.01, 0.032, by=0.0001)
+p0sim <- seq(0.01, 0.032, length.out = 500)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 pvpoweriters.paramsdf <- tibble::tibble(
@@ -94,7 +94,7 @@ cat("*************************** \n Submitted Pv Power Calc Models \n **********
 # Make Data Frame for Pv params
 #...............................................................
 ### run lots of these at different levels of p0
-p0sim <- seq(0.01, 0.3, by=0.001)
+p0sim <- seq(0.01, 0.3, length.out = 500)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 pfpoweriters.paramsdf <- tibble::tibble(
