@@ -506,72 +506,72 @@ PrevMap::autocor.plot(long.covar, param = "phi")
 ```
 
 
-## DIC of Final Models
-```{r}
+<!-- ## DIC of Final Models -->
+<!-- ```{r} -->
 
-# note because the model returns the S matrix which is the posterior for the random effect
-# and it returns the posterior betas, we can calculate the Ti from each model 
-# from there, it is straightforward to calculate the likelihood as a series of 
-# independently drawn binomial trials
+<!-- # note because the model returns the S matrix which is the posterior for the random effect -->
+<!-- # and it returns the posterior betas, we can calculate the Ti from each model  -->
+<!-- # from there, it is straightforward to calculate the likelihood as a series of  -->
+<!-- # independently drawn binomial trials -->
 
-long.framework$randomeff <- purrr::map(long.framework$mcmc, "S")
-long.framework$betas <- purrr::map(long.framework$mcmc, "estimate")
-long.framework$betas <- purrr::map(long.framework$betas, function(x){return(x[, colnames(x)[!colnames(x) %in% c("sigma^2", "phi", "tau^2")] ] )})
-long.framework$X <- purrr::map(long.framework$mcmc, "D") # matrix of covariates
-long.framework$Yi <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$plsmdn)) # binomial successes
-long.framework$ni <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$n)) # observations 
+<!-- long.framework$randomeff <- purrr::map(long.framework$mcmc, "S") -->
+<!-- long.framework$betas <- purrr::map(long.framework$mcmc, "estimate") -->
+<!-- long.framework$betas <- purrr::map(long.framework$betas, function(x){return(x[, colnames(x)[!colnames(x) %in% c("sigma^2", "phi", "tau^2")] ] )}) -->
+<!-- long.framework$X <- purrr::map(long.framework$mcmc, "D") # matrix of covariates -->
+<!-- long.framework$Yi <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$plsmdn)) # binomial successes -->
+<!-- long.framework$ni <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$n)) # observations  -->
 
-long.framework$Ti <- purrr::pmap(long.framework[,c("X", "betas", "randomeff")], 
-                                 function(X, betas, randomeff){
-                                   bi <- X %*% t(betas) # get the X (nxp matrix) * the betas (pxsim matrix)
-                                   Ti <- randomeff + t(bi) # random effects is in sim x n so tranpose bi to match it
-                                   return(Ti)
-                                 })
+<!-- long.framework$Ti <- purrr::pmap(long.framework[,c("X", "betas", "randomeff")],  -->
+<!--                                  function(X, betas, randomeff){ -->
+<!--                                    bi <- X %*% t(betas) # get the X (nxp matrix) * the betas (pxsim matrix) -->
+<!--                                    Ti <- randomeff + t(bi) # random effects is in sim x n so tranpose bi to match it -->
+<!--                                    return(Ti) -->
+<!--                                  }) -->
 
-long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(Yi, ni, Ti){
-  LL <- c()
-  for(s in 1:nrow(Ti)){ # for every sim
-    LL.iter <- 0
-    for(i in 1:ncol(Ti)){ # for every spatial unit
-      LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = expit(Ti[s, i]), log = T) + LL.iter
-      LL.iter
-    }
-    LL <- append(LL.iter, LL)
-    
-  }
-  
-  LL <- return(LL)
-})
+<!-- long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(Yi, ni, Ti){ -->
+<!--   LL <- c() -->
+<!--   for(s in 1:nrow(Ti)){ # for every sim -->
+<!--     LL.iter <- 0 -->
+<!--     for(i in 1:ncol(Ti)){ # for every spatial unit -->
+<!--       LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = expit(Ti[s, i]), log = T) + LL.iter -->
+<!--       LL.iter -->
+<!--     } -->
+<!--     LL <- append(LL.iter, LL) -->
 
+<!--   } -->
 
-long.framework$DICg <- purrr::map(long.framework$LL, function(x){
-  mu = mean(x)
-  sigma = var(x)/2
-  DICg = mu + sigma
-  return(DICg)
-})
+<!--   LL <- return(LL) -->
+<!-- }) -->
 
 
-```
-
-```{r, results = 'asis'}
-
-long.framework %>% 
-  dplyr::select(c("name", "DICg")) %>% 
-  tidyr::unnest(cols="DICg")  %>% 
-  dplyr::mutate(DICgchar = as.character(DICg)) %>%  # odd rounding behavior
-  dplyr::mutate(DICg = round(DICg, 2)) %>% 
-  magrittr::set_colnames(c("Model", "DICg", "DICgchar")) %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) 
+<!-- long.framework$DICg <- purrr::map(long.framework$LL, function(x){ -->
+<!--   mu = mean(x) -->
+<!--   sigma = var(x)/2 -->
+<!--   DICg = mu + sigma -->
+<!--   return(DICg) -->
+<!-- }) -->
 
 
-```
+<!-- ``` -->
 
-### Log Likelihood Trace Plots for Final Models
-```{r, results = 'asis'}
+<!-- ```{r, results = 'asis'} -->
 
-plot(long.framework$LL[[1]], main = "Intercept Model", type = "l")
-plot(long.framework$LL[[2]], main = "Covars Model", type = "l")
+<!-- long.framework %>%  -->
+<!--   dplyr::select(c("name", "DICg")) %>%  -->
+<!--   tidyr::unnest(cols="DICg")  %>%  -->
+<!--   dplyr::mutate(DICgchar = as.character(DICg)) %>%  # odd rounding behavior -->
+<!--   dplyr::mutate(DICg = round(DICg, 2)) %>%  -->
+<!--   magrittr::set_colnames(c("Model", "DICg", "DICgchar")) %>%  -->
+<!--   kableExtra::kable(format = "html", escape = F) %>% -->
+<!--   kableExtra::kable_styling("striped", full_width = F)  -->
 
-```
+
+<!-- ``` -->
+
+<!-- ### Log Likelihood Trace Plots for Final Models -->
+<!-- ```{r, results = 'asis'} -->
+
+<!-- plot(long.framework$LL[[1]], main = "Intercept Model", type = "l") -->
+<!-- plot(long.framework$LL[[2]], main = "Covars Model", type = "l") -->
+
+<!-- ``` -->

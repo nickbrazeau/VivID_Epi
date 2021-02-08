@@ -306,66 +306,66 @@ wrap_chain_plotter.carbayes.final(final.dir = myfinalchain, chains = chains)
 ```
 
 
-### Long Chain DIC
+<!-- ### Long Chain DIC -->
 
-```{r}
-
-
-mod.framework.long$modfit <- purrr::map(mod.framework.long$mcmc.modsum, "modelfit")
-
-# note in order to be consistent, with the PrevMap approach,
-# I want Gelman's DIC: DICg = mu + sigma
-# can get this from the log likelihood provided by CarBayes. 
-
-# CarBayes nicely outputs the Fitted Values, from which I can calculate a log-likelihood
-dimnames(mod.framework.long$W[[1]])[[1]]
-
-mod.framework.long$LL <- purrr::pmap(mod.framework.long[, c("data", "trials", "MCMC")], 
-  function(data, trials, MCMC){
-  Yi <- data$plsmdn
-  ni <- trials
-  Ti <- MCMC$samples$fitted
-  
-  LL <- c()
-  for(s in 1:nrow(Ti)){ # for every sim
-    LL.iter <- 0
-    for(i in 1:ncol(Ti)){ # for every spatial unit
-      LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = Ti[s, i]/ni[i], log = T) + LL.iter
-      LL.iter
-    }
-    LL <- append(LL.iter, LL)
-    
-  }
-  
-  LL <- return(LL)
-})
+<!-- ```{r} -->
 
 
-mod.framework.long$DICg <- purrr::map(mod.framework.long$LL, function(x){
-  mu = mean(x)
-  sigma = var(x)/2
-  DICg = mu + sigma
-  return(DICg)
-})
+<!-- mod.framework.long$modfit <- purrr::map(mod.framework.long$mcmc.modsum, "modelfit") -->
+
+<!-- # note in order to be consistent, with the PrevMap approach, -->
+<!-- # I want Gelman's DIC: DICg = mu + sigma -->
+<!-- # can get this from the log likelihood provided by CarBayes.  -->
+
+<!-- # CarBayes nicely outputs the Fitted Values, from which I can calculate a log-likelihood -->
+<!-- dimnames(mod.framework.long$W[[1]])[[1]] -->
+
+<!-- mod.framework.long$LL <- purrr::pmap(mod.framework.long[, c("data", "trials", "MCMC")],  -->
+<!--   function(data, trials, MCMC){ -->
+<!--   Yi <- data$plsmdn -->
+<!--   ni <- trials -->
+<!--   Ti <- MCMC$samples$fitted -->
+
+<!--   LL <- c() -->
+<!--   for(s in 1:nrow(Ti)){ # for every sim -->
+<!--     LL.iter <- 0 -->
+<!--     for(i in 1:ncol(Ti)){ # for every spatial unit -->
+<!--       LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = Ti[s, i]/ni[i], log = T) + LL.iter -->
+<!--       LL.iter -->
+<!--     } -->
+<!--     LL <- append(LL.iter, LL) -->
+
+<!--   } -->
+
+<!--   LL <- return(LL) -->
+<!-- }) -->
 
 
-mod.framework.long$DICs <- purrr::map(mod.framework.long$modfit, "DIC")
+<!-- mod.framework.long$DICg <- purrr::map(mod.framework.long$LL, function(x){ -->
+<!--   mu = mean(x) -->
+<!--   sigma = var(x)/2 -->
+<!--   DICg = mu + sigma -->
+<!--   return(DICg) -->
+<!-- }) -->
 
 
-```
+<!-- mod.framework.long$DICs <- purrr::map(mod.framework.long$modfit, "DIC") -->
 
-```{r, results='asis'}
-data.frame(name = mod.framework.long$name, DICg = unlist(mod.framework.long$DICg),
-           DICs = unlist(mod.framework.long$DICs)) %>% 
-  DT::datatable(., 
-                rownames = F,
-                options = list(
-                  searching = F,
-                  pageLength = 6,
-                  dom = 'Bfrtip', 
-                  buttons = c('csv')))
 
-```
+<!-- ``` -->
+
+<!-- ```{r, results='asis'} -->
+<!-- data.frame(name = mod.framework.long$name, DICg = unlist(mod.framework.long$DICg), -->
+<!--            DICs = unlist(mod.framework.long$DICs)) %>%  -->
+<!--   DT::datatable(.,  -->
+<!--                 rownames = F, -->
+<!--                 options = list( -->
+<!--                   searching = F, -->
+<!--                   pageLength = 6, -->
+<!--                   dom = 'Bfrtip',  -->
+<!--                   buttons = c('csv'))) -->
+
+<!-- ``` -->
 
 ```{r}
 
