@@ -33,8 +33,8 @@ DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 # point
 point_prev <- readRDS("results/Pointest_map_prev_PlotObj.RDS")  + 
   theme(legend.position = "bottom",
-        legend.title = element_text(face = "bold"),
-        legend.text = element_text(angle = 45, hjust = 0.5, vjust = 0.5),
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 45, hjust = 0.5, vjust = 0.5),
         plot.margin = margin(0, 0, 1, 0.1, "cm"))
 # prov
 prov_prev <- readRDS("results/ProvMap_postMeans_PlotObj.RDS") + 
@@ -87,7 +87,8 @@ point_se <- dplyr::left_join(clst, genosf, by = "hv001") %>%
                        na.value = NA) + 
   theme_void() + 
   theme(legend.position = "bottom",
-        legend.text = element_text(angle = 45, hjust = 0.5, vjust = 0.5, face = "bold"),
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 45, hjust = 0.5, vjust = 0.5),
         plot.margin = margin(0, 0, 1, 0.1, "cm"))
 
 jpeg("results/figures/collected_spatial_models_point_prevalences.jpg", width = 11, height = 8, res = 500, units = "in")
