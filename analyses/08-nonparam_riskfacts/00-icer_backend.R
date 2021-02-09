@@ -19,9 +19,9 @@ dtsrvy <- makecd2013survey(survey = dt)
 
 # need weighed counts
 data <- dtsrvy %>% 
-  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0 & po18s == 0, 1, 0),
-                pvmono =  ifelse(pfldh == 0 & pv18s == 1 & po18s == 0, 1, 0),
-                pfpv =  ifelse(pfldh == 1 & pv18s == 1 & po18s == 0, 1, 0)
+  dplyr::mutate(pfmono =  ifelse(pfldh == 1 & pv18s == 0, 1, 0),
+                pvmono =  ifelse(pfldh == 0 & pv18s == 1, 1, 0),
+                pfpv =  ifelse(pfldh == 1 & pv18s == 1, 1, 0)
   ) %>% 
   dplyr::summarise(
     "pf" = srvyr::survey_total(x=pfmono),
@@ -43,6 +43,7 @@ surv <- new("surveillance")
 surv@denominator <- nrow(dt)
 surv@cases <- unlist(data.vec)
 surv@casenames <- names(data.vec)
+surv
 
 #......................
 # run icer model 
