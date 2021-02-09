@@ -142,8 +142,8 @@ dt <- dt %>%
 
 dt[, colnames(dt)[grepl("pv18s|pfldh|po18s", colnames(dt))] ] %>% 
   sapply(., summary) # looks clean, all NAs are consistent except Pf but that has to do with double call strategy
-                     # Remember, CT values >cutoff (species dependent) are coded as NA in raw data. Retained here
-  
+# Remember, CT values >cutoff (species dependent) are coded as NA in raw data. Retained here
+
 #.............
 # HIV
 #.............
@@ -292,7 +292,7 @@ xtabs(~dt$wlthrcde_fctb + dt$wlthrcde_fctm)
 dt %>% 
   ggplot() + 
   geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont))
-  
+
 # shift directionality so riches has highest continuous number
 dt <- dt %>% 
   dplyr::mutate(wlthrcde_combscor_cont = wlthrcde_combscor_cont * -1)
@@ -463,7 +463,11 @@ plot(dt$mean_temperature_2015[dt$mean_temperature_2015 > 0],
 # sanity
 plot(dt$rainfall_2015[dt$rainfall_2015 > 0], 
      dt$precip_mean_cont_clst[dt$rainfall_2015 > 0])
-
+ggplot(data = dt) + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = rainfall_2015)) + 
+  scale_color_viridis_c()
 
 #.............
 # Cluster-Level Altitude
@@ -482,7 +486,7 @@ dt <- dt %>%
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
   dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst),
                 wtrdist_cont_log_scale_clst = my.scale(wtrdist_cont_log_clst, center = T, scale = T)
-                )
+  )
 
 
 #..........................................................................................
