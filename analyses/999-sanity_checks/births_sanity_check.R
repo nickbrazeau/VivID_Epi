@@ -13,7 +13,7 @@ tableone::CreateTableOne(vars = c("mage","raceeth_f","smoker_f"),
 df$mage2 <- df$mage^2
 covars = c("mage", "mage2", "raceeth_f", "smoker_f")
 covars.form = paste(covars, collapse = "+")
-summary(ps_model <- glm(data = df, pnc5_f ~ mage+mage2+raceeth_f+smoker_f, family=binomial("logit")))
+summary(ps_model <- glm(data = df, pnc5 ~ mage+mage2+raceeth_f+smoker_f, family=binomial("logit")))
 df$ps <- predict(ps_model, type = "response")
 
 #Distribution of propensity score...
@@ -42,7 +42,10 @@ summary(df$iptw_s)
 library(mlr)
 source("R/00-IPTW_functions.R")
 
-task <- makeClassifTask(data = df[,c(covars, "pnc5_f")], target = "pnc5_f")
+task <- mlr::makeClassifTask(data = df[,c(covars, "pnc5_f")],
+                             target = "pnc5_f",
+                             positive = "Early PNC")
+
 lrn <- makeLearner("classif.logreg", predict.type = "prob")
 lrn <- list(lrn)
 
@@ -52,7 +55,12 @@ nsmp <- ifelse(nsets %in% nsmp, 1, 2)
 valset.list <- split(nsets, factor(nsmp))
 
 
-out <- mlrwrapSL::SL_crossval_risk_pred(learnerlib = lrn, task = task, valset.list = valset.list)
-summary( get_iptw_prob(task = task, ELpreds = out$EL.predictions) )
+out <- mlrwrapSL::SL_crossval_risk_pred(learnerlib = lrn, 
+                                        task = task, 
+                                        valset.list = valset.list, 
+                                        seed = 48)
+wi <- get_iptw_prob(task = task, SLpreds = out$SL.predictions)
+summary(wi)
 
-
+plot(wi, df$iptw_s)
+abline(a =  0, b = 1, col = "red")
