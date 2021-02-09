@@ -178,7 +178,7 @@ graphics.off()
 
 ```
 
-#### Positive Cluster Level Prevalence 
+#### Cluster Level Prevalence and SEs
 ```{r, results='asis', fig.align='center', fig.width=11, fig.height=8}
 
 # prov centroid for color
@@ -230,10 +230,13 @@ graphics.off()
 ### Cluster Level Prevalences Table (Unweighted Ns)
 ```{r, results='asis'}
 
-clst %>% 
-  dplyr::select(c("hv001", "n", "pv18sn", "pfldhn",
-                  "pv18sprev", "pv18sL95", "pv18sU95",
-                  "pfldhprev", "pfldhL95", "pfldhU95")) %>% 
+dt %>%
+  group_by(hv001) %>% 
+  dplyr::summarise(
+    n = dplyr::n(),
+    pv18sn = sum(pv18s),
+    pv18sprev = pv18sn/n
+  ) %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(

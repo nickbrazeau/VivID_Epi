@@ -32,7 +32,7 @@ covar.rstr.pred <- readRDS("data/derived_data/vividepi_spatial_covar_feature_eng
 
 # convert from raster to array/matrix
 covar.rstr.pred.downsmpl <- raster::sampleRandom(covar.rstr.pred,
-                                                 size = raster::ncell(covar.rstr.pred), # want  all locations that are missing
+                                                 size = raster::ncell(covar.rstr.pred), # want  all locations 
                                                  na.rm = T,
                                                  xy = T,
                                                  sp = F
