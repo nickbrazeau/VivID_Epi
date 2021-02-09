@@ -111,7 +111,7 @@ PowerPlot <- ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
   xlab("Type II Error") + ylab("Prevalence Odds Ratio") +
   xlim(0,0.5) + # once we fall off we don't care that much
   ylim(0, 3) + # not impressive to catch an OR of 5...
-  scale_color_manual("Probability of No Exposure", values = c("#8214A0", "#005AC8", "#006E82")) +
+  scale_color_manual("Probability of Exposure", values = c("#8214A0", "#005AC8", "#006E82")) +
   theme(plot.title = element_text(hjust = 0.5, face="bold", size=16),
         axis.title = element_text(hjust = 0.5, size=14),
         axis.text = element_text(hjust = 0.5, size=13),
