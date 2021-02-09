@@ -247,8 +247,8 @@ liftover <- data.frame(label =
                            "Water Dist.",
                            "Housing Materials (Trad.)",
                            "ITN Use (No)",
-                           "Urbanicity (Rur.)",
-                           "Hospital Dist."),
+                           "Urban",
+                           "Hospital Dist. (Far)"),
                        labelnum = 1:14)
 
 blocks <- data.frame(ymin = c(0, 0, 0),
