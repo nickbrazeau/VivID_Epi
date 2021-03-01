@@ -458,16 +458,46 @@ dt <- dt %>%
 # sanity
 plot(dt$mean_temperature_2015[dt$mean_temperature_2015 > 0], 
      dt$temp_mean_cont_clst[dt$mean_temperature_2015 > 0])
+summary(dt$mean_temperature_2015)
+summary(dt$temp_mean_cont_clst)
+
+
+p1 <- dt %>%  
+  dplyr::filter(mean_temperature_2015 > 0) %>% 
+  ggplot() + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = mean_temperature_2015)) + 
+  scale_color_viridis_c()
+
+p2 <- ggplot(data = dt) + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = temp_mean_cont_clst)) + 
+  scale_color_viridis_c()
+cowplot::plot_grid(p1, p2, align = "h")
+
 
 
 # sanity
 plot(dt$rainfall_2015[dt$rainfall_2015 > 0], 
      dt$precip_mean_cont_clst[dt$rainfall_2015 > 0])
-ggplot(data = dt) + 
+summary(dt$rainfall_2015)
+summary(dt$precip_mean_cont_clst)
+
+p1 <- ggplot(data = dt) + 
   geom_point(aes(x = longnum, 
                  y = latnum, 
                  color = rainfall_2015)) + 
   scale_color_viridis_c()
+
+p2 <- ggplot(data = dt) + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = precip_mean_cont_clst)) + 
+  scale_color_viridis_c()
+cowplot::plot_grid(p1, p2, align = "h")
+
 
 #.............
 # Cluster-Level Altitude

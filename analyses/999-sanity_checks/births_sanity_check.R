@@ -1,3 +1,5 @@
+library(tidyverse)
+library(mlr)
 births <- readRDS(file = "~/Documents/GitHub/18Fall_EPID799C_RforEpi/data/births_afterhw2.RDS")
 
 #........................................................
