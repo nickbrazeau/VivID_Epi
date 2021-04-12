@@ -307,7 +307,20 @@ dt %>%
   geom_hline(yintercept = 1.244034, color = "red") +
   geom_hline(yintercept = 2.57571, color = "red")
 
+# sanity check of comparing urbanicity and wealth recode vs. original 
+xtabs(~dt$wlthrcde_fctm + dt$urban_rura)
+xtabs(~haven::as_factor(dt$hv270) + dt$urban_rura)
+  # note, does result in some skew that isn't too surprising of "extreme" wealth 
+  # in urban places and poverty in rural places
+dt %>% 
+  ggplot() +
+  geom_boxplot(aes(x = urban_rura, y = wlthrcde_combscor_cont))
 
+boxplot(dt$wlthrcde_combscor_cont ~ haven::as_factor(dt$urban_rura))
+t.test(dt$wlthrcde_combscor_cont[ haven::as_factor(dt$urban_rura) == "R"],
+       dt$wlthrcde_combscor_cont[ haven::as_factor(dt$urban_rura) == "U"])
+energy::dcor(dt$wlthrcde_combscor_cont,
+             as.numeric(dt$urban_rura))
 
 #.............
 # years of education (continuous)
@@ -588,6 +601,6 @@ dt.cc <- dt  %>%
   dplyr::filter(complete.cases(.)) 
 
 saveRDS(object = dt.cc,
-        file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+        file = "data/derived_data/vividepi_recode_completecases.rds")
 
 

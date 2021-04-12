@@ -169,8 +169,8 @@ clst.prev.plotObj <- clst %>%
 
 plot(clst.prev.plotObj)
 
-dir.create(path = "~/Documents/GitHub/VivID_Epi/results/figures/", recursive = T)
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/cluster_prevalence_pointranges.jpg",
+dir.create(path = "results/figures/", recursive = T)
+jpeg(filename = "results/figures/cluster_prevalence_pointranges.jpg",
      width = 11, height = 8, units = "in", res=500)
 plot(clst.prev.plotObj)
 graphics.off()
@@ -219,8 +219,8 @@ clst.prev.plotObj <- clst %>%
 
 plot(clst.prev.plotObj)
 
-dir.create(path = "~/Documents/GitHub/VivID_Epi/results/figures/", recursive = T)
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pos_cluster_prevalence_pointranges_E-W_colorgrad.jpg",
+dir.create(path = "results/figures/", recursive = T)
+jpeg(filename = "results/figures/pos_cluster_prevalence_pointranges_E-W_colorgrad.jpg",
      width = 11, height = 8, units = "in", res=500)
 plot(clst.prev.plotObj)
 graphics.off()
@@ -746,7 +746,7 @@ cowplot::plot_grid(pv_bivar_rf_plot,
 
 
 # svglite::svglite(file = "results/figures/Figure1B.svg")
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/PfPv_Bivariate_dotplotRR.jpg", 
+jpeg("results/figures/PfPv_Bivariate_dotplotRR.jpg", 
      width = 11, height = 8, units = "in", res = 500)
 cowplot::plot_grid(pv_bivar_rf_plot, 
                    pf_bivar_rf_plot, 
@@ -767,24 +767,24 @@ save(pvivtbl1df, pfaltbl1df, # table one output
      pvivrskfctr_models, pfalrskfctr_models, # model datatframes
      pvivriskfactortable, pfalriskfactortable, # final out table for report
      casestbl1df, # for prettier table 1
-     file = "~/Documents/GitHub/VivID_Epi/results/bivariate_model_results.rda")
+     file = "results/bivariate_model_results.rda")
 
 
 #-----------------------------------------------------------------------------
 # housekeeping -- write out
 #-----------------------------------------------------------------------------
 # Case/NonCase Dist Tables
-dir.create(path = "~/Documents/GitHub/VivID_Epi/results/tables/", recursive = T)
+dir.create(path = "results/tables/", recursive = T)
 readr::write_csv(x = pvivtbl1df, 
-                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pvivtblones_counts.csv",
+                 path = "results/tables/pvivtblones_counts.csv",
                  na = "")
 
 readr::write_csv(x = pfaltbl1df, 
-                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pfaltblones_counts.csv",
+                 path = "results/tables/pfaltblones_counts.csv",
                  na = "")
 
 readr::write_csv(x = casestbl1df, 
-                 path = "~/Documents/GitHub/VivID_Epi/results/tables/cases_noncases_tblones_counts.csv",
+                 path = "results/tables/cases_noncases_tblones_counts.csv",
                  na = "")
 
 
@@ -792,11 +792,11 @@ readr::write_csv(x = casestbl1df,
 
 
 readr::write_csv(x = pvivriskfactortable, 
-                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pvivriskfactortable_tabletwos.csv",
+                 path = "results/tables/pvivriskfactortable_tabletwos.csv",
                  na = "")
 
 readr::write_csv(x = pfalriskfactortable, 
-                 path = "~/Documents/GitHub/VivID_Epi/results/tables/pfalriskfactortable_tabletwos.csv",
+                 path = "results/tables/pfalriskfactortable_tabletwos.csv",
                  na = "")
 
 
