@@ -287,6 +287,7 @@ sum(diag(tab))/sum(tab) # 56% concordance. Presumambly, household type was a big
 # look at binary
 xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270))
 xtabs(~dt$wlthrcde_fctb + dt$wlthrcde_fctm)
+xtabs(~dt$wlthrcde_fctb)
 
 # look at direction of wealth for continuous
 dt %>% 
@@ -321,6 +322,9 @@ t.test(dt$wlthrcde_combscor_cont[ haven::as_factor(dt$urban_rura) == "R"],
        dt$wlthrcde_combscor_cont[ haven::as_factor(dt$urban_rura) == "U"])
 energy::dcor(dt$wlthrcde_combscor_cont,
              as.numeric(dt$urban_rura))
+
+# Given this structural positivity issue, will use the binary recoding of wealth
+
 
 #.............
 # years of education (continuous)

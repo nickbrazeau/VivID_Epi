@@ -109,7 +109,7 @@ wlth_fct <- wlth_fct %>%
 
 
 # check for flat indicator vars, Rutstein point 4a 
-summary(wlth_fct)
+summary(wlth_fct) 
 
 
 
@@ -137,9 +137,24 @@ table(wlth_fct)
 
 # expand factors
 wlth_fct_exp <- fastDummies::dummy_columns(wlth_fct)
+
 # missing observations get coded to all 0s -- ok
 strtcol <- min( which(grepl("hv201_", colnames(wlth_fct_exp))) )
 wlth_fct_exp <- wlth_fct_exp[, strtcol:ncol(wlth_fct_exp)] # drop original codes
+
+# sanity
+ncol(wlth_fct_exp)
+colnames(wlth_fct_exp)
+levels(factor(wlth_fct[,1])) # good -- all 13 there
+levels(factor(wlth_fct[,2])) # good -- all 10 there
+levels(factor(wlth_fct[,3])) # good -- both there 
+levels(factor(wlth_fct[,4])) # good -- both there
+levels(factor(wlth_fct[,5])) # good -- both there
+levels(factor(wlth_fct[,6])) # good -- both there
+levels(factor(wlth_fct[,7])) # good -- both there
+levels(factor(wlth_fct[,8])) # good -- both there
+levels(factor(wlth_fct[,9])) # good -- all 19 there
+
 
 # exclude assets where <5 or >95% of households own (per MS)
 dropassets <- wlth_fct_exp %>% 
@@ -182,7 +197,18 @@ library(ggfortify)
 ggplot2::autoplot(com1,
                   loadings = TRUE,
                   loadings.label = TRUE,
-                  loadings.label.size  = 3)
+                  loadings.label.size  = 2)
+# 1. Drinking Water (categorical: HV201)
+# 2. Type of Toilet Facility (HV205) & Shared Toilet (HV225) from Rutstein point 3b.2.b
+# 3. Type of Cooking Fuel (HV226)
+# 4. Electricity (HV206)
+# 5. Radio (HV207)
+# 6. Television (HV208)
+# 7. Bicycle (HV210)
+# 8. Mobile telephone (HV243A)
+# 9. Watch (HV243B)
+# based on the direction of these eigenvectors, this is in *general* lines with my expectations
+
 
 #......................
 # tidy into df
@@ -251,7 +277,15 @@ wlth_scores <- wlth_scores %>%
 # check
 sum(is.na(wlth_scores$combscor))
 
- ##############################
+#...................... 
+# Visualize Combscor
+#...................... 
+score_wlth_char <- cbind.data.frame(wlth_fct, data.frame(combscor = wlth_scores$combscor))
+# generally consistent/sensible. Slightly odd that a shared septic tank is better than 
+# an independent septic tank in terms of absolute score 
+# washed out in factorization and then binary dichotomization
+
+##############################
 # Account for Sampling Weights
 ##############################
 dtsub <- dt %>% 
