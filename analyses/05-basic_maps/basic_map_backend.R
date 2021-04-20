@@ -97,6 +97,8 @@ saveRDS(moranIprov, "results/MoranI_prov.RDS")
 #............................................................
 # Moran's I for Cluster
 #...........................................................
+# https://stats.idre.ucla.edu/r/faq/how-can-i-calculate-morans-i-in-r/
+# but use monte carlo approach
 mp.clst <- mp %>% 
   dplyr::filter(maplvl == "hv001") %>% 
   dplyr::ungroup()
@@ -106,9 +108,7 @@ mp.clst <- mp %>%
 ge.nosf <- ge
 sf::st_geometry(ge.nosf) <- NULL
 
-# note, need to remove three clusters that were not screened for malaria
-# one cluster due to no HIV testing in it(? DHS internal) and 
-# two clusters lost due to contamination
+# extra sanity, but no longer needed on recent better coding
 maldhsclustlist <- unique( dt$hv001 )
 ge.clst <- ge %>% 
   dplyr::filter(hv001 %in% maldhsclustlist)
