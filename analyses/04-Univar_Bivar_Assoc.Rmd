@@ -230,13 +230,15 @@ graphics.off()
 ### Cluster Level Prevalences Table (Unweighted Ns)
 ```{r, results='asis'}
 
-dt %>%
+clust_no_weights <- dt %>%
   group_by(hv001) %>% 
   dplyr::summarise(
     n = dplyr::n(),
     pv18sn = sum(pv18s),
     pv18sprev = pv18sn/n
-  ) %>% 
+  ) 
+
+clust_no_weights %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
                 options = list(
@@ -246,6 +248,8 @@ dt %>%
                   buttons = c('csv')))
 
 ```
+
+Not considering weights, among the `r nrow(clst)` clusters considered, `r sum(clust_no_weights$pv18sn >= 1)` clusters had at least one infection and `r sum(clust_no_weights$pv18sn == 1)` had exactly one infection. 
 
 ### Cluster Level Prevalences Table (Weighted Ns)
 ```{r, results='asis'}
@@ -264,7 +268,7 @@ clst %>%
 
 ```
 
-Not considering weights, among the `r nrow(clst)` clusters considered, `r sum(clst$pv18sn >= 1)` clusters had at least one infection and `r sum(clst$pv18sn == 1)` had exactly one infection. 
+
 
 
 ## Duffy Negativity
@@ -801,7 +805,5 @@ readr::write_csv(x = pfalriskfactortable,
 
 
 ```
-
-
 
 
