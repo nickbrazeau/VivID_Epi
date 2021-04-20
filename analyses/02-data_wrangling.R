@@ -196,6 +196,7 @@ dt <- dt %>%
                 hab1_cont_scale = my.scale(hab1_cont, center = T, scale = T)) 
 
 summary(dt$hab1_cont) 
+hist(dt$hab1_cont_scale) 
 plot(dt$ha1, dt$hab1_cont)
 plot(dt$hb1, dt$hab1_cont)
 
@@ -297,6 +298,7 @@ dt %>%
 # shift directionality so riches has highest continuous number
 dt <- dt %>% 
   dplyr::mutate(wlthrcde_combscor_cont = wlthrcde_combscor_cont * -1)
+hist(dt$wlthrcde_combscor_cont)
 
 dt %>% 
   ggplot() + # look good 
@@ -311,8 +313,8 @@ dt %>%
 # sanity check of comparing urbanicity and wealth recode vs. original 
 xtabs(~dt$wlthrcde_fctm + dt$urban_rura)
 xtabs(~haven::as_factor(dt$hv270) + dt$urban_rura)
-  # note, does result in some skew that isn't too surprising of "extreme" wealth 
-  # in urban places and poverty in rural places
+# note, does result in some skew that isn't too surprising of "extreme" wealth 
+# in urban places and poverty in rural places
 dt %>% 
   ggplot() +
   geom_boxplot(aes(x = urban_rura, y = wlthrcde_combscor_cont))
@@ -324,6 +326,10 @@ energy::dcor(dt$wlthrcde_combscor_cont,
              as.numeric(dt$urban_rura))
 
 # Given this structural positivity issue, will use the binary recoding of wealth
+xtabs(~dt$wlthrcde_fctb + 
+        haven::as_factor(dt$urban_rura))
+energy::dcor(as.numeric(dt$wlthrcde_fctb),
+             as.numeric(dt$urban_rura))
 
 
 #.............
@@ -381,7 +387,7 @@ summary(dt$hv009) # looks clean
 dt <- dt %>% 
   dplyr::mutate(hv009_cont = hv009,
                 hv009_cont_scale = my.scale(hv009_cont, center = T, scale = T))
-
+hist(dt$hv009_cont_scale)
 
 #..........................................................................................
 #                                 MALARIA-INTERVENTIONS
@@ -473,6 +479,7 @@ dt <- dt %>%
   )
 
 # sanity
+hist(dt$temp_mean_cont_scale_clst)
 plot(dt$mean_temperature_2015[dt$mean_temperature_2015 > 0], 
      dt$temp_mean_cont_clst[dt$mean_temperature_2015 > 0])
 summary(dt$mean_temperature_2015)
@@ -497,6 +504,7 @@ cowplot::plot_grid(p1, p2, align = "h")
 
 
 # sanity
+hist(dt$precip_mean_cont_scale_clst)
 plot(dt$rainfall_2015[dt$rainfall_2015 > 0], 
      dt$precip_mean_cont_clst[dt$rainfall_2015 > 0])
 summary(dt$rainfall_2015)
@@ -523,7 +531,7 @@ dt <- dt %>%
   dplyr::mutate(alt_dem_cont_clst = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
                 alt_dem_cont_scale_clst = my.scale(alt_dem_cont_clst, center = T, scale = T)
   )
-
+hist(dt$alt_dem_cont_scale_clst)
 
 #.............
 # Distance to Water Source
@@ -534,7 +542,7 @@ dt <- dt %>%
   dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst),
                 wtrdist_cont_log_scale_clst = my.scale(wtrdist_cont_log_clst, center = T, scale = T)
   )
-
+hist(dt$wtrdist_cont_log_scale_clst)
 
 #..........................................................................................
 #                           DEMOGRAPHIC/BEHAVIORAL VARIABLES

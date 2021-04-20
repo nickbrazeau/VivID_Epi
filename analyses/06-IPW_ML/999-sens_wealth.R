@@ -18,25 +18,30 @@ dt <- readRDS("data/derived_data/vividepi_recode.rds")
 dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::pull(c("column_name"))
 sf::st_geometry(dt) <- NULL
+
+
 dt <- dt  %>% 
-  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr, "hv270")) %>% 
-  dplyr::filter(complete.cases(.)) %>% 
-  dplyr::mutate(hv270_fctb = ifelse(haven::as_factor(hv270) %in% c("poorest", "poorer"), "poor", "not poor"),
-                hv270_fctb = factor(hv270_fctb, levels = c("not poor", "poor")))
-table(dt$hv270_fctb, useNA = "always")
-xtabs(~haven::as_factor(dt$hv270) + dt$hv270_fctb)
+  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr, "wlthrcde_combscor_cont")) %>% 
+  dplyr::filter(complete.cases(.)) 
 
 
 #............................................................
 # base calc
 #...........................................................
 dtsrvy_raw <- dt %>% srvyr::as_survey_design(ids = hv001, 
-                                         strata = hv023, 
-                                         weights = hiv05_wi)
-ret <- survey::svyglm("pv18s ~ hv270_fctb",
+                                             strata = hv023, 
+                                             weights = hiv05_wi)
+ret <- survey::svyglm("pv18s ~ wlthrcde_combscor_cont",
                       design = dtsrvy_raw,
                       family = quasibinomial(link="logit"))
 broom::tidy(ret, exponentiate = T, conf.int = T)
+
+
+ret <- survey::svyglm("pfldh ~ wlthrcde_combscor_cont",
+                      design = dtsrvy_raw,
+                      family = quasibinomial(link="logit"))
+broom::tidy(ret, exponentiate = T, conf.int = T)
+
 
 #............................................................
 # Apply IPTW
@@ -48,11 +53,11 @@ txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>%
                               ifelse(grepl("fctb", column_name), "binary", NA))) %>% 
   dplyr::rename(target = column_name)
 txs <- txs %>% 
-  dplyr::filter(target == "wlthrcde_combscor_cont") %>% 
-  dplyr::mutate(target = "hv270_fctb",
-                var_label = "DHS wealth",
-                abridged_var_label = "DHS Wealth (Poor)",
-                type = "binary")
+  dplyr::filter(target == "wlthrcde_fctb") %>% 
+  dplyr::mutate(target = "wlthrcde_combscor_cont",
+                var_label = "Cont Wealth",
+                abridged_var_label = "Cont Wealth",
+                type = "continuous")
 
 #...............................................................................................
 # Read In Spatial Partition & make spatial cross-validation set
@@ -85,7 +90,6 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
     return(base.learners.classif)
   }
 })
-
 
 
 #...............................................................................................
@@ -122,6 +126,43 @@ txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
 boxplot(txs$iptw[[1]])
 boxplot(log(txs$iptw[[1]]))
 
+
+#......................
+# run again but now with simpler since
+# urbanicity highly correlated and causing very high weights
+#......................
+txs <- txs %>% 
+  dplyr::select(-c("ensembl_cvRisk", "SLpreds", "iptw"))
+txs$learnerlib[txs$target == "wlthrcde_combscor_cont"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+paramsdf <- txs[,c("learnerlib", "task")]
+paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
+
+# run
+paramsdf$ensembl_cvRisk <- purrr::pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, 
+                                       seed = 123)
+
+
+#............................................................
+# Look at distribution and effects of iptweights
+#...........................................................
+# tidy up
+paramsdf <- paramsdf %>% 
+  dplyr::mutate(target = purrr::map_chr(task, mlr::getTaskTargetNames)) %>% 
+  dplyr::select(c("target", "ensembl_cvRisk"))
+
+#......................
+# Get IPTW Estimates
+#......................
+txs <- dplyr::left_join(txs, paramsdf, by = "target")
+txs$SLpreds <- purrr::map(txs$ensembl_cvRisk, "SL.predictions")
+txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
+
+# look at balance
+boxplot(txs$iptw[[1]])
+boxplot(log(txs$iptw[[1]]))
+
+
+
 #............................................................
 # apply in mod
 #...........................................................
@@ -130,7 +171,12 @@ options(survey.lonely.psu="adjust")
 dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
                                          strata = hv023, 
                                          weights = wi)
-ret <- survey::svyglm("pv18s ~ hv270_fctb",
+ret <- survey::svyglm("pv18s ~ wlthrcde_combscor_cont",
+                      design = dtsrvy,
+                      family = quasibinomial(link="logit"))
+broom::tidy(ret, exponentiate = T, conf.int = T)
+
+ret <- survey::svyglm("pfldh ~ wlthrcde_combscor_cont",
                       design = dtsrvy,
                       family = quasibinomial(link="logit"))
 broom::tidy(ret, exponentiate = T, conf.int = T)

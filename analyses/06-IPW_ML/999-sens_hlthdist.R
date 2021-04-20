@@ -91,8 +91,6 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
   }
 })
 
-# urbanicity highly correlated
-txs$learnerlib[txs$target == "hlthdist_cont_log_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
 
 #...............................................................................................
 # SUPERLEARNER
@@ -127,6 +125,43 @@ txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
 # look at balance
 boxplot(txs$iptw[[1]])
 boxplot(log(txs$iptw[[1]]))
+
+
+#......................
+# run again but now with simpler since
+# urbanicity highly correlated and causing very high weights
+#......................
+txs <- txs %>% 
+  dplyr::select(-c("ensembl_cvRisk", "SLpreds", "iptw"))
+txs$learnerlib[txs$target == "hlthdist_cont_log_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
+paramsdf <- txs[,c("learnerlib", "task")]
+paramsdf$valset.list <- lapply(1:nrow(paramsdf), function(x) return(spcrossvalset))
+
+# run
+paramsdf$ensembl_cvRisk <- purrr::pmap(paramsdf, mlrwrapSL::SL_crossval_risk_pred, 
+                                       seed = 123)
+
+
+#............................................................
+# Look at distribution and effects of iptweights
+#...........................................................
+# tidy up
+paramsdf <- paramsdf %>% 
+  dplyr::mutate(target = purrr::map_chr(task, mlr::getTaskTargetNames)) %>% 
+  dplyr::select(c("target", "ensembl_cvRisk"))
+
+#......................
+# Get IPTW Estimates
+#......................
+txs <- dplyr::left_join(txs, paramsdf, by = "target")
+txs$SLpreds <- purrr::map(txs$ensembl_cvRisk, "SL.predictions")
+txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
+
+# look at balance
+boxplot(txs$iptw[[1]])
+boxplot(log(txs$iptw[[1]]))
+
+
 
 #............................................................
 # apply in mod

@@ -17,9 +17,7 @@ sp::proj4string(caf) <- "+init=epsg:4326"
 
 #..................................
 # import data
-#..................................
-# Get cluster locations
-dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
+#................................ ..
 # read in GE as import
 ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 # sanity check
@@ -46,7 +44,7 @@ identicalCRS(hlthdist, caf)
 hlthdist <- raster::crop(x = hlthdist, y = caf)
 # create mask 
 DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
-identicalCRS(hlthdist, DRC)
+identicalCRS(hlthdist, sf::as_Spatial(DRC))
 hlthdist <- raster::mask(x = hlthdist, mask = DRC)
 
 
@@ -92,9 +90,22 @@ hlthdist.mean <- hlthdist.mean %>%
     hlthdist_fctb_clst = factor(hlthdist_fctb_clst, levels = c("far", "near"))
   )
 
+# quick sanities
 xtabs(~ hlthdist.mean$hlthdist_fctb_clst + hlthdist.mean$urban_rura)
 xtabs(~ hlthdist.mean$hlthdist_fctb_clst)
-
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "R" &
+            hlthdist.mean$hlthdist_fctb_clst == "far"])
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "U" &
+            hlthdist.mean$hlthdist_fctb_clst == "far"])
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "R" &
+            hlthdist.mean$hlthdist_fctb_clst == "near"])
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "U" &
+            hlthdist.mean$hlthdist_fctb_clst == "near"])
+sum(hlthdist.mean$hlthdist_cont_clst == 0)
 
 #......................
 # inspect results
@@ -111,7 +122,8 @@ hlthdist.mean %>%
                            aes(fill = stat(band1)),
                            alpha = 0.9,
                            na.rm = T) +
-  geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst, shape = hlthdist_fctb_clst)) +
+  geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst, 
+                 shape = hlthdist_fctb_clst)) +
   scale_fill_distiller("hlthdist", type = "div", palette = "RdYlBu", na.value = NA) + 
   scale_color_viridis_c(option="plasma")
 
