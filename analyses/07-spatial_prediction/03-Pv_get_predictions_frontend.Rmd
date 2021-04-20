@@ -79,7 +79,6 @@ provmodel.posteriormeans %>%
 
 
 ```{r}
-
 #........................
 # Bring it home
 #........................
@@ -122,8 +121,8 @@ plot(provmodelplotObj)
 ```{r}
 # following assumption diggle and giorgi make here: https://github.com/cran/PrevMap/blob/master/R/foo.R
 provmodel.samples.fittedvalues_prevs <- apply(provmodel.samples.fittedvalues, 
-                                              2, function(x){x/provmodel$data[[1]]$n})
-provmodel.se <- apply(provmodel.samples.fittedvalues_prevs, 2, sd)
+                                              1, function(x){x/provmodel$data[[1]]$n})
+provmodel.se <- apply(provmodel.samples.fittedvalues_prevs, 1, sd)
 
 ```
 
@@ -177,6 +176,9 @@ plot(provmodel.posteriorselotObj)
 ```{r}
 # A "pred.PrevMap" object list with the following components: logit; prevalence; odds; probit;exceedance.prob, corresponding to a matrix of the exceedance probabilities where each column corresponds to a specified value in thresholds; samples, corresponding to a matrix of the posterior samples at each prediction locations for the linear predictor; grid.pred prediction locations. Each of the three components logit, prevalence, odds and probit is also a list with the following components:
 source("R/00-functions_basic.R")
+# for mask sanity
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+
 # read rds
 clstmodel <- readRDS("analyses/07-spatial_prediction/prevmap_predictions/covar_predictions.RDS")
 clstmodel.fitted <- expit(clstmodel$samples)
@@ -194,13 +196,18 @@ clstmodel.fitted.postmeans.raster <-
                               clstmodel.coords.means[, "latnum"],
                               clstmodel.coords.means[, "fitted.postmean"]),
                         crs="+proj=longlat +datum=WGS84 +no_defs")
-
-
+# crop out values
+sp::identicalCRS(clstmodel.fitted.postmeans.raster, sf::as_Spatial(DRC))
+sanity_clstmodel.fitted.postmeans.raster <- raster::mask(clstmodel.fitted.postmeans.raster, DRC)
+sanity_clstmodel.fitted.postmeans <- values(clstmodel.fitted.postmeans.raster)
+summary(sanity_clstmodel.fitted.postmeans)
+summary(clstmodel.fitted.postmeans)
+# good
 ```
 
 ```{r, results='asis'}
 
-clstmodel.fitted.postmeansdf <- data.frame(PrevPred = clstmodel.fitted.postmeans)
+clstmodel.fitted.postmeansdf <- data.frame(PrevPred =clstmodel.fitted.postmeans[!is.na(clstmodel.fitted.postmeans)])
 clstmodel.fitted.postmeansdf %>% 
   dplyr::mutate_if(is.numeric, round, 4) %>% 
   DT::datatable(., extensions='Buttons',
@@ -277,8 +284,10 @@ clstmodel.fitted.se <- rasterFromXYZ(cbind(clstmodel$grid,
 ```{r, results='asis'}
 
 clstmodel.fitted.sedf <- data.frame(PrevSE = values(clstmodel.fitted.se))
-summprevpe <- summary(clstmodel.fitted.sedf$PrevSE)
-knitr::kable(tibble::tibble(nms = names(summprevpe), ret = unname(unlist(summprevpe))))
+minse <- min(clstmodel.fitted.sedf$PrevSE, na.rm = T)
+maxse <- max(clstmodel.fitted.sedf$PrevSE, na.rm = T)
+
+knitr::kable(tibble::tibble(nms = c("minSE", "maxSE"), ret = c(minse, maxse)))
 
 ```
 
