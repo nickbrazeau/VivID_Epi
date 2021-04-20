@@ -80,9 +80,9 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
-                                             log.normal.nugget = c(2, 1.5), # this is tau2
+                                             log.normal.nugget = c(2, 3), # this is tau2
                                              log.normal.phi = c(0, 1),
-                                             log.normal.sigma2 = c(-1.75, 1))
+                                             log.normal.sigma2 = c(-1.75, 1.5))
 
 # NB covar matrix
 covarsmat <- matrix(0, ncol = 3, nrow = 3) # two risk factors, 3 betas
@@ -90,9 +90,9 @@ diag(covarsmat) <- 1 # identity matrix
 
 mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0),
                                        beta.covar = covarsmat,
-                                       log.normal.nugget = c(2, 1.5), # this is tau2
+                                       log.normal.nugget = c(2, 3), # this is tau2
                                        log.normal.phi = c(0, 1),
-                                       log.normal.sigma2 = c(-1.75, 1))
+                                       log.normal.sigma2 = c(-1.75, 1.5))
 
 mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
                                                         n.sim = 1e4+1e4,
