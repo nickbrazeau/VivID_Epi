@@ -62,7 +62,7 @@ iptw.dist.plotObj <- params %>%
   geom_boxplot(aes(x = abridged_var_label, y = logiptw)) +
   geom_hline(yintercept = 0, col = "#e41a1c") +
   vivid_theme + 
-  ylab("log(IPTW)") +
+  ylab("log(IPW)") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.text.x = element_text(family = "Helvetica", size = 10, angle = 90, hjust = 1, vjust = 0.5, face = "bold"),
@@ -82,13 +82,13 @@ graphics.off()
 plot(iptw.dist.plotObj)
 
 ```
-  
+
 **N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. In addition, hospital distance is extremely associated with urbanicity (as expected).
 
 
 ### Covariate Balance
 A classic definition of confounding in a cross-sectional survey is an unequal distribution of baseline exposures. This will result in various covariates being correlated (e.g. being poor and living in a traditional house). If our weights have worked, we will have removed baseline confounding (i.e. removed baseline correlations). One way to check this is to measure the correlations of all the covariates at baseline (_Base_) as compared to covariate correlations with IPTW weights applied. Given that we have a mix of continuous and binary covariates, pearson correlation and/or standard-mean difference are not on the same squale. To overcome this, we will use the an *energy* function which calculates correlations despite functional form [Rizzo/Szekely 2016](https://onlinelibrary.wiley.com/doi/full/10.1002/wics.1375). This is more or less measuring correlation with euclidean distances of our data points in a multidimensional space (relating to kernel density and multi-dimensional GPs).     
-  
+
 Given that this fancy statistic doesn't take into account weights, I made 100 pseudopopulations (by sampling from the base population with respect to the calculated IPTW) and calculated the energy correlation for each iteration. Plotted is the distribution of the correlations for each covariate (e.g. Precipitation-Temperature, Precipitation-Wealth, etc. etc.) given that we focused on canonical sets when possible. 
 ```{r checkwicovarbalparams}
 covarbalparams <- readRDS("analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
@@ -125,12 +125,12 @@ varnames <- params %>%
 
 covarbalanceplot <- covarbalparams %>% 
   dplyr::left_join(., varnames, by = "covar1") %>% 
-  dplyr::mutate(lvl_fct = factor(lvl, levels = c("base", "IPTW"), labels = c("Base", "IPTW"))) %>% 
+  dplyr::mutate(lvl_fct = factor(lvl, levels = c("base", "IPTW"), labels = c("Base", "IPW"))) %>% 
   ggplot() + 
   geom_boxplot(aes(x = abridged_var_label, y = dist)) +
   facet_wrap(~lvl_fct, nrow = 2) +
   vivid_theme + 
-  ylab("Correlation (Energy)") +
+  ylab("Correlation") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.text.x = element_text(family = "Helvetica", size = 10, angle = 90, hjust = 1, vjust = 0.5, face = "bold"),
@@ -146,13 +146,50 @@ graphics.off()
 ```
 
 ```{r checkwicovarbalparamsplot, results='asis'}
-
 plot(covarbalanceplot)
+```
+
+```{r, results='asis'}
+
+covarbalparams_ranges <- covarbalparams %>% 
+  dplyr::select(-c("data")) %>% 
+  dplyr::group_by(covar1, lvl) %>% 
+  dplyr::summarise(
+    n = n(),
+    maxcorr = max(dist),
+    meancorr = mean(dist),
+    mediancorr = median(dist),
+    mincorr = min(dist)) 
+
+DT::datatable(covarbalparams_ranges, extensions='Buttons',
+              options = list(
+                searching = T,
+                pageLength = 20,
+                dom = 'Bfrtip', 
+                buttons = c('csv')))
+
 
 ```
+
+
 **Very nice!** 
 
 #### Covar Balance Long Comparison
+
+Looking at descendent and ancestor not on causal path numbers. 
+```{r, results='asis'}
+
+covarbalparams %>% 
+  dplyr::select(-c("data")) %>% 
+  dplyr::filter(lvl == "base") %>% 
+  dplyr::group_by(covar1) %>% 
+  dplyr::summarise(
+    n = n()) %>% 
+  knitr::kable(.)
+
+
+```
+
 Looking at mean reductions (for the "fold" statement). 
 ```{r}
 
@@ -213,11 +250,11 @@ stbmdldf$alg.cvrisk.validationset <- purrr::map(stbmdldf$ensembl_cvRisk, "alg.cv
 stbmdldf$learners <- purrr::map(stbmdldf$alg.cvrisk.validationset, 
                                 function(x){
                                   ret <- names(x)
-                                    if(is.null(ret)){
-                                      ret <- "regr"
-                                      } 
+                                  if(is.null(ret)){
+                                    ret <- "regr"
+                                  } 
                                   return(ret)
-                                  })
+                                })
 
 ```
 
@@ -233,11 +270,11 @@ out %>%
   dplyr::select(-c("ensembl_cvRisk")) %>% 
   tidyr::unnest(cols = c("cvrisk.coef", "alg.cvrisk.validationset", "learners")) %>% 
   DT::datatable(., extensions='Buttons',
-               options = list(
-              searching = T,
-              pageLength = 20,
-              dom = 'Bfrtip', 
-              buttons = c('csv')))
+                options = list(
+                  searching = T,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 
 
 ```
