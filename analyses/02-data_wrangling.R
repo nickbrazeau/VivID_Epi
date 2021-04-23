@@ -284,52 +284,16 @@ wlth <- readRDS(file = "data/derived_data/vividepi_wealth_recoded.rds")
 dt <- dplyr::left_join(dt, wlth, by = "hivrecode_barcode")
 tab <- xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks just OK. 
 tab 
-sum(diag(tab))/sum(tab) # 56% concordance. Presumambly, household type was a big driver given the 0 cells in the lower corner
-# look at binary
-xtabs(~dt$wlthrcde_fctb + haven::as_factor(dt$hv270))
-xtabs(~dt$wlthrcde_fctb + dt$wlthrcde_fctm)
-xtabs(~dt$wlthrcde_fctb)
-
-# look at direction of wealth for continuous
-dt %>% 
-  ggplot() + 
-  geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont))
-
-# shift directionality so riches has highest continuous number
-dt <- dt %>% 
-  dplyr::mutate(wlthrcde_combscor_cont = wlthrcde_combscor_cont * -1)
-hist(dt$wlthrcde_combscor_cont)
-
-dt %>% 
-  ggplot() + # look good 
-  geom_point(aes(x = wlthrcde_fctm, y = wlthrcde_combscor_cont)) +
-  geom_hline(yintercept = -1.1723, color = "red") + 
-  geom_hline(yintercept = -1.0273, color = "red") + 
-  geom_hline(yintercept = -0.4405624, color = "red") + 
-  geom_hline(yintercept = 0.2055109, color = "red") + 
-  geom_hline(yintercept = 1.244034, color = "red") +
-  geom_hline(yintercept = 2.57571, color = "red")
-
-# sanity check of comparing urbanicity and wealth recode vs. original 
-xtabs(~dt$wlthrcde_fctm + dt$urban_rura)
-xtabs(~haven::as_factor(dt$hv270) + dt$urban_rura)
-# note, does result in some skew that isn't too surprising of "extreme" wealth 
-# in urban places and poverty in rural places
-dt %>% 
-  ggplot() +
-  geom_boxplot(aes(x = urban_rura, y = wlthrcde_combscor_cont))
-
-boxplot(dt$wlthrcde_combscor_cont ~ haven::as_factor(dt$urban_rura))
-t.test(dt$wlthrcde_combscor_cont[ haven::as_factor(dt$urban_rura) == "R"],
-       dt$wlthrcde_combscor_cont[ haven::as_factor(dt$urban_rura) == "U"])
-energy::dcor(dt$wlthrcde_combscor_cont,
-             as.numeric(dt$urban_rura))
-
-# Given this structural positivity issue, will use the binary recoding of wealth
+sum(diag(tab))/sum(tab) # 56% concordance. Presumably, household type was a big driver given the 0 cells in the lower corner
 xtabs(~dt$wlthrcde_fctb + 
         haven::as_factor(dt$urban_rura))
 energy::dcor(as.numeric(dt$wlthrcde_fctb),
              as.numeric(dt$urban_rura))
+dt <- dt %>% 
+  dplyr::mutate(hv270_fctb = ifelse(haven::as_factor(dt$hv270) %in% c("poorest", "poor"),
+                "poor", "not poor"))
+xtabs(~dt$wlthrcde_fctb + 
+        dt$hv270_fctb)
 
 
 #.............
@@ -582,6 +546,8 @@ hist(dt$hlthdist_cont_log_scale_clst)
 xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$hv270))
 xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
 xtabs(~ dt$hlthdist_fctb_clst)
+energy::dcor(as.numeric(dt$hlthdist_fctb_clst),
+             as.numeric(dt$urban_rura_fctb))
 
 # look at continous
 boxplot(dt$hlthdist_cont_log_scale_clst ~ haven::as_factor(dt$urban_rura_fctb))

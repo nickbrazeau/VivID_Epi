@@ -33,7 +33,7 @@ dt <- dt %>%
 # need to recode the wealth variable to avoid controlling for part of our
 # effect when considering the covar housing materials (as they did above)
 # https://dhsprogram.com/programming/wealth%20index/Steps_to_constructing_the_new_DHS_Wealth_Index.pdf
-# Factor analysis/PCA to do this 
+# PCA to do this 
 # Will use the same variables for consideration as (PMID: 28222094)
 # (1) source of drinking water; (2) toilet facility; (3) cooking fuel; 
 # (4) electricity; ownership of a: (5) radio, (6) television, (7) bicycle, 
@@ -41,7 +41,7 @@ dt <- dt %>%
 # all in PR recode
 
 # 1. Drinking Water (categorical: HV201)
-# 2. Type of Toilet Facility (HV205) & Shared Toilet (HV225) from Rutstein point 3b.2.b
+# 2. Type of Toilet Facility (HV205) 
 # 3. Type of Cooking Fuel (HV226)
 # 4. Electricity (HV206)
 # 5. Radio (HV207)
@@ -54,7 +54,7 @@ wlth <- dt %>%
   as.data.frame(.) %>% # drop tibble and sf classes
   dplyr::select(c(
     "hv201", "hv205", "hv226", 
-    "hv206", "hv207", "hv208",  "hv225", "hv210", "hv243a", "hv243b" # binary vars
+    "hv206", "hv207", "hv208", "hv210", "hv243a", "hv243b" # binary vars
   )) %>% 
   haven::as_factor(.) 
 
@@ -63,13 +63,24 @@ for(i in 1:ncol(wlth_fct)){
   wlth_fct[,i] <- forcats::fct_drop(wlth_fct[,i])
 }
 
+#............................................................
+# lift over multifactorial variables
+#...........................................................
+hv201 <- readxl::read_excel("internal_datamap_files/wlth_recode_hv201.xlsx")
+hv205 <- readxl::read_excel("internal_datamap_files/wlth_recode_hv205.xlsx")
+hv226 <- readxl::read_excel("internal_datamap_files/wlth_recode_hv226.xlsx")
+
+wlth_fct_binary <- wlth_fct %>% 
+  dplyr::left_join(., hv201, by = "hv201") %>% 
+  dplyr::left_join(., hv205, by = "hv205") %>% 
+  dplyr::left_join(., hv226, by = "hv226") %>% 
+  dplyr::select(-c("hv201", "hv205", "hv226"))
+summary(wlth_fct_binary)
+
+
+
 # RECODE NA values to Missing for Yes-No Original Variables
 # This is based on Rutstein point 3b.3
-wlth_fct_binary <- wlth_fct[, c("hv206", "hv207", "hv208",  "hv225", "hv210", "hv243a", "hv243b")]
-wlth_fct_multi <- wlth_fct[, c("hv201", "hv205", "hv226")]
-# note, hv225 has NAs in it that aren't "missing" going to recode them to missing
-wlth_fct_binary$hv225[is.na(wlth_fct_binary$hv225)] <- factor("missing")
-
 # binary recode
 wlth_fct_binary_recode <- wlth_fct_binary
 for(i in 1:ncol(wlth_fct_binary_recode)){
@@ -81,89 +92,35 @@ for(i in 1:ncol(wlth_fct_binary_recode)){
   print(xtabs(~wlth_fct_binary[,i] + wlth_fct_binary_recode[,i], addNA = T))
 }
 
-# multinomial recode
-wlth_fct_multi_recode <- wlth_fct_multi
-# Considering Rutstein point 3b.2.a, it appears these are already recoded together
-for(i in 1:ncol(wlth_fct_multi_recode)){
-  wlth_fct_multi_recode[,i] <- forcats::fct_recode(wlth_fct_multi_recode[,i], NULL = "missing")
-} 
-# check multi
-for(i in 1:ncol(wlth_fct_multi_recode)){
-  print(xtabs(~wlth_fct_multi[,i] + wlth_fct_multi_recode[,i], addNA = T))
-}
-
-# RECODE Water Sources --looks good, surface waters already combined
-table(wlth_fct_multi_recode$hv201)
-
-
-
-# RECODE Toilet Facilities
-# This is based on Rutstein point 3b.2.b
-wlth_fct <- dplyr::bind_cols(wlth_fct_multi_recode, wlth_fct_binary_recode)
-wlth_fct <- wlth_fct %>% 
-  dplyr::mutate(toiletfacil = paste(hv205, hv225, sep = "_"),
-                toiletfacil = factor( ifelse(grepl("NA", toiletfacil), NA, toiletfacil)) )
-xtabs(~wlth_fct$hv205 + wlth_fct$toiletfacil, addNA = T) # have to take into consideration two lost to toilet type missing
-wlth_fct <- wlth_fct %>% 
-  dplyr::select(-c("hv205", "hv225"))
-
-
-# check for flat indicator vars, Rutstein point 4a 
-summary(wlth_fct) 
-
-
-
-# impute missing values by "average" -- going to flip a weighted coin/die
-# This is based on Rutstein point 4b
-impute_missingness <- function(fct){
-  if(sum(is.na(fct)) == 0){
-    return(fct)
-  } else{
-    probs <- as.numeric(table(fct))/sum(as.numeric(table(fct))) # purposefully don't include NAs
-    options <- names(table(fct))
-    cnt <- sum(is.na(fct))
-    fct[is.na(fct)] <- sample(x = options,
-                              size = cnt,
-                              replace = T,
-                              prob = probs)
-    return(fct)
-    
-  }
-}
-
-wlth_fct <- apply(wlth_fct, 2, impute_missingness)
-sum(is.na(wlth_fct)) # good to go
-table(wlth_fct)
+# looks good, no missing/NAs anymore
+wlth_fct <- wlth_fct_binary_recode 
 
 # expand factors
 wlth_fct_exp <- fastDummies::dummy_columns(wlth_fct)
 
-# missing observations get coded to all 0s -- ok
-strtcol <- min( which(grepl("hv201_", colnames(wlth_fct_exp))) )
-wlth_fct_exp <- wlth_fct_exp[, strtcol:ncol(wlth_fct_exp)] # drop original codes
-
 # sanity
 ncol(wlth_fct_exp)
 colnames(wlth_fct_exp)
-levels(factor(wlth_fct[,1])) # good -- all 13 there
-levels(factor(wlth_fct[,2])) # good -- all 10 there
-levels(factor(wlth_fct[,3])) # good -- both there 
-levels(factor(wlth_fct[,4])) # good -- both there
-levels(factor(wlth_fct[,5])) # good -- both there
-levels(factor(wlth_fct[,6])) # good -- both there
-levels(factor(wlth_fct[,7])) # good -- both there
-levels(factor(wlth_fct[,8])) # good -- both there
-levels(factor(wlth_fct[,9])) # good -- all 19 there
 
-
+# Tusting's exclusion
 # exclude assets where <5 or >95% of households own (per MS)
-dropassets <- wlth_fct_exp %>% 
-  tidyr::gather(., key = "assets", value = "owns") %>% 
-  dplyr::group_by(assets) %>% 
-  dplyr::summarise(pctowns = mean(owns)) %>% 
-  dplyr::filter(pctowns < 0.05 | pctowns > 0.95)
-# drop
-wlth_fct_exp <- wlth_fct_exp[, !( colnames(wlth_fct_exp) %in% dropassets)]
+# 4. Electricity (HV206)
+# 5. Radio (HV207)
+# 6. Television (HV208)
+# 7. Bicycle (HV210)
+# 8. Mobile telephone (HV243A)
+# 9. Watch (HV243B)
+mean(wlth_fct_exp$hv206 == "yes") # ok
+mean(wlth_fct_exp$hv207 == "yes") # ok
+mean(wlth_fct_exp$hv208 == "yes") # ok
+mean(wlth_fct_exp$hv210 == "yes") # ok
+mean(wlth_fct_exp$hv243a == "yes") # ok
+mean(wlth_fct_exp$hv243b == "yes") # ok
+
+# drop extra columns with factor/chars
+wlth_fct_exp <- wlth_fct_exp %>% 
+  dplyr::select(c(dplyr::ends_with("_no"), dplyr::ends_with("_yes")))
+
 
 
 # add in urbanicity and barcode for split and merge
@@ -172,11 +129,9 @@ wlth_fct_exp <- cbind.data.frame(wlth_fct_exp,
                                  hivrecode_barcode = dt$hivrecode_barcode)
 
 ##############################
-# RUN Factor (PCA) for combined
+# RUN  PCA for combined
 ##############################
-# Per this line from Rutstein point 4b
-# "principal components extraction using correlation method with one factor extracted"
-# am goingt to assume PC1 is extracted and we are calcuating
+# Going to assume we just can use 
 # zi1 for the first component, where i is the observations
 
 com1 <- wlth_fct_exp %>% 
@@ -187,8 +142,11 @@ com1$var <- (com1$sdev ^ 2) / sum(com1$sdev ^ 2) * 100
 com1$loadings <- abs(com1$rotation)
 com1$loadings <- sweep(com1$loadings, 2, colSums(com1$loadings), "/")
 # look at var explained
-# ~28% in PC1 -- not bad
+# ~38% in PC1 -- not bad
 com1$var
+eigen_dir <- cbind.data.frame(nm = rownames(com1$loadings),
+                              values = com1$rotation[,1])
+
 
 #......................
 # look at results
@@ -198,9 +156,9 @@ ggplot2::autoplot(com1,
                   loadings = TRUE,
                   loadings.label = TRUE,
                   loadings.label.size  = 2)
-# 1. Drinking Water (categorical: HV201)
-# 2. Type of Toilet Facility (HV205) & Shared Toilet (HV225) from Rutstein point 3b.2.b
-# 3. Type of Cooking Fuel (HV226)
+# 1. Drinking Water (categorical: HV201) -- lifted over
+# 2. Type of Toilet Facility (HV205) -- lifted over
+# 3. Type of Cooking Fuel (HV226) -- lifted over
 # 4. Electricity (HV206)
 # 5. Radio (HV207)
 # 6. Television (HV208)
@@ -208,7 +166,7 @@ ggplot2::autoplot(com1,
 # 8. Mobile telephone (HV243A)
 # 9. Watch (HV243B)
 # based on the direction of these eigenvectors, this is in *general* lines with my expectations
-
+# own a bicycle is slightly negative but may track with richer adults having a car (or boda boda)
 
 #......................
 # tidy into df
@@ -278,12 +236,13 @@ wlth_scores <- wlth_scores %>%
 sum(is.na(wlth_scores$combscor))
 
 #...................... 
-# Visualize Combscor
+# look at Combscor, seems reasonable
 #...................... 
 score_wlth_char <- cbind.data.frame(wlth_fct, data.frame(combscor = wlth_scores$combscor))
-# generally consistent/sensible. Slightly odd that a shared septic tank is better than 
-# an independent septic tank in terms of absolute score 
-# washed out in factorization and then binary dichotomization
+summary(score_wlth_char$combscor)
+hist(score_wlth_char$combscor)
+View(score_wlth_char)
+View(eigen_dir)
 
 ##############################
 # Account for Sampling Weights
@@ -298,8 +257,8 @@ quants <- survey::svyquantile(x = ~combscor, design = dtsrvy,
 
 dtsub <- dtsub %>% 
   dplyr::mutate(wlthrcde_fctm = base::cut(x = .$combscor, breaks = quants, 
-                                           labels = rev(c("poorest", "poor", 
-                                                      "middle", "rich", "richest")),
+                                           labels = c("poorest", "poor", 
+                                                      "middle", "rich", "richest"),
                                           include.lowest = T)
   ) %>% 
   dplyr::mutate(wlthrcde_fctm = factor(wlthrcde_fctm, levels = c("poorest", "poor", 
