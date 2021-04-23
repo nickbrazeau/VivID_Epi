@@ -452,11 +452,13 @@ plot(ret.smrstr.m.plot)
 ```
 
 
-#### With Cluster Prev Points
+#### With Nonzero Cluster Prev Points
+This excludes prevalences of 0
 ```{r}
 mp <- readRDS( "data/derived_data/basic_cluster_mapping_data.rds")
 pvclst <- mp[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001", ]
-pvclst <- pvclst$data[[1]]
+pvclst <- pvclst$data[[1]] %>% 
+  dplyr::filter(plsmdprev > 0)
 
 clst.points <- ggplot() + 
   ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
@@ -471,7 +473,7 @@ clst.points <- ggplot() +
         legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 
-jpeg(file = "results/figures/ClstMap_postMeans_interpolate_with_clst.jpg",
+jpeg(file = "results/figures/ClstMap_postMeans_interpolate_with_clst_onlyposprev.jpg",
      height = 11, width = 8, units = "in", res = 500)
 plot(clst.points)
 graphics.off()
@@ -481,6 +483,40 @@ graphics.off()
 ```{r, results='asis'}
 plot(clst.points)
 ```
+
+#### With Nonzero Cluster Prev Points and no outliers
+This excludes prevalences of 0 and prevalences over 0.2 for a more reasonable scale
+```{r}
+mp <- readRDS( "data/derived_data/basic_cluster_mapping_data.rds")
+pvclst <- mp[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001", ]
+pvclst <- pvclst$data[[1]] %>% 
+  dplyr::filter(plsmdprev > 0) %>% 
+  dplyr::filter(plsmdprev < 0.2)
+
+clst.points <- ggplot() + 
+  ggspatial::layer_spatial(data = clstmodel.fitted.postmeans.raster, aes(fill = stat(band1))) +
+  scale_fill_distiller("Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  smpl_base_map +
+  geom_point(data = pvclst, aes(x=longnum, y=latnum, color = plsmdprev), 
+             alpha = 0.5, shape = 16) + 
+  scale_color_viridis_c() + 
+  theme(legend.position = "right",
+        legend.title = element_text(size = 13, face = "bold", angle = 0, vjust = 0.5, hjust = 0.5),
+        legend.text = element_text(size = 12, face = "bold", angle = 0))
+
+
+jpeg(file = "results/figures/ClstMap_postMeans_interpolate_with_clst_onlyposprev.jpg",
+     height = 11, width = 8, units = "in", res = 500)
+plot(clst.points)
+graphics.off()
+
+
+```
+```{r, results='asis'}
+plot(clst.points)
+```
+
 
 
 ### Intercept Comparison

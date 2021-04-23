@@ -69,15 +69,51 @@ adm1 <- split(adm1, 1:nrow(adm1))
 pvcovar$precip <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = precip) )
 pvcovar$hlthdist <- unlist( lapply(adm1, extract_agg_raster_polygon, rstrlyr = hlthdist.drc) )
 
+#...................... 
+# sanity checks 
+#......................
 # quick viz
 hist(pvcovar$precip)
 hist(pvcovar$hlthdist)
 
+#  precip 
+pa <- ggplot() +
+  geom_sf(data = pvcovar, aes(fill = precip)) + 
+  scale_fill_viridis_c("Precip")
+pb <- ggplot() + 
+  ggspatial::layer_spatial(data = precip, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_sf(data = DRCprov, color = "#000000", fill = NA) +
+  scale_fill_viridis_c("Precip", na.value = NA) 
 
+cowplot::plot_grid(pa, pb)
+
+
+
+# health distance 
+pa <- ggplot() +
+  geom_sf(data = pvcovar, aes(fill = hlthdist)) + 
+  scale_fill_viridis_c("hlthdist")
+pb <- ggplot() + 
+  ggspatial::layer_spatial(data = hlthdist.drc, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_sf(data = DRCprov, color = "#000000", fill = NA) +
+  scale_fill_viridis_c("Health Distance", na.value = NA) 
+
+jpeg("~/Desktop/temp.jpg", width = 11, height = 8, res = 250, units = "in")
+cowplot::plot_grid(pa, pb)
+graphics.off()
+
+
+
+#...................... 
 # scale for better model fitting
+#......................
 pvcovar$precip_scale <- my.scale(pvcovar$precip)
 pvcovar$hlthdist_scale <- my.scale(pvcovar$hlthdist)
 sf::st_geometry(pvcovar) <- NULL
+
+
 
 
 #..............................................................
