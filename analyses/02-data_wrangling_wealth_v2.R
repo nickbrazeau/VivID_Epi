@@ -58,6 +58,7 @@ wlth <- dt %>%
   )) %>% 
   haven::as_factor(.) 
 
+
 wlth_fct <- wlth
 for(i in 1:ncol(wlth_fct)){
   wlth_fct[,i] <- forcats::fct_drop(wlth_fct[,i])
@@ -119,7 +120,7 @@ mean(wlth_fct_exp$hv243b == "yes") # ok
 
 # drop extra columns with factor/chars
 wlth_fct_exp <- wlth_fct_exp %>% 
-  dplyr::select(c(dplyr::ends_with("_no"), dplyr::ends_with("_yes")))
+  dplyr::select(dplyr::ends_with("_yes"))
 
 
 
