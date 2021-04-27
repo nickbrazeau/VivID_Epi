@@ -8,6 +8,8 @@
 #        
 #        https://dhsprogram.com/pubs/pdf/FR300/FR300.pdf
 #        
+#        MUST run 02-wrangling health sites, wealth, and weather before this script
+#        
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
