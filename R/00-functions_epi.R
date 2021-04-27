@@ -28,30 +28,6 @@ fitsvyglmlog <- function(outcome, covar){
   
 }
 
-#----------------------------------------------------------------------------------------------------
-# proportion CIs
-#----------------------------------------------------------------------------------------------------
-#' @param success numeric; count of success
-#' @param n numeric; trial count
-#' @param tol numeric; tolerance for logit transformation
-
-getCI_from_logit_transfrom <- function(succeses, n, tol, alpha){
-  warning("Assumes the logit and expit functions are in your global environment")
-  p.logit <- logit(succeses/n, tol=tol) 
-  
-  se <- sqrt(n*(succeses/n) *(1- (succeses/n))) # sqrt(n*p*(1-p))
-  se.logit <- se/( (succeses/n) *(1- (succeses/n)) ) # logit transform se 
-  
-  cv <- stats::dt(alpha/2, df = n-1)*se
-  
-  LL <- expit( p.logit - cv )
-  UL <- expit( p.logit + cv )
-  
-  ret <- c(LL, UL)
-  names(ret) <- c("lower.ci", "upper.ci")
-  return(ret)
-}
-
 
 #----------------------------------------------------------------------------------------------------
 # tableone manipulations
