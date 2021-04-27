@@ -108,10 +108,12 @@ dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 # read in GE as import
 ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
 # drop observations with missing or excluded geospatial data 
-dt <- dt %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::filter(hv001 %in% ge$hv001)
+dt <- dt  %>% 
+  dplyr::filter(latnum != 0 & longnum != 0) %>%  # drop observations with missing geospatial data 
+  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>%
+  dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
+  dplyr::filter(hiv05 != 0) # sampling weights 0
+
 # sanity check
 sf::st_crs(dt)
 identicalCRS(sf::as_Spatial(dt), sf::as_Spatial(ge))
