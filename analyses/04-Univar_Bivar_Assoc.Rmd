@@ -147,7 +147,7 @@ clst.prev.plotObj <- clst %>%
   dplyr::select(c("adm1name", "hv001", "species", dplyr::everything())) %>% 
   dplyr::mutate(estlevel = gsub("pv18s", "", estlevel),
                 estlevel= gsub("pfldh", "", estlevel)) %>% 
-  tidyr::spread(., key = "estlevel", value = "est", 4:5) %>% 
+  tidyr::pivot_wider(data = ., names_from = "estlevel", values_from = "est") %>% 
   ggplot() + 
   geom_pointrange(aes(x = factor(hv001), y=prev, ymin=L95, ymax=U95, color = factor(species)), size =0.5, alpha = 0.5) +
   coord_flip() + 
@@ -278,50 +278,27 @@ clst %>%
 duffypos <- tolower(c("C1T5C", "G9M2E", "J3Q9M"))
 
 duff <- dt %>% 
-  dplyr::mutate(duffy = ifelse(hivrecode_barcode%in% duffypos, 1, 0)) %>% 
+  dplyr::mutate(duffy = ifelse(hivrecode_barcode %in% duffypos, 1, 0)) %>% 
   dplyr::summarise(
-    duff_total = sum(duffy)
-  ) 
-
-duffn <- sum(dt$pv18s)
-duff <- duff %>% 
-  dplyr::mutate(duff_total = mean(duff_total),
-                duff_prev = duff_total/duffn * 100,
-                duffse = sqrt( duff_total * (duff_total/duffn) * (1-(duff_total/duffn)) ),
-                duffL95 = getCI_from_logit_transfrom(succeses = duff_total, n = duffn, tol = 0, alpha = 0.05)[1] * 100,
-                duffU95 = getCI_from_logit_transfrom(succeses = duff_total, n = duffn, tol = 0, alpha = 0.05)[2] * 100
-  )
-
-
-# weighted
-duffn <- sum( dt$hiv05_wi[dt$pv18s == 1] )
-duff_wi <- dtsrvy %>% 
-  dplyr::mutate(duffy = ifelse(hivrecode_barcode%in% duffypos, 1, 0)) %>% 
-  dplyr::summarise(
-    duff_wi_total = srvyr::survey_total(duffy, vartype = "ci")
-  ) 
-
-duff_wi <- duff_wi %>% 
-  dplyr::mutate(duff_wi_total = mean(duff_wi_total),
-                duff_wi_prev = duff_wi_total/duffn * 100,
-                duffse = sqrt( duff_wi_total * (duff_wi_total/duffn) * (1-(duff_wi_total/duffn)) ),
-                duffL95 = getCI_from_logit_transfrom(succeses = duff_wi_total, n = duffn, tol = 0, alpha = 0.05)[1] * 100,
-                duffU95 = getCI_from_logit_transfrom(succeses = duff_wi_total, n = duffn, tol = 0, alpha = 0.05)[2] * 100
-  )
-
+    duff_pos = sum(duffy),
+    duff_screen = sum(pv18s)) %>%  
+  dplyr::mutate(
+    duffbinomtest = purrr::map2(duff_pos, duff_screen, function(x,y)
+    {binom.test(x = x, n = y)}),
+    duffprev = duff_pos/duff_screen,
+    duffconfint = purrr::map(duffbinomtest, "conf.int"),
+    duffL95 = purrr::map_dbl(duffconfint, 1),
+    duffU95 = purrr::map_dbl(duffconfint, 2))
 
 
 ```
 
-Note, prevalences below are in percentages.
+Note, prevalences below are not in percentages
 ```{r, results='asis'}
 
 duff %>% 
-  dplyr::mutate_if(is.numeric, round, 2) %>% 
-  knitr::kable(.)
-
-duff_wi %>% 
-  dplyr::mutate_if(is.numeric, round, 2) %>% 
+  dplyr::select(c("duff_pos", "duff_screen", "duffprev", "duffL95", "duffU95")) %>% 
+  dplyr::mutate_if(is.numeric, round, 4) %>% 
   knitr::kable(.)
 
 ```
@@ -516,6 +493,9 @@ pvivtbl1df <- dcdr %>%
   dplyr::left_join(pvivtbl1df, ., by = "matchcol") %>% 
   dplyr::select(c("var_label", dplyr::everything()))
 
+# manual fix
+pvivtbl1df$matchcol[pvivtbl1df$matchcol == "wtrdist_cont_clst"] <- "wtrdist_cont_log_scale_clst"
+
 
 
 pvivriskfactortable <- mergetableone2table(tableonedf = pvivtbl1df,
@@ -537,6 +517,9 @@ pfaltbl1df <- dcdr %>%
   dplyr::rename(matchcol = column_name) %>% 
   dplyr::left_join(pfaltbl1df, ., by = "matchcol") %>% 
   dplyr::select(c("var_label", dplyr::everything()))
+
+# manual fix
+pfaltbl1df$matchcol[pfaltbl1df$matchcol == "wtrdist_cont_clst"] <- "wtrdist_cont_log_scale_clst"
 
 
 pfalriskfactortable <- mergetableone2table(tableonedf = pfaltbl1df,
@@ -613,8 +596,8 @@ knitr::kable(broom::tidy(basicnet, exponentiate=TRUE, conf.int=TRUE))
 
 ```{r}
 longnet <- survey::svyglm("pv18s ~ ITN_fctb",
-                           design = dtsrvy_sens,
-                           family = quasibinomial(link="logit"))
+                          design = dtsrvy_sens,
+                          family = quasibinomial(link="logit"))
 ```
 
 ```{r, results='asis'}
