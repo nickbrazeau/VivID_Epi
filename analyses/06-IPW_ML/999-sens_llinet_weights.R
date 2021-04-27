@@ -104,6 +104,7 @@ txs$SLpreds <- purrr::map(txs$ensembl_cvRisk, "SL.predictions")
 txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
 
 # look at balance
+summary(txs$iptw[[1]])
 boxplot(txs$iptw[[1]])
 boxplot(log(txs$iptw[[1]]))
 
