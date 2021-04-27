@@ -93,14 +93,15 @@ point_se <- dplyr::left_join(clst, genosf, by = "hv001") %>%
 
 jpeg("results/figures/collected_spatial_models_point_prevalences.jpg", width = 11, height = 8, res = 500, units = "in")
 cowplot::plot_grid(point_prev, prov_prev, clust_prev,
-                   labels = c("(A)", "(B)", "(C)"), nrow = 1)
+                   labels = c("(A)", "(B)", "(C)"), nrow = 1,
+                   align = "h")
 graphics.off()
 
 jpeg("results/figures/collected_spatial_models_standard_errors.jpg", 
      width = 11, height = 8, res = 800, units = "in")
 cowplot::plot_grid(point_se, prov_se, clust_se,
                    labels = c("(A)", "(B)", "(C)"), nrow = 1,
-                   rel_heights = c(0.1, 0.45, 0.45))
+                   align = "h")
 graphics.off()
 
 
@@ -114,3 +115,6 @@ clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
 summary(clstmodel.fitted.postmeans)
 sum(clstmodel.fitted.postmeans < 0.0296 & clstmodel.fitted.postmeans > 0, na.rm  = T)
 sum(!is.na(clstmodel.fitted.postmeans))
+sum(clstmodel.fitted.postmeans < 0.0296 & clstmodel.fitted.postmeans > 0, na.rm  = T)/sum(!is.na(clstmodel.fitted.postmeans))
+# less than two
+sum(clstmodel.fitted.postmeans < 0.02 & clstmodel.fitted.postmeans > 0, na.rm  = T)/sum(!is.na(clstmodel.fitted.postmeans))
