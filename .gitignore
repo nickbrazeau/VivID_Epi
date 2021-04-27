@@ -1,4 +1,4 @@
-07-spatial_prediction_submit/
+
 # History files
 .Rhistory
 .Rapp.history
@@ -52,4 +52,4 @@ sandbox/
 ~$*
 _rslurm
 
-data_thesis_copy/derived_data/vividepi_nightlights_surface.grd
+arXive/
