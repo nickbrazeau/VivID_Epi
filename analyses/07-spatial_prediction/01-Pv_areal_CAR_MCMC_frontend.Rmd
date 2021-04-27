@@ -152,7 +152,7 @@ mod.framework.long <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_
 ```
 
 #### Long Chain MCMC Diagnostics 
-Note, our goal is still to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
+Note, our goal is still to have the effective sample sizes (`n.effective`) to be at least 500 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
 ##### Long Chain Param Diagnostics
 
