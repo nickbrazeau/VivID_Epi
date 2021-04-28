@@ -8,11 +8,17 @@
 #        
 #        https://dhsprogram.com/pubs/pdf/FR300/FR300.pdf
 #        
+#        MUST run 02-wrangling health sites, wealth, and weather before this script
+#        
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
 source("R/00-functions_basic.R")
-tol <- 1e-3
+
+# create bounding box of Central Africa for Speed/sanity checks
+# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+init=epsg:4326"
 
 #--------------------------------------------------------------
 # Section 1:Pulling data-map file for all recodes
@@ -22,7 +28,7 @@ tol <- 1e-3
 # https://dhsprogram.com/data/Guide-to-DHS-Statistics/ -- note this is version 7
 # recode map https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
 # https://dhsprogram.com/pubs/pdf/DHSG4/Recode6_DHS_22March2013_DHSG4.pdf
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/raw_data/vividpcr_dhs_raw.rds")
+dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
 
 # subset
 dt <- dt %>% 
@@ -31,10 +37,18 @@ dt <- dt %>%
   dplyr::filter(hv102 == 1) %>% # subset to de-jure https://dhsprogram.com/data/Guide-to-DHS-Statistics/Analyzing_DHS_Data.htm
   dplyr::filter(hiv05 != 0) # drop observations with samplings weights set to 0
 
+# sanity check
+sf::st_crs(dt)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+dt <- sp::spTransform(sf::as_Spatial(dt), CRSobj = sp::CRS("+init=epsg:4326"))
+sp::identicalCRS(dt, caf)
+# back to tidy 
+dt <- sf::st_as_sf(dt)
+
+
 #--------------------------------------------------------------
 # Section 2: Looking at recodes, manual data wrangle
 #-------------------------------------------------------------- 
-
 #..........................
 # Exposure of Interests
 #..........................
@@ -78,8 +92,7 @@ dt <- dt %>%
 # weights
 #.............
 dt <- dt %>% 
-  dplyr::mutate(hiv05_wi = hiv05/1e6
-  )
+  dplyr::mutate(hiv05_wi = hiv05/1e6)
 
 
 #.............
@@ -95,7 +108,6 @@ summary(hs$housemax) # looks reasonable by cluster
 
 dt <- dt %>% 
   dplyr::mutate(houseid = factor(paste0(hv001, "_", hv002)))
-
 
 #.............
 # dates
@@ -120,11 +132,11 @@ summary(dt$pv18s)
 dt <- dt %>% 
   dplyr::mutate(
     pfldhct_cont = pfctmean,
-    pfldhct_cont_log = log(pfctmean + tol),
+    pfldhct_cont_log = log(pfctmean + 1e-3),
     pv18sct_cont = pvctcrrct,
-    pv18sct_cont_log = log(pvctcrrct + tol),
+    pv18sct_cont_log = log(pvctcrrct + 1e-3),
     po18sct_cont = poctcrrct,
-    po18sct_cont_log = log(poctcrrct + tol),
+    po18sct_cont_log = log(poctcrrct + 1e-3),
     pfldh_fctb = factor(pfldh, levels=c("0", "1"), labels=c("falneg", "falpos")),
     pv18s_fctb = factor(pv18s, levels=c("0", "1"), labels=c("vivneg", "vivpos")),
     po18s_fctb = factor(po18s, levels=c("0", "1"), labels=c("ovneg", "ovpos"))
@@ -132,8 +144,8 @@ dt <- dt %>%
 
 dt[, colnames(dt)[grepl("pv18s|pfldh|po18s", colnames(dt))] ] %>% 
   sapply(., summary) # looks clean, all NAs are consistent except Pf but that has to do with double call strategy
-                     # Remember, CT values >cutoff (species dependent) are coded as NA in raw data. Retained here
-  
+# Remember, CT values >cutoff (species dependent) are coded as NA in raw data. Retained here
+
 #.............
 # HIV
 #.............
@@ -174,6 +186,8 @@ dt <- dt %>%
                 hv104_fctb = forcats::fct_rev(forcats::fct_reorder(.f = hv104_fctb, .x = hv104_fctb, .fun = length))
   ) # female to default (b/c 0 and larger SE)
 
+xtabs(~hv104_fctb + haven::as_factor(hv104), data = dt, addNA = T)
+
 
 #.............
 # age
@@ -184,6 +198,7 @@ dt <- dt %>%
                 hab1_cont_scale = my.scale(hab1_cont, center = T, scale = T)) 
 
 summary(dt$hab1_cont) 
+hist(dt$hab1_cont_scale) 
 plot(dt$ha1, dt$hab1_cont)
 plot(dt$hb1, dt$hab1_cont)
 
@@ -195,7 +210,7 @@ plot(dt$hb1, dt$hab1_cont)
 # https://pdfs.semanticscholar.org/e290/cf81bdb182696505952f37d1c910db86925a.pdf
 
 # floor
-floor <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_floor_liftover.csv")
+floor <- readr::read_csv("internal_datamap_files/pr_floor_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv213 = haven::as_factor(hv213), 
                 hv213 =  forcats::fct_drop(hv213))
@@ -207,7 +222,7 @@ xtabs(~dt$hv213 + dt$hv213_liftover, addNA = T)
 
 
 # wall
-wall <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_wall_liftover.csv")
+wall <- readr::read_csv("internal_datamap_files/pr_wall_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv214 = haven::as_factor(hv214), 
                 hv214 =  forcats::fct_drop(hv214))
@@ -219,7 +234,7 @@ xtabs(~dt$hv214 + dt$hv214_liftover, addNA = T)
 
 
 # roof
-roof <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_roof_liftover.csv")
+roof <- readr::read_csv("internal_datamap_files/pr_roof_liftover.csv")
 dt <- dt %>% 
   dplyr::mutate(hv215 = haven::as_factor(hv215), 
                 hv215 =  forcats::fct_drop(hv215))
@@ -255,6 +270,8 @@ dt <- dt %>%
 
 
 # check -- seems reasonable
+xtabs(~dt$hv21345_fctb + dt$housecount, addNA = T)
+xtabs(~dt$hv21345_fctb + dt$hv215, addNA = T)
 xtabs(~dt$hv21345_fctb, addNA = T)
 
 
@@ -269,7 +286,16 @@ wlth <- readRDS(file = "data/derived_data/vividepi_wealth_recoded.rds")
 dt <- dplyr::left_join(dt, wlth, by = "hivrecode_barcode")
 tab <- xtabs(~dt$wlthrcde_fctm + haven::as_factor(dt$hv270)) # looks just OK. 
 tab 
-sum(diag(tab))/sum(tab) # 56% concordance. Presumambly, household type was a big driver given the 0 cells in the lower corner
+sum(diag(tab))/sum(tab) # 56% concordance. Presumably, household type was a big driver given the 0 cells in the lower corner
+xtabs(~dt$wlthrcde_fctb + 
+        haven::as_factor(dt$urban_rura))
+energy::dcor(as.numeric(dt$wlthrcde_fctb),
+             as.numeric(dt$urban_rura))
+dt <- dt %>% 
+  dplyr::mutate(hv270_fctb = ifelse(haven::as_factor(dt$hv270) %in% c("poorest", "poor"),
+                "poor", "not poor"))
+xtabs(~dt$wlthrcde_fctb + 
+        dt$hv270_fctb)
 
 
 #.............
@@ -282,7 +308,7 @@ dt <- dt %>%
 #.............
 # years of education (categorical)
 #.............
-edu <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_education_liftover.csv")
+edu <- readr::read_csv("internal_datamap_files/pr_education_liftover.csv")
 xtabs(~haven::as_factor(dt$hv106))
 dt <- dt %>% 
   dplyr::mutate(hv106 = haven::as_factor(hv106), 
@@ -300,13 +326,16 @@ xtabs(~dt$hv106 + dt$hv106_fctb, addNA = T)
 table(factor(haven::as_factor(dt$hv104)), useNA = "always") # no missing m/f but still missing factor from haven
 dt <- dt %>% 
   dplyr::mutate(occupation = ifelse(haven::as_factor(hv104) == "female",
-                                    haven::as_factor(v717), 
-                                    haven::as_factor(mv717)))
+                                    as.character(haven::as_factor(v717)), 
+                                    as.character(haven::as_factor(mv717))))
 
 dt <- dt %>% 
-  dplyr::mutate(farmer_fctb = ifelse(occupation %in% c(4,5), "farmer", "not farmer"),
+  dplyr::mutate(farmer_fctb = ifelse(grepl("agricultural", occupation), "farmer", "not farmer"),
                 farmer_fctb = factor(farmer_fctb, levels = c("not farmer", "farmer"))) # not being a farmer protective
 # note, we have coded missing as not a farmer
+table(factor(haven::as_factor(dt$farmer_fctb)), useNA = "always")
+xtabs(~dt$farmer_fctb + dt$occupation, addNA = T)
+
 
 
 #------------------------------------------
@@ -324,7 +353,7 @@ summary(dt$hv009) # looks clean
 dt <- dt %>% 
   dplyr::mutate(hv009_cont = hv009,
                 hv009_cont_scale = my.scale(hv009_cont, center = T, scale = T))
-
+hist(dt$hv009_cont_scale)
 
 #..........................................................................................
 #                                 MALARIA-INTERVENTIONS
@@ -348,11 +377,11 @@ dt <- dt %>%
   dplyr::mutate(
     ITN_fctb = ifelse(
       # (i) long-lasting insecticidal nets that were <= 3 y old at the time of survey
-      !(haven::as_factor(hml4) %in% c("more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
+      !(as.character(haven::as_factor(hml4)) %in% c("more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
       # (ii) conventional ITNs that were 1 y old 
-      ifelse(haven::as_factor(hml4) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
+      ifelse(as.character(haven::as_factor(hml4)) %in% c(0:12) & as.character(haven::as_factor(hml12)) == "only treated (itn) nets", 1, 
              # or were retreated within the year before the survey
-             ifelse(haven::as_factor(hml9) %in% c(0:12) & haven::as_factor(hml12) == "only treated (itn) nets", 1, 
+             ifelse(as.character(haven::as_factor(hml9)) %in% as.character(c(0:12)) & as.character(haven::as_factor(hml12)) == "only treated (itn) nets", 1, 
                     0))), # we know no missing net from above. they either reported yes or no at some level
     ITN_fctb = factor(ITN_fctb, levels = c(0,1), labels = c("no", "yes")),
     ITN_fctb = forcats::fct_drop(ITN_fctb),
@@ -361,6 +390,7 @@ dt <- dt %>%
 
 
 # sanity check
+xtabs(~haven::as_factor(dt$hml4) + haven::as_factor(dt$hml10)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml10)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml12)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml20)) 
@@ -378,7 +408,7 @@ dt <- dt %>%
 # Note, must have LLIN to have insecticide (120 missing LLIN insecticide types, 8500 no LLIN)
 #.............
 # read insecticide liftover table
-insctcd <- readr::read_csv("~/Documents/GitHub/VivID_Epi/internal_datamap_files/pr_insecticide_liftover.csv")
+insctcd <- readr::read_csv("internal_datamap_files/pr_insecticide_liftover.csv")
 
 dt <- dt %>%
   dplyr::mutate(hml7 = haven::as_factor(hml7)) %>%
@@ -414,6 +444,52 @@ dt <- dt %>%
     temp_mean_cont_scale_clst = my.scale(temp_mean_cont_clst, center = T, scale = T)
   )
 
+# sanity
+hist(dt$temp_mean_cont_scale_clst)
+plot(dt$mean_temperature_2015[dt$mean_temperature_2015 > 0], 
+     dt$temp_mean_cont_clst[dt$mean_temperature_2015 > 0])
+summary(dt$mean_temperature_2015)
+summary(dt$temp_mean_cont_clst)
+
+
+p1 <- dt %>%  
+  dplyr::filter(mean_temperature_2015 > 0) %>% 
+  ggplot() + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = mean_temperature_2015)) + 
+  scale_color_viridis_c()
+
+p2 <- ggplot(data = dt) + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = temp_mean_cont_clst)) + 
+  scale_color_viridis_c()
+cowplot::plot_grid(p1, p2, align = "h")
+
+
+
+# sanity
+hist(dt$precip_mean_cont_scale_clst)
+plot(dt$rainfall_2015[dt$rainfall_2015 > 0], 
+     dt$precip_mean_cont_clst[dt$rainfall_2015 > 0])
+summary(dt$rainfall_2015)
+summary(dt$precip_mean_cont_clst)
+
+p1 <- ggplot(data = dt) + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = rainfall_2015)) + 
+  scale_color_viridis_c()
+
+p2 <- ggplot(data = dt) + 
+  geom_point(aes(x = longnum, 
+                 y = latnum, 
+                 color = precip_mean_cont_clst)) + 
+  scale_color_viridis_c()
+cowplot::plot_grid(p1, p2, align = "h")
+
+
 #.............
 # Cluster-Level Altitude
 #.............
@@ -421,7 +497,7 @@ dt <- dt %>%
   dplyr::mutate(alt_dem_cont_clst = ifelse(alt_dem == 9999, NA, alt_dem), # note no missing (likely dropped with missing gps)
                 alt_dem_cont_scale_clst = my.scale(alt_dem_cont_clst, center = T, scale = T)
   )
-
+hist(dt$alt_dem_cont_scale_clst)
 
 #.............
 # Distance to Water Source
@@ -429,10 +505,10 @@ dt <- dt %>%
 wtrdist_out <- readRDS("data/derived_data/hotosm_waterways_dist.rds")
 dt <- dt %>% 
   dplyr::left_join(x=., y = wtrdist_out, by = "hv001") %>% 
-  dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst + tol),
+  dplyr::mutate(wtrdist_cont_log_clst = log(wtrdist_cont_clst),
                 wtrdist_cont_log_scale_clst = my.scale(wtrdist_cont_log_clst, center = T, scale = T)
-                )
-
+  )
+hist(dt$wtrdist_cont_log_scale_clst)
 
 #..........................................................................................
 #                           DEMOGRAPHIC/BEHAVIORAL VARIABLES
@@ -442,23 +518,46 @@ dt <- dt %>%
 #.............
 dt <- dt %>% 
   dplyr::mutate(urban_rura_fctb = haven::as_factor(urban_rura))
+# sanity
+xtabs(~dt$urban_rura_fctb + haven::as_factor(dt$urban_rura), addNA=T) 
 
 #.............
 # Health Care Access (Mean Distance to Health Site)
 #.............
-hlthdist_out <- readRDS("data/derived_data/hlthdist_out_minduration.rds") %>% 
-  magrittr::set_colnames(c("hv001", "hlthdist_mean_duration", "hlthdist_sd_duration"))
+hlthdist_out <- readRDS("data/derived_data/hlthdist_out_wlk_trvltime.rds") 
+# drop geom
+sf::st_geometry(hlthdist_out) <- NULL 
+# drop extra columns
+hlthdist_out <- hlthdist_out %>% 
+  dplyr::select(c("hv001", "hlthdist_cont_clst", "hlthdist_fctb_clst"))
 
 dt <- dt %>% 
   dplyr::left_join(x=., y = hlthdist_out, by = "hv001") %>% 
   dplyr::mutate(
-    hlthst_duration_cont_scale_clst = my.scale(hlthdist_mean_duration, center = T, scale = T),
-    hlthst_duration_fctb_clst = ifelse(hlthdist_mean_duration > 120, "far", "near"),
-    hlthst_duration_fctb_clst = factor(hlthst_duration_fctb_clst, levels = c("near", "far"))
-    
-  )
+    hlthdist_fctb_clst = factor(hlthdist_fctb_clst, levels = c("near", "far")),
+    hlthdist_cont_scale_clst = my.scale(hlthdist_cont_clst, center = T, scale = T),
+    hlthdist_cont_log_scale_clst = my.scale(log(hlthdist_cont_clst + 0.5), center = T, scale = T)) # offset for zeroes
 
+# look at output
+summary(dt$hlthdist_cont_scale_clst)
+hist(dt$hlthdist_cont_scale_clst)
+summary(dt$hlthdist_cont_log_scale_clst)
+hist(dt$hlthdist_cont_log_scale_clst)
 
+# look at factor
+xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$hv270))
+xtabs(~dt$hlthdist_fctb_clst + haven::as_factor(dt$urban_rura_fctb))
+xtabs(~ dt$hlthdist_fctb_clst)
+energy::dcor(as.numeric(dt$hlthdist_fctb_clst),
+             as.numeric(dt$urban_rura_fctb))
+
+# look at continous
+boxplot(dt$hlthdist_cont_log_scale_clst ~ haven::as_factor(dt$urban_rura_fctb))
+t.test(dt$hlthdist_cont_log_scale_clst[ haven::as_factor(dt$urban_rura_fctb) == "R"],
+       dt$hlthdist_cont_log_scale_clst[ haven::as_factor(dt$urban_rura_fctb) == "U"])
+energy::dcor(dt$hlthdist_cont_log_scale_clst,
+             as.numeric(dt$urban_rura_fctb))
+# very correlated in continuous sense, because some urban cluster right on top of a hospital
 
 #..........................................................................................
 #                               Final Write Out
@@ -466,22 +565,22 @@ dt <- dt %>%
 #...........................
 # All Observations
 #...........................
-saveRDS(dt, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+saveRDS(dt, file = "data/derived_data/vividepi_recode.rds")
 
 #...........................
 # Complete Observations
 #...........................
 # get final covariates
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::pull(c("column_name"))
 
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
 sf::st_geometry(dt) <- NULL
 dt.cc <- dt  %>% 
   dplyr::select(c("pv18s", "pfldh", "po18s", dcdr)) %>% 
   dplyr::filter(complete.cases(.)) 
 
 saveRDS(object = dt.cc,
-        file = "~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+        file = "data/derived_data/vividepi_recode_completecases.rds")
 
 

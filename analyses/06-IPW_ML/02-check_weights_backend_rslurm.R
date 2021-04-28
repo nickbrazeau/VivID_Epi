@@ -2,6 +2,7 @@
 # Purpose of this script is to check for 
 # covariate balance after applying the weights
 #----------------------------------------------------------------------------------------------------
+library(rslurm)
 library(tidyverse)
 library(energy)
 source("R/00-IPTW_functions.R")
@@ -11,27 +12,7 @@ set.seed(48, "L'Ecuyer")
 # Import Data
 #............................................................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
-
-params <- readRDS("analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
-SLpaths <- list.files("analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
-                      pattern = ".RDS", full.names = T)
-
-SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
-
-# sort properly to match rows in df
-SLpaths <- tibble::tibble(SLpaths = SLpaths) %>% 
-  mutate(order = stringr::str_extract(basename(SLpaths), "[0-9]+"),
-         order = as.numeric(order)) %>% 
-  dplyr::arrange(order) %>% 
-  dplyr::select(-c(order)) %>% 
-  unlist(.)
-params$ensembl_cvRisk <- purrr::map(  SLpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
-
-#............................................................
-# Get IPTW Estimates
-#............................................................
-params$SLpreds <-purrr::map(params$ensembl_cvRisk, "SL.predictions")
-params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
+params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
 
 #............................................................
 # Make Model Map
@@ -130,13 +111,11 @@ setwd("analyses/06-IPW_ML/")
 sjob <- rslurm::slurm_apply(f = slurm_calc_corr, 
                             params = modelmap, 
                             jobname = 'covar_IPTW_balance',
-                            nodes = 1028, 
+                            nodes = 512, 
                             cpus_per_node = 1, 
                             submit = T,
                             slurm_options = list(mem = 32000,
-                                                 array = sprintf("0-%d%%%d", 
-                                                                 1028, 
-                                                                 128),
+                                                 array = sprintf("0-511"),
                                                  'cpus-per-task' = 1,
                                                  error =  "%A_%a.err",
                                                  output = "%A_%a.out",

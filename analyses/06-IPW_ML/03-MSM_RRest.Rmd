@@ -8,16 +8,18 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
+knitr::opts_knit$set(root.dir = here::here())
 
 ```
 
 ```{r}
 
 library(srvyr)
+options(survey.lonely.psu="adjust")
 library(tidyverse)
-remotes::install_github("malcolmbarrett/ggdag"); library(ggdag)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+library(ggdag)
+source("R/00-functions_epi.R")
+source("R/00-functions_basic.R")
 
 ```
 
@@ -46,13 +48,13 @@ dagplot <- tidy_dag %>%
 
 plot(dagplot)
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/dag.jpg",
+jpeg(filename = "results/figures/dag.jpg",
      width = 11, height = 8, units = "in", res=500)
 plot(dagplot)
 graphics.off()
 
 
-svglite::svglite("~/Documents/GitHub/VivID_Epi/results/figures/dag.svg",
+svglite::svglite("results/figures/dag.svg",
      width = 11, height = 8)
 plot(dagplot)
 graphics.off()
@@ -61,9 +63,9 @@ graphics.off()
 
 ```{r}
 # import data
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
-params <- readRDS("~/Documents/GitHub/VivID_Epi/results/IPTWmodels.RDS")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+dcdr <- readxl::read_excel(path = "internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
+params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
 
 iptw <- params %>% 
   dplyr::select(c("target", "iptw"))
@@ -73,13 +75,13 @@ iptw <- params %>%
 
 ```{r}
 
-makeiptwsrvy <- function(x){ # not good function practice
-  if(is.null(x)){
+makeiptwsrvy <- function(x){ # not generalizable
+  if(is.null(x)){ # if null, we didn't do weights was unconfounded in exp
     x <- 1
   }
   dt$wi <- x*dt$hiv05_wi
   dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
-                                           #   strata = hv023, 
+                                           strata = hv023, 
                                            weights = wi)
   return(dtsrvy)
 }
@@ -185,7 +187,6 @@ DT::datatable(pfalrskfctr_est,
 
 ## IPTW Prevalence Odds Ratio Plot
 ```{r}
-
 #...................................................
 # Tidy
 #...................................................
@@ -237,25 +238,26 @@ liftover <- data.frame(label =
                            "Age",
                            "HIV (+)",
                            "Farmer",
-                           "Wealth",
+                           "Wealth (Poor)",
                            "Education (Lower)",
+                           "Num. House Members",
                            "Precipitation",
                            "Temperature",
                            "Altitude",
                            "Water Dist.",
                            "Housing Materials (Trad.)",
                            "ITN Use (No)",
-                           "Urbanicity (Rur.)",
-                           "Hospital Dist."),
-                       labelnum = 1:14)
+                           "Urban",
+                           "Hospital Dist. (Far)"),
+                       labelnum = 1:15)
 
 blocks <- data.frame(ymin = c(0, 0, 0),
                      ymax = c(3.5, 3.5, 3.5),
-                     xmin = c(0.5, 6.5, 12.5), 
-                     xmax = c(2.5, 10.5, 14.5)
+                     xmin = c(0.5, 7.5, 13.5), 
+                     xmax = c(2.5, 11.5, 15.5)
 )
 
-text <- data.frame(x = c(1.5, 4.75, 8.5, 11.5, 13.5),
+text <- data.frame(x = c(1.5, 5.75, 9.5, 12.5, 14.5),
                    y = c(2.5, 2.5, 2.5, 2.5, 2.5),
                    label = 
                      c("Demographic",
@@ -342,14 +344,26 @@ graphics.off()
 plot(finalMSMplot)
 ```
 
+### Appendix: Bed Net Coding
+
+##### LLIN Definition
+
+```{r, results='asis'}
+
+llinet <- readRDS("results/llin_hml20_sens_analysis_spensemble.rds")
+broom::tidy(llinet, exponentiate=TRUE, conf.int=TRUE) %>% 
+  DT::datatable(.)
+
+```
+
 ### Appendix: Digging into _Pv_-Precipitation
 ```{r}
 dtsrvyr.app <- makecd2013survey(survey = dt)
 
 pvsrvyr <- dtsrvyr.app %>% 
-  dplyr::group_by(hv001) %>% 
   dplyr::mutate(count = 1) %>% 
-  srvyr::summarise(n = srvyr::survey_total(count), 
+  dplyr::group_by(hv001) %>% 
+  srvyr::summarise(n = srvyr::survey_total(count, vartype = "se"), # same sampling weight to whole cluster
                    pv = srvyr::survey_mean(pv18s, vartype = "se"),
                    pf = srvyr::survey_mean(pfldh, vartype = "se"))
 
@@ -369,7 +383,7 @@ pvprecipplot <- pvprecip %>%
   ggplot() +
   geom_point(aes(x=precip, y = prev, size = n)) +
   facet_wrap(~species) + 
-  xlab("Lagged Precipitation (cm)") + 
+  xlab("Precipitation (cm)") + 
   ylab("Prevalence") +
   theme_classic() + 
   theme(legend.position = "none",
@@ -386,61 +400,181 @@ plot(pvprecipplot)
 ```
 
 
-
-### Appendix: Digging into _Pv_-Temperature
+### Appendix: Raster Digging into _Pv_-Precipitation 
 ```{r}
+# load spatial coordinates
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS") %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
+genosf <- ge
+sf::st_geometry(genosf) <- NULL
 
-dtsrvyr.app <- makecd2013survey(survey = dt)
+# load precip raster
+precipraster <- readRDS("data/derived_data/vividepi_precip_study_period_effsurface.rds") 
 
-pvsrvyr <- dtsrvyr.app %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::mutate(count = 1) %>% 
-  srvyr::summarise(n = srvyr::survey_total(count), 
-                   pv = srvyr::survey_mean(pv18s, vartype = "se"),
-                   pf = srvyr::survey_mean(pfldh, vartype = "se"))
-
-temp <- dt %>% 
-  dplyr::group_by(hv001) %>% 
-  dplyr::summarise(
-    temp = mean(temp_mean_cont_clst) # clst has same precip)
-  )
-
-tempprecip <- dplyr::left_join(pvsrvyr, temp, by = "hv001") %>% 
-  dplyr::select(-c(dplyr::ends_with("_se"))) %>% 
-  dplyr::select(c("hv001", "n", "temp", dplyr::everything())) %>% 
-  tidyr::gather(., key = "species", value = "prev", 4:5)
-
-pvtempplot <- tempprecip %>% 
+# bring in spatial and plot
+pvprecipplot <- pvsrvyr %>% 
+  dplyr::left_join(., genosf, by = "hv001")  %>% 
   ggplot() +
-  geom_point(aes(x=temp, y = prev, size = n)) +
-  facet_wrap(~species) + 
-  xlab("Lagged Temperature (C)") + 
-  ylab("Prevalence") +
-  theme_classic() + 
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 90))
+  ggspatial::layer_spatial(data = precipraster, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
+             alpha = 0.6) +
+  scale_fill_viridis_c("Precip.", na.value = NA) +
+  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() +
+  theme(legend.position = "bottom")
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_figure.jpg", width = 11, height = 8, units = "in", res = 600)
-plot(pvtempplot)
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvprecip_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvprecipplot)
 graphics.off()
 
 ```
 
 ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
-plot(pvtempplot)
+plot(pvprecipplot)
 ```
 
-### Appendix: Digging into _Pv_-Farming
+
+
+
+<!-- ### Appendix: Digging into _Pv_-Temperature -->
+<!-- ```{r} -->
+
+<!-- dtsrvyr.app <- makecd2013survey(survey = dt) -->
+
+<!-- pvsrvyr <- dtsrvyr.app %>%  -->
+<!--   dplyr::group_by(hv001) %>%  -->
+<!--   dplyr::mutate(count = 1) %>%  -->
+<!--   srvyr::summarise(n = srvyr::survey_total(count),  -->
+<!--                    pv = srvyr::survey_mean(pv18s, vartype = "se"), -->
+<!--                    pf = srvyr::survey_mean(pfldh, vartype = "se")) -->
+
+<!-- temp <- dt %>%  -->
+<!--   dplyr::group_by(hv001) %>%  -->
+<!--   dplyr::summarise( -->
+<!--     temp = mean(temp_mean_cont_clst) # clst has same precip) -->
+<!--   ) -->
+
+<!-- tempprecip <- dplyr::left_join(pvsrvyr, temp, by = "hv001") %>%  -->
+<!--   dplyr::select(-c(dplyr::ends_with("_se"))) %>%  -->
+<!--   dplyr::select(c("hv001", "n", "temp", dplyr::everything())) %>%  -->
+<!--   tidyr::gather(., key = "species", value = "prev", 4:5) -->
+
+<!-- pvtempplot <- tempprecip %>%  -->
+<!--   ggplot() + -->
+<!--   geom_point(aes(x=temp, y = prev, size = n)) + -->
+<!--   facet_wrap(~species) +  -->
+<!--   xlab("Temperature (C)") +  -->
+<!--   ylab("Prevalence") + -->
+<!--   theme_classic() +  -->
+<!--   theme(legend.position = "none", -->
+<!--         axis.text.x = element_text(angle = 90)) -->
+
+<!-- jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_figure.jpg", width = 11, height = 8, units = "in", res = 600) -->
+<!-- plot(pvtempplot) -->
+<!-- graphics.off() -->
+
+<!-- ``` -->
+
+<!-- ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'} -->
+<!-- plot(pvtempplot) -->
+<!-- ``` -->
+
+
+<!-- ### Appendix: Raster Digging into _Pv_-Temperature  -->
+<!-- ```{r} -->
+<!-- # load spatial coordinates -->
+<!-- ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS") -->
+
+<!-- # load temp raster -->
+<!-- tempraster <- readRDS("data/derived_data/vividepi_temperature_study_period_effsurface.rds")  -->
+
+<!-- # bring in spatial and plot -->
+<!-- pvtempplot <- pvsrvyr %>%  -->
+<!--   dplyr::left_join(., genosf, by = "hv001") %>%  -->
+<!--   ggplot() + -->
+<!--   ggspatial::layer_spatial(data = tempraster, aes(fill = stat(band1)), -->
+<!--                            alpha = 0.8) + -->
+<!--   geom_point(aes(x = longnum, y = latnum, color = pv, size = n), -->
+<!--              alpha = 0.6) + -->
+<!--   scale_fill_viridis_c("Temp", na.value = NA) + -->
+<!--   scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu", -->
+<!--                        na.value = NA) + -->
+<!--   theme_void() + -->
+<!--   theme(legend.position = "bottom") -->
+
+<!-- jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvtemp_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600) -->
+<!-- plot(pvtempplot) -->
+<!-- graphics.off() -->
+
+<!-- ``` -->
+
+<!-- ```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'} -->
+<!-- plot(pvtempplot) -->
+<!-- ``` -->
+
+
+
+
+
+### Appendix: Digging into _Pv_-Health Distance
 ```{r, results='asis'}
 
-dtsrvyr.app <- makecd2013survey(survey = dt)
-
 dtsrvyr.app %>% 
-  dplyr::group_by(farmer_fctb, pv18s_fctb) %>% 
+  dplyr::group_by(hlthdist_fctb_clst, pv18s_fctb) %>% 
   dplyr::summarise(counts = srvyr::survey_total()) %>% 
   knitr::kable(.)
 
 ```
+
+
+### Appendix: Raster Digging into _Pv_-Health Distance
+```{r}
+# load spatial coordinates
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+# create bounding box of Central Africa for Speed
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+init=epsg:4326"
+
+# create mask 
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+
+# load hlthdist raster
+hlthdistraster <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
+sp::identicalCRS(hlthdistraster, caf)
+sp::identicalCRS(hlthdistraster, sf::as_Spatial(DRC))
+hlthdistraster <- raster::crop(hlthdistraster, caf)
+hlthdistraster <- raster::mask(hlthdistraster, DRC)
+hlthdistraster <- raster::aggregate(hlthdistraster, fact = 10) # agg for easier plotting 
+
+# bring in spatial and plot
+pvhlthdistplot <- pvsrvyr %>% 
+  dplyr::left_join(., genosf, by = "hv001") %>% 
+  ggplot() +
+  ggspatial::layer_spatial(data = hlthdistraster, aes(fill = stat(band1)),
+                           alpha = 0.8) +
+  geom_point(aes(x = longnum, y = latnum, color = pv, size = n),
+             alpha = 0.6) +
+  scale_fill_viridis_c("Health Dist.", na.value = NA) +
+  scale_color_distiller("Pv Prev", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/pvhlthdist_raster_figure.jpg", width = 11, height = 8, units = "in", res = 600)
+plot(pvhlthdistplot)
+graphics.off()
+
+```
+
+```{r, results='asis', fig.width=11, fig.height=8, fig.align='center'}
+plot(pvhlthdistplot)
+```
+
+
+
 
 ### Appendix: Unadjusted vs. Adjusted RR Estimates
 ```{r}

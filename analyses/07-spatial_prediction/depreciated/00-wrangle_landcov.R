@@ -1,39 +1,40 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to wrangle 
-# the night light composite data from MCD12Q1 2013
+# landcoverage data for crops for farmer variable
 #----------------------------------------------------------------------------------------------------
 # libraries and imports
 library(tidyverse)
 library(raster)
 library(sp)
 library(sf)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-tol <- 1e-3
+source("R/00-functions_basic.R")
 
 # create bounding box of Central Africa for mrm
 # https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
 caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
-sp::proj4string(caf) <- "+proj=longlat +datum=WGS84 +no_defs"
+sp::proj4string(caf) <- "+init=epsg:4326"
 
 # create mask 
-DRCprov <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
 
 #.............................................................................. 
 # Read in Land Coverage
 #.............................................................................. 
 landcov2013 <- raster::raster("data/raw_data/land_coverage/dataset-satellite-land-cover-902f410c-4e52-4fae-badd-2fc35ec86c62/ESACCI-LC-L4-LCCS-Map-300m-P1Y-2013-v2.0.7cds.nc")
+# sanity
+raster::compareCRS(landcov2013, raster::crs("+init=epsg:4326"))
+
+# speed
 landcov2013.drc <- raster::crop(x = landcov2013, y = caf)
 # mask out non DRC 
-landcov2013.drc <- raster::mask(landcov2013.drc, DRCprov)
-landcov2013.drc <- raster::projectRaster(from = landcov2013.drc, to = landcov2013.drc,
-                                         crs = sf::st_crs("+proj=utm +zone=34 +datum=WGS84 +units=m")) # want units to be m
+landcov2013.drc <- raster::mask(landcov2013.drc, DRC)
 
 #.............................................................................. 
 # Lift Over to Binary Cropland yes or no
 #.............................................................................. 
 # using data dictionary from here: https://maps.elie.ucl.ac.be/CCI/viewer/download/ESACCI-LC-QuickUserGuide-LC-Maps_v2-0-7.pdf
 origvals <- raster::values(landcov2013.drc)
-newvals <- ifelse(origvals %in% c(10, 20, 30, 40), 1, 
+newvals <- ifelse(origvals %in% c(10, 11, 12, 20, 30), 1, 
                   ifelse(is.na(origvals), NA, 0))
 raster::values(landcov2013.drc) <- newvals
 
@@ -63,7 +64,11 @@ for(i in 1:nrow(ge.croopland)){
 }
 
 # liftover
-ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.croopland$cropprop, tol = tol))
+ge.croopland$cropprop_cont_scale_clst <- my.scale(logit(ge.croopland$cropprop, tol = 1e-3))
+
+# drop extraneous geometry
+sf::st_geometry(ge.croopland) <- NULL
+
 
 # save out
 saveRDS(object = ge.croopland, 

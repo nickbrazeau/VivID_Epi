@@ -1,6 +1,5 @@
 #----------------------------------------------------------------------------------------------------
-# Purpose of this script is to Ob-train the 
-# Cross Validated Risk 
+# Purpose of this script is to run quick sensitivity of LLIN coding of nets
 #----------------------------------------------------------------------------------------------------
 remotes::install_github("nickbrazeau/mlrwrapSL"); library(mlrwrapSL)
 library(tidyverse)
@@ -14,14 +13,26 @@ set.seed(48, "L'Ecuyer")
 #...............................................................................................
 # Import Data & tx map
 #...............................................................................................
-# read in treatments
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+  dplyr::pull(c("column_name"))
+sf::st_geometry(dt) <- NULL
+dt <- dt  %>% 
+  dplyr::select(c("pv18s", "pfldh", "po18s", dcdr, "hml20_fctb")) %>% 
+  dplyr::filter(complete.cases(.)) %>% 
+  dplyr::mutate(hml20_fctb = relevel(hml20_fctb, ref = "yes"))
+
+# read in treatments and subset to nets
 txs <- readRDS("model_datamaps/IPTW_treatments.RDS") %>% 
   dplyr::rename(positive = positivefactor) %>% 
   dplyr::mutate(type = ifelse(grepl("cont", column_name), "continuous",
                               ifelse(grepl("fctb", column_name), "binary", NA))) %>% 
   dplyr::rename(target = column_name)
-
-dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+txs <- txs %>% 
+  dplyr::filter(target == "ITN_fctb") %>% 
+  dplyr::mutate(target = "hml20_fctb",
+                var_label = "LLIN Use",
+                abridged_var_label = "LLIN Use (No)")
 
 #...............................................................................................
 # Read In Spatial Partition & make spatial cross-validation set
@@ -57,18 +68,9 @@ txs$learnerlib <- purrr::map(txs$type, function(x){
 
 #...............................................................................................
 # Manual processing from EDA, 
-# know some of these parameters need to be changed
+# know some of this parameter needs to be changed
 #...............................................................................................
-txs$learnerlib[txs$target == "precip_mean_cont_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
-txs$learnerlib[txs$target == "temp_mean_cont_scale_clst"] <- list(list(mlr::makeLearner("regr.lm", predict.type = "response")))
-txs$learnerlib[txs$target == "hlthdist_fctb_clst"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "hiv03_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "farmer_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "hv21345_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "wlthrcde_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "ITN_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-txs$learnerlib[txs$target == "hv106_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
-
+txs$learnerlib[txs$target == "hml20_fctb"] <- list(list(mlr::makeLearner("classif.logreg", predict.type = "prob")))
 
 
 #...............................................................................................
@@ -101,5 +103,21 @@ txs <- dplyr::left_join(txs, paramsdf, by = "target")
 txs$SLpreds <- purrr::map(txs$ensembl_cvRisk, "SL.predictions")
 txs$iptw <- purrr::pmap(txs[,c("task", "SLpreds")], get_iptw_prob)
 
-# saveout
-saveRDS(txs, "results/ensembl_cvRisk_paramdf.RDS")
+# look at balance
+summary(txs$iptw[[1]])
+boxplot(txs$iptw[[1]])
+boxplot(log(txs$iptw[[1]]))
+
+#............................................................
+# apply in mod
+#...........................................................
+dt$wi <- unlist(txs$iptw)*dt$hiv05_wi
+options(survey.lonely.psu="adjust")
+dtsrvy <- dt %>% srvyr::as_survey_design(ids = hv001, 
+                                         strata = hv023, 
+                                         weights = wi)
+ret <- survey::svyglm("pv18s ~ hml20_fctb",
+                      design = dtsrvy,
+                      family = quasibinomial(link="logit"))
+# save out
+saveRDS(ret, "results/llin_hml20_sens_analysis_spensemble.rds")

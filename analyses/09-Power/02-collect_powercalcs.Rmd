@@ -10,6 +10,7 @@ editor_options:
 # _post-hoc_ Power Calculation
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide')
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
@@ -22,7 +23,7 @@ library(tidyverse)
 # Read in Pf Data
 #.....................................
 
-pfpower.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pf/", pattern = ".RDS", full.names = T)
+pfpower.files <- list.files("analyses/09-Power/_rslurm_powercalc_pf/", pattern = ".RDS", full.names = T)
 pfpower.files <- pfpower.files[!grepl("params.RDS|f.RDS", pfpower.files)]
 
 # need to sort properly
@@ -40,8 +41,10 @@ read_power_files <- function(path, species){
 
 
 pfpower.files.ret <- lapply(pfpower.files$power.files, read_power_files, species = "Pf") %>% 
-  dplyr::bind_rows()
-pfpoweriters.ret <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pf/params.RDS") 
+  dplyr::bind_rows() %>% 
+  dplyr::rename(pval = p)
+
+pfpoweriters.ret <- readRDS("analyses/09-Power/_rslurm_powercalc_pf/params.RDS") 
 pfpoweriters.params.ret <- dplyr::bind_cols(pfpoweriters.ret, pfpower.files.ret)
 
 
@@ -52,7 +55,7 @@ pfpoweriters.params.ret <- dplyr::bind_cols(pfpoweriters.ret, pfpower.files.ret)
 # Read in Pv Data
 #.....................................
 
-pvpower.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pv/", pattern = ".RDS", full.names = T)
+pvpower.files <- list.files("analyses/09-Power/_rslurm_powercalc_pv/", pattern = ".RDS", full.names = T)
 pvpower.files <- pvpower.files[!grepl("params.RDS|f.RDS", pvpower.files)]
 
 # need to sort properly
@@ -70,8 +73,9 @@ read_power_files <- function(path, species){
 
 
 pvpower.files.ret <- lapply(pvpower.files$power.files, read_power_files, species = "Pv") %>% 
-  dplyr::bind_rows()
-pvpoweriters.ret <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/09-Power/_rslurm_powercalc_pv/params.RDS") 
+  dplyr::bind_rows() %>% 
+  dplyr::rename(pval = p)
+pvpoweriters.ret <- readRDS("analyses/09-Power/_rslurm_powercalc_pv/params.RDS") 
 pvpoweriters.params.ret <- dplyr::bind_cols(pvpoweriters.ret, pvpower.files.ret)
 
 ```
@@ -91,7 +95,7 @@ poweriters.params.ret <- rbind.data.frame(pfpoweriters.params.ret, pvpoweriters.
 poweriters.powercalc <- poweriters.params.ret %>% 
   dplyr::group_by(species, n, p, exp_prob, p0, OR) %>% 
   dplyr::summarise(
-    power = mean(p1 < 0.05)
+    power = mean(pval < 0.05)
   )
 
 df <- poweriters.powercalc %>%
@@ -107,7 +111,7 @@ PowerPlot <- ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
   xlab("Type II Error") + ylab("Prevalence Odds Ratio") +
   xlim(0,0.5) + # once we fall off we don't care that much
   ylim(0, 3) + # not impressive to catch an OR of 5...
-  scale_color_manual("Exposure Probability", values = c("#8214A0", "#005AC8", "#006E82")) +
+  scale_color_manual("Probability of Exposure", values = c("#8214A0", "#005AC8", "#006E82")) +
   theme(plot.title = element_text(hjust = 0.5, face="bold", size=16),
         axis.title = element_text(hjust = 0.5, size=14),
         axis.text = element_text(hjust = 0.5, size=13),

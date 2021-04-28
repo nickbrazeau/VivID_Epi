@@ -8,44 +8,16 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
-
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
 library(mlr)
 library(tidyverse)
-source("~/Documents/GitHub/VivID_Epi/R/00-IPTW_functions.R")
+source("R/00-IPTW_functions.R")
 
 ```
 
-```{r checkwidcdr}
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
-  rename(target = column_name)
-
-
-params <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/params.RDS")
-SLpaths <- list.files("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_vivid_spSL/", 
-                      pattern = ".RDS", full.names = T)
-
-SLpaths <- SLpaths[!c(grepl("params.RDS", SLpaths) | grepl("f.RDS", SLpaths))]
-
-# sort properly to match rows in df
-SLpaths <- tibble::tibble(ELpaths = SLpaths) %>% 
-  mutate(order = stringr::str_extract(basename(SLpaths), "[0-9]+"),
-         order = as.numeric(order)) %>% 
-  dplyr::arrange(order) %>% 
-  dplyr::select(-c(order)) %>% 
-  unlist(.)
-params$ensembl_cvRisk <- purrr::map(  SLpaths, function(x){ ret <- readRDS(x); return(ret[[1]]) }  )
-
-#................................................................. 
-# Get IPTW Estimates
-#.................................................................
-params$SLpreds <-purrr::map(params$ensembl_cvRisk, "SL.predictions")
-params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
-
-
-```
 
 
 ### Distribution of IPTW for each Risk Factor
@@ -53,24 +25,24 @@ params$iptw <- purrr::pmap(params[,c("task", "SLpreds")], get_iptw_prob)
 #### Table 
 ```{r checkwidist}
 
+dcdr <- readxl::read_excel(path = "internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
+#................................................................. 
+# read in IPTW Estimates
+#.................................................................
+params <- readRDS("results/ensembl_cvRisk_paramdf.RDS")
+params <- dplyr::left_join(params, dcdr, by = "target")
+#......................
+# look at weight
+#......................
 widist <- purrr::map(params$iptw, summary) %>% 
   do.call("rbind.data.frame", .) %>% 
   dplyr::mutate_if(is.numeric, round, 2) %>% 
   magrittr::set_colnames(c("min", "1stquart", "median", "mean", "3rdqart", "max"))
 
-params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) )
-
-# get normal var name
-varnames <- dcdr %>% 
-  dplyr::select(c("target", "abridged_var_label"))
-params <- dplyr::left_join(params, varnames, by = "target")
-
-
-widist <- cbind.data.frame(params$abridged_var_label, widist)
 ```
 
 ```{r, results='asis'}
-widist %>% 
+cbind.data.frame(params$label, widist) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(
@@ -85,14 +57,14 @@ widist %>%
 
 # make plot
 iptw.dist.plotObj <- params %>% 
-  dplyr::select(c("abridged_var_label", "iptw")) %>% 
+  dplyr::select(c("label", "iptw")) %>% 
   tidyr::unnest(cols = iptw) %>% 
   dplyr::mutate(logiptw = log(iptw)) %>% 
   ggplot() + 
-  geom_boxplot(aes(x = abridged_var_label, y = logiptw)) +
+  geom_boxplot(aes(x = label, y = logiptw)) +
   geom_hline(yintercept = 0, col = "#e41a1c") +
   vivid_theme + 
-  ylab("log(IPTW)") +
+  ylab("log(IPW)") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.text.x = element_text(family = "Helvetica", size = 10, angle = 90, hjust = 1, vjust = 0.5, face = "bold"),
@@ -112,18 +84,18 @@ graphics.off()
 plot(iptw.dist.plotObj)
 
 ```
-  
-**N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. 
+
+**N.B.** Although a view of our weights are more extreme than I would like, they are "as expected" for issues of smoothing through low likelihood exposure profiles. In other words, there are very few poor individuals with modern houses (as an example). Therefore, some of the extreme weight settings are valid. Moreover, our weights are 1 - 6 order of magnitudes less than those present in the [Gruber/Hernan 2015]() mansucript. In addition, hospital distance is extremely associated with urbanicity (as expected).
 
 
 ### Covariate Balance
 A classic definition of confounding in a cross-sectional survey is an unequal distribution of baseline exposures. This will result in various covariates being correlated (e.g. being poor and living in a traditional house). If our weights have worked, we will have removed baseline confounding (i.e. removed baseline correlations). One way to check this is to measure the correlations of all the covariates at baseline (_Base_) as compared to covariate correlations with IPTW weights applied. Given that we have a mix of continuous and binary covariates, pearson correlation and/or standard-mean difference are not on the same squale. To overcome this, we will use the an *energy* function which calculates correlations despite functional form [Rizzo/Szekely 2016](https://onlinelibrary.wiley.com/doi/full/10.1002/wics.1375). This is more or less measuring correlation with euclidean distances of our data points in a multidimensional space (relating to kernel density and multi-dimensional GPs).     
-  
+
 Given that this fancy statistic doesn't take into account weights, I made 100 pseudopopulations (by sampling from the base population with respect to the calculated IPTW) and calculated the energy correlation for each iteration. Plotted is the distribution of the correlations for each covariate (e.g. Precipitation-Temperature, Precipitation-Wealth, etc. etc.) given that we focused on canonical sets when possible. 
 ```{r checkwicovarbalparams}
-covarbalparams <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
+covarbalparams <- readRDS("analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/params.RDS") 
 
-covarretfiles <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/",
+covarretfiles <- list.files(path = "analyses/06-IPW_ML/_rslurm_covar_IPTW_balance/",
                             pattern = ".RDS", full.names = T)
 covarretfiles <- covarretfiles[!grepl("f.RDS|params", covarretfiles)]
 
@@ -149,24 +121,25 @@ covarbalparams <- covarbalparams %>%
 
 
 # make pretty plot
-varnames <- varnames %>% 
+varnames <- params %>% 
+  dplyr::select(c("target", "label")) %>% 
   dplyr::rename(covar1 = target)
 
 covarbalanceplot <- covarbalparams %>% 
   dplyr::left_join(., varnames, by = "covar1") %>% 
-  dplyr::mutate(lvl_fct = factor(lvl, levels = c("base", "IPTW"), labels = c("Base", "IPTW"))) %>% 
+  dplyr::mutate(lvl_fct = factor(lvl, levels = c("base", "IPTW"), labels = c("Base", "IPW"))) %>% 
   ggplot() + 
-  geom_boxplot(aes(x = abridged_var_label, y = dist)) +
+  geom_boxplot(aes(x = label, y = dist)) +
   facet_wrap(~lvl_fct, nrow = 2) +
   vivid_theme + 
-  ylab("Correlation (Energy)") +
+  ylab("Correlation") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.text.x = element_text(family = "Helvetica", size = 10, angle = 90, hjust = 1, vjust = 0.5, face = "bold"),
         axis.line.x = element_line(size = 0.5, linetype = "solid", colour = "#000000"),
         axis.line.y = element_line(size = 0.5, linetype = "solid", colour = "#000000"))
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/IPTWcovar_bal.jpg",
+jpeg("results/figures/IPTWcovar_bal.jpg",
      width = 11, height = 8, units = "in", res = 500)
 plot(covarbalanceplot)
 graphics.off()
@@ -175,13 +148,50 @@ graphics.off()
 ```
 
 ```{r checkwicovarbalparamsplot, results='asis'}
-
 plot(covarbalanceplot)
+```
+
+```{r, results='asis'}
+
+covarbalparams_ranges <- covarbalparams %>% 
+  dplyr::select(-c("data")) %>% 
+  dplyr::group_by(covar1, lvl) %>% 
+  dplyr::summarise(
+    n = n(),
+    maxcorr = max(dist),
+    meancorr = mean(dist),
+    mediancorr = median(dist),
+    mincorr = min(dist)) 
+
+DT::datatable(covarbalparams_ranges, extensions='Buttons',
+              options = list(
+                searching = T,
+                pageLength = 20,
+                dom = 'Bfrtip', 
+                buttons = c('csv')))
+
 
 ```
+
+
 **Very nice!** 
 
 #### Covar Balance Long Comparison
+
+Looking at descendent and ancestor not on causal path numbers. 
+```{r, results='asis'}
+
+covarbalparams %>% 
+  dplyr::select(-c("data")) %>% 
+  dplyr::filter(lvl == "base") %>% 
+  dplyr::group_by(covar1) %>% 
+  dplyr::summarise(
+    n = n()) %>% 
+  knitr::kable(.)
+
+
+```
+
 Looking at mean reductions (for the "fold" statement). 
 ```{r}
 
@@ -233,9 +243,6 @@ knitr::kable(cbind(nm = "base_vs_IPTW_reduction", summary(bal_sum_wide$base_vs_I
 # Pull out some relevant features
 # from our fitted IPTW
 #.......................................
-
-params$target <- unlist( purrr::map(params$task, mlr::getTaskTargetNames) ) 
-
 stbmdldf <- params %>% 
   dplyr::select(c("target", "ensembl_cvRisk"))
 
@@ -245,17 +252,17 @@ stbmdldf$alg.cvrisk.validationset <- purrr::map(stbmdldf$ensembl_cvRisk, "alg.cv
 stbmdldf$learners <- purrr::map(stbmdldf$alg.cvrisk.validationset, 
                                 function(x){
                                   ret <- names(x)
-                                    if(is.null(ret)){
-                                      ret <- "regr"
-                                      } 
+                                  if(is.null(ret)){
+                                    ret <- "regr"
+                                  } 
                                   return(ret)
-                                  })
+                                })
 
 ```
 
 ```{r checkwiappendix2, results='asis'}
 
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
+dcdr <- readxl::read_excel(path = "internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
 
 out <- dplyr::left_join(dcdr, stbmdldf, by = "target") %>% 
   dplyr::select(-c("group")) %>% 
@@ -265,22 +272,13 @@ out %>%
   dplyr::select(-c("ensembl_cvRisk")) %>% 
   tidyr::unnest(cols = c("cvrisk.coef", "alg.cvrisk.validationset", "learners")) %>% 
   DT::datatable(., extensions='Buttons',
-               options = list(
-              searching = T,
-              pageLength = 20,
-              dom = 'Bfrtip', 
-              buttons = c('csv')))
+                options = list(
+                  searching = T,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
 
 
 ```
 
-
-```{r checkwihousekeep}
-#.............................
-# House keeping
-#.............................
-saveRDS(object = params, 
-        file = "~/Documents/GitHub/VivID_Epi/results/IPTWmodels.RDS")
-
-```
 

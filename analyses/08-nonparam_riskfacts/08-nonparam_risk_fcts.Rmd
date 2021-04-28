@@ -1,0 +1,373 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Non-Parameteric Risk Factors
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
+                      fig.align = 'center')
+knitr::opts_knit$set(root.dir = here::here())
+
+```
+```{r}
+set.seed(48)
+remotes::install_github("nickbrazeau/icer")
+library(icer)
+library(tidyverse)
+source("R/00-functions_basic.R")
+source("R/00-functions_maps.R") 
+library(tidyverse)
+library(sf)
+library(geosphere)
+library(spdep)
+library(raster)
+library(srvyr) #wrap the survey package in dplyr syntax
+library(RColorBrewer)
+
+```
+
+
+## Pf-Pv Interference
+### Infection Composition Model Indepdent Model for Interference 
+```{r}
+
+surv.mle <- readRDS("analyses/08-nonparam_riskfacts/perm_rets/icer_model.rds")
+coinfxnplotObj <- surv.mle$coinfxnplot$plot +
+  theme(axis.text.x = element_text(angle = 90))
+
+jpeg("results/figures/PvPfInterference.jpg",
+     height = 8, width = 8, units = "in", res = 500)
+plot(coinfxnplotObj)
+graphics.off()
+
+```
+
+```{r, results='asis'}
+plot(coinfxnplotObj)
+```
+
+
+#### Cluster Level Prevalences-Interactions
+```{r}
+mp <- readRDS(file = "data/derived_data/basic_cluster_mapping_data.rds")
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+
+pfpvclst <- mp %>% 
+  dplyr::filter(plsmdmspec %in% c("pfldh", "pv18s") & maplvl == "hv001") %>% 
+  dplyr::ungroup() %>% 
+  dplyr::select(c("plsmdmspec", "data")) 
+
+# issue with casting from sf
+pf <- pfpvclst$data[[1]]
+pfclust <- cbind.data.frame(species = "pf", pf) %>% 
+  dplyr::select(c("species", "hv001", "plsmdprev", "n"))
+pv <- pfpvclst$data[[2]]
+pvclust <- cbind.data.frame(species = "pv", pv) %>% 
+  dplyr::select(c("species", "hv001", "plsmdprev", "n"))
+
+pfpvclst <- left_join(pfclust, pvclust, by = c("hv001", "n")) %>% 
+  dplyr::left_join(., y = ge, by = "hv001")
+
+
+```
+
+```{r, results='asis'}
+
+pfpvclst %>% 
+  ggplot() + 
+  geom_point(aes(x=plsmdprev.x, y = plsmdprev.y, size = n)) +
+  geom_smooth(aes(x=plsmdprev.x, y = plsmdprev.y, weight = n), method=loess) +
+  facet_wrap(~ urban_rura) +
+  xlab("Pfalciparum") + ylab("Pvivax") + 
+  labs(title ="Cluster Level Prevalences Seperated \n by Urbanicity",
+       caption = "Loess line and point sizes are weighted by cluster size") +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(vjust = 0.5, hjust = 0.5))
+
+
+
+```
+
+
+
+## Ape Distribution  vs. _P. vivax_  
+
+
+```{r, results='asis'}
+#......................
+# vivid pieces 
+#......................
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+dtsrvy <- makecd2013survey(survey = dt)
+# DRC
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+# pv prev
+clstprev <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
+                   pv18sn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
+                   pfldhn = srvyr::survey_total(pfldh, vartype = c("se", "ci"))) %>% 
+  dplyr::mutate(
+    pv18sbinomtest = purrr::map2(pv18sn, n, function(x,y)
+    {binom.test(x = round(x), n = round(y))}),
+    pv18sprev = pv18sn/n,
+    pvconfint = purrr::map(pv18sbinomtest, "conf.int"),
+    pv18sL95 = purrr::map_dbl(pvconfint, 1),
+    pv18sU95 =purrr::map_dbl(pvconfint, 2))
+
+# add in longnum
+genosf <- ge %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
+sf::st_geometry(genosf) <- NULL
+# bring together
+pvpos_cases <- dplyr::left_join(clstprev, genosf, by = "hv001") %>% 
+  dplyr::filter(pv18sprev != 0)
+#......................
+# bring in apes
+#......................
+ape <- readRDS("data/derived_data/drc_ape.rds")
+ape <- sf::st_intersection(ape, DRCprov)
+
+apeMainFig <- ggplot() +
+  geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
+  geom_sf(data = ape, aes(fill = species), color = NA, alpha = 0.6) +
+  scale_fill_manual("Non-Human \n Ape Habitat", 
+                    values = c("#316F65", "#4D8A5F", "#71A473", "#76BC43")) + 
+  geom_point(data = pvpos_cases,
+             aes(x = longnum, y = latnum, 
+                 color = pv18sprev), alpha = 0.9) +
+  scale_color_distiller("Vivax \n Prevalence", type = "div", palette = "RdYlBu",
+                       na.value = NA) +
+  theme_void() + 
+  theme(legend.title = element_text(size = 10, face = "bold", hjust = 0.5),
+        legend.text = element_text(size = 8),
+        legend.position = "right")
+
+
+```
+
+### Permutation Test for _P. vivax_ vs. Ape Distribution 
+
+Data will be simulated by randomly assigning clusters as ape or not territories and then calculating the prevalence of Pv within ape and non-ape regions. 
+
+```{r}
+# how many clusters do apes overlap?
+ape.range <- sf::st_union(ape$geometry)
+ape.clusters <- sf::st_intersection(ge, ape.range)
+
+# how many clusters do chimp and gorillas overlap?
+chimpgor.range <- ape %>% 
+  dplyr::filter(species != "Pan paniscus") %>% 
+  dplyr::select(geometry) %>% 
+  sf::st_union(.)
+chimpgor.clusters <- sf::st_intersection(ge, chimpgor.range)
+
+```
+
+There are `r length(ape.clusters)` clusters that overlap with apes and `r length(chimpgor.clusters)` clusters that overlap with chimpanzee and gorillas.
+
+#### All Apes 
+
+```{r, results='asis'}
+
+#......................
+# read in 
+#......................
+ape.range.iters <- readRDS("analyses/08-nonparam_riskfacts/perm_rets/all_ape_range_iters.RDS")
+
+# observed
+real.ape.clstrprev <- dt %>% 
+  dplyr::filter(hv001 %in% ape.clusters$hv001)
+
+real.ape.clstrprev <- mean(real.ape.clstrprev$pv18s)
+
+# plot out
+hist(ape.range.iters$ape_overlap_prev, breaks = 50, 
+     main = "Simulated Pvivax Prevelance \n within Ape Clusters")
+abline(v = real.ape.clstrprev, col = "red")
+
+```
+
+Assuming a one-sided test that ape clusters should have more _P. vivax_, we can get a monte-carlo P-value of approximately `r round(mean(ape.range.iters$ape_overlap_prev > real.ape.clstrprev), 2)`. Obviously not significant from plot and maps.
+
+
+#### Chimpanzee & Gorillas
+Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains but mostly at a concentrated field site, Tshuapa–Lomami–Lualaba (TL2), near the Lomami River [Liu et al. 2018](https://www.nature.com/articles/s41467-017-01798-5)
+
+```{r, results='asis'}
+
+#......................
+# read in 
+#......................
+chimpgor.range.iters <- readRDS("analyses/08-nonparam_riskfacts/perm_rets/chimp_gor_range_iters.RDS")
+
+# observed
+real.chimpgor.clstrprev <- dt %>% 
+  dplyr::filter(hv001 %in% chimpgor.clusters$hv001)
+real.chimpgor.clstrprev <- mean(real.chimpgor.clstrprev$pv18s)
+
+# plot out
+hist(chimpgor.range.iters$chimpgor_overlap_prev, breaks = 50, 
+     main = "Simulated Pvivax Prevelance \n within Chimp & Gor Clusters")
+abline(v = real.chimpgor.clstrprev, col = "red")
+
+```
+
+As above, assuming a one-sided test that chimpanzee and gorilla clusters should have more _P. vivax_, we can get a monte-carlo P-value of approximately `r round(mean(chimpgor.range.iters$chimpgor_overlap_prev > real.chimpgor.clstrprev), 2)`. Obviously not significant from plot and maps.
+
+
+```{r}
+##############################
+# Ape Overlap
+##############################
+jpeg("results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
+apeMainFig
+graphics.off()
+
+
+```
+
+```{r, results = 'asis', fig.width= 12, fig.height=12}
+apeMainFig
+```
+
+## Airplane - Importation Corr
+```{r}
+#......................
+# import data
+#......................
+airports <- readr::read_csv("data/raw_data/hotosm_data/hotosm_airports/hotosm_cd-airports.csv") %>%
+  dplyr::filter(type %in% c("large_airport", "medium_airport"))  
+airports <- sf::st_as_sf(airports, coords = c("longitude_deg", "latitude_deg"),
+                         crs = "+init=epsg:4326")
+# drc prov
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+
+# sanity check
+sp::identicalCRS(sf::as_Spatial(airports), sf::as_Spatial(DRCprov))
+
+# cities
+drccities <- readr::read_csv("data/map_bases/DRC_city_coordinates.csv") %>% 
+  dplyr::filter(population > 1e5)
+
+#......................
+# vivid items
+#......................
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+dtsrvy <- makecd2013survey(survey = dt)
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+
+#......................
+# get prev 
+#......................
+clstprev <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count, vartype = c("se", "ci")),
+                   pv18sn = srvyr::survey_total(pv18s, vartype = c("se", "ci")),
+                   pfldhn = srvyr::survey_total(pfldh, vartype = c("se", "ci"))) %>% 
+  dplyr::mutate(
+    pv18sbinomtest = purrr::map2(pv18sn, n, function(x,y)
+    {binom.test(x = round(x), n = round(y))}),
+    pv18sprev = pv18sn/n,
+    pvconfint = purrr::map(pv18sbinomtest, "conf.int"),
+    pv18sL95 = purrr::map_dbl(pvconfint, 1),
+    pv18sU95 =purrr::map_dbl(pvconfint, 2)
+  )
+
+#......................
+# get cluster and airport distances
+#......................
+clst_air_dist <- sf::st_distance(ge, airports)
+clst_air_dist <- tibble::tibble(
+  hv001 = ge$hv001,
+  mindist = apply(clst_air_dist, 1, min))
+
+# bring together
+prev_air <- dplyr::left_join(clstprev, clst_air_dist, by = "hv001") %>% 
+  dplyr::mutate(mindist = mindist/1e3)
+
+
+```
+
+#### DRC Airports
+```{r}
+inset <- airports %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
+  ggplot() +
+  geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
+  geom_point(aes(x = longnum, y = latnum), color = "#ED2C31", 
+             size = 2, alpha = 0.8, shape = 17) +
+  theme_void()
+
+```
+
+
+#### Correlation of Prev and Airports
+```{r, results='asis'}
+pmain <- prev_air %>% 
+  ggplot() + 
+  geom_pointrange(aes(x = mindist, y = pv18sprev,
+                      ymin = pv18sL95, ymax = pv18sU95),
+                  alpha = 0.5) + 
+  ylab("Vivax Prevalence") +
+  xlab("Min. Airport Dist. (km)") +
+  vivid_theme + 
+  theme(axis.line = element_line(size = 1))
+
+# bring together
+AirportMainFig <- cowplot::ggdraw() +
+  cowplot::draw_plot(pmain,
+                     x = 0, y = 0, width = 1, height = 0.95, scale = 1) +
+  cowplot::draw_plot(inset, x = 0.7, y = 0.55,
+                     width = 0.3, height = 0.3)
+
+
+plot(AirportMainFig)
+```
+
+##### Energy Correlation Value
+```{r}
+dcor <- energy::dcor(prev_air$pv18sprev, prev_air$mindist)
+```
+The energy correlation value is `r round(dcor, 3)`.
+
+
+## SatScan
+Cedar doing this locally. 
+```{r}
+satscanspace <- ggplot() + theme_void()
+```
+
+## Bring Together
+```{r}
+
+apeMainFig <- apeMainFig +
+  theme(plot.margin = margin(0, 0, 0, 0.9, "cm"))
+
+toprow <- coinfxnplotObj
+bottomrow <- cowplot::plot_grid(apeMainFig, AirportMainFig, satscanspace,
+                                ncol = 3, labels = c("(B)", "(C)", "(D)"))
+mainfig <- cowplot::plot_grid(toprow, bottomrow, 
+                   nrow = 2, rel_heights = c(0.8, 1), 
+                   labels = c("(A)", ""))
+
+jpeg("results/figures/non_param_riskfactors.jpg", width = 11, height = 8, units = "in", res = 800)
+mainfig
+graphics.off()
+
+svglite::svglite("results/figures/non_param_riskfactors.svg", width = 11, height = 8)
+mainfig
+graphics.off()
+
+```
+```{r, results='asis'}
+plot(mainfig)
+```

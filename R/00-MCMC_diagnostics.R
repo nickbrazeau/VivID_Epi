@@ -85,6 +85,7 @@ get_diag_summ_results.Bayes.PrevMap <- function(mcmc, hpd.coverage = 0.95){
   summresults <- dplyr::left_join(summresults, neff, by = "param")
   
   # trace plots
+  plot.new()
   beta <- recordPlot(PrevMap::trace.plot(mcmc, param = "beta", component.beta = 1))
   sigma <- recordPlot(PrevMap::trace.plot(mcmc, param = "sigma2"))
   phi <- recordPlot(PrevMap::trace.plot(mcmc, param = "phi"))
@@ -92,11 +93,11 @@ get_diag_summ_results.Bayes.PrevMap <- function(mcmc, hpd.coverage = 0.95){
   traceplots <- list(beta, sigma, phi, tau)
   
   # autocorr plots
-  beta <- recordPlot(PrevMap::autocor.plot(mcmc, param = "beta", component.beta = 1))
-  sigma <- recordPlot(PrevMap::autocor.plot(mcmc, param = "sigma2"))
-  phi <- recordPlot(PrevMap::autocor.plot(mcmc, param = "phi"))
-  tau <- recordPlot(PrevMap::autocor.plot(mcmc, param = "tau2"))
-  autocorr <- list(beta, sigma, phi, tau)
+  betacorr <- recordPlot(PrevMap::autocor.plot(mcmc, param = "beta", component.beta = 1))
+  sigmacorr <- recordPlot(PrevMap::autocor.plot(mcmc, param = "sigma2"))
+  phicorr <- recordPlot(PrevMap::autocor.plot(mcmc, param = "phi"))
+  taucorr <- recordPlot(PrevMap::autocor.plot(mcmc, param = "tau2"))
+  autocorr <- list(betacorr, sigmacorr, phicorr, taucorr)
   
   
   ret <- list(summresults = summresults,

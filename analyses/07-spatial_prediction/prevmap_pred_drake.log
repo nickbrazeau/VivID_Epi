@@ -1,0 +1,48 @@
+c0304.ll.unc.edu  224228  20210423 093436.653669 0400 GMT    begin drake_config
+c0304.ll.unc.edu  224228  20210423 093436.759606 0400 GMT    cache projideelmeshnickusersNickBProjectsVivID_Epi.drake
+c0304.ll.unc.edu  224228  20210423 093436.764304 0400 GMT    analyze environment
+c0304.ll.unc.edu  224228  20210423 093437.946814 0400 GMT    analyze imports
+c0304.ll.unc.edu  224228  20210423 093438.002647 0400 GMT    get knitr hash
+c0304.ll.unc.edu  224228  20210423 093439.061044 0400 GMT    analyze commands
+c0304.ll.unc.edu  224228  20210423 093439.073513 0400 GMT    set knitr files
+c0304.ll.unc.edu  224228  20210423 093439.082710 0400 GMT    create graph edges
+c0304.ll.unc.edu  224228  20210423 093439.086083 0400 GMT    connect output files
+c0304.ll.unc.edu  224228  20210423 093439.095085 0400 GMT    finalize graph edges
+c0304.ll.unc.edu  224228  20210423 093439.096225 0400 GMT    create igraph
+c0304.ll.unc.edu  224228  20210423 093439.100814 0400 GMT    trim neighborhoods
+c0304.ll.unc.edu  224228  20210423 093439.105623 0400 GMT    add igraph attributes
+c0304.ll.unc.edu  224228  20210423 093439.107341 0400 GMT    finalize igraph
+c0304.ll.unc.edu  224228  20210423 093439.118174 0400 GMT    end drake_config
+c0304.ll.unc.edu  224228  20210423 093439.119452 0400 GMT    begin make
+c0304.ll.unc.edu  224228  20210423 093439.143237 0400 GMT  paramsdf  import
+c0304.ll.unc.edu  224228  20210423 093444.930577 0400 GMT  PrevMapspatial.pred.binomial.Bayes  import
+c0304.ll.unc.edu  224228  20210423 093444.956453 0400 GMT    isolate oudated targets
+c0304.ll.unc.edu  224228  20210423 093445.029394 0400 GMT    construct priority queue
+c0304.ll.unc.edu  224228  20210423 093445.038342 0400 GMT  pred_covar  trigger missing
+c0304.ll.unc.edu  224228  20210423 093446.553835 0400 GMT    set common data
+c0304.ll.unc.edu  224228  20210423 093447.217027 0400 GMT    begin scheduling targets
+c0304.ll.unc.edu  224228  20210423 093552.784196 0400 GMT    sending common data
+c0304.ll.unc.edu  224228  20210423 093553.012241 0400 GMT    sending common data
+c0304.ll.unc.edu  224228  20210423 093556.473876 0400 GMT  pred_covar  trigger missing
+c0304.ll.unc.edu  224228  20210423 093556.484345 0400 GMT  pred_covar  target
+c0304.ll.unc.edu  224228  20210423 093556.489353 0400 GMT  pred_covar  build on an hpc worker
+c0304.ll.unc.edu  224228  20210423 093556.996940 0400 GMT  pred_intercept  trigger missing
+c0304.ll.unc.edu  224228  20210423 093557.003600 0400 GMT  pred_intercept  target
+c0304.ll.unc.edu  224228  20210423 093557.006468 0400 GMT  pred_intercept  build on an hpc worker
+c0409.ll.unc.edu  238362  20210423 093602.389464 0400 GMT  pred_covar  Warning couldnt connect to display 152.2.94.1119.0
+c0410.ll.unc.edu  257598  20210423 093604.144113 0400 GMT  pred_intercept  Warning couldnt connect to display 152.2.94.1119.0
+c0304.ll.unc.edu  224228  20210425 011640.605838 0400 GMT  pred_covar  store
+c0304.ll.unc.edu  224228  20210425 011806.944976 0400 GMT  pred_covar  time  Duration0  Duration0  exec  total
+c0304.ll.unc.edu  224228  20210425 011806.975005 0400 GMT  save_pred_covar  build locally
+c0304.ll.unc.edu  224228  20210425 011806.979367 0400 GMT  save_pred_covar  trigger missing
+c0304.ll.unc.edu  224228  20210425 011806.984879 0400 GMT  save_pred_covar  target
+c0304.ll.unc.edu  224228  20210425 011930.787397 0400 GMT  save_pred_covar  store
+c0304.ll.unc.edu  224228  20210425 011930.812463 0400 GMT  save_pred_covar  time  Duration0  Duration0  exec  total
+c0304.ll.unc.edu  224228  20210425 041936.266690 0400 GMT  pred_intercept  store
+c0304.ll.unc.edu  224228  20210425 042108.228369 0400 GMT  pred_intercept  time  Duration0  Duration0  exec  total
+c0304.ll.unc.edu  224228  20210425 042108.262685 0400 GMT  save_pred_intercept  build locally
+c0304.ll.unc.edu  224228  20210425 042108.267725 0400 GMT  save_pred_intercept  trigger missing
+c0304.ll.unc.edu  224228  20210425 042108.277360 0400 GMT  save_pred_intercept  target
+c0304.ll.unc.edu  224228  20210425 042238.226233 0400 GMT  save_pred_intercept  store
+c0304.ll.unc.edu  224228  20210425 042238.239027 0400 GMT  save_pred_intercept  time  Duration0  Duration0  exec  total
+c0304.ll.unc.edu  224228  20210425 042238.522824 0400 GMT    end make

@@ -9,56 +9,51 @@ library(sf)
 library(srvyr) 
 library(raster)
 library(PrevMap)
+library(drake)
 set.seed(48, "L'Ecuyer")
-tol <- 1e-3
 #......................
 # Import Data
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
-DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
-
 #......................
 # Subset to Pv
 #......................
-pvclust.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001"][[1]]
-# vectors have destroyed spatial class, need to remake
-pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
-sf::st_crs(pvclust.weighted) <-  sf::st_crs(ge)
+longlat <- dt %>% 
+  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
+  dplyr::filter(!duplicated(.))
+
+pvclust.weighted.nosf <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count), 
+                   plsmdn = srvyr::survey_total(pv18s, na.rm = T), 
+                   plsmdprev = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95))
 
 # need to keep integers, so will round
-pvclust.weighted <- pvclust.weighted %>% 
+pvclust.weighted.nosf <- pvclust.weighted.nosf %>% 
   dplyr::mutate(plsmdn = round(plsmdn, 0),
-                n = round(n, 0))
+                n = round(n, 0)) %>% 
+  dplyr::left_join(., longlat, by = "hv001") # add back in longlat
 
 #-------------------------------------------------------------------------
 # Aggregate Covariates
 #-------------------------------------------------------------------------
-
 # precipitation already in dataset 
 pvclst.covar <- dt %>% 
   dplyr::select("hv001", "precip_mean_cont_scale_clst") %>% 
   dplyr::filter(!duplicated(.))
 
-# bring in cropland
-crop <- readRDS("data/derived_data/vividepi_cropland_propmeans.rds") %>% 
-  dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in nightlights
-nightlists <- readRDS("data/derived_data/vividepi_night_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
+# bring in health distance
+hlthdist <- readRDS("data/derived_data/vividepi_hlthdist_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "hlthdist_cont_scale_clst"))
 
-pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = nightlists, by = "hv001")
+pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = hlthdist, by = "hv001")
 
 # join together
-pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
-pvclust.weighted.nosf <- pvclust.weighted
-sf::st_geometry(pvclust.weighted.nosf) <- NULL
+pvclust.weighted.nosf <- dplyr::left_join(pvclust.weighted.nosf, pvclst.covar, by = "hv001")
 
-riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+riskvars <- c("precip_mean_cont_scale_clst", "hlthdist_cont_scale_clst")
 
 
 
@@ -67,8 +62,7 @@ riskvars = c("precip_mean_cont_scale_clst",
 #-------------------------------------------------------------------------
 mod.framework <- tibble::tibble(name = c("intercept", "covars"),
                                 formula = c("plsmdn ~ 1", 
-                                            paste0("plsmdn ~ ", paste(riskvars, collapse = "+")))
-)
+                                            paste0("plsmdn ~ ", paste(riskvars, collapse = "+"))))
 
 coords <- as.formula(paste0("~ longnum + latnum"))
 mod.framework$data <- lapply(1:nrow(mod.framework), function(x) return(pvclust.weighted.nosf))
@@ -86,40 +80,40 @@ fit.glm <- glm(cbind(plsmdn, n - plsmdn) ~ 1,
 
 mypriors.intercept <- PrevMap::control.prior(beta.mean = 0,
                                              beta.covar = 1,
-                                             log.normal.nugget = c(0,25), # this is tau2
-                                             uniform.phi = c(0,50),
-                                             log.normal.sigma = c(0,50))
+                                             log.normal.nugget = c(2, 3), # this is tau2
+                                             log.normal.phi = c(0, 1),
+                                             log.normal.sigma2 = c(-1.75, 1.5))
 
 # NB covar matrix
-covarsmat <- matrix(0, ncol = 4, nrow=4) # three risk factors, 4 betas
-diag(covarsmat) <- 1 # identity matrix
+covarsmat <- matrix(0, ncol = 3, nrow = 3) # two risk factors, 3 betas
+diag(covarsmat) <- 1 # identity matrix 
 
-mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0, 0),
+mypriors.mod <- PrevMap::control.prior(beta.mean = c(0, 0, 0),
                                        beta.covar = covarsmat,
-                                       log.normal.nugget = c(0,25), # this is tau2
-                                       uniform.phi = c(0,50),
-                                       log.normal.sigma = c(0,50))
+                                       log.normal.nugget = c(2, 3), # this is tau2
+                                       log.normal.phi = c(0, 1),
+                                       log.normal.sigma2 = c(-1.75, 1.5))
 
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                        n.sim = 1e4+1e3,
-                                                        thin = 1, # don't thin
+mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
+                                                        n.sim = 1e4+1e4,
+                                                        thin = 5, 
                                                         L.S.lim = c(5,50),
                                                         epsilon.S.lim = c(0.01, 0.1),
-                                                        start.nugget = 0.05,
-                                                        start.sigma2 = 1,
-                                                        start.beta = -5,
-                                                        start.phi = 25,
+                                                        start.nugget = 1,
+                                                        start.sigma2 = 0.2,
+                                                        start.beta = 1,
+                                                        start.phi = 0.5,
                                                         start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e3, 
-                                                  n.sim = 1e4+1e3,
-                                                  thin = 1, # don't thin
+mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
+                                                  n.sim = 1e4+1e4,
+                                                  thin = 5, 
                                                   L.S.lim = c(5,50),
                                                   epsilon.S.lim = c(0.01, 0.1),
-                                                  start.nugget = 0.05,
-                                                  start.sigma2 = 1, 
-                                                  start.beta = c(-4, -0.2, 0, -0.02),
-                                                  start.phi = 25,
+                                                  start.nugget = 1,
+                                                  start.sigma2 = 0.2, 
+                                                  start.beta = c(1, -0.2, -0.15),
+                                                  start.phi = 0.5,
                                                   start.S = predict(fit.glm))
 
 
@@ -133,17 +127,28 @@ mod.framework$mcmcdirections <- lapply(1:nrow(mod.framework),
 mod.framework$mypriors[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mypriors.mod
 mod.framework$mcmcdirections[[ which(stringr::str_detect(mod.framework$formula, "\\+")) ]] <- mcmcdirections.mod
 
+# replicate this four times for our four chains
+mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>% 
+  dplyr::bind_rows() %>% 
+  dplyr::arrange(name)
+
 
 #......................
-# Make a wrapper for PrevMap
+# Make a wrapper for PrevMap diagnostic chain
 #......................
-fit_bayesmap_wrapper <- function(name, 
-                                 formula, 
-                                 trials = "n", 
-                                 coords, 
-                                 data, 
-                                 mypriors, mcmcdirections, 
-                                 kappa = 1){
+dir.create("analyses/07-spatial_prediction/prevmap_diagn_runs/", 
+           recursive = TRUE)
+
+fit_bayesmap_wrapper <- function(path){
+  input <- readRDS(path)
+  name <- input$name  
+  formula <- input$formula  
+  trials = "n"
+  coords <- input$coords[[1]]
+  data <- input$data[[1]]
+  mypriors <- input$mypriors[[1]]
+  mcmcdirections <- input$mcmcdirections[[1]]
+  kappa = 0.75
   
   ret <- PrevMap::binomial.logistic.Bayes(
     formula = as.formula(formula),
@@ -154,92 +159,152 @@ fit_bayesmap_wrapper <- function(name,
     control.mcmc = mcmcdirections,
     kappa = kappa
   )
-  return(ret)
+  
+  #......................
+  # save out
+  #......................
+  outpath = paste0("analyses/07-spatial_prediction/prevmap_diagn_runs/",
+                   name, ".diagnostic_run_ret.RDS")
+  saveRDS(ret, file = outpath)
+  return(0)
 }
 
 
 
-# replicate this four times for our four chains
-mod.framework <- lapply(1:4, function(x) return(mod.framework)) %>% 
-  dplyr::bind_rows() %>% 
-  dplyr::arrange(name)
 
 ####################################################################################
-###########                      Diagnostic Runs                           #########
+###########            Diagnostic Run Drake Plan                           #########
 #####################################################################################
-setwd("analyses/07-spatial_prediction")
-ntry <- nrow(mod.framework)
-sjob <- rslurm::slurm_apply(f = fit_bayesmap_wrapper, 
-                            params = mod.framework, 
-                            jobname = 'prevmap_diagnostic_chains',
-                            nodes = ntry, 
-                            cpus_per_node = 1, 
-                            submit = T,
-                            slurm_options = list(mem = 64000,
-                                                 'cpus-per-task' = 1,
-                                                 error =  "%A_%a.err",
-                                                 output = "%A_%a.out",
-                                                 time = "5-00:00:00"))
+#......................
+# make diagnostic map
+#......................
+# PrevMap is having trouble with the drake nesting. resorted to reading in input files
+dir.create("analyses/07-spatial_prediction/prevmap_drake_inputs", recursive = T)
+mod.framework$name <- paste0(mod.framework$name, seq(1, 4))
+mod.framework.list <- split(mod.framework, 1:nrow(mod.framework))
+names(mod.framework.list) <- purrr::map_chr(mod.framework.list, "name")
+lapply(mod.framework.list, function(x){
+  saveRDS(x, paste0("analyses/07-spatial_prediction/prevmap_drake_inputs/", 
+                    x$name, "_prevmap_diag_input.RDS"))
+})
 
+diagruns <- list.files("analyses/07-spatial_prediction/prevmap_drake_inputs/",
+                       full.names = TRUE)
+diagruns <- tibble::tibble(path = diagruns)
+
+# make drake map
+diag_analysis_names <- stringr::str_split_fixed(basename(diagruns$path), "_", n = 2)[,1]
+plan_diag <- drake::drake_plan(
+  fits = target(
+    fit_bayesmap_wrapper(path), 
+    transform = map(
+      .data = !!diagruns,
+      .names = !!diag_analysis_names
+    )
+  )
+)
 ####################################################################################
 ###########                          LONG Run                              #########
 ####################################################################################
 # note that PrevMap::spatial.pred.binomial.Bayes access the "formula"
 # call within the model object for prediction (with covariates). As a result,
 # we can't use a wrapper with purrr as above. 
-
+dir.create("analyses/07-spatial_prediction/prevmap_long_runs/", 
+           recursive = TRUE)
 # Directions LONG RUN                      
-mcmcdirections.intercept <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                        n.sim = 1e5 + 1e4,
-                                                        thin = 1, # don't thin
-                                                        L.S.lim = c(5,50),
-                                                        epsilon.S.lim = c(0.01, 0.1),
-                                                        start.nugget = 0.05,
-                                                        start.sigma2 = 1,
-                                                        start.beta = -5,
-                                                        start.phi = 25,
-                                                        start.S = predict(fit.glm))
+mcmcdirections.intercept.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
+                                                             n.sim = 1e5 + 1e5,
+                                                             thin = 10, 
+                                                             L.S.lim = c(5,50),
+                                                             epsilon.S.lim = c(0.01, 0.1),
+                                                             start.nugget = 1,
+                                                             start.sigma2 = 0.2,
+                                                             start.beta = 1,
+                                                             start.phi = 0.5,
+                                                             start.S = predict(fit.glm))
 
-mcmcdirections.mod <- PrevMap::control.mcmc.Bayes(burnin = 1e4, 
-                                                  n.sim = 1e5 + 1e4,
-                                                  thin = 1, # don't thin
-                                                  L.S.lim = c(5,50),
-                                                  epsilon.S.lim = c(0.01, 0.1),
-                                                  start.nugget = 0.05,
-                                                  start.sigma2 = 1, 
-                                                  start.beta = c(-4, -0.2, 0, -0.02),
-                                                  start.phi = 25,
-                                                  start.S = predict(fit.glm))
+mcmcdirections.mod.long <- PrevMap::control.mcmc.Bayes(burnin = 1e5, 
+                                                       n.sim = 1e5 + 1e5,
+                                                       thin = 10, 
+                                                       L.S.lim = c(5,50),
+                                                       epsilon.S.lim = c(0.01, 0.1),
+                                                       start.nugget = 1,
+                                                       start.sigma2 = 0.2, 
+                                                       start.beta = c(1, -0.2, -0.15),
+                                                       start.phi = 0.5,
+                                                       start.S = predict(fit.glm))
 
 
 
-longrun.prevmapbayes.intercept <- PrevMap::binomial.logistic.Bayes(
-  formula = as.formula("plsmdn ~ 1"),
-  units.m = as.formula("~ n"),
-  coords = as.formula("~ longnum + latnum"),
-  data = pvclust.weighted.nosf,
-  control.prior = mypriors.intercept,
-  control.mcmc = mcmcdirections.intercept,
-  kappa = 1
+#......................
+# drake plan for long intercept
+#......................
+plan_long_intercept <- drake::drake_plan(
+  longrun_intercept = target(
+    PrevMap::binomial.logistic.Bayes(
+      formula = as.formula("plsmdn ~ 1"),
+      units.m = as.formula("~ n"),
+      coords = as.formula("~ longnum + latnum"),
+      data = pvclust.weighted.nosf,
+      control.prior = mypriors.intercept,
+      control.mcmc = mcmcdirections.intercept.long,
+      kappa = 0.75
+    )),
+  savelongrun_intercept = target(
+    saveRDS(longrun_intercept, 
+            file = "analyses/07-spatial_prediction/prevmap_long_runs/intercept_model.RDS"),
+    hpc = FALSE
+  )
 )
 
 
-longrun.prevmapbayes.mod <- PrevMap::binomial.logistic.Bayes(
-  formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
-                       cropprop_cont_scale_clst + nightlightsmean_cont_scale_clst"),
-  units.m = as.formula("~ n"),
-  coords = as.formula("~ longnum + latnum"),
-  data = pvclust.weighted.nosf,
-  control.prior = mypriors.mod,
-  control.mcmc = mcmcdirections.mod,
-  kappa = 1
-)
+#......................
+# drake plan for long covar
+#......................
+plan_long_covarmad <- drake::drake_plan(
+  longrun_covarmod = target(
+    PrevMap::binomial.logistic.Bayes(
+      formula = as.formula("plsmdn ~ 1 + precip_mean_cont_scale_clst + 
+                           hlthdist_cont_scale_clst"),
+      units.m = as.formula("~ n"),
+      coords = as.formula("~ longnum + latnum"),
+      data = pvclust.weighted.nosf,
+      control.prior = mypriors.mod,
+      control.mcmc = mcmcdirections.mod.long,
+      kappa = 0.75
+    )),
+  savelongrun_covar = target(
+    saveRDS(longrun_covarmod, 
+            file = "analyses/07-spatial_prediction/prevmap_long_runs/covariate_model.RDS"),
+    hpc = FALSE))
 
 
 
-# save out
-dir.create("prevmap_long_chains")
-saveRDS(object = longrun.prevmapbayes.intercept, file = "prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
-saveRDS(object = longrun.prevmapbayes.mod, file = "prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+#............................................................
+# bring drake plans together
+#...........................................................
+plan <- drake::bind_plans(plan_diag, 
+                          plan_long_intercept,
+                          plan_long_covarmad)
 
+#......................
+# call drake to send out to slurm
+#......................
+options(clustermq.scheduler = "slurm",
+        clustermq.template = "analyses/07-spatial_prediction/drake_clst/slurm_clustermq_LL_fit.tmpl")
+make(plan,
+     parallelism = "clustermq",
+     jobs = 10,
+     log_make = "analyses/07-spatial_prediction/prevmap_fit_drake.log", verbose = 2,
+     log_progress = TRUE,
+     log_build_times = FALSE,
+     recoverable = FALSE,
+     history = FALSE,
+     session_info = FALSE,
+     lock_envir = FALSE,  
+     lock_cache = FALSE)
+
+
+
+cat("************** Drake Finished **************************")
 

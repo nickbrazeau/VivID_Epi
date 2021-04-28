@@ -8,11 +8,11 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center')
-
+knitr::opts_knit$set(root.dir = here::here())
 ```
 ```{r}
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
+source("R/00-functions_basic.R")
+source("R/00-functions_maps.R") 
 library(tidyverse)
 library(sf)
 library(geosphere)
@@ -25,10 +25,12 @@ set.seed(48)
 #......................
 # Import Data
 #......................
-load("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_maps_bases.rda")
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
-DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
-ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
+load("data/map_bases/vivid_maps_bases.rda")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS") %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2])
 
 # need to add back in geometry to dt
 gegeoms <- ge %>% 
@@ -85,12 +87,12 @@ mp$plots <- pmap(mp, mapplotter)
 ```{r, results='asis'}
 
 cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
-                  nrow = 1)
+                   nrow = 1)
 
 ```
 
 ```{r}
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Province_Prevalence_3x1.jpg",
+jpeg("results/figures/Province_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(mp$plots[[1]],  mp$plots[[2]],  mp$plots[[3]],
                    nrow = 1)
@@ -105,7 +107,7 @@ cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
 ```
 
 ```{r}
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Cluster_Prevalence_3x1.jpg",
+jpeg("results/figures/Cluster_Prevalence_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(mp$plots[[4]],  mp$plots[[5]],  mp$plots[[6]],
                    nrow = 1)
@@ -128,7 +130,7 @@ mp.clst <- mp %>%
 case_n_maps <- purrr::pmap(mp.clst[,c("data", "plsmdmspec")], casemap_n_plotter)
 
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Case_N_ClusterPlots_3x1.jpg",
+jpeg("results/figures/Case_N_ClusterPlots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
                    nrow = 1)
@@ -148,20 +150,20 @@ cowplot::plot_grid(case_n_maps[[1]],  case_n_maps[[2]],  case_n_maps[[3]],
 
 caseprevmaps <- purrr::pmap(mp.clst[,c("data", "plsmdmspec")], casemap_prev_plotter)
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Prevalence_Case_ClusterPlots_3x1.jpg",
+jpeg("results/figures/Prevalence_Case_ClusterPlots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
-                  nrow = 1)
+                   nrow = 1)
 graphics.off()
 
 ```
 
 ```{r, results='asis'}
 cowplot::plot_grid(caseprevmaps[[1]],  caseprevmaps[[2]],  caseprevmaps[[3]],
-                  nrow = 1)
+                   nrow = 1)
 ```
 
-### Case Plot (Prettier)
+### Case Prev Plot (Prettier)
 
 ```{r}
 
@@ -170,19 +172,20 @@ pvcaseprev <- mp.clst[,c("data", "plsmdmspec")] %>%
 pvcaseprev <- pvcaseprev$data[[1]]
 
 pos <- pvcaseprev %>% 
-    dplyr::filter(plsmdprev > 0)
+  dplyr::filter(plsmdprev > 0)
 neg <- pvcaseprev %>% 
-    dplyr::filter(plsmdprev == 0)
-  
+  dplyr::filter(plsmdprev == 0)
+
 pvret <- ggplot() + 
   geom_sf(data = DRCprov, color = "#737373", fill = "#525252") +
-  geom_sf(data = neg, aes(size = n), shape = 4, show.legend = F, colour = "#f0f0f0") +
-  geom_sf(data = pos, aes(colour = plsmdprev, size = n), alpha = 0.9) +
+  coord_sf(datum=NA) +  # to get rid of gridlines
+  prettybasemap_nodrc_dark_nonorth +
+  geom_point(data = neg, aes(x = longnum, y = latnum, size = n), 
+             shape = 4, show.legend = F, colour = "#f0f0f0") +
+  geom_point(data = pos, aes(x = longnum, y = latnum, 
+                          colour = plsmdprev, size = n), alpha = 0.9) +
   scale_color_distiller("Prevalence", type = "div", palette = "RdYlBu") +
   scale_size(guide = 'none') +
-  coord_sf(datum=NA) + # to get rid of gridlines
-  vivid_theme +
-  prettybasemap_nodrc_dark +
   theme(axis.text = element_blank(),
         axis.line = element_blank(), 
         axis.title = element_blank(),
@@ -191,7 +194,7 @@ pvret <- ggplot() +
 
 
 # make world map
-DRC <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/gadm/gadm36_COD_0_sp.rds") %>% 
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds") %>% 
   sf::st_as_sf(.)
 
 bb <- sf::st_bbox(
@@ -219,125 +222,65 @@ africaplot <- ggplot() +
         panel.background = element_rect(fill = "white", color = "black", size = 1))
 
 
-
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Africa_Inset_PvClstPrev_dark.jpg", width = 11, height = 8, units = "in", res = 500)
-cowplot::ggdraw() +
+mainPlot <- cowplot::ggdraw() +
   cowplot::draw_plot(pvret, x = 0, y = 0, width = 1, height = 1, scale = 1) +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
+# out
+jpeg("results/figures/Africa_Inset_PvClstPrev_dark.jpg", width = 11, height = 8, units = "in", res = 500)
+mainPlot
 graphics.off()
 
+# save out for final map
+saveRDS(pvret, "results/Pointest_map_prev_PlotObj.RDS")
 
 ```
 
 ```{r, results='asis'}
-
-cowplot::ggdraw() +
-  cowplot::draw_plot(pvret, x = 0, y = 0, width = 1, height = 1, scale = 1) +
-  cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)
-
+plot(mainPlot)
 ```
+
 
 ## Spatial Autocorrelation 
 
 ### Moran's I by Province
 ```{r, results='asis'}
-
 #......................
-# Make Adjacency Matrix for Pvf
+# read in prov Moran's I
 #......................
-drcprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
-# https://cran.r-project.org/web/packages/spdep/vignettes/nb.pdf
-W.nb <- spdep::poly2nb(sf::as_Spatial(drcprov), row.names = drcprov$adm1name)
-W <- spdep::nb2mat(W.nb, style = "B") # binary weights taking values zero or one (only one is recorded)
-
-
-moran_mc_wrapper <- function(data, listw){
-  prev <- data$plsmdprev
-  ret <- spdep::moran.mc(x = prev,
-                         listw = spdep::mat2listw(listw),
-                         alternative = "greater",
-                         nsim = 1e5)
-  return(ret)
-}
-
-#........................
-# Moran's I for Prov
-#........................
-mp.prov <- mp %>% 
-  dplyr::filter(maplvl == "adm1name") %>% 
-  dplyr::ungroup()
-
-mp.prov$moranIprov <- purrr::map(mp.prov$data, moran_mc_wrapper, listw = W)
-
-moranIprov <- mp.prov %>% 
-  dplyr::select(c("plsmdmspec", "moranIprov")) 
-
-moranIprov$Istatistic <- purrr::map(moranIprov$moranIprov, "statistic")
-moranIprov$pvalue <- purrr::map(moranIprov$moranIprov, "p.value")
-
+moranIprov <- readRDS("results/MoranI_prov.RDS")
 moranIprov <- moranIprov %>% 
   dplyr::select(-c("moranIprov")) %>% 
   tidyr::unnest(cols = c("Istatistic", "pvalue"))
 
 knitr::kable(moranIprov)
 
+
 ```
 
 ### Moran's I by Cluster
 ```{r, results='asis'}
 
-#........................
-# Moran's I for Cluster Level
-#........................
-ge.nosf <- ge
-sf::st_geometry(ge.nosf) <- NULL
-
-# note, need to remove three clusters that were not screened for malaria
-# one cluster due to no HIV testing in it(? DHS internal) and 
-# two clusters lost due to contamination
-maldhsclustlist <- unique( dt$hv001 )
-ge.clst <- ge %>% 
-  dplyr::filter(hv001 %in% maldhsclustlist)
-
-# get GC Weight Matrix
-gcdist <- ge.clst %>% 
-   dplyr::select(c("longnum", "latnum")) %>% 
-  sf::st_distance(x = .,
-                  which = "Great Circle")
-
-gcdist  <- apply(gcdist, 2, as.numeric) # drop units
-gcdist.inv <- 1/gcdist
-diag(gcdist.inv) <- 0
-
-mp.clst$moranIclust <- purrr::map(mp.clst$data, 
-                                  moran_mc_wrapper, 
-                                  listw = gcdist.inv)
-
-moranIclst <- mp.clst %>% 
-  dplyr::select(c("plsmdmspec", "moranIclust")) 
-
-
-moranIclst$Istatistic <- purrr::map(moranIclst$moranIclust, "statistic")
-moranIclst$pvalue <- purrr::map(moranIclst$moranIclust, "p.value")
-
+#......................
+# read in cluster Moran's I
+#......................
+moranIclst <- readRDS("results/MoranI_clust.RDS")
 moranIclst <- moranIclst %>% 
   dplyr::select(-c("moranIclust")) %>% 
   tidyr::unnest(cols = c("Istatistic", "pvalue"))
 
 knitr::kable(moranIclst)
 
-
 ```
 
 
-## Krigged Prevalence Maps
+## Krigged MLE Prevalence Maps
 **N.B. Here I have employed an empirical logit transformation and used a "trans-Gaussian" approximation under a MLE framework**. This means that I now assume a model framework of:    
 $$\hat{Y}|S(x_i) \sim N(X_i^\intercal \space \beta \space + \space S(x_i), \space \tau^2)$$    
 Under this formulation, nugget effects are being absorbed by the conditional normal. 
-  
+
 ```{r}
 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R")
+source("R/00-functions_maps.R")
 
 pfldhprev <- guass_map_clstr_summarizer(data = dt, plsmdmspec = pfldh, clustgeom = ge) %>% 
   dplyr::mutate(plsmdmspec = "pfldh")
@@ -362,7 +305,7 @@ colnames(grid.pred) <- c("long","lat")
 pr$prevrasters <- map(pr$data, 
                       fit_pred_spMLE, outcome = "logitplsmdprev", covar = "1", 
                       long_var = "longnum", lat_var = "latnum",
-                      grid.pred = grid.pred, kappa = 0.5, 
+                      grid.pred = grid.pred, kappa = 0.75, 
                       pred.reps = 1e2)
 
 pr$prevrasterspred <- purrr::map(pr$prevrasters, "pred")
@@ -382,175 +325,31 @@ prevmaprasterplots.north <- map(prevmaprasterplots, function(x){return(x + smpl_
 cowplot::plot_grid(prevmaprasterplots.north[[1]],
                    prevmaprasterplots.north[[2]],
                    prevmaprasterplots.north[[3]],
-                  nrow = 1)
+                   nrow = 1)
 
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/PrevMap_Plots_3x1.jpg",
+jpeg("results/figures/PrevMap_Plots_3x1.jpg",
      heigh = 8, width = 11, units = "in", res=500)
 cowplot::plot_grid(prevmaprasterplots.north[[1]],
                    prevmaprasterplots.north[[2]],
                    prevmaprasterplots.north[[3]],
-                  nrow = 1)
+                   nrow = 1)
 graphics.off()
 
 
 ```
 **Order is Pf, Pv, Po**.
 
-
-## _P. vivax_ vs. Ape Distribution 
-```{r, results='asis'}
-
-ape <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/drc_ape.rds")
-
-aperange_nhapv <- 
-  caseprevmaps[[2]] +
-  scale_color_viridis_c("Prevalence") + 
-  geom_sf(data = ape, aes(fill = species), alpha = 0.4) +
-  scale_fill_manual("Non-Human \n Ape Range", 
-                    values = c("#33a02c", "#b3de69", "#8dd3c7", "#80b1d3"))
-
-```
-
-### Permutation Test for _P. vivax_ vs. Ape Distribution 
-```{r}
-# how many clusters do apes overlap?
-ape.range <- sf::st_union(ape$geometry)
-ape.clusters <- sf::st_intersection(ge, ape.range)
-
-# how many clusters do chimp and gorillas overlap?
-chimpgor.range <- ape %>% 
-  dplyr::filter(species != "Pan paniscus") %>% 
-  dplyr::select(geometry) %>% 
-  sf::st_union(.)
-chimpgor.clusters <- sf::st_intersection(ge, chimpgor.range)
-
-```
-
-
-Data will be simulated by randomly assigning clusters as ape or not territories and then calculating the prevalence of Pv within ape and non-ape regions. 
-  
-```{r}
-
-run_ape_permutations <- function(dtsrvy18s, n.apeclsts){
-  
-  clsts <- dtsrvy18s %>% 
-    tibble::as_tibble(.) %>% 
-    dplyr::select("hv001") %>% 
-    dplyr::filter(!duplicated(.)) %>% 
-    unlist(.)
-  
-  apeclsts <- sample(clsts, size = n.apeclsts, replace = F)
-
-  ape.ovrlp.pos <- dtsrvy18s %>% 
-    dplyr::filter(hv001 %in% apeclsts) %>% 
-    dplyr::summarise(pv18s = srvyr::survey_mean(pv18s)) %>% 
-    dplyr::select(-c(dplyr::ends_with("_se")))
-  
-  ret <- unname(as.vector(ape.ovrlp.pos))
-  
-  return(ret)
-
-}
-
-sims <- 1e4
-
-```
-     
-There are `r length(ape.clusters)` clusters that overlap with apes and `r length(chimpgor.clusters)` clusters that overlap with chimpanzee and gorillas.
-
-#### All Apes 
-
-```{r, results='asis'}
-
-ape.range.iters <- data.frame(iter = 1:sims)
-
-ape.range.iters$ape_overlap_prev <- purrr::map(ape.range.iters$iter, function(x){
-  return( run_ape_permutations(dtsrvy18s = dtsrvy, n.apeclsts = length(ape.clusters)) )
-  }) 
-  
-ape.range.iters$ape_overlap_prev <- unlist(ape.range.iters$ape_overlap_prev )
-
-
-real.ape.clstrprev <- dt %>% 
-  dplyr::filter(hv001 %in% ape.clusters$hv001)
-
-real.ape.clstrprev <- mean(real.ape.clstrprev$pv18s)
-
-hist(ape.range.iters$ape_overlap_prev, breaks = 50, 
-     main = "Simulated Pvivax Prevelance \n within Ape Clusters")
-abline(v = real.ape.clstrprev, col = "red")
-
-
-
-```
-
-Assuming a one-sided test that ape clusters should have more _P. vivax_, we can get a monte-carlo P-value of approximately `r round(mean(ape.range.iters$ape_overlap_prev > real.ape.clstrprev), 2)`. Obviously not significant from plot and maps.
-
-
-#### Chimpanzee & Gorillas
-Note, Bonobos have recently been shown to also harbor _P. vivax-like_ strains but mostly at a concentrated field site, Tshuapa–Lomami–Lualaba (TL2), near the Lomami River [Liu et al. 2018](https://www.nature.com/articles/s41467-017-01798-5)
-
-```{r, results='asis'}
-
-chimpgor.range.iters <- data.frame(iter = 1:sims)
-
-chimpgor.range.iters$chimpgor_overlap_prev <- purrr::map(chimpgor.range.iters$iter, function(x){
-  return( run_ape_permutations(dtsrvy18s = dtsrvy, n.apeclsts = length(chimpgor.clusters)) )
-}) 
-
-chimpgor.range.iters$chimpgor_overlap_prev <- unlist(chimpgor.range.iters$chimpgor_overlap_prev )
-
-
-real.chimpgor.clstrprev <- dt %>% 
-  dplyr::filter(hv001 %in% chimpgor.clusters$hv001)
-
-real.chimpgor.clstrprev <- mean(real.chimpgor.clstrprev$pv18s)
-
-hist(chimpgor.range.iters$chimpgor_overlap_prev, breaks = 50, 
-     main = "Simulated Pvivax Prevelance \n within Chimp & Gor Clusters")
-abline(v = real.chimpgor.clstrprev, col = "red")
-
-
-```
-
-As above, assuming a one-sided test that chimpanzee and gorilla clusters should have more _P. vivax_, we can get a monte-carlo P-value of approximately `r round(mean(chimpgor.range.iters$chimpgor_overlap_prev > real.chimpgor.clstrprev), 2)`. Obviously not significant from plot and maps.
-
+#### More Maps
 
 ```{r}
 #---------------------------------------------- 
 # Housekeeping -- save out and write out
 #----------------------------------------------- 
- 
-saveRDS(mp, file = "~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-
-
+saveRDS(mp, file = "data/derived_data/basic_cluster_mapping_data.rds")
 provmaps <- mp$plots[1:3]
-
-save(provmaps, caseprevmaps, case_n_maps, aperange_nhapv,
-      file = "~/Documents/GitHub/VivID_Epi/results/basic_maps_results.rda")
-
-```
-
-```{r}
-
-##############################
-# Ape Overlap
-##############################
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-ape-overlap-crude_maps1x1.jpg", width = 11, height = 8, units = "in", res = 500)
-aperange_nhapv + prettybasemap_nodrc
-graphics.off()
-
-```
-
-```{r, results = 'asis', fig.width= 12, fig.height=12}
-aperange_nhapv + prettybasemap_nodrc
-```
-
-
-#### More Maps
-
-```{r}
+save(provmaps, caseprevmaps, case_n_maps,
+     file = "results/basic_maps_results.rda")
 
 ############################################################
 #########               MORE MAPS                  ######### 
@@ -564,7 +363,7 @@ prevmaprasterplots_lrg <- map(prevmaprasterplots, function(x){return(x + smpl_ba
 ##############################
 # Pf, Pv, Po All together
 ##############################
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-pf-po_crude_maps3x3.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("results/figures/pv-pf-po_crude_maps3x3.jpg", width = 11, height = 8, units = "in", res = 500)
 gridExtra::grid.arrange(
   provmaps_lrg[[1]], caseprevmaps_lrg[[1]], prevmaprasterplots_lrg[[1]],
   provmaps_lrg[[2]], caseprevmaps_lrg[[2]], prevmaprasterplots_lrg[[2]],
@@ -589,7 +388,7 @@ gridExtra::grid.arrange(
 ##############################
 # Just Pv 
 ##############################
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-crude_maps2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("results/figures/pv-crude_maps2x2.jpg", width = 11, height = 8, units = "in", res = 500)
 gridExtra::grid.arrange(
   provmaps_lrg[[2]], case_n_maps_lrg[[2]],
   caseprevmaps_lrg[[2]], prevmaprasterplots_lrg[[2]], 
@@ -627,11 +426,25 @@ pvclst.dat <- mp.clst %>%
 pvclst.dat <- pvclst.dat$data[[1]] %>%  # can't unnest geometry 
   dplyr::filter(plsmdn > 5)
 
+pv_clst_count_label <- ggplot() + 
+  geom_sf(data = DRCprov) +
+  geom_point(data = pvclst.dat, aes(size = n, x = longnum, y = latnum,
+                                 color = plsmdn), alpha = 0.5) +
+  ggrepel::geom_label_repel(data = pvclst.dat,
+                            aes(x = longnum, y = latnum, label = plsmdn)) +
+  scale_color_distiller("Weighted \n Count", type = "div", palette = "RdYlBu") +
+  
+  scale_size(guide = 'none') +
+  ggtitle("Labeled with Cluster Case Counts > 5") +
+  coord_sf(datum=NA) + # to get rid of gridlines
+  vivid_theme +
+  theme(axis.text = element_blank(),
+        axis.line = element_blank(), 
+        axis.title = element_blank(),
+        legend.position = "bottom")
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-case_prev_ggrepel_counts.jpg", width = 11, height = 8, units = "in", res = 500)
-caseprevmaps_lrg[[2]] + ggrepel::geom_label_repel(data = pvclst.dat,
-                                                  aes(x = longnum, y = latnum, label = plsmdn)) +
-  ggtitle("Labeled with Cluster Case Counts > 5")
+jpeg("results/figures/pv-case_prev_ggrepel_counts.jpg", width = 11, height = 8, units = "in", res = 500)
+plot(pv_clst_count_label)
 graphics.off()
 
 
@@ -639,11 +452,7 @@ graphics.off()
 
 
 ```{r, results='asis'}
-
-caseprevmaps_lrg[[2]] + ggrepel::geom_label_repel(data = pvclst.dat,
-                                                  aes(x = longnum, y = latnum, label = plsmdn)) +
-  ggtitle("Labeled with Cluster Case Counts > 5")
-
+plot(pv_clst_count_label)
 ```
 
 ```{r}
@@ -667,7 +476,7 @@ pvprevmap <-  prevmaprasterplots_lrg[[2]] +
     legend.text = element_text(face = "bold", angle = 0, vjust = 0.5, hjust = 0.5)
   )
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pv-pf-prevmap2x2.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("results/figures/pv-pf-prevmap2x2.jpg", width = 11, height = 8, units = "in", res = 500)
 cowplot::plot_grid(pfprevmap, 
                    pvprevmap, 
                    nrow = 1)
@@ -690,10 +499,7 @@ cowplot::plot_grid(pfprevmap,
 ##############################
 # Pf nice
 ##############################
-drccites <- readxl::read_excel("~/Documents/GitHub/VivID_Epi/data/map_bases/DRC_city_coordinates.xlsx") %>% 
-  dplyr::mutate(latnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,1] ),
-                longnum = as.numeric( stringr::str_split_fixed(coordinates, ",", n=2)[,2] ) 
-                )
+drccites <- readr::read_csv("data/map_bases/DRC_city_coordinates.csv")
 
 pfprevmap <- pfprevmap  +
   geom_point(data = drccites, aes(x = longnum, y=latnum)) + 
@@ -704,7 +510,7 @@ pfprevmap <- pfprevmap  +
         legend.text = element_text(size = 12, face = "bold", angle = 0))
 
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/pf-prevmap_nice.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("results/figures/pf-prevmap_nice.jpg", width = 11, height = 8, units = "in", res = 500)
 plot(pfprevmap)
 graphics.off()
 
@@ -722,16 +528,16 @@ clstcounts <- dtsrvy %>%
   dplyr::mutate(count = 1) %>% 
   dplyr::summarise( 
     n = srvyr::survey_total(count)
-    )
+  )
 clstcounts <- dplyr::left_join(clstcounts, ge, by = "hv001")
 
 clstcountsplot <- ggplot() + 
   geom_sf(data = DRCprov, fill = "#e5f5e0", color = "#969696") +
   geom_point(data = clstcounts, aes(x = longnum, y = latnum, size = n), fill = "#252525", shape = 4, alpha = 0.5, show.legend = F) +
-  prettybasemap_nodrc
+  smpl_base_map
 
 
-jpeg("~/Documents/GitHub/VivID_Epi/results/figures/Africa_Inset_clsts.jpg", width = 11, height = 8, units = "in", res = 500)
+jpeg("results/figures/Africa_Inset_clsts.jpg", width = 11, height = 8, units = "in", res = 500)
 cowplot::ggdraw() +
   cowplot::draw_plot(clstcountsplot, x = 0, y = 0, width = 1, height = 1, scale = 1) +
   cowplot::draw_plot(africaplot, x = 0.02, y= 0.68, width = 0.35, height = 0.25)

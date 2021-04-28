@@ -1,0 +1,108 @@
+c0410.ll.unc.edu  184796  20210420 184216.830131 0400 GMT    begin drake_config
+c0410.ll.unc.edu  184796  20210420 184216.910349 0400 GMT    cache projideelmeshnickusersNickBProjectsVivID_Epi.drake
+c0410.ll.unc.edu  184796  20210420 184216.913314 0400 GMT    analyze environment
+c0410.ll.unc.edu  184796  20210420 184216.955134 0400 GMT    analyze imports
+c0410.ll.unc.edu  184796  20210420 184216.985540 0400 GMT    get knitr hash
+c0410.ll.unc.edu  184796  20210420 184217.023124 0400 GMT    analyze commands
+c0410.ll.unc.edu  184796  20210420 184217.038668 0400 GMT    set knitr files
+c0410.ll.unc.edu  184796  20210420 184217.048451 0400 GMT    create graph edges
+c0410.ll.unc.edu  184796  20210420 184217.053307 0400 GMT    connect output files
+c0410.ll.unc.edu  184796  20210420 184217.062336 0400 GMT    finalize graph edges
+c0410.ll.unc.edu  184796  20210420 184217.063460 0400 GMT    create igraph
+c0410.ll.unc.edu  184796  20210420 184217.065123 0400 GMT    trim neighborhoods
+c0410.ll.unc.edu  184796  20210420 184217.068539 0400 GMT    add igraph attributes
+c0410.ll.unc.edu  184796  20210420 184217.070065 0400 GMT    finalize igraph
+c0410.ll.unc.edu  184796  20210420 184217.081686 0400 GMT    end drake_config
+c0410.ll.unc.edu  184796  20210420 184217.083042 0400 GMT    begin make
+c0410.ll.unc.edu  184796  20210420 184217.112449 0400 GMT  PrevMapbinomial.logistic.Bayes  import
+c0410.ll.unc.edu  184796  20210420 184217.133316 0400 GMT  mcmcdirections.intercept.long  import
+c0410.ll.unc.edu  184796  20210420 184217.149639 0400 GMT  mcmcdirections.mod.long  import
+c0410.ll.unc.edu  184796  20210420 184217.167368 0400 GMT  pvclust.weighted.nosf  import
+c0410.ll.unc.edu  184796  20210420 184217.189804 0400 GMT  mypriors.intercept  import
+c0410.ll.unc.edu  184796  20210420 184217.208604 0400 GMT  mypriors.mod  import
+c0410.ll.unc.edu  184796  20210420 184217.231106 0400 GMT  fit_bayesmap_wrapper  import
+c0410.ll.unc.edu  184796  20210420 184217.255583 0400 GMT    isolate oudated targets
+c0410.ll.unc.edu  184796  20210420 184217.324518 0400 GMT    construct priority queue
+c0410.ll.unc.edu  184796  20210420 184217.346529 0400 GMT  longrun_intercept  trigger missing
+c0410.ll.unc.edu  184796  20210420 184217.890176 0400 GMT    set common data
+c0410.ll.unc.edu  184796  20210420 184217.967233 0400 GMT    begin scheduling targets
+c0410.ll.unc.edu  184796  20210420 184251.536181 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.638470 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.657183 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.690266 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.697915 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.709080 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.769497 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184251.776110 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 184255.167502 0400 GMT  longrun_intercept  trigger missing
+c0410.ll.unc.edu  184796  20210420 184255.177873 0400 GMT  longrun_intercept  target
+c0410.ll.unc.edu  184796  20210420 184255.182552 0400 GMT  longrun_intercept  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184255.679608 0400 GMT  longrun_covarmod  trigger missing
+c0410.ll.unc.edu  184796  20210420 184255.686511 0400 GMT  longrun_covarmod  target
+c0410.ll.unc.edu  184796  20210420 184255.688698 0400 GMT  longrun_covarmod  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184255.995939 0400 GMT  covars1  trigger missing
+c0410.ll.unc.edu  184796  20210420 184256.002284 0400 GMT  covars1  target
+c0410.ll.unc.edu  184796  20210420 184256.005018 0400 GMT  covars1  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184256.009762 0400 GMT  covars2  trigger missing
+c0410.ll.unc.edu  184796  20210420 184256.015143 0400 GMT  covars2  target
+c0410.ll.unc.edu  184796  20210420 184256.016787 0400 GMT  covars2  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184256.019898 0400 GMT  covars3  trigger missing
+c0410.ll.unc.edu  184796  20210420 184256.024387 0400 GMT  covars3  target
+c0410.ll.unc.edu  184796  20210420 184256.025795 0400 GMT  covars3  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184256.128395 0400 GMT  covars4  trigger missing
+c0410.ll.unc.edu  184796  20210420 184256.135044 0400 GMT  covars4  target
+c0410.ll.unc.edu  184796  20210420 184256.137516 0400 GMT  covars4  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184256.337812 0400 GMT  intercept1  trigger missing
+c0410.ll.unc.edu  184796  20210420 184256.344583 0400 GMT  intercept1  target
+c0410.ll.unc.edu  184796  20210420 184256.347526 0400 GMT  intercept1  build on an hpc worker
+c0410.ll.unc.edu  184796  20210420 184256.357950 0400 GMT  intercept2  trigger missing
+c0410.ll.unc.edu  184796  20210420 184256.363279 0400 GMT  intercept2  target
+c0410.ll.unc.edu  184796  20210420 184256.365533 0400 GMT  intercept2  build on an hpc worker
+c0301.ll.unc.edu  170944  20210420 184256.964691 0400 GMT  longrun_intercept  Warning couldnt connect to display 152.2.94.1241.0
+c0319.ll.unc.edu  10723  20210420 184257.674530 0400 GMT  longrun_covarmod  Warning couldnt connect to display 152.2.94.1241.0
+c0410.ll.unc.edu  186962  20210420 184258.109509 0400 GMT  covars4  Warning couldnt connect to display 152.2.94.1241.0
+c0314.ll.unc.edu  291497  20210420 184258.206809 0400 GMT  covars1  Warning couldnt connect to display 152.2.94.1241.0
+c0314.ll.unc.edu  291501  20210420 184258.209271 0400 GMT  covars2  Warning couldnt connect to display 152.2.94.1241.0
+c0301.ll.unc.edu  170904  20210420 184258.211733 0400 GMT  intercept1  Warning couldnt connect to display 152.2.94.1241.0
+c0301.ll.unc.edu  170903  20210420 184259.214378 0400 GMT  intercept2  Warning couldnt connect to display 152.2.94.1241.0
+c0410.ll.unc.edu  184796  20210420 200600.267709 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 200603.295270 0400 GMT  intercept3  trigger missing
+c0410.ll.unc.edu  184796  20210420 200603.309611 0400 GMT  intercept3  target
+c0410.ll.unc.edu  184796  20210420 200603.312361 0400 GMT  intercept3  build on an hpc worker
+c0318.ll.unc.edu  275390  20210420 200604.794833 0400 GMT  intercept3  Warning couldnt connect to display 152.2.94.1241.0
+c0410.ll.unc.edu  184796  20210420 201906.757163 0400 GMT    sending common data
+c0410.ll.unc.edu  184796  20210420 201910.518361 0400 GMT  intercept4  trigger missing
+c0410.ll.unc.edu  184796  20210420 201910.527492 0400 GMT  intercept4  target
+c0410.ll.unc.edu  184796  20210420 201910.529947 0400 GMT  intercept4  build on an hpc worker
+c0304.ll.unc.edu  89390  20210420 201912.374911 0400 GMT  intercept4  Warning couldnt connect to display 152.2.94.1241.0
+c0410.ll.unc.edu  184796  20210420 211015.740262 0400 GMT  covars4  store
+c0410.ll.unc.edu  184796  20210420 211015.850204 0400 GMT  covars4  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 211245.568309 0400 GMT  covars1  store
+c0410.ll.unc.edu  184796  20210420 211245.579654 0400 GMT  covars1  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 211657.561615 0400 GMT  covars3  store
+c0410.ll.unc.edu  184796  20210420 211657.575764 0400 GMT  covars3  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 211700.573251 0400 GMT  covars2  store
+c0410.ll.unc.edu  184796  20210420 211700.582875 0400 GMT  covars2  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 213317.698347 0400 GMT  intercept1  store
+c0410.ll.unc.edu  184796  20210420 213317.713718 0400 GMT  intercept1  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 213332.996751 0400 GMT  intercept2  store
+c0410.ll.unc.edu  184796  20210420 213333.007003 0400 GMT  intercept2  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 215333.107331 0400 GMT  intercept3  store
+c0410.ll.unc.edu  184796  20210420 215333.146238 0400 GMT  intercept3  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210420 221250.180591 0400 GMT  intercept4  store
+c0410.ll.unc.edu  184796  20210420 221250.202157 0400 GMT  intercept4  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210421 125348.716673 0400 GMT  longrun_covarmod  store
+c0410.ll.unc.edu  184796  20210421 125351.451799 0400 GMT  longrun_covarmod  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210421 125351.515645 0400 GMT  savelongrun_covar  build locally
+c0410.ll.unc.edu  184796  20210421 125351.519582 0400 GMT  savelongrun_covar  trigger missing
+c0410.ll.unc.edu  184796  20210421 125351.524625 0400 GMT  savelongrun_covar  target
+c0410.ll.unc.edu  184796  20210421 125353.786743 0400 GMT  savelongrun_covar  store
+c0410.ll.unc.edu  184796  20210421 125353.797427 0400 GMT  savelongrun_covar  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210421 180333.066931 0400 GMT  longrun_intercept  store
+c0410.ll.unc.edu  184796  20210421 180336.447319 0400 GMT  longrun_intercept  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210421 180336.486954 0400 GMT  savelongrun_intercept  build locally
+c0410.ll.unc.edu  184796  20210421 180336.492304 0400 GMT  savelongrun_intercept  trigger missing
+c0410.ll.unc.edu  184796  20210421 180336.497530 0400 GMT  savelongrun_intercept  target
+c0410.ll.unc.edu  184796  20210421 180338.902034 0400 GMT  savelongrun_intercept  store
+c0410.ll.unc.edu  184796  20210421 180338.910213 0400 GMT  savelongrun_intercept  time  Duration0  Duration0  exec  total
+c0410.ll.unc.edu  184796  20210421 180339.348491 0400 GMT    end make

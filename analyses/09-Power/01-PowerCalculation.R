@@ -8,17 +8,17 @@ set.seed(48, "L'Ecuyer")
 # Power Function
 #...............................................................
 #' @param n numeric; total number of people in population to simulate
-#' @param exp_prob numeric; probability of exposure in the population
+#' @param exp_prob numeric; probability of being exposure in the population
 #' @param p numeric; probability of infection/prevalence of outcome 
 #' @param p0 numeric; prevalence among unexposed/probability of outcome among unexposed
 powercalculator.glmOR <- function(n=15490, exp_prob=0.5, p=0.03, p0=0.02){
   
-  logit <- function(x, tol=1e-3){ 
-    return( log(((x+tol)/(1-x+tol))) )
+  logit <- function(x){ 
+    return( log(((x)/(1-x))) )
   }
-  
+
   df <- data.frame(obs=factor(seq(1:n)),
-                   exp=sample(x=c(0,1), size=n, replace = T, prob=c(exp_prob, 1-exp_prob))) # df of exposure
+                   exp=sample(x=c(0,1), size=n, replace = T, prob=c(1-exp_prob, exp_prob))) # df of exposure
   p <- 2*p # inv average prev for both groups 
   p0 <- p0 # prev among unexposed
   p1 <- p-p0 # prev among exposed
@@ -46,7 +46,7 @@ powercalculator.glmOR <- function(n=15490, exp_prob=0.5, p=0.03, p0=0.02){
 # Make Data Frame for Pv params
 #...............................................................
 ### run lots of these at different levels of p0
-p0sim <- seq(0.01, 0.032, by=0.0001)
+p0sim <- seq(0.01, 0.032, length.out = 500)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 pvpoweriters.paramsdf <- tibble::tibble(
@@ -94,7 +94,7 @@ cat("*************************** \n Submitted Pv Power Calc Models \n **********
 # Make Data Frame for Pv params
 #...............................................................
 ### run lots of these at different levels of p0
-p0sim <- seq(0.01, 0.3, by=0.001)
+p0sim <- seq(0.01, 0.3, length.out = 500)
 expprob <- c(0.1, 0.25, 0.5)
 exppo <- expand.grid(expprob, p0sim)
 pfpoweriters.paramsdf <- tibble::tibble(

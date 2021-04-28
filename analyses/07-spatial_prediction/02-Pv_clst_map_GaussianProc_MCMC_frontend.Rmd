@@ -8,13 +8,14 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_maps.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
+source("R/00-functions_basic.R")
+source("R/00-functions_maps.R") 
+source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(sf)
 library(srvyr) 
@@ -27,11 +28,11 @@ set.seed(48)
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
-DRCprov <- readRDS("~/Documents/GitHub/VivID_Epi/data/map_bases/vivid_DRCprov.rds")
+mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 
 ```
 
@@ -62,23 +63,18 @@ pvclst.covar <- dt %>%
   dplyr::select("hv001", "precip_mean_cont_scale_clst") %>% 
   dplyr::filter(!duplicated(.))
 
-# bring in cropland
-crop <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_cropland_propmeans.rds") %>% 
-  dplyr::select(c("hv001", "cropprop_cont_scale_clst"))
-# bring in nightlights
-nightlists <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_night_clstmeans.rds") %>% 
-  dplyr::select(c("hv001", "nightlightsmean_cont_scale_clst"))
+# bring in health distance
+hlthdist <- readRDS("data/derived_data/vividepi_hlthdist_clstmeans.rds") %>% 
+  dplyr::select(c("hv001", "hlthdist_cont_scale_clst"))
 
-pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = crop, by = "hv001") %>% 
-  dplyr::left_join(x = ., y = nightlists, by = "hv001")
+pvclst.covar <- dplyr::left_join(x = pvclst.covar, y = hlthdist, by = "hv001")
 
 # join together
 pvclust.weighted <- dplyr::left_join(pvclust.weighted, pvclst.covar, by = "hv001")
 pvclust.weighted.nosf <- pvclust.weighted
 sf::st_geometry(pvclust.weighted.nosf) <- NULL
 
-riskvars = c("precip_mean_cont_scale_clst", 
-             "cropprop_cont_scale_clst", "nightlightsmean_cont_scale_clst")
+riskvars = c("precip_mean_cont_scale_clst", "hlthdist_cont_scale_clst")
 
 
 ```
@@ -169,7 +165,33 @@ mtext("Empirical Variogram for P.vivax Prevelance", side = 3,  line = -6, outer 
 graphics.off()
 
 ```
-A remarkable lack of spatial structure...
+A remarkable lack of spatial structure...?
+
+
+#### Matern Shape
+```{r}
+#......................
+# Matern Shape, K
+#......................
+
+# look at kappa smooth parameter for matern covariance
+profile.kappa <- invisible( PrevMap::shape.matern(plsmdlogit ~ 1,
+                                                  coords = ~ longnum + latnum,
+                                                  data = pvclust.weighted.nosf,
+                                                  set.kappa = seq(0.1, 10, length = 30),
+                                                  start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
+                                                  coverage = NULL # CI coverage
+) )
+
+
+
+```
+
+```{r, results='asis'}
+plot(profile.kappa)
+abline(v = 0.76, col = "blue", lty = 2)
+```
+The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 0.75 (fixed now in subsequent analyses).
 
 #### Estimation of Variogram Parameters
 I.e. nugget effect, sill, and range. Will test a Matern and Exponential Covariance and compare. 
@@ -178,37 +200,37 @@ I.e. nugget effect, sill, and range. Will test a Matern and Exponential Covarian
 #..........................
 # Maximum Likelihood
 #..........................
-ml.exp <- likfit(pvclust.weighted.geodata, 
-                 ini = c(1, 0.5),
-                 cov.model = "exp",
-                 fix.nugget = F, 
-                 nugget = 0,
-                 fix.kappa = F)
+ml.exp <- geoR::likfit(pvclust.weighted.geodata, 
+                       ini = c(1, 0.5),
+                       cov.model = "exp",
+                       fix.nugget = F, 
+                       nugget = 0,
+                       fix.kappa = T) # matern of kappa of 1 reduces to exp
 
-ml.matern <- likfit(pvclust.weighted.geodata, 
-                    ini = c(1, 0.5),
-                    cov.model = "matern",
-                    fix.nugget = F, 
-                    nugget = 0,
-                    fix.kappa = F)
+ml.matern <- geoR::likfit(pvclust.weighted.geodata, 
+                          ini = c(1, 0.5),
+                          cov.model = "matern",
+                          fix.nugget = F, 
+                          nugget = 0,
+                          fix.kappa = T,
+                          kappa = 0.75)
 
 #..........................
 # OLS
 #..........................
+ols.exp <- geoR::variofit(pv.vario.prev, 
+                          ini = c(1, 0.5),
+                          cov.model = "exp",
+                          fix.nugget = F, 
+                          nugget = 0,
+                          fix.kappa = F) 
 
-ols.exp <- variofit(pv.vario.prev, 
-                    ini = c(1, 0.5),
-                    cov.model = "exp",
-                    fix.nugget = F, 
-                    nugget = 0,
-                    fix.kappa = F) 
-
-ols.matern <- variofit(pv.vario.prev, 
-                       ini = c(1, 0.5),
-                       cov.model = "matern",
-                       fix.nugget = F, 
-                       nugget = 0,
-                       fix.kappa = F)
+ols.matern <- geoR::variofit(pv.vario.prev, 
+                             ini = c(1, 0.5),
+                             cov.model = "matern",
+                             fix.nugget = F, 
+                             nugget = 0,
+                             fix.kappa = F)
 
 
 
@@ -226,35 +248,97 @@ legend(2, 4, legend = c("Exp", "Matern"),
        lty = c(1, 2), col = c("black", "red"), cex = 0.7)
 
 graphics.off()
-
 ```
+
 Truly impressive lack of spatial structure. From models above, an appropriate _kappa_ value fro the Matern covariance matrix appeared to be 0.5 or 1. Let's explore that specifically below.
 
-#### Matern Shape
-```{r}
-#......................
-# Matern Shape, K
-#......................
+We can also use the information from the empirical variogram fits for choosing starting values in our Bayesian model. 
 
-# look at kappa smooth parameter for matern covariance
-profile.kappa <- invisible( PrevMap::shape.matern(plsmdlogit ~ 1,
-                                                  coords = ~ longnum + latnum,
-                                                  data = pvclust.weighted.nosf,
-                                                  set.kappa = seq(0.1, 10, length = 16),
-                                                  start.par = c(0.2, 0.05), # starting values for the scale parameter phi and the relative variance of the nugget effect nu2
-                                                  coverage = NULL # CI coverage
-) )
-
-
-
-```
-
+##### MLE Exponential to the GRF 
 ```{r, results='asis'}
-
-plot(profile.kappa)
-abline(v = 1, col = "blue", lty = 2)
+ml.exp
 ```
-The max _kappa_ value was found to be `r profile.kappa$set.kappa[ which(profile.kappa$val.kappa == max(profile.kappa$val.kappa)) ]`. Will set it to 1 (fixed now in subsequent analyses).
+
+##### MLE Matern to the GRF 
+```{r, results='asis'}
+ml.matern
+```
+
+##### OLS Exponential Empirical Variogram fit
+```{r, results='asis'}
+ols.exp
+```
+
+##### OLS Matern Empirical Variogram fit
+```{r, results='asis'}
+ols.matern
+```
+
+### MLE Estimates w/ PrevMap
+#### Intercept Only Model 
+
+```{r}
+prevmap.linear.mleintercept <- PrevMap::linear.model.MLE(
+  formula=as.formula("plsmdn~1"), 
+  coords=as.formula("~longnum+latnum"),
+  data=pvclust.weighted.nosf, 
+  start.cov.pars=c(1,1),
+  kappa=0.75)
+```
+```{r, results='asis'}
+summary(prevmap.linear.mleintercept)
+```
+
+##### Good Priors for Intercept Matern function 
+```{r, results='asis'}
+ests <- summary(prevmap.linear.mleintercept)$cov.pars
+expests <- exp(ests)
+ests <- cbind.data.frame(intparam = c("sigma2", "phi", "tau2"), 
+                         ests = ests,
+                         exp_ests = expests)
+ests %>% 
+  dplyr::mutate_if(is.numeric, round, 3) %>% 
+  DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 7,
+                  dom = 'Bfrtip'))
+
+
+
+```
+
+#### Covar Model 
+```{r}
+prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
+  formula=as.formula("plsmdn~precip_mean_cont_scale_clst+hlthdist_cont_scale_clst"), 
+  coords=as.formula("~longnum+latnum"),
+  data=pvclust.weighted.nosf, 
+  start.cov.pars=c(1.5,1),
+  kappa=0.75)
+```
+```{r, results='asis'}
+summary(prevmap.linear.mlecovar)
+```
+
+##### Good Priors for Covar Matern function 
+```{r, results='asis'}
+ests <- summary(prevmap.linear.mlecovar)$cov.pars
+expests <- exp(ests)
+ests <- cbind.data.frame(covparam = c("sigma2", "phi", "tau2"), 
+                         ests = ests,
+                         exp_ests = expests)
+ests %>% 
+  dplyr::mutate_if(is.numeric, round, 3) %>% 
+  DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 7,
+                  dom = 'Bfrtip'))
+
+```
 
 
 
@@ -272,14 +356,13 @@ NB, here it is not quite the same to "turn off space". Instead, we will let the 
 Run out four diagnostic chains to check convergence. 
 ```{r}
 
-mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/params.RDS")
+mod.framework <- tibble::tibble(name = sub("_run_ret.RDS", "", list.files("analyses/07-spatial_prediction/prevmap_diagn_runs/")),
+                                path = list.files("analyses/07-spatial_prediction/prevmap_diagn_runs/",
+                                                  full.names = TRUE)) %>%   
+  dplyr::mutate(mcmc = purrr::map(path, readRDS)) %>% 
+  dplyr::select(-c("path"))
 
-mcmc.ret <- list.files(path = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/_rslurm_prevmap_diagnostic_chains/", full.names = T, pattern = ".RDS")
-mcmc.ret <- mcmc.ret[!grepl("params|f.", mcmc.ret)]
 
-# 0-7 index here so don't have to worry about char 10 and 1 being next to eachother
-
-mod.framework$mcmc <- purrr::map(mcmc.ret, function(x){return(readRDS(x)[[1]])})
 
 ```
 
@@ -302,8 +385,9 @@ mod.framework$autocorrplot <- invisible( purrr::map(mod.framework$summdiagret, "
 ```{r, results='asis'}
 
 mod.framework %>% 
-  dplyr::select(c("name", "formula", "paramtable")) %>% 
+  dplyr::select(c("name", "paramtable")) %>% 
   tidyr::unnest(cols="paramtable") %>% 
+  dplyr::mutate_if(is.numeric, round, 3) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(
@@ -320,7 +404,7 @@ mod.framework %>%
 ##### MCMC Trace Plots for Diagnostic Runs
 Too many plots again to visualize here, so will send out locally.
 ```{r}
-diagchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
+diagchain <- "analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
 dir.create(diagchain, recursive = T)
 
 for(i in 1:nrow(mod.framework)){
@@ -344,15 +428,15 @@ for(i in 1:nrow(mod.framework)){
 ## Long Chain
 ```{r}
 
-long.intercept <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-intercept.rds")
-long.covar <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prevmap_long_chains/longrun-prevmapbayes-mod.rds")
+long.intercept <- readRDS("analyses/07-spatial_prediction/prevmap_long_runs/intercept_model.RDS")
+long.covar <- readRDS("analyses/07-spatial_prediction/prevmap_long_runs/covariate_model.RDS")
 long.framework <- tibble::tibble(name = c("intercept", "covars"),
                                  mcmc = list(long.intercept, long.covar))
 
 ```
 
 ### Final Params
-```{r}
+```{r, results='hide'}
 
 long.framework$summresults <- purrr::map(long.framework$mcmc, summary, hpd.coverage = 0.95)
 long.framework$summdiagret <- invisible( purrr::map(long.framework$mcmc, get_diag_summ_results.Bayes.PrevMap) )
@@ -367,6 +451,7 @@ long.frameworks.summresults <- long.framework %>%
 
 ```{r, results='asis'}
 long.frameworks.summresults %>% 
+  dplyr::mutate_if(is.numeric, round, 2) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(
@@ -408,10 +493,6 @@ PrevMap::trace.plot(long.covar, param = "beta", component.beta = 3)
 PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 3)
 
 
-PrevMap::trace.plot(long.covar, param = "beta", component.beta = 4)
-PrevMap::autocor.plot(long.covar, param = "beta", component.beta = 4)
-
-
 PrevMap::trace.plot(long.covar, param = "tau2")
 PrevMap::autocor.plot(long.covar, param = "tau2")
 
@@ -425,72 +506,72 @@ PrevMap::autocor.plot(long.covar, param = "phi")
 ```
 
 
-## DIC of Final Models
-```{r}
+<!-- ## DIC of Final Models -->
+<!-- ```{r} -->
 
-# note because the model returns the S matrix which is the posterior for the random effect
-# and it returns the posterior betas, we can calculate the Ti from each model 
-# from there, it is straightforward to calculate the likelihood as a series of 
-# independently drawn binomial trials
+<!-- # note because the model returns the S matrix which is the posterior for the random effect -->
+<!-- # and it returns the posterior betas, we can calculate the Ti from each model  -->
+<!-- # from there, it is straightforward to calculate the likelihood as a series of  -->
+<!-- # independently drawn binomial trials -->
 
-long.framework$randomeff <- purrr::map(long.framework$mcmc, "S")
-long.framework$betas <- purrr::map(long.framework$mcmc, "estimate")
-long.framework$betas <- purrr::map(long.framework$betas, function(x){return(x[, colnames(x)[!colnames(x) %in% c("sigma^2", "phi", "tau^2")] ] )})
-long.framework$X <- purrr::map(long.framework$mcmc, "D") # matrix of covariates
-long.framework$Yi <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$plsmdn)) # binomial successes
-long.framework$ni <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$n)) # observations 
+<!-- long.framework$randomeff <- purrr::map(long.framework$mcmc, "S") -->
+<!-- long.framework$betas <- purrr::map(long.framework$mcmc, "estimate") -->
+<!-- long.framework$betas <- purrr::map(long.framework$betas, function(x){return(x[, colnames(x)[!colnames(x) %in% c("sigma^2", "phi", "tau^2")] ] )}) -->
+<!-- long.framework$X <- purrr::map(long.framework$mcmc, "D") # matrix of covariates -->
+<!-- long.framework$Yi <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$plsmdn)) # binomial successes -->
+<!-- long.framework$ni <- lapply(1:nrow(long.framework), function(x) return(pvclust.weighted$n)) # observations  -->
 
-long.framework$Ti <- purrr::pmap(long.framework[,c("X", "betas", "randomeff")], 
-                                 function(X, betas, randomeff){
-                                   bi <- X %*% t(betas) # get the X (nxp matrix) * the betas (pxsim matrix)
-                                   Ti <- randomeff + t(bi) # random effects is in sim x n so tranpose bi to match it
-                                   return(Ti)
-                                 })
+<!-- long.framework$Ti <- purrr::pmap(long.framework[,c("X", "betas", "randomeff")],  -->
+<!--                                  function(X, betas, randomeff){ -->
+<!--                                    bi <- X %*% t(betas) # get the X (nxp matrix) * the betas (pxsim matrix) -->
+<!--                                    Ti <- randomeff + t(bi) # random effects is in sim x n so tranpose bi to match it -->
+<!--                                    return(Ti) -->
+<!--                                  }) -->
 
-long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(Yi, ni, Ti){
-  LL <- c()
-  for(s in 1:nrow(Ti)){ # for every sim
-    LL.iter <- 0
-    for(i in 1:ncol(Ti)){ # for every spatial unit
-      LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = expit(Ti[s, i]), log = T) + LL.iter
-      LL.iter
-    }
-    LL <- append(LL.iter, LL)
-    
-  }
-  
-  LL <- return(LL)
-})
+<!-- long.framework$LL <- purrr::pmap(long.framework[,c("Yi", "ni", "Ti")], function(Yi, ni, Ti){ -->
+<!--   LL <- c() -->
+<!--   for(s in 1:nrow(Ti)){ # for every sim -->
+<!--     LL.iter <- 0 -->
+<!--     for(i in 1:ncol(Ti)){ # for every spatial unit -->
+<!--       LL.iter <- dbinom(x = Yi[i], size = ni[i], prob = expit(Ti[s, i]), log = T) + LL.iter -->
+<!--       LL.iter -->
+<!--     } -->
+<!--     LL <- append(LL.iter, LL) -->
 
+<!--   } -->
 
-long.framework$DICg <- purrr::map(long.framework$LL, function(x){
-  mu = mean(x)
-  sigma = var(x)/2
-  DICg = mu + sigma
-  return(DICg)
-})
+<!--   LL <- return(LL) -->
+<!-- }) -->
 
 
-```
-
-```{r, results = 'asis'}
-
-long.framework %>% 
-  dplyr::select(c("name", "DICg")) %>% 
-  tidyr::unnest(cols="DICg")  %>% 
-  dplyr::mutate(DICgchar = as.character(DICg)) %>%  # odd rounding behavior
-  dplyr::mutate(DICg = round(DICg, 2)) %>% 
-  magrittr::set_colnames(c("Model", "DICg", "DICgchar")) %>% 
-  kableExtra::kable(format = "html", escape = F) %>%
-  kableExtra::kable_styling("striped", full_width = F) 
+<!-- long.framework$DICg <- purrr::map(long.framework$LL, function(x){ -->
+<!--   mu = mean(x) -->
+<!--   sigma = var(x)/2 -->
+<!--   DICg = mu + sigma -->
+<!--   return(DICg) -->
+<!-- }) -->
 
 
-```
+<!-- ``` -->
 
-### Log Likelihood Trace Plots for Final Models
-```{r, results = 'asis'}
+<!-- ```{r, results = 'asis'} -->
 
-plot(long.framework$LL[[1]], main = "Intercept Model", type = "l")
-plot(long.framework$LL[[2]], main = "Covars Model", type = "l")
+<!-- long.framework %>%  -->
+<!--   dplyr::select(c("name", "DICg")) %>%  -->
+<!--   tidyr::unnest(cols="DICg")  %>%  -->
+<!--   dplyr::mutate(DICgchar = as.character(DICg)) %>%  # odd rounding behavior -->
+<!--   dplyr::mutate(DICg = round(DICg, 2)) %>%  -->
+<!--   magrittr::set_colnames(c("Model", "DICg", "DICgchar")) %>%  -->
+<!--   kableExtra::kable(format = "html", escape = F) %>% -->
+<!--   kableExtra::kable_styling("striped", full_width = F)  -->
 
-```
+
+<!-- ``` -->
+
+<!-- ### Log Likelihood Trace Plots for Final Models -->
+<!-- ```{r, results = 'asis'} -->
+
+<!-- plot(long.framework$LL[[1]], main = "Intercept Model", type = "l") -->
+<!-- plot(long.framework$LL[[2]], main = "Covars Model", type = "l") -->
+
+<!-- ``` -->

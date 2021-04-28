@@ -9,6 +9,7 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
@@ -16,15 +17,15 @@ library(tidyverse)
 library(sf)
 library(mice)
 library(srvyr)
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R")
+source("R/00-functions_basic.R")
 
 #......................
 # Import Data
 #......................
-dt <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode.rds")
-dt.cc <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/vividepi_recode_completecases.rds")
+dt <- readRDS("data/derived_data/vividepi_recode.rds")
+dt.cc <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 
-dcdr <- readxl::read_excel(path = "~/Documents/GitHub/VivID_Epi/model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
+dcdr <- readxl::read_excel(path = "model_datamaps/sub_DECODER_covariate_map_v3.xlsx", sheet = 1) %>% 
   dplyr::mutate( risk_factor_model = ifelse(is.na(risk_factor_model), "n", risk_factor_model) )
 
 
@@ -40,37 +41,13 @@ rskfctr <- dcdr %>%
 
 
 
-
 ### Covariate Collinearity
 #### Nonparametric Approach - Distance
 Using this distance function, which has several nice features, but particularly, its ability to detect dependence despite differences in X, Y covariate form. 
 
 ```{r}
-covar.files <- list.files("~/Documents/GitHub/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/", pattern = ".RDS", full.names = T)
-covar.files <- covar.files[!grepl("params.RDS|f.RDS", covar.files)]
-
-# need to sort properly
-covar.files <- tibble::tibble(covar.files = covar.files, 
-                              iteration = stringr::str_extract(basename(covar.files), "[0-9]+")) %>% dplyr::mutate(iteration = as.numeric(iteration)) %>% 
-  dplyr::arrange(iteration)
-
-read_covar_files <- function(path){
-  ret <- readRDS(path)
-  ret <- unname(ret)
-  return(ret)
-}
-
-
-
-covar.results.vals <- lapply(covar.files$covar.files, read_covar_files) %>% 
-  do.call("rbind", .)
-
-
-paramsdf <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/03-covar_assoc/_rslurm_covar_corr/params.RDS") %>% 
+covar.results <- readRDS("results/covars_collinearity.RDS") %>% 
   dplyr::select(-c(data))
-
-covar.results <- paramsdf
-covar.results$dist <- unlist(covar.results.vals)
 
 
 nameliftover <- dcdr %>% 
@@ -94,7 +71,7 @@ covar.plotObj <- covar.results %>%
     dplyr::mutate(varlab.x = forcats::fct_rev(forcats::fct_reorder(.f = varlab.x, .x = varlab.x, .fun = length)),
                 varlab.y = forcats::fct_rev(forcats::fct_reorder(.f = varlab.y, .x = varlab.y, .fun = length))) %>% 
   ggplot() + 
-  geom_tile(aes(x=varlab.x, y=varlab.y, fill = dist)) + 
+  geom_tile(aes(x=varlab.x, y=varlab.y, fill = dcor)) + 
   ggtitle("Covariate Collinearity") +
   scale_fill_viridis_c("Distance Correlation") + 
   theme_minimal() + 
@@ -217,7 +194,7 @@ dt.full %>%
 
 ### Final Thoughts
 #### Collinearity
-Although the VIF was reasonable, altitude and temperature are essentially truly collinear -- such that altitude is essentially latent or instrumental variable for temperature. This largely results due to our recoding of temperature, where it is an average of the study period. As a result, the most important factor influencing temperature is the altitude as we have "aggregated out" any seasonality or potentially interesting signal. Going to not include temperature as an independent covariate and will just use altitude instead.
+Although the VIF was reasonable, altitude and temperature are essentially truly collinear -- such that altitude is essentially latent or instrumental variable for temperature. This largely results due to our recoding of temperature, where it is an average of the study period. As a result, the most important factor influencing temperature is the altitude as we have "aggregated out" any seasonality or potentially interesting signal. 
 
 #### Missingingess
 N.B. This data does not appear to be MCAR, as there do appear to be some biases (more or less, poor, rural individuals with lots of household members, poor individuals have less nice houses [even after controls], etc.). However, given that this 0.44% of the unweighted data and 0.43% of the weighted data, we are well within the range of the rule of thumb that missing data less than 5-10% (even if it is MNAR) is largely inconsequential (see Bennett 2001). As a result, I feel comfortable subsetting to complete cases from here on out without worrying about the effect of any MNAR bias that may or may not be present and would affect my results.

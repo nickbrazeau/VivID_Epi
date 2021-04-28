@@ -1,172 +1,136 @@
 #----------------------------------------------------------------------------------------------------
 # Purpose of this script is to wrangle distance to public Health Sites
 # in the DRC as a proxy to healthcare accessibility
-# Using OSRM to calculate road duration/distances
+# recent work has made this available at an even higher resolution: 
+#  https://malariaatlas.org/research-project/accessibility_to_healthcare/
 #----------------------------------------------------------------------------------------------------
+library(tidyverse)
+library(raster)
+library(sp)
+library(sf)
+
+# create bounding box of Central Africa for Speed
+# https://gis.stackexchange.com/questions/206929/r-create-a-boundingbox-convert-to-polygon-class-and-plot/206952
+caf <- as(raster::extent(10, 40,-18, 8), "SpatialPolygons")
+sp::proj4string(caf) <- "+init=epsg:4326"
+
 
 #..................................
 # import data
-#..................................
-# Get cluster locations
-dt <- readRDS("data/raw_data/vividpcr_dhs_raw.rds")
-# drop observations with missing geospatial data 
-ge <- dt %>% 
-  dplyr::filter(latnum != 0 & longnum != 0) %>% 
-  dplyr::filter(!is.na(latnum) & !is.na(longnum)) %>% 
-  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
-  dplyr::filter(!duplicated(.)) %>% 
-  dplyr::rename(dhsclust = hv001) # legacy
-
-hlthsites.harvard.drc <- readxl::read_excel("data/raw_data/harvard_dataverse/Ouma_Okiro_Snow_Africa_Hospitals_Data.xlsx") %>% 
-  magrittr::set_colnames(tolower(colnames(.))) %>% 
-  magrittr::set_colnames(gsub(pattern = " ", "_", colnames(.))) %>% 
-  dplyr::filter(country == "Democratic Republic of Congo") %>%
-  sf::st_as_sf(coords = c("long", "lat"), 
-               crs = sf::st_crs("+proj=longlat +datum=WGS84 +no_defs"))
+#................................ ..
+# read in GE as import
+ge <- readRDS("data/raw_data/dhsdata/VivIDge.RDS")
+# sanity check
+sf::st_crs(ge)
+identicalCRS(sf::as_Spatial(ge), caf)
+# liftover to conform with rgdal updates http://rgdal.r-forge.r-project.org/articles/PROJ6_GDAL3.html
+ge <- sp::spTransform(sf::as_Spatial(ge), CRSobj = sp::CRS("+init=epsg:4326"))
+identicalCRS(ge, caf)
+# back to tidy 
+ge <- sf::st_as_sf(ge)
 
 
-#..................................
-# SPIN up Docker and start server
-# then add these options
-#..................................
-# https://github.com/rCarto/osrm
-remotes::install_github("rCarto/osrm")
-library(osrm)
-options(osrm.server = "http://0.0.0.0:5000/", osrm.profile = "driving")
 
-ge.osrm <- ge %>% 
-  dplyr::select("dhsclust") 
-rownames(ge.osrm) <- ge.osrm$dhsclust
+#............................................................
+# get health care calculated distances
+# just looking at walking distance
+#...........................................................
+hlthdist <- raster::raster("data/raw_data/hlthdist/2020_walking_only_travel_time_to_healthcare.geotiff")
 
-
-hlthsites.harvard.drc.osrm <- hlthsites.harvard.drc %>% 
-  dplyr::mutate(id = paste0("hlth", seq(1:nrow(.))),
-                id = factor(id)) %>%
-  dplyr::select(id)
-
-rownames(hlthsites.harvard.drc.osrm) <- hlthsites.harvard.drc.osrm$id
+# sanity check
+sf::st_crs(hlthdist)
+identicalCRS(hlthdist, caf)
+# crop for speed
+hlthdist <- raster::crop(x = hlthdist, y = caf)
+# create mask 
+DRC <- readRDS("data/map_bases/gadm/gadm36_COD_0_sp.rds")
+identicalCRS(hlthdist, sf::as_Spatial(DRC))
+hlthdist <- raster::mask(x = hlthdist, mask = DRC)
 
 
-#-----------------------------------------------------------------
-# Going to consider healthcare access as a function
-# of how mean duration to hospital 
-#-----------------------------------------------------------------
-#' @param x sf object; query
-#' @param y sf objest; target
-#' @param long.distancematrix distance matrix, long format; distances between target and query
-#' @param crs coordinate string
-#' @param urbanwidth km for gbuffer
-#' @param searchwidth km for gbuffer
+#............................................................
+# new get buffer around urban versus rural cluster
+#...........................................................
+hlthdist.mean <- ge[,c("hv001", "geometry", "urban_rura")] %>%
+  dplyr::mutate(buffer = ifelse(urban_rura == "R", 10000, 2000))
+hlthdist.mean <- hlthdist.mean[!duplicated(hlthdist.mean$hv001),]
 
 
-osrm_distances_by_bcircle <- function(x, y, long.distancematrix, crs,
-                                   searchwidth = 50){
-  
-  ret <- matrix(NA, nrow = nrow(x), ncol = 3)
-  x <- sf::st_transform(x, crs)
-  y <- sf::st_transform(y, crs)
-  
-  for(i in 1:nrow(x)){
-    # get centroid
-    centroid <- x[i,]
-    centroid <- sf::as_Spatial(centroid) 
-    # making bounding circle
-    bcircle <- rgeos::gBuffer(centroid, width = searchwidth*1e3)
-    
-    # interset query
-    hlthsites.catchment <- sf::st_intersection(y, sf::st_as_sf(bcircle))
-    
-    # ERROR CATCH clusters without catchment area
-    # just find the min distance 
-    if(nrow(hlthsites.catchment) == 0){
-      
-      durations <- osrm::osrmTable(src = centroid,
-                                   dst = y,
-                                   measure = "duration") # in minutes
-      
-      # fill in matrix
-      hv001 <- x[i, "dhsclust"]
-      sf::st_geometry(hv001) <- NULL 
-      ret[i,1] <- unlist( hv001 ) # all this work to get a vector of 1
-      ret[i, 2] <- min(durations$durations)
-      ret[i, 3] <- NA
-      
-    } else {
-      # get OSRM durations as planned
-      durations <- osrm::osrmTable(src = centroid,
-                                   dst = hlthsites.catchment,
-                                   measure = "duration") # in minutes
-      
-      # fill in matrix
-      hv001 <- x[i, "dhsclust"]
-      sf::st_geometry(hv001) <- NULL 
-      ret[i,1] <- unlist( hv001 ) # all this work to get a vector of 1
-      ret[i, 2] <- mean(durations$durations)
-      ret[i, 3] <- sd(durations$durations)
-    }
-    
-  }
-  
-  colnames(ret) <- c("hv001", "mean_duration", "sd_duration")
-  return(as.data.frame(ret))
-  
+
+# Drop in a for loop again to account for DHS buffering
+# note the 0.05 degree resolution is approximately 6km, so the buffer
+# for urbanicity shouldn't be doing anything... but to be consistent with 
+# DHS "The Geospatial Covariate Datasets Manual", we will do it
+hlthdist.mean$hlthdist_cont_clst <- NA
+
+for(i in 1:nrow(hlthdist.mean)){
+  hlthdist.mean$hlthdist_cont_clst[i] <- 
+    raster::extract(x = hlthdist, 
+                    y = sf::as_Spatial(hlthdist.mean$geometry[i]),
+                    buffer = hlthdist.mean$buffer[[i]],
+                    fun = mean,
+                    na.rm = T, 
+                    sp = F
+    )
 }
 
 
-
-hlthdist <- osrm_distances_by_bcircle(x = ge.osrm,
-                                      y = hlthsites.harvard.drc.osrm,
-                                      crs = "+proj=utm +zone=34 +datum=WGS84 +units=m",
-                                      searchwidth = 100)
-
-
-#..........
-# Note, cluter 469 cannot be resolved with osrm
-# do 5 knn again average
-#..........
-missclust <- data.frame(dhsclust = hlthdist$hv001[ which(is.na(hlthdist$mean_duration)) ] ) %>% 
-  dplyr::left_join(., y=ge, by = "dhsclust") %>% 
-  sf::st_as_sf(.)
-knownclust <- data.frame(dhsclust = hlthdist$hv001[ which(! is.na(hlthdist$mean_duration)) ] ) %>% 
-  dplyr::left_join(., y=ge, by = "dhsclust") %>% 
-  sf::st_as_sf(.)
-
-
-dist <- sf::st_distance(x = missclust,
-                        y = knownclust,
-                        which = "Great Circle")
-
-# find 5 nearby clusters
-dist.sorted.5 <- sort(dist)[1:5]
-nrbyclstrs <- hlthdist$hv001[ which(dist %in% dist.sorted.5) ]
-
-#.................
-# sanity check
-#.................
-sanityplotdf <- ge %>% 
+#............................................................
+# categorize as near of far based on hour mark (seems to be
+# standard used by MAP)
+#...........................................................
+hlthdist.mean <- hlthdist.mean %>% 
   dplyr::mutate(
-    lvl = ifelse(dhsclust == 469, "miss", ifelse(
-      dhsclust %in% nrbyclstrs, "nrby", "clst"
-    ))
+    hlthdist_fctb_clst = dplyr::case_when(
+      hlthdist_cont_clst >= 60 & urban_rura == "R" ~ "far", 
+      hlthdist_cont_clst < 60 & urban_rura == "R" ~ "near", 
+      hlthdist_cont_clst >= 30 & urban_rura == "U" ~ "far", 
+      hlthdist_cont_clst < 30 & urban_rura == "U" ~ "near", 
+    ),
+    hlthdist_fctb_clst = factor(hlthdist_fctb_clst, levels = c("far", "near"))
   )
 
-sanitylabeldf <- sanityplotdf %>% 
-  dplyr::filter(lvl == "nrby")
+# quick sanities
+xtabs(~ hlthdist.mean$hlthdist_fctb_clst + hlthdist.mean$urban_rura)
+xtabs(~ hlthdist.mean$hlthdist_fctb_clst)
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "R" &
+            hlthdist.mean$hlthdist_fctb_clst == "far"])
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "U" &
+            hlthdist.mean$hlthdist_fctb_clst == "far"])
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "R" &
+            hlthdist.mean$hlthdist_fctb_clst == "near"])
+summary(hlthdist.mean$hlthdist_cont_clst
+        [hlthdist.mean$urban_rura == "U" &
+            hlthdist.mean$hlthdist_fctb_clst == "near"])
+sum(hlthdist.mean$hlthdist_cont_clst == 0)
 
-ggplot() + 
-  geom_jitter(data = sanityplotdf, 
-              aes(x=longnum, y = latnum, color = factor(lvl))) + 
-  ggrepel::geom_label_repel(data = sanitylabeldf, 
-                            aes(x=longnum, y = latnum, label = dhsclust))
+#......................
+# inspect results
+#......................
+# aggregate quickly so we don't overwhelm ggplot
+hlthdist.agg <- raster::aggregate(hlthdist, fact = 10, fun = mean)
 
-
-# get their averages
-hlthdist$mean_duration[hlthdist$hv001 == 469] <- mean(hlthdist$mean_duration[hlthdist$hv001 %in% nrbyclstrs])
+hlthdist.mean %>% 
+  dplyr::mutate(longnum = sf::st_coordinates(geometry)[,1],
+                latnum = sf::st_coordinates(geometry)[,2]) %>% 
+  ggplot() + 
+  geom_sf(data = sf::st_as_sf(DRC)) +
+  ggspatial::layer_spatial(data = hlthdist.agg,
+                           aes(fill = stat(band1)),
+                           alpha = 0.9,
+                           na.rm = T) +
+  geom_point(aes(x = longnum, y = latnum, color = hlthdist_cont_clst, 
+                 shape = hlthdist_fctb_clst)) +
+  scale_fill_distiller("hlthdist", type = "div", palette = "RdYlBu", na.value = NA) + 
+  scale_color_viridis_c(option="plasma")
 
 
 
 #..........
 # Now write out
 #..........
-saveRDS(object = hlthdist, file = "data/derived_data/hlthdist_out_minduration.rds")
-saveRDS(object = hlthsites.harvard.drc, file = "data/derived_data/hlthsites_harvard_drc.rds")
+dir.create("data/derived_data/", recursive = TRUE)
+saveRDS(object = hlthdist.mean, file = "data/derived_data/hlthdist_out_wlk_trvltime.rds")
