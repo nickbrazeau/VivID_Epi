@@ -187,6 +187,9 @@ urb1 <- wlth_fct_exp %>%
   dplyr::select(-c("hv025", "hivrecode_barcode")) %>% 
   prcomp(.)
 
+# look at urb1
+urb1$rotation[,1]
+
 urb1df <- cbind.data.frame(
   hivrecode_barcode = dt$hivrecode_barcode[haven::as_factor(dt$hv025) == "urban"],
   urb1_scores = urb1$x[,1]
@@ -196,6 +199,9 @@ rur1 <- wlth_fct_exp %>%
   dplyr::filter(hv025 == "rural") %>% 
   dplyr::select(-c("hv025", "hivrecode_barcode")) %>% 
   prcomp(.)
+
+# look at rur1
+rur1$rotation[,1]
 
 rur1df <- cbind.data.frame(
   hivrecode_barcode = dt$hivrecode_barcode[haven::as_factor(dt$hv025) == "rural"],
@@ -239,11 +245,28 @@ sum(is.na(wlth_scores$combscor))
 #...................... 
 # look at Combscor, seems reasonable
 #...................... 
-score_wlth_char <- cbind.data.frame(wlth_fct, data.frame(combscor = wlth_scores$combscor))
+score_wlth_char <- cbind.data.frame(wlth_fct_exp, data.frame(combscor = wlth_scores$combscor))
 summary(score_wlth_char$combscor)
 hist(score_wlth_char$combscor)
 View(score_wlth_char)
 View(eigen_dir)
+# quick sanitty
+score_wlth_char_plotdat <- score_wlth_char
+score_wlth_char_plotdat$sumyes <- apply(score_wlth_char[,grepl("_yes", colnames(score_wlth_char))], 1, sum)
+score_wlth_char_plotdat %>% 
+  ggplot() + 
+  geom_point(aes(x = sumyes, y = combscor))
+
+score_wlth_char_plotdat %>% 
+  ggplot() + 
+  geom_point(aes(x = sumyes, y = combscor)) + 
+  facet_wrap(~hv025)
+
+score_wlth_char_plotdat %>% 
+  ggplot() + 
+  geom_jitter(aes(x = sumyes, y = combscor)) + 
+  facet_wrap(~hv025)
+
 
 ##############################
 # Account for Sampling Weights
