@@ -42,7 +42,7 @@ widist <- purrr::map(params$iptw, summary) %>%
 ```
 
 ```{r, results='asis'}
-cbind.data.frame(params$label, widist) %>% 
+cbind.data.frame(params$abridged_var_label, widist) %>% 
   DT::datatable(., 
                 rownames = F,
                 options = list(
@@ -57,11 +57,11 @@ cbind.data.frame(params$label, widist) %>%
 
 # make plot
 iptw.dist.plotObj <- params %>% 
-  dplyr::select(c("label", "iptw")) %>% 
+  dplyr::select(c("abridged_var_label", "iptw")) %>% 
   tidyr::unnest(cols = iptw) %>% 
   dplyr::mutate(logiptw = log(iptw)) %>% 
   ggplot() + 
-  geom_boxplot(aes(x = label, y = logiptw)) +
+  geom_boxplot(aes(x = abridged_var_label, y = logiptw)) +
   geom_hline(yintercept = 0, col = "#e41a1c") +
   vivid_theme + 
   ylab("log(IPW)") +
@@ -122,14 +122,15 @@ covarbalparams <- covarbalparams %>%
 
 # make pretty plot
 varnames <- params %>% 
-  dplyr::select(c("target", "label")) %>% 
+  dplyr::select(c("target", "abridged_var_label")) %>% 
   dplyr::rename(covar1 = target)
 
 covarbalanceplot <- covarbalparams %>% 
   dplyr::left_join(., varnames, by = "covar1") %>% 
-  dplyr::mutate(lvl_fct = factor(lvl, levels = c("base", "IPTW"), labels = c("Base", "IPW"))) %>% 
+  dplyr::mutate(lvl_fct = factor(lvl, levels = c("base", "IPTW"),
+                                 labels = c("Base", "IPW"))) %>% 
   ggplot() + 
-  geom_boxplot(aes(x = label, y = dist)) +
+  geom_boxplot(aes(x = abridged_var_label, y = dist)) +
   facet_wrap(~lvl_fct, nrow = 2) +
   vivid_theme + 
   ylab("Correlation") +
@@ -261,8 +262,6 @@ stbmdldf$learners <- purrr::map(stbmdldf$alg.cvrisk.validationset,
 ```
 
 ```{r checkwiappendix2, results='asis'}
-
-dcdr <- readxl::read_excel(path = "internal_datamap_files/risk_factor_plot_liftover.xlsx") # pretty decoder
 
 out <- dplyr::left_join(dcdr, stbmdldf, by = "target") %>% 
   dplyr::select(-c("group")) %>% 
