@@ -56,6 +56,7 @@ for(i in 3:ncol(aftemp)) {
 }
 # stack
 daytemprstr_stack <- raster::stack(dayrstr_list)
+names(daytemprstr_stack) <- paste0("X", 1:365)
 # crop and mask
 daytemprstr_stack <- raster::crop(daytemprstr_stack, caf)
 daytemprstr_stack <- raster::mask(daytemprstr_stack, DRC)
