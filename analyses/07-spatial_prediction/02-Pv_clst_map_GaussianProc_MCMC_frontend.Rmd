@@ -30,20 +30,35 @@ set.seed(48)
 #......................
 dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
 dtsrvy <- makecd2013survey(survey = dt)
-mp <- readRDS("data/derived_data/basic_cluster_mapping_data.rds")
 ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 
 ```
 
 ```{r}
+
+#...................... 
+# get long lat back
+#......................
+longlat <- dt %>% 
+  dplyr::select(c("hv001", "longnum", "latnum")) %>% 
+  dplyr::filter(!duplicated(.))
 #......................
 # Subset to Pv
 #......................
-pvclust.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "hv001"][[1]]
+pvclust.weighted <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(hv001) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count), 
+                   plsmdn = srvyr::survey_total(pv18s, na.rm = T), 
+                   plsmdprev = srvyr::survey_mean(pv18s, na.rm = T, vartype = c("se", "ci"), level = 0.95)) %>% 
+  dplyr::left_join(., ge,  by = "hv001") %>% 
+  dplyr::left_join(., longlat, by = "hv001")
+
 # vectors have destroyed spatial class, need to remake
 pvclust.weighted <- sf::st_as_sf(pvclust.weighted)
-sf::st_crs(pvclust.weighted) <-  sf::st_crs(ge)
+# sanity
+identical(sf::st_crs(pvclust.weighted), sf::st_crs(ge))
 
 # need to keep integers, so will round
 pvclust.weighted <- pvclust.weighted %>% 
@@ -285,11 +300,13 @@ prevmap.linear.mleintercept <- PrevMap::linear.model.MLE(
   start.cov.pars=c(1,1),
   kappa=0.75)
 ```
-```{r, results='asis'}
+Summary call for `prevmap.linear.mleintercept` here (print out ugly).
+```{r, results='hide', echo = F}
+# results print out ugly, so put here
 summary(prevmap.linear.mleintercept)
 ```
 
-##### Good Priors for Intercept Matern function 
+##### Potential Priors for Matern function 
 ```{r, results='asis'}
 ests <- summary(prevmap.linear.mleintercept)$cov.pars
 expests <- exp(ests)
@@ -322,7 +339,7 @@ prevmap.linear.mlecovar <- PrevMap::linear.model.MLE(
 summary(prevmap.linear.mlecovar)
 ```
 
-##### Good Priors for Covar Matern function 
+##### Potential Priors for Matern function 
 ```{r, results='asis'}
 ests <- summary(prevmap.linear.mlecovar)$cov.pars
 expests <- exp(ests)
@@ -368,11 +385,11 @@ mod.framework <- tibble::tibble(name = sub("_run_ret.RDS", "", list.files("analy
 
 
 #### MCMC Diagnostics Chains
-Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 1,000 for all parameters. In addition, we will visually check for convergence among the four chains. 
+Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 500 for all parameters. In addition, we will visually check for convergence among the four chains. 
 
-```{r}
+```{r, results='hide'}
 mod.framework$summresults <- invisible( purrr::map(mod.framework$mcmc, summary, hpd.coverage = 0.95) )
-mod.framework$summdiagret <- invisible( purrr::map(mod.framework$mcmc, get_diag_summ_results.Bayes.PrevMap) )
+mod.framework$summdiagret <- invisible( purrr::pmap(mod.framework[,c("name", "mcmc")], get_diag_summ_results.Bayes.PrevMap) )
 
 
 mod.framework$paramtable <- invisible( purrr::map(mod.framework$summdiagret, "summresults") )
@@ -403,7 +420,7 @@ mod.framework %>%
 
 ##### MCMC Trace Plots for Diagnostic Runs
 Too many plots again to visualize here, so will send out locally.
-```{r}
+```{r, results='hide', fig.show='hide'}
 diagchain <- "analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
 dir.create(diagchain, recursive = T)
 
@@ -436,11 +453,11 @@ long.framework <- tibble::tibble(name = c("intercept", "covars"),
 ```
 
 ### Final Params
-```{r, results='hide'}
+```{r, results='hide', fig.show='hide'}
 
 long.framework$summresults <- purrr::map(long.framework$mcmc, summary, hpd.coverage = 0.95)
-long.framework$summdiagret <- invisible( purrr::map(long.framework$mcmc, get_diag_summ_results.Bayes.PrevMap) )
-
+long.framework$summdiagret <- invisible( purrr::pmap(long.framework[,c("name", "mcmc")], get_diag_summ_results.Bayes.PrevMap) )
+mod.framework
 
 long.framework$paramtable <- purrr::map(long.framework$summdiagret, "summresults")
 
