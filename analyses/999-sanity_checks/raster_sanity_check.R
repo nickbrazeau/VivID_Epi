@@ -29,7 +29,8 @@ extract(r, xy[1:3,], buffer=1000000, fun=mean)
 
 ## illustrating the varying size of a buffer (expressed in meters) 
 ## on a longitude/latitude raster
-crs(r)
+crs(r) # default +proj=longlat +datum=WGS84 +no_defs is considered long/lat raster
+# so meters here is being appropriately used (as we do in vivid)
 z <- extract(r, xy, buffer=1000000)
 s <- raster(r)
 for (i in 1:length(z)) { s[z[[i]]] <- i }

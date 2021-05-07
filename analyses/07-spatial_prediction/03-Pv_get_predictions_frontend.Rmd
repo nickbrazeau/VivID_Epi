@@ -36,7 +36,7 @@ Fitted values are taken from the Hierarchial Bayesian Spatial Models that were p
 # import data
 DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds")
 provmodel <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
-provmodel <- provmodel[provmodel$name == "CAR_covar", ] # best model
+provmodel <- provmodel[provmodel$name == "CAR_covar", ] # a priori model
 
 ```
 
@@ -187,6 +187,13 @@ clstmodel.fitted.postmeans <- apply(clstmodel.fitted, 2, mean)
 clstmodel.coords.means <- cbind.data.frame(clstmodel.coords, 
                                            fitted.postmean = clstmodel.fitted.postmeans)
 
+#...................... 
+# sanity check
+#......................
+sanitycheck <- clstmodel$prevalence$predictions
+if ( !all.equal(sanitycheck, clstmodel.coords.means$fitted.postmean) ) {
+  stop("Issue with prevmap understanding")
+}
 
 #..............................................................
 # Make Raster from PrevMap 
