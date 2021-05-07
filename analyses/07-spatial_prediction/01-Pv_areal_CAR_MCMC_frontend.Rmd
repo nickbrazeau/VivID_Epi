@@ -128,17 +128,18 @@ mod.framework$betachains <- purrr::map(mod.framework$samples, "beta")
 mod.framework$phichains <- purrr::map(mod.framework$samples, "phi")
 mod.framework$tau2chains <- purrr::map(mod.framework$samples, "tau2")
 mod.framework$rhochains <- purrr::map(mod.framework$samples, "rho")
-mod.framework$fittedchains <- purrr::map(mod.framework$samples, "fitted")
 
 
 chains <- mod.framework %>% 
-  dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains", "fittedchains")) %>% 
+  dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains")) %>% 
   dplyr::group_by(name) %>% 
-  tidyr::nest()
+  dplyr::mutate(chainnum = 1:dplyr::n())
 
-mydiagnosticdir <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_diagnostic_chains/"
+mydiagnosticdir <- "analyses/07-spatial_prediction/prov_map_diagnostic_chains/"
 dir.create(mydiagnosticdir, recursive = T)
-wrap_chain_plotter.carbayes.diag(diag.dir = mydiagnosticdir, chains = chains)
+pmap(.l = chains[,c("name", "chainnum", "betachains", "phichains", "tau2chains", "rhochains")],
+     .f  = make_mcmc_chain_plots.carbayes,
+     diag.dir = mydiagnosticdir)
 
 
 ```
@@ -234,7 +235,12 @@ mod.framework.long$posteriorphis <- purrr::map(mod.framework.long$samples,
 
 mod.framework.long.res <- mod.framework.long %>% 
   dplyr::select(c("name", "formula", "summresultsdf")) %>% 
-  tidyr::unnest(cols = "summresultsdf") 
+  tidyr::unnest(cols = "summresultsdf") %>% 
+  dplyr::select("name", "formula", "pars", "n.sample", "Median", dplyr::starts_with("HPD"),
+                "2.5%", "97.5%", "% accept",
+                "n.effective", "Geweke.diag") %>% 
+  dplyr::mutate(Geweke.pval = 2*pnorm(abs(Geweke.diag), lower.tail=FALSE))
+
 ```
 
 ###### Summary Stats, Percentiles
@@ -297,12 +303,17 @@ mod.framework.long$fittedchains <- purrr::map(mod.framework.long$samples, "fitte
 chains <- mod.framework.long %>% 
   dplyr::select(c("name", "betachains", "phichains", "tau2chains", "rhochains", "fittedchains")) %>% 
   dplyr::group_by(name) %>% 
-  tidyr::nest()
+  dplyr::mutate(chainnum = 1:dplyr::n())
 
 
 myfinalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/"
 dir.create(myfinalchain, recursive = T)
-wrap_chain_plotter.carbayes.final(final.dir = myfinalchain, chains = chains)
+dir.create(mydiagnosticdir, recursive = T)
+pmap(.l = chains[,c("name", "chainnum", "betachains", "phichains", "tau2chains", "rhochains")],
+     .f  = make_mcmc_chain_plots.carbayes,
+     diag.dir = myfinalchain)
+
+
 ```
 
 
