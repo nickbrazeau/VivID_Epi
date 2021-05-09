@@ -9,7 +9,7 @@ editor_options:
 ```{r, include=FALSE}
 knitr::opts_chunk$set(echo = T, warning = F, message = F, eval = T, results = 'hide',
                       fig.align = 'center', fig.width = 8, fig.height = 8)
-
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r}
@@ -36,14 +36,24 @@ NB. When $\rho$ is `NULL`, it is estimated within the CAR model. based on the _L
 #......................
 # Import Data
 #......................
-mp <- readRDS("~/Documents/GitHub/VivID_Epi/data/derived_data/basic_cluster_mapping_data.rds")
-ge <- readRDS(file = "~/Documents/GitHub/VivID_Epi/data/raw_data/dhsdata/VivIDge.RDS")
+dt <- readRDS("data/derived_data/vividepi_recode_completecases.rds")
+dtsrvy <- makecd2013survey(survey = dt)
+ge <- readRDS(file = "data/raw_data/dhsdata/VivIDge.RDS")
+DRCprov <- readRDS("data/map_bases/vivid_DRCprov.rds") %>% 
+  dplyr::select(c("adm1name", "geometry"))
 
 #------------------------------------------------------------------------
 # Subset to Pv
 #------------------------------------------------------------------------
-pvprov.weighted <- mp$data[mp$plsmdmspec == "pv18s" & mp$maplvl == "adm1name"][[1]]
-# vectors have destroyed spatial class, need to remake
+pvprov.weighted <- dtsrvy %>% 
+  dplyr::mutate(count = 1) %>% 
+  dplyr::group_by(adm1name) %>% 
+  dplyr::summarise(n = srvyr::survey_total(count), 
+                   plsmdn = srvyr::survey_total(pv18s), 
+                   plsmdprev = srvyr::survey_mean(pv18s, vartype = c("se", "ci"), level = 0.95)) %>% 
+  dplyr::left_join(., DRCprov)
+
+
 pvprov.weighted <- sf::st_as_sf(pvprov.weighted)
 sf::st_crs(pvprov.weighted) <-  sf::st_crs(ge)
 # need ints (binomail prob), so will round
@@ -218,12 +228,21 @@ mod.framework.long$posteriorphis <- purrr::map(mod.framework.long$samples,
   
   phihpd <- HDInterval::hdi(smpl$phi, credMass = 0.95)
   
+  # effective sampling
   phineff <- apply(smpl$phi, 2, coda::effectiveSize)
-  phis <- list(phimean, phimedian, phiperc025, phiperc975, phihpd, phineff)
+  
+  # Geweke's Diagnostic
+  phigwe <- apply(smpl$phi, 2, coda::geweke.diag)
+  phigwe <- purrr::map_dbl(phigwe, "z")
+  phi_gwepv <- purrr::map_dbl(phigwe, function(x) {2*pnorm(abs(x), lower.tail=FALSE)})
+  
+  phis <- list(phimean, phimedian, phiperc025, phiperc975, phihpd, 
+               phineff, phigwe, phi_gwepv)
   phis <- do.call("rbind.data.frame", phis)
   # bind together
   phis <- cbind.data.frame(statistic = c("Mean", "Median", "Perc0.025", "Perc97.5",
-                                         "HPD 0.025", "HPD 0.975", "Neff"),
+                                         "HPD 0.025", "HPD 0.975", "Neff",
+                                          "Geweke.diag", "Geweke.pval"),
                    phis)
                    
   # put names in 
