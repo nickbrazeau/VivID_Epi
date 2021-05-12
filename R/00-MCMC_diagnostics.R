@@ -1,4 +1,119 @@
+#............................................................
+# Gelman-Rubin Diagnostic Carbayes
+#...........................................................
+#' @title Gelman for the CarBayes Models Random Effect
+random_effect_gelman.carbayes <- function(diag_chain1, diag_chain2,
+                                          diag_chain3, diag_chain4) {
+  # get phis
+  gr_phis <- rep(NA, ncol(diag_chain1$phi))
+  for (i in 1:length(gr_phis)) {
+    c1 <- coda::as.mcmc(diag_chain1$phi[,i])
+    c2 <- coda::as.mcmc(diag_chain2$phi[,i])
+    c3 <- coda::as.mcmc(diag_chain3$phi[,i])
+    c4 <- coda::as.mcmc(diag_chain4$phi[,i])
+    mcmclist <- coda::as.mcmc.list(list(c1, c2, c3, c4))
+    gr_phis[i] <- coda::gelman.diag(mcmclist)$psrf[,1]
+  }
+  
+  # tidy up 
+  prov_phis <- data.frame(
+    provnum = 1:ncol(diag_chain1$phi),
+    gr_phi = gr_phis)
+  return(prov_phis)
+}
 
+
+#' @title Gelman for the CarBayes Models Covariates
+covars_gelman.carbayes <- function(diag_chain1, diag_chain2,
+                                   diag_chain3, diag_chain4) {
+  # get betas
+  gr_betas <- rep(NA, ncol(diag_chain1$beta))
+  for (i in 1:length(gr_betas)) {
+    c1 <- coda::as.mcmc(diag_chain1$beta[,i])
+    c2 <- coda::as.mcmc(diag_chain2$beta[,i])
+    c3 <- coda::as.mcmc(diag_chain3$beta[,i])
+    c4 <- coda::as.mcmc(diag_chain4$beta[,i])
+    mcmclist <- coda::as.mcmc.list(list(c1, c2, c3, c4))
+    gr_betas[i] <- coda::gelman.diag(mcmclist)$psrf[,1]
+  }
+  
+  # get tau
+  c1 <- coda::as.mcmc(diag_chain1$tau2)
+  c2 <- coda::as.mcmc(diag_chain2$tau2)
+  c3 <- coda::as.mcmc(diag_chain3$tau2)
+  c4 <- coda::as.mcmc(diag_chain4$tau2)
+  mcmclist <- coda::as.mcmc.list(list(c1, c2, c3, c4))
+  gr_tau <- coda::gelman.diag(mcmclist)$psrf[,1]
+  
+  # get rho
+  c1 <- coda::as.mcmc(diag_chain1$rho)
+  c2 <- coda::as.mcmc(diag_chain2$rho)
+  c3 <- coda::as.mcmc(diag_chain3$rho)
+  c4 <- coda::as.mcmc(diag_chain4$rho)
+  mcmclist <- coda::as.mcmc.list(list(c1, c2, c3, c4))
+  gr_rho <- coda::gelman.diag(mcmclist)$psrf[,1]
+  
+  
+  # tidy up 
+  prov_covars <- data.frame(
+    covars = c(paste0("covars", 1:length(gr_betas)),
+               "tau2", "rho"),
+    gr_covar = c(gr_betas, gr_tau, gr_rho))
+  return(prov_covars)
+}
+
+#............................................................
+# Gelman-Rubin Diagnostic Prevmap
+#...........................................................
+#' @title Gelman for the Prevmap Models Random Effect
+random_effect_gelman.prevmap <- function(diag_chain1, diag_chain2,
+                                         diag_chain3, diag_chain4) {
+  # get S matrix
+  gr_random_effects <- rep(NA, ncol(diag_chain1$S))
+  
+  for (i in 1:length(gr_random_effects)) {
+    c1 <- coda::as.mcmc(diag_chain1$S[,i])
+    c2 <- coda::as.mcmc(diag_chain2$S[,i])
+    c3 <- coda::as.mcmc(diag_chain3$S[,i])
+    c4 <- coda::as.mcmc(diag_chain4$S[,i])
+    mcmclist <- coda::as.mcmc.list(list(c1, c2, c3, c4))
+    gr_random_effects[i] <- coda::gelman.diag(mcmclist)$psrf[,1]
+  }
+  
+  # tidy up
+  cluster_random_effects <- data.frame(
+    clstnum = 1:ncol(diag_chain1$S),
+    gelmanrubindiag = gr_random_effects
+  )
+  return(cluster_random_effects)
+}
+
+
+#' @title Gelman for the Prevmap Models Covariates
+covariates_gelman.prevmap <- function(diag_chain1, diag_chain2,
+                                      diag_chain3, diag_chain4){
+  covarsdim <- colnames(diag_chain1$estimate)
+  gr_covars <- rep(NA, length(covarsdim))
+  for (i in 1:length(covarsdim)) {
+    c1 <- coda::as.mcmc(diag_chain1$estimate[,i])
+    c2 <- coda::as.mcmc(diag_chain2$estimate[,i])
+    c3 <- coda::as.mcmc(diag_chain3$estimate[,i])
+    c4 <- coda::as.mcmc(diag_chain4$estimate[,i])
+    mcmclist <- coda::as.mcmc.list(list(c1, c2, c3, c4))
+    gr_covars[i] <- coda::gelman.diag(mcmclist)$psrf[,1]
+  }
+  
+  # tidy out
+  covars_gf <- data.frame(
+    covars = covarsdim,
+    gelmanrubindiag = gr_covars
+  )
+  return(covars_gf)
+}
+
+#............................................................
+# Plotting and Summarizing Tools
+#...........................................................
 #---------------------------------------------------
 # Internal use function, not good for corner cases
 #----------------------------------------------------

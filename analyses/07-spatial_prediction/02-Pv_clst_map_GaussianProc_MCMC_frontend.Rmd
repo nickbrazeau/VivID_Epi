@@ -441,6 +441,51 @@ for(i in 1:nrow(mod.framework)){
 
 ```
 
+##### Gelman Rubin Diagnostic
+```{r}
+gr_covars <- covariates_gelman.prevmap(
+  diag_chain1 = mod.framework$mcmc[[1]],
+  diag_chain2 = mod.framework$mcmc[[2]],
+  diag_chain3 = mod.framework$mcmc[[3]],
+  diag_chain4 = mod.framework$mcmc[[4]]
+)
+
+gr_randomeffects <- random_effect_gelman.prevmap(
+  diag_chain1 = mod.framework$mcmc[[1]],
+  diag_chain2 = mod.framework$mcmc[[2]],
+  diag_chain3 = mod.framework$mcmc[[3]],
+  diag_chain4 = mod.framework$mcmc[[4]]
+)
+
+
+```
+
+###### Random Effects Gelman
+```{r, results='asis'}
+gr_randomeffects %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+###### Covars Gelman
+```{r, results='asis'}
+
+gr_covars %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+
+```
+
 
 ## Long Chain
 ```{r}
