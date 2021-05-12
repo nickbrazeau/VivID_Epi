@@ -390,6 +390,23 @@ dt <- dt %>%
 
 
 # sanity check
+sanity <- dt %>% 
+  dplyr::mutate(
+    ITN_fctb = ifelse(
+      # (i) long-lasting insecticidal nets that were <= 3 y old at the time of survey
+      !(as.character(haven::as_factor(hml4)) %in% c("more than 3 years ago", "don't know", "missing")) & haven::as_factor(hml20) == "yes", 1,
+      # (ii) conventional ITNs that were 1 y old 
+      ifelse(as.character(haven::as_factor(hml4)) %in% c(0:12) & as.character(haven::as_factor(hml10)) == "yes", 1, 
+             # or were retreated within the year before the survey
+             ifelse(as.character(haven::as_factor(hml9)) %in% as.character(c(0:12)) & as.character(haven::as_factor(hml10)) == "yes", 1, 
+                    0))), # we know no missing net from above. they either reported yes or no at some level
+    ITN_fctb = factor(ITN_fctb, levels = c(0,1), labels = c("no", "yes")),
+    ITN_fctb = forcats::fct_drop(ITN_fctb),
+    ITN_fctb = relevel(ITN_fctb, "yes")
+  )
+identical(dt$ITN_fctb, sanity$ITN_fctb)
+
+# extra sanity check
 xtabs(~haven::as_factor(dt$hml4) + haven::as_factor(dt$hml10)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml10)) 
 xtabs(~dt$ITN_fctb + haven::as_factor(dt$hml12)) 
