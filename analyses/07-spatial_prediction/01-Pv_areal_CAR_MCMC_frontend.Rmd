@@ -16,9 +16,9 @@ knitr::opts_knit$set(root.dir = here::here())
 #..............................................................
 # dependencies
 #..............................................................
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_basic.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-functions_epi.R") 
-source("~/Documents/GitHub/VivID_Epi/R/00-MCMC_diagnostics.R")
+source("R/00-functions_basic.R") 
+source("R/00-functions_epi.R") 
+source("R/00-MCMC_diagnostics.R")
 library(tidyverse)
 library(srvyr) #wrap the survey package in dplyr syntax
 library(CARBayes)
@@ -127,7 +127,7 @@ mod.framework %>%
 ```
 
 
-##### Diagnostic Chains
+##### Viz Chains
 Note, there are too many chains for visualizing here. Writing out to local directory. 
 ```{r}
 
@@ -154,8 +154,53 @@ pmap(.l = chains[,c("name", "chainnum", "betachains", "phichains", "tau2chains",
 
 ```
 
+##### Gelman-Rubin Diagnostic
+```{r}
+
+covars_gelman <- covars_gelman.carbayes(
+  diag_chain1 = mod.framework$MCMC[[1]]$samples,
+  diag_chain2 = mod.framework$MCMC[[2]]$samples,
+  diag_chain3 = mod.framework$MCMC[[3]]$samples,
+  diag_chain4 = mod.framework$MCMC[[4]]$samples
+)
+
+random_eff_gelman <- random_effect_gelman.carbayes(
+  diag_chain1 = mod.framework$MCMC[[1]]$samples,
+  diag_chain2 = mod.framework$MCMC[[2]]$samples,
+  diag_chain3 = mod.framework$MCMC[[3]]$samples,
+  diag_chain4 = mod.framework$MCMC[[4]]$samples
+)
+
+
+```
+
+###### Gelman Covars
+```{r, results='asis'}
+covars_gelman %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+###### Gelman Random Effects
+```{r, results='asis'}
+random_eff_gelman %>% 
+    DT::datatable(., 
+                rownames = F,
+                options = list(
+                  searching = F,
+                  pageLength = 20,
+                  dom = 'Bfrtip', 
+                  buttons = c('csv')))
+```
+
+
 ## Final Long Chain
-Now, we will run out one final long chain with 1e5 burnin iterations and 1e8 sampling iterations for each of our base models. 
+Now, we will run out one final long chain with 1e5 burnin iterations and 1e5 sampling iterations for each of our base models. 
 
 ```{r}
 mod.framework.long <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
