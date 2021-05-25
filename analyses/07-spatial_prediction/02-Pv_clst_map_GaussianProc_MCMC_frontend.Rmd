@@ -421,6 +421,9 @@ mod.framework %>%
 ##### MCMC Trace Plots for Diagnostic Runs
 Too many plots again to visualize here, so will send out locally.
 ```{r, results='hide', fig.show='hide'}
+#...................... 
+# diagnostic chain non-random effects
+#......................
 diagchain <- "analyses/07-spatial_prediction/cluster_gaus_diagnostic_chain/"
 dir.create(diagchain, recursive = T)
 
@@ -438,6 +441,41 @@ for(i in 1:nrow(mod.framework)){
   invisible(lapply(mod.framework$autocorrplot[i], print)) 
   dev.off()
 }
+
+#...................... 
+# diagnostic chain non-random effects
+#......................
+diag1 <- mod.framework$mcmc[mod.framework$name == "covars1.diagnostic"][[1]]
+diag2 <- mod.framework$mcmc[mod.framework$name == "covars2.diagnostic"][[1]]
+diag3 <- mod.framework$mcmc[mod.framework$name == "covars3.diagnostic"][[1]]
+diag4 <- mod.framework$mcmc[mod.framework$name == "covars4.diagnostic"][[1]]
+
+
+pdf(paste0(diagchain, "diagnostic_chains_random_effect_chains.pdf"))
+par(mfrow=c(2,4))
+for (i in 1:ncol(diag1$S)) {
+  # diag 1 
+  diag1x <- 1:nrow(diag1$S)
+  diag1y <- diag1$S[,i]
+  plot(diag1x, diag1y, type="l")
+  
+  # diag 2
+  diag2x <- 1:nrow(diag2$S)
+  diag2y <- diag2$S[,i]
+  plot(diag2x, diag2y, type="l")
+  
+  # diag 3
+  diag3x <- 1:nrow(diag3$S)
+  diag3y <- diag3$S[,i]
+  plot(diag3x, diag3y, type="l")
+  
+  # diag 4
+  diag4x <- 1:nrow(diag4$S)
+  diag4y <- diag4$S[,i]
+  plot(diag4x, diag4y, type="l")
+}
+dev.off()
+
 
 ```
 
@@ -463,7 +501,7 @@ gr_randomeffects <- random_effect_gelman.prevmap(
 ###### Random Effects Gelman
 ```{r, results='asis'}
 gr_randomeffects %>% 
-    DT::datatable(., 
+  DT::datatable(., 
                 rownames = F,
                 options = list(
                   searching = F,
@@ -476,7 +514,7 @@ gr_randomeffects %>%
 ```{r, results='asis'}
 
 gr_covars %>% 
-    DT::datatable(., 
+  DT::datatable(., 
                 rownames = F,
                 options = list(
                   searching = F,
@@ -563,10 +601,32 @@ PrevMap::autocor.plot(long.covar, param = "sigma2")
 
 PrevMap::trace.plot(long.covar, param = "phi")
 PrevMap::autocor.plot(long.covar, param = "phi")
-
-
 ```
 
+##### Random Effects for Covars
+Too large to plot, so will send out locally.
+```{r}
+#............................................................
+# send out random effects to local drive
+#...........................................................
+dir.create("analyses/07-spatial_prediction/cluster_gaus_long_chain",
+           recursive = T)
+pdf("analyses/07-spatial_prediction/cluster_gaus_long_chain_chain_random_effect_chains.pdf")
+par(mfrow=c(4,1))
+for(i in 1:ncol(long.covar$S)) {
+  plot(coda::as.mcmc(long.covar$S[,i]))
+}
+dev.off()
+
+#...................... 
+# get min effective N
+#......................
+eff_n_random_effs <- apply(long.covar$S, 2, function(x){
+  coda::effectiveSize(coda::as.mcmc(x))
+})
+
+```
+The minimum effective N among the covariate cluster random effects is: `r min(eff_n_random_effs)`. 
 
 <!-- ## DIC of Final Models -->
 <!-- ```{r} -->
