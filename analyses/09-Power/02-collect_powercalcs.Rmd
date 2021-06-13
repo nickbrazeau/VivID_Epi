@@ -119,7 +119,7 @@ PowerPlot <- ggplot(df, aes(x=beta, y=OR, color = expprob_f)) +
 
 
 
-jpeg(filename = "~/Documents/GitHub/VivID_Epi/results/figures/OR_glm_posthoc_powercalc.jpg", width = 11, height = 8, res = 250, units = "in")
+jpeg(filename = "results/figures/OR_glm_posthoc_powercalc.jpg", width = 11, height = 8, res = 250, units = "in")
 plot(PowerPlot)
 graphics.off()
 ```

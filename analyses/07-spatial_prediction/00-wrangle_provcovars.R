@@ -87,7 +87,7 @@ pb <- ggplot() +
   scale_fill_viridis_c("Precip", na.value = NA) 
 
 # faster
-jpeg("~/Desktop/temp.jpg", width = 11, height = 8, res = 250, units = "in")
+jpeg("temp.jpg", width = 11, height = 8, res = 250, units = "in")
 cowplot::plot_grid(pa, pb)
 graphics.off()
 
@@ -104,7 +104,7 @@ pb <- ggplot() +
   scale_fill_viridis_c("Health Distance", na.value = NA) 
 
 # faster
-jpeg("~/Desktop/temp.jpg", width = 11, height = 8, res = 250, units = "in")
+jpeg("temp.jpg", width = 11, height = 8, res = 250, units = "in")
 cowplot::plot_grid(pa, pb)
 graphics.off()
 

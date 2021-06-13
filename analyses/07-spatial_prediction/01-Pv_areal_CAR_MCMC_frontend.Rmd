@@ -74,7 +74,7 @@ Run out four diagnostic chains to check convergence.
 #..............................................................
 # read in diagnostic chains
 #..............................................................
-mod.framework <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/ProvModels/ProvModel_diag_chains.RDS")
+mod.framework <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_diag_chains.RDS")
 ```
 #### MCMC Diagnostics 
 Note, our goal is to have the effective sample sizes (`n.effective`) to be at least 500 for all parameters. In addition, we will visually check for convergence among the four chains. 
@@ -203,7 +203,7 @@ random_eff_gelman %>%
 Now, we will run out one final long chain with 1e5 burnin iterations and 1e5 sampling iterations for each of our base models. 
 
 ```{r}
-mod.framework.long <- readRDS("~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
+mod.framework.long <- readRDS("analyses/07-spatial_prediction/ProvModels/ProvModel_long_chains.RDS")
 
 ```
 
@@ -370,7 +370,7 @@ chains <- mod.framework.long %>%
   dplyr::mutate(chainnum = 1:dplyr::n())
 
 
-myfinalchain <- "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/"
+myfinalchain <- "analyses/07-spatial_prediction/prov_map_final_long_chain/"
 dir.create(myfinalchain, recursive = T)
 dir.create(mydiagnosticdir, recursive = T)
 pmap(.l = chains[,c("name", "chainnum", "betachains", "phichains", "tau2chains", "rhochains")],
@@ -446,6 +446,6 @@ pmap(.l = chains[,c("name", "chainnum", "betachains", "phichains", "tau2chains",
 
 # save out this RDS file
 saveRDS(mod.framework.long, 
-        file = "~/Documents/GitHub/VivID_Epi/analyses/07-spatial_prediction/prov_map_final_long_chain/Province_Bayes_Hierarchial_Model_longchain.rds")
+        file = "analyses/07-spatial_prediction/prov_map_final_long_chain/Province_Bayes_Hierarchial_Model_longchain.rds")
 
 ```
