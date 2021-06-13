@@ -611,7 +611,7 @@ Too large to plot, so will send out locally.
 #...........................................................
 dir.create("analyses/07-spatial_prediction/cluster_gaus_long_chain",
            recursive = T)
-pdf("analyses/07-spatial_prediction/cluster_gaus_long_chain_chain_random_effect_chains.pdf")
+pdf("analyses/07-spatial_prediction/cluster_gaus_long_chain/cluster_gaus_long_chain_chain_random_effect_chains.pdf")
 par(mfrow=c(4,1))
 for(i in 1:ncol(long.covar$S)) {
   plot(coda::as.mcmc(long.covar$S[,i]))
